@@ -29,27 +29,27 @@ describe("snapshots service", () => {
     }[] = [];
 
     const service = createSnapshotsService({
-      createSnapshot: async (input) => {
+      createSnapshot: (input) => {
         snapshotCalls.push(input);
-        return "snapshot-1";
+        return Promise.resolve("snapshot-1");
       },
-      deprecateSnapshotsBeyondLimit: async () => undefined,
-      getSnapshotBySkillAndCommit: async () => null,
-      uploadSnapshotFiles: async (input) => {
+      deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+      getSnapshotBySkillAndCommit: () => Promise.resolve(null),
+      uploadSnapshotFiles: (input) => {
         uploadCalls.push(input);
-        return { workId: "workflow-1" };
+        return Promise.resolve({ workId: "workflow-1" });
       },
     });
 
     await expect(
       service.createHistoricalSnapshot({
         description: "Widget skill",
-        directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
+        directoryPath: "custom/boards/widget/",
+        entryPath: "custom/boards/widget/skill.md",
         files: [
           {
             content: "skill content",
-            path: "skills/acme/widget/skill.md",
+            path: "custom/boards/widget/skill.md",
           },
         ],
         name: "widget",
@@ -65,9 +65,9 @@ describe("snapshots service", () => {
     expect(snapshotCalls).toEqual([
       {
         description: "Widget skill",
-        directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
-        hash: "f673b3a57705b4279e1deb5f59f3e0012c5097bbe84f3bda0509d4bf2c5d1c35",
+        directoryPath: "custom/boards/widget/",
+        entryPath: "custom/boards/widget/skill.md",
+        hash: "bf03119fbc84893f53e9e7b70af2c69957a10e3578de42d71e8bb045cf88b47b",
         name: "widget",
         skillId: "skill-1",
         sourceCommitDate: Date.parse("2024-01-02T00:00:00.000Z"),
@@ -83,7 +83,7 @@ describe("snapshots service", () => {
         files: [
           {
             content: "skill content",
-            path: "skills/acme/widget/skill.md",
+            path: "custom/boards/widget/skill.md",
           },
         ],
         snapshotId: "snapshot-1",
@@ -94,13 +94,13 @@ describe("snapshots service", () => {
   test("maps listBySkill cursors and snapshot fields using the contract shape", async () => {
     const calls: { cursor: { id: string; syncTime: number } | null; limit?: number; skillId: string }[] = [];
     const service = createSnapshotsService({
-      listSnapshotsPageBySkill: async (input) => {
+      listSnapshotsPageBySkill: (input) => {
         calls.push({
           cursor: input.cursor ?? null,
           limit: input.limit,
           skillId: input.skillId,
         });
-        return {
+        return Promise.resolve({
           nextCursor: {
             id: "snapshot-2",
             syncTime: 456,
@@ -125,7 +125,7 @@ describe("snapshots service", () => {
               version: "1.0.0",
             },
           ],
-        };
+        });
       },
     });
 
@@ -180,9 +180,9 @@ describe("snapshots service", () => {
   test("returns the latest snapshot for a skill and version", async () => {
     const calls: { skillId: string; version: string }[] = [];
     const service = createSnapshotsService({
-      getSnapshotBySkillAndVersion: async (input) => {
+      getSnapshotBySkillAndVersion: (input) => {
         calls.push(input);
-        return {
+        return Promise.resolve({
           archiveR2Key: null,
           description: "Widget skill snapshot",
           directoryPath: "skills/acme/widget/",
@@ -198,7 +198,7 @@ describe("snapshots service", () => {
           sourceCommitUrl: null,
           syncTime: 123,
           version: "1.0.0",
-        };
+        });
       },
     });
 
@@ -234,10 +234,11 @@ describe("snapshots service", () => {
 
   test("returns a download manifest for snapshot files with public urls", async () => {
     const service = createSnapshotsService({
-      listSnapshotFiles: async () => [
-        {
-          contentType: "text/markdown; charset=utf-8",
-          fileHash: "hash-1",
+      listSnapshotFiles: () =>
+        Promise.resolve([
+          {
+            contentType: "text/markdown; charset=utf-8",
+            fileHash: "hash-1",
           path: "skills/acme/widget/README.md",
           r2Key: "snapshots/acme/widget/README.md",
           size: 12,
@@ -248,10 +249,10 @@ describe("snapshots service", () => {
           fileHash: "hash-2",
           path: "skills/acme/widget/NO_URL.md",
           r2Key: null,
-          size: 3,
-          sourceSha: null,
-        },
-      ],
+            size: 3,
+            sourceSha: null,
+          },
+        ]),
     });
 
     await expect(
@@ -270,34 +271,35 @@ describe("snapshots service", () => {
 
   test("returns archive download objects when the archive file exists", async () => {
     const service = createSnapshotsService({
-      getSnapshotArchiveObject: async (archiveKey) => {
+      getSnapshotArchiveObject: (archiveKey) => {
         expect(archiveKey).toBe("snapshots/acme/widget.zip");
-        return {
+        return Promise.resolve({
           body: new ReadableStream(),
           httpEtag: "etag-1",
           httpMetadata: {
             contentType: "application/gzip",
           },
           size: 128,
-        };
+        });
       },
-      getSnapshotById: async () => ({
-        archiveR2Key: "snapshots/acme/widget.zip",
-        description: "Widget skill snapshot",
-        directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
-        hash: "hash-1",
-        id: "snapshot-1",
-        isDeprecated: false,
-        name: "widget",
-        skillId: "skill-1",
-        sourceCommitDate: null,
-        sourceCommitMessage: null,
-        sourceCommitSha: null,
-        sourceCommitUrl: null,
-        syncTime: 123,
-        version: "1.0.0",
-      }),
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: "snapshots/acme/widget.zip",
+          description: "Widget skill snapshot",
+          directoryPath: "skills/acme/widget/",
+          entryPath: "skills/acme/widget/skill.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "widget",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
     });
 
     await expect(
@@ -321,9 +323,9 @@ describe("snapshots service", () => {
     const calls: { path: string; snapshotId: string }[] = [];
     const service = createSnapshotsService({
       buildSnapshotFilePublicUrl: (key) => `https://cdn.example/${key}`,
-      getSnapshotById: async (snapshotId) => {
+      getSnapshotById: (snapshotId) => {
         expect(snapshotId).toBe(asSnapshotId("snapshot-1"));
-        return {
+        return Promise.resolve({
           archiveR2Key: null,
           description: "Widget skill snapshot",
           directoryPath: "skills/acme/widget/",
@@ -339,20 +341,22 @@ describe("snapshots service", () => {
           sourceCommitUrl: null,
           syncTime: 123,
           version: "1.0.0",
-        };
+        });
       },
-      getSnapshotFileByPath: async (input) => {
+      getSnapshotFileByPath: (input) => {
         calls.push(input);
-        return input.path === "README.md"
-          ? {
-              contentType: "text/markdown; charset=utf-8",
-              fileHash: "hash-1",
-              path: "README.md",
+        return Promise.resolve(
+          input.path === "README.md"
+            ? {
+                contentType: "text/markdown; charset=utf-8",
+                fileHash: "hash-1",
+                path: "README.md",
               r2Key: "snapshots/acme/widget/README.md",
-              size: 12,
-              sourceSha: "sha-1",
-            }
-          : null;
+                size: 12,
+                sourceSha: "sha-1",
+              }
+            : null,
+        );
       },
     });
 
@@ -381,44 +385,47 @@ describe("snapshots service", () => {
 
   test("reads snapshot file content from R2 using the requested byte range", async () => {
     const service = createSnapshotsService({
-      getSnapshotById: async () => ({
-        archiveR2Key: null,
-        description: "Widget skill snapshot",
-        directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
-        hash: "hash-1",
-        id: "snapshot-1",
-        isDeprecated: false,
-        name: "widget",
-        skillId: "skill-1",
-        sourceCommitDate: null,
-        sourceCommitMessage: null,
-        sourceCommitSha: null,
-        sourceCommitUrl: null,
-        syncTime: 123,
-        version: "1.0.0",
-      }),
-      getSnapshotFileByPath: async (input) =>
-        input.path === "guide.md"
-          ? {
-              contentType: "text/markdown; charset=utf-8",
-              fileHash: "hash-1",
-              path: "guide.md",
-              r2Key: "snapshots/acme/widget/guide.md",
-              size: 6,
-              sourceSha: "sha-1",
-            }
-          : null,
-      readSnapshotFileObject: async (_key, range) => {
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: null,
+          description: "Widget skill snapshot",
+          directoryPath: "skills/acme/widget/",
+          entryPath: "skills/acme/widget/skill.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "widget",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      getSnapshotFileByPath: (input) =>
+        Promise.resolve(
+          input.path === "guide.md"
+            ? {
+                contentType: "text/markdown; charset=utf-8",
+                fileHash: "hash-1",
+                path: "guide.md",
+                r2Key: "snapshots/acme/widget/guide.md",
+                size: 6,
+                sourceSha: "sha-1",
+              }
+            : null,
+        ),
+      readSnapshotFileObject: (_key, range) => {
         expect(range).toEqual({
           length: 3,
           offset: 2,
         });
-        return {
-          arrayBuffer: async () => new TextEncoder().encode("cde").buffer,
+        return Promise.resolve({
+          arrayBuffer: () => Promise.resolve(new TextEncoder().encode("cde").buffer),
           body: new ReadableStream(),
           size: 6,
-        };
+        });
       },
     });
 
@@ -440,16 +447,17 @@ describe("snapshots service", () => {
 
   test("maps snapshot tree entries to blob entries", async () => {
     const service = createSnapshotsService({
-      listSnapshotFiles: async () => [
-        {
-          contentType: null,
-          fileHash: "hash-1",
+      listSnapshotFiles: () =>
+        Promise.resolve([
+          {
+            contentType: null,
+            fileHash: "hash-1",
           path: "skills/acme/widget/README.md",
           r2Key: "snapshots/acme/widget/README.md",
-          size: 12,
-          sourceSha: null,
-        },
-      ],
+            size: 12,
+            sourceSha: null,
+          },
+        ]),
     });
 
     await expect(
@@ -466,9 +474,9 @@ describe("snapshots service", () => {
     const calls: { files: { content: string; path: string }[]; snapshotId: string }[] = [];
     const service = createSnapshotsService({
       snapshotUploadScheduler: {
-        enqueue: async (input) => {
+        enqueue: (input) => {
           calls.push(input);
-          return { workId: "workflow-123" };
+          return Promise.resolve({ workId: "workflow-123" });
         },
       },
     });
@@ -521,42 +529,45 @@ describe("snapshots service", () => {
     }[] = [];
     const service = createSnapshotsService({
       buildSkillTreeEntries: (tree) => tree,
-      createSnapshot: async (input) => {
+      createSnapshot: (input) => {
         snapshotCalls.push(input);
-        return `snapshot-${snapshotCalls.length}`;
+        return Promise.resolve(`snapshot-${snapshotCalls.length}`);
       },
-      deprecateSnapshotsBeyondLimit: async () => undefined,
-      fetchCommitSha: async ({ ref }) => `${ref.padEnd(40, "0")}`.slice(0, 40),
-      fetchSkillFilesForRoot: async () => ({
-        files: [
+      deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+      fetchCommitSha: ({ ref }) => Promise.resolve(`${ref.padEnd(40, "0")}`.slice(0, 40)),
+      fetchSkillFilesForRoot: () =>
+        Promise.resolve({
+          files: [
+            {
+              content: "skill content",
+              path: "skill.md",
+            },
+          ],
+        }),
+      fetchTree: () =>
+        Promise.resolve([
           {
-            content: "skill content",
-            path: "acme/widget/skill.md",
+            path: "skill.md",
+            sha: "tree-sha-1",
+            type: "blob",
           },
-        ],
-      }),
-      fetchTree: async () => [
-        {
-          path: "acme/widget/skill.md",
-          sha: "tree-sha-1",
-          type: "blob",
-        },
-      ],
+        ]),
       hasGithubToken: () => true,
-      getSnapshotBySkillAndCommit: async () => null,
-      listSkillsHistoryInfoByIds: async () => [
-        {
-          directoryPath: "skills/acme/widget",
-          entryPath: "skills/acme/widget/skill.md",
-          id: "skill-1",
-          latestDescription: "Widget skill",
-          latestName: "widget",
-          latestVersion: "1.2.0",
-        },
-      ],
-      uploadSnapshotFiles: async (input) => {
+      getSnapshotBySkillAndCommit: () => Promise.resolve(null),
+      listSkillsHistoryInfoByIds: () =>
+        Promise.resolve([
+          {
+            directoryPath: "skills/acme/widget",
+            entryPath: "skills/acme/widget/skill.md",
+            id: "skill-1",
+            latestDescription: "Widget skill",
+            latestName: "widget",
+            latestVersion: "1.2.0",
+          },
+        ]),
+      uploadSnapshotFiles: (input) => {
         uploadCalls.push(input);
-        return { workId: "workflow-1" };
+        return Promise.resolve({ workId: "workflow-1" });
       },
     });
 
@@ -642,27 +653,26 @@ describe("snapshots service", () => {
 
   test("creates archive staging from snapshot files", async () => {
     const archiveBuffer = new TextEncoder().encode("archive-bytes");
-    const createSnapshotArchiveBufferCalls: Array<
-      {
-        body: Uint8Array;
-        header: { name: string; size: number; type: "file" };
-      }[]
-    > = [];
-    const putCalls: Array<{
+    const createSnapshotArchiveBufferCalls: {
+      body: Uint8Array;
+      header: { name: string; size: number; type: "file" };
+    }[][] = [];
+    const putCalls: {
       body: Uint8Array;
       contentType?: string;
       key: string;
-    }> = [];
+    }[] = [];
 
     const service = createSnapshotsService({
-      createSnapshotArchiveBuffer: async (entries) => {
+      createSnapshotArchiveBuffer: (entries) => {
         createSnapshotArchiveBufferCalls.push(entries);
-        return archiveBuffer;
+        return Promise.resolve(archiveBuffer);
       },
-      getSnapshotById: async () => ({
-        archiveR2Key: null,
-        description: "Widget skill snapshot",
-        directoryPath: "skills/acme/widget/",
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: null,
+          description: "Widget skill snapshot",
+          directoryPath: "skills/acme/widget/",
         entryPath: "skills/acme/widget/skill.md",
         hash: "hash-1",
         id: "snapshot-1",
@@ -672,39 +682,43 @@ describe("snapshots service", () => {
         sourceCommitDate: null,
         sourceCommitMessage: null,
         sourceCommitSha: null,
-        sourceCommitUrl: null,
-        syncTime: 123,
-        version: "1.0.0",
-      }),
-      getSnapshotStorageContext: async () => ({
-        directoryPath: "skills/acme/widget/",
-        repoName: "widget-repo",
-        repoOwner: "acme",
-        snapshotId: "snapshot-1" as never,
-        version: "1.0.0",
-      }),
-      listSnapshotFiles: async () => [
-        {
-          contentType: "text/markdown; charset=utf-8",
-          fileHash: "hash-1",
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      getSnapshotStorageContext: () =>
+        Promise.resolve({
+          directoryPath: "skills/acme/widget/",
+          repoName: "widget-repo",
+          repoOwner: "acme",
+          snapshotId: "snapshot-1" as never,
+          version: "1.0.0",
+        }),
+      listSnapshotFiles: () =>
+        Promise.resolve([
+          {
+            contentType: "text/markdown; charset=utf-8",
+            fileHash: "hash-1",
           path: "skills/acme/widget/README.md",
           r2Key: "snapshots/acme/widget/README.md",
-          size: 12,
-          sourceSha: "sha-1",
-        },
-      ],
-      putSnapshotArchiveStagingObject: async (key, body, contentType) => {
+            size: 12,
+            sourceSha: "sha-1",
+          },
+        ]),
+      putSnapshotArchiveStagingObject: (key, body, contentType) => {
         putCalls.push({
           body: body as Uint8Array,
           contentType,
           key,
         });
+        return Promise.resolve();
       },
-      readSnapshotFileObject: async (key) => ({
-        arrayBuffer: async () => new TextEncoder().encode(`bytes:${key}`).buffer,
-        body: new ReadableStream(),
-        size: 12,
-      }),
+      readSnapshotFileObject: (key) =>
+        Promise.resolve({
+          arrayBuffer: () => Promise.resolve(new TextEncoder().encode(`bytes:${key}`).buffer),
+          body: new ReadableStream(),
+          size: 12,
+        }),
     });
 
     await expect(
@@ -741,31 +755,33 @@ describe("snapshots service", () => {
   test("uploads archive staging objects into the archive bucket", async () => {
     const archiveBuffer = new TextEncoder().encode("archive-bytes");
     const stagingCalls: string[] = [];
-    const archiveCalls: Array<{
+    const archiveCalls: {
       body: Uint8Array;
       contentType?: string;
       key: string;
-    }> = [];
-    const setCalls: Array<{ archiveR2Key: string; snapshotId: string }> = [];
+    }[] = [];
+    const setCalls: { archiveR2Key: string; snapshotId: string }[] = [];
 
     const service = createSnapshotsService({
-      getSnapshotArchiveStagingObject: async (key) => {
+      getSnapshotArchiveStagingObject: (key) => {
         stagingCalls.push(key);
-        return {
-          arrayBuffer: async () => archiveBuffer.buffer,
+        return Promise.resolve({
+          arrayBuffer: () => Promise.resolve(archiveBuffer.buffer),
           body: new ReadableStream(),
           size: archiveBuffer.byteLength,
-        };
+        });
       },
-      putSnapshotArchiveObject: async (key, body, contentType) => {
+      putSnapshotArchiveObject: (key, body, contentType) => {
         archiveCalls.push({
           body: body as Uint8Array,
           contentType,
           key,
         });
+        return Promise.resolve();
       },
-      setSnapshotArchiveR2Key: async (input) => {
+      setSnapshotArchiveR2Key: (input) => {
         setCalls.push(input);
+        return Promise.resolve();
       },
     });
 

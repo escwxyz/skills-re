@@ -306,6 +306,27 @@ const normalizeFiles = (files: { content: string; path: string }[]) => {
   return normalized;
 };
 
+const normalizeSkillDirectoryRoot = (directoryPath: string) =>
+  normalizeSnapshotPath(directoryPath).replace(/\/+$/, "");
+
+const toRootedSnapshotPath = (rootPath: string, value: string) => {
+  const normalizedPath = normalizeSnapshotPath(value);
+  const normalizedRoot = normalizeSkillDirectoryRoot(rootPath);
+
+  if (!normalizedRoot) {
+    return normalizedPath;
+  }
+
+  if (
+    normalizedPath === normalizedRoot ||
+    normalizedPath.startsWith(`${normalizedRoot}/`)
+  ) {
+    return normalizedPath;
+  }
+
+  return `${normalizedRoot}/${normalizedPath}`;
+};
+
 const truncateCommitMessage = (value?: string | null) => {
   const normalized = value?.trim();
   if (!normalized) {
@@ -344,24 +365,19 @@ const deriveHistoricalVersion = (latestVersion: string | undefined, offset: numb
 };
 
 const normalizeTreeAndFiles = (
+  rootPath: string,
   treeEntries: GitTreeEntry[],
   files: { content: string; path: string }[],
-) => {
-  const treeNeedsPrefix =
-    treeEntries.length > 0 && !treeEntries.some((entry) => entry.path.startsWith("skills/"));
-  const withSkillsPrefix = (path: string) => (treeNeedsPrefix ? `skills/${path}` : path);
-
-  return {
-    files: files.map((file) => ({
-      ...file,
-      path: withSkillsPrefix(file.path),
-    })),
-    tree: treeEntries.map((entry) => ({
-      ...entry,
-      path: withSkillsPrefix(entry.path),
-    })),
-  };
-};
+) => ({
+  files: files.map((file) => ({
+    ...file,
+    path: toRootedSnapshotPath(rootPath, file.path),
+  })),
+  tree: treeEntries.map((entry) => ({
+    ...entry,
+    path: toRootedSnapshotPath(rootPath, entry.path),
+  })),
+});
 
 const normalizeCommitSha = async (
   deps: Pick<SnapshotsServiceDeps, "fetchCommitSha">,
@@ -582,6 +598,8 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         return null;
       }
 
+      const skillRoots = [...new Set(skills.map((skill) => normalizeSkillDirectoryRoot(skill.directoryPath)))];
+
       for (const [commitIndex, commit] of commits.entries()) {
         const commitSha = await normalizeCommitSha(historyDeps, {
           owner: input.repoOwner,
@@ -594,19 +612,33 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
           owner: input.repoOwner,
           repo: input.repoName,
         });
-        const treeEntries = historyDeps.buildSkillTreeEntries(tree, "skills");
-        const filesResponse = await historyDeps.fetchSkillFilesForRoot({
-          owner: input.repoOwner,
-          repo: input.repoName,
-          skillRootPath: "skills",
-          tree,
-        });
-        const normalized = normalizeTreeAndFiles(treeEntries, filesResponse.files);
+        const normalizedByRoot = new Map<
+          string,
+          ReturnType<typeof normalizeTreeAndFiles>
+        >();
+
+        for (const rootPath of skillRoots) {
+          const treeEntries = historyDeps.buildSkillTreeEntries(tree, rootPath);
+          const filesResponse = await historyDeps.fetchSkillFilesForRoot({
+            owner: input.repoOwner,
+            repo: input.repoName,
+            skillRootPath: rootPath,
+            tree,
+          });
+          normalizedByRoot.set(
+            rootPath,
+            normalizeTreeAndFiles(rootPath, treeEntries, filesResponse.files),
+          );
+        }
 
         for (const skill of skills) {
-          const directoryPath = skill.directoryPath.endsWith("/")
-            ? skill.directoryPath
-            : `${skill.directoryPath}/`;
+          const rootPath = normalizeSkillDirectoryRoot(skill.directoryPath);
+          const normalized = normalizedByRoot.get(rootPath);
+          if (!normalized) {
+            continue;
+          }
+
+          const directoryPath = `${rootPath}/`;
           const filesForSkill = normalized.files.filter((file) =>
             file.path.startsWith(directoryPath),
           );
