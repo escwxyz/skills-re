@@ -14,8 +14,14 @@ export const createDownloadMetricsRecorder = (env: DownloadMetricsEnv) => {
       return;
     }
 
-    dataset.writeDataPoint({
-      blobs: [input.skillId, input.version],
-    });
+    try {
+      await Promise.resolve(
+        dataset.writeDataPoint({
+        blobs: [input.skillId, input.version],
+        }),
+      );
+    } catch (error) {
+      console.warn("Failed to record download metrics.", error);
+    }
   };
 };
