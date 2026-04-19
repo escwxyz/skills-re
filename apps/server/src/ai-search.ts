@@ -70,9 +70,12 @@ const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
 const buildFallbackEndpoint = (accountId: string, instanceName: string) =>
   `https://api.cloudflare.com/client/v4/accounts/${accountId}/autorag/rags/${instanceName}/search`;
 
-const getJson = async (response: Response, input: string) => {
+const getJson = async (response: Response) => {
   if (!response.ok) {
-    throw new Error(`AI Search request failed with ${response.status} for ${input}`);
+    const statusText = response.statusText.trim();
+    throw new Error(
+      `AI Search request failed with ${response.status}${statusText ? ` ${statusText}` : ""}`,
+    );
   }
 
   return (await response.json()) as unknown;
@@ -121,7 +124,7 @@ export function createAiSearchRuntime(
         },
       );
 
-      return (await getJson(response, input.query)) as AiSearchRuntimeResult;
+      return (await getJson(response)) as AiSearchRuntimeResult;
     },
   };
 }
