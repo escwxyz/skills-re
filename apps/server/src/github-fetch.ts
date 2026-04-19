@@ -199,6 +199,35 @@ const discoverSkillRoots = (
 
 const toOwnerName = (value: string | null | undefined) => value ?? null;
 
+const mapWithConcurrency = async <T, U>(
+  items: readonly T[],
+  limit: number,
+  mapper: (item: T, index: number) => Promise<U>,
+) => {
+  const results = Array.from({ length: items.length }, () => undefined as U);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      if (currentIndex >= items.length) {
+        return;
+      }
+
+      const currentItem = items[currentIndex];
+      if (currentItem === undefined) {
+        return;
+      }
+
+      results[currentIndex] = await mapper(currentItem, currentIndex);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
+};
+
 const buildRepoOverview = async (
   fetchImpl: typeof fetch,
   token: string | null,
@@ -313,10 +342,7 @@ export function createGithubFetchRuntime(
       const tree = await fetchRepoTree(fetchImpl, token, parsed.owner, parsed.repo, headSha);
       const roots = discoverSkillRoots(tree, parsed.skillPath);
 
-      const skills: GithubFetchResult["skills"] = [];
-      const invalidSkills: GithubFetchResult["invalidSkills"] = [];
-
-      for (const root of roots) {
+      const rootResults = await mapWithConcurrency(roots, 4, async (root) => {
         const filesResponse = await snapshotHelpers.fetchSkillFilesForRoot({
           owner: parsed.owner,
           repo: parsed.repo,
@@ -327,36 +353,55 @@ export function createGithubFetchRuntime(
           (file) => file.path.split("/").at(-1)?.toLowerCase() === SKILL_FILENAME,
         );
         if (!skillMd) {
-          invalidSkills.push({
-            message: "Missing skill.md file.",
-            skillMdPath: root.skillMdPath,
-            skillRootPath: root.skillRootPath,
-          });
-          continue;
+          return {
+            kind: "invalid" as const,
+            invalidSkill: {
+              message: "Missing skill.md file.",
+              skillMdPath: root.skillMdPath,
+              skillRootPath: root.skillRootPath,
+            },
+          };
         }
 
         const frontmatter = parseFrontmatter(skillMd.content);
         if (!frontmatter) {
-          invalidSkills.push({
-            message: "Invalid skill frontmatter.",
-            skillMdPath: skillMd.path,
+          return {
+            kind: "invalid" as const,
+            invalidSkill: {
+              message: "Invalid skill frontmatter.",
+              skillMdPath: skillMd.path,
+              skillRootPath: root.skillRootPath,
+            },
+          };
+        }
+
+        return {
+          kind: "valid" as const,
+          skill: {
+            files: filesResponse.files,
+            frontmatter: frontmatter.metadata ?? {
+              description: frontmatter.description,
+              name: frontmatter.name,
+            },
+            skillDescription: frontmatter.description,
+            skillMdContent: skillMd.content,
+            skillMdPath: root.skillMdPath,
             skillRootPath: root.skillRootPath,
-          });
+            skillTitle: frontmatter.name,
+          },
+        };
+      });
+
+      const skills: GithubFetchResult["skills"] = [];
+      const invalidSkills: GithubFetchResult["invalidSkills"] = [];
+
+      for (const result of rootResults) {
+        if (result.kind === "valid") {
+          skills.push(result.skill);
           continue;
         }
 
-        skills.push({
-          files: filesResponse.files,
-          frontmatter: frontmatter.metadata ?? {
-            description: frontmatter.description,
-            name: frontmatter.name,
-          },
-          skillDescription: frontmatter.description,
-          skillMdContent: skillMd.content,
-          skillMdPath: root.skillMdPath,
-          skillRootPath: root.skillRootPath,
-          skillTitle: frontmatter.name,
-        });
+        invalidSkills.push(result.invalidSkill);
       }
 
       return {
