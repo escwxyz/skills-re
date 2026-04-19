@@ -92,7 +92,11 @@ describe("snapshots service", () => {
   });
 
   test("maps listBySkill cursors and snapshot fields using the contract shape", async () => {
-    const calls: { cursor: { id: string; syncTime: number } | null; limit?: number; skillId: string }[] = [];
+    const calls: {
+      cursor: { id: string; syncTime: number } | null;
+      limit?: number;
+      skillId: string;
+    }[] = [];
     const service = createSnapshotsService({
       listSnapshotsPageBySkill: (input) => {
         calls.push({
@@ -239,16 +243,16 @@ describe("snapshots service", () => {
           {
             contentType: "text/markdown; charset=utf-8",
             fileHash: "hash-1",
-          path: "skills/acme/widget/README.md",
-          r2Key: "snapshots/acme/widget/README.md",
-          size: 12,
-          sourceSha: "sha-1",
-        },
-        {
-          contentType: "text/plain; charset=utf-8",
-          fileHash: "hash-2",
-          path: "skills/acme/widget/NO_URL.md",
-          r2Key: null,
+            path: "skills/acme/widget/README.md",
+            r2Key: "snapshots/acme/widget/README.md",
+            size: 12,
+            sourceSha: "sha-1",
+          },
+          {
+            contentType: "text/plain; charset=utf-8",
+            fileHash: "hash-2",
+            path: "skills/acme/widget/NO_URL.md",
+            r2Key: null,
             size: 3,
             sourceSha: null,
           },
@@ -351,7 +355,7 @@ describe("snapshots service", () => {
                 contentType: "text/markdown; charset=utf-8",
                 fileHash: "hash-1",
                 path: "README.md",
-              r2Key: "snapshots/acme/widget/README.md",
+                r2Key: "snapshots/acme/widget/README.md",
                 size: 12,
                 sourceSha: "sha-1",
               }
@@ -452,17 +456,15 @@ describe("snapshots service", () => {
           {
             contentType: null,
             fileHash: "hash-1",
-          path: "skills/acme/widget/README.md",
-          r2Key: "snapshots/acme/widget/README.md",
+            path: "skills/acme/widget/README.md",
+            r2Key: "snapshots/acme/widget/README.md",
             size: 12,
             sourceSha: null,
           },
         ]),
     });
 
-    await expect(
-      service.getSnapshotTreeEntries({ snapshotId: "snapshot-1" }),
-    ).resolves.toEqual([
+    await expect(service.getSnapshotTreeEntries({ snapshotId: "snapshot-1" })).resolves.toEqual([
       {
         path: "skills/acme/widget/README.md",
         type: "blob",
@@ -673,15 +675,15 @@ describe("snapshots service", () => {
           archiveR2Key: null,
           description: "Widget skill snapshot",
           directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
-        hash: "hash-1",
-        id: "snapshot-1",
-        isDeprecated: false,
-        name: "widget",
-        skillId: "skill-1",
-        sourceCommitDate: null,
-        sourceCommitMessage: null,
-        sourceCommitSha: null,
+          entryPath: "skills/acme/widget/skill.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "widget",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
           sourceCommitUrl: null,
           syncTime: 123,
           version: "1.0.0",
@@ -699,8 +701,8 @@ describe("snapshots service", () => {
           {
             contentType: "text/markdown; charset=utf-8",
             fileHash: "hash-1",
-          path: "skills/acme/widget/README.md",
-          r2Key: "snapshots/acme/widget/README.md",
+            path: "skills/acme/widget/README.md",
+            r2Key: "snapshots/acme/widget/README.md",
             size: 12,
             sourceSha: "sha-1",
           },
@@ -800,9 +802,7 @@ describe("snapshots service", () => {
       snapshotId: "snapshot-1",
     });
 
-    expect(stagingCalls).toEqual([
-      "snapshot-archive/staging/2024-01-01/abc.tar.gz",
-    ]);
+    expect(stagingCalls).toEqual(["snapshot-archive/staging/2024-01-01/abc.tar.gz"]);
     expect(archiveCalls).toEqual([
       {
         body: archiveBuffer,

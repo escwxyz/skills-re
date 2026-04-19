@@ -1,13 +1,6 @@
 import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm";
-import {
-  check,
-  index,
-  integer,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import type { EvaluationId, RepoId, SkillId, SnapshotId, TagId } from "../utils";
 import type { CategoryId, UserId } from "../utils";
@@ -60,7 +53,10 @@ export const skillsTable = sqliteTable(
   },
   (table) => [
     check("skills_downloads_all_time_non_negative", sql`${table.downloadsAllTime} >= 0`),
-    check("skills_created_at_ms_non_negative", sql`${table.createdAt} is null or ${table.createdAt} >= 0`),
+    check(
+      "skills_created_at_ms_non_negative",
+      sql`${table.createdAt} is null or ${table.createdAt} >= 0`,
+    ),
     check("skills_sync_time_non_negative", sql`${table.syncTime} >= 0`),
     index("skills_categoryId_idx").on(table.categoryId),
     index("skills_createdAt_id_idx").on(table.createdAt, table.id),

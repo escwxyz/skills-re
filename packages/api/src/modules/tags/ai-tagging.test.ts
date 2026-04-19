@@ -7,9 +7,10 @@ import { generateSkillTagsBatch, normalizeSkillTags } from "./ai-tagging";
 
 describe("tagging ai helpers", () => {
   test("normalizes skill tag slugs", () => {
-    expect(
-      normalizeSkillTags(["  AI Tools  ", "best-practices", "AI   Tools"])
-    ).toEqual(["ai-tools", "best-practices"]);
+    expect(normalizeSkillTags(["  AI Tools  ", "best-practices", "AI   Tools"])).toEqual([
+      "ai-tools",
+      "best-practices",
+    ]);
   });
 
   test("parses a fenced tagging payload and preserves structured output", async () => {
@@ -34,7 +35,7 @@ describe("tagging ai helpers", () => {
           ? never
           : never,
         getModel: (() => null) as unknown as AiTaskRuntime["getModel"],
-      } as never
+      } as never,
     );
 
     expect(result.items).toEqual([

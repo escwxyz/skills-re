@@ -2,10 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  generateSkillCategoriesBatch,
-  skillCategorySlugSchema,
-} from "./ai-categorization";
+import { generateSkillCategoriesBatch, skillCategorySlugSchema } from "./ai-categorization";
 import type { AiTaskRuntime } from "../ai/runtime";
 
 describe("categorization ai helpers", () => {
@@ -36,7 +33,7 @@ describe("categorization ai helpers", () => {
           ? never
           : never,
         getModel: (() => null) as unknown as AiTaskRuntime["getModel"],
-      } as never
+      } as never,
     );
 
     expect(result.items).toEqual([

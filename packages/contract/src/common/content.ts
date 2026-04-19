@@ -132,9 +132,11 @@ export const repoDuplicateInputSchema = z.object({
   repoOwner: githubOwnerSchema,
 });
 
-export const repoDuplicateResultSchema = z.object({
-  duplicated: z.boolean(),
-}).passthrough();
+export const repoDuplicateResultSchema = z
+  .object({
+    duplicated: z.boolean(),
+  })
+  .passthrough();
 
 export const repoStatsUpdateInputSchema = z.object({
   forks: z.number().int().nonnegative(),

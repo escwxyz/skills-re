@@ -5,9 +5,7 @@ import { tagSlugSchema } from "./slugs";
 export const githubOwnerRegex = /^(?!-)(?!.*--)(?!.*-$)[A-Za-z0-9-]{1,39}$/;
 export const githubRepoRegex = /^[A-Za-z0-9._-]{1,100}$/;
 
-export const githubOwnerSchema = z
-  .string()
-  .regex(githubOwnerRegex, "Invalid GitHub owner handle.");
+export const githubOwnerSchema = z.string().regex(githubOwnerRegex, "Invalid GitHub owner handle.");
 export const githubRepoSchema = z
   .string()
   .regex(githubRepoRegex, "Invalid GitHub repository name.");

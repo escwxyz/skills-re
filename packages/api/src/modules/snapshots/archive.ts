@@ -89,10 +89,7 @@ export const buildSnapshotArchiveTarEntries = (input: {
   });
 };
 
-const gzipBuffer = async (
-  input: Uint8Array,
-  deps: SnapshotArchiveCodecDeps = defaultCodecDeps,
-) => {
+const gzipBuffer = async (input: Uint8Array, deps: SnapshotArchiveCodecDeps = defaultCodecDeps) => {
   const source = new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(input);

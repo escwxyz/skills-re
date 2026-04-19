@@ -93,13 +93,9 @@ export async function listCategoriesForAi(input?: { limit?: number }) {
   return rows.map((row) => row.slug);
 }
 
-export async function listCategoryDefinitions(input?: {
-  statuses?: ("active" | "deprecated")[];
-}) {
+export async function listCategoryDefinitions(input?: { statuses?: ("active" | "deprecated")[] }) {
   const statuses =
-    input?.statuses && input.statuses.length > 0
-      ? input.statuses
-      : (["active"] as const);
+    input?.statuses && input.statuses.length > 0 ? input.statuses : (["active"] as const);
 
   return await db
     .select({

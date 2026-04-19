@@ -9,7 +9,8 @@ import type {
   SnapshotUploadScheduler,
 } from "../../types";
 
-import { buildAiSearchResult, type AiSearchResult } from "./ai-search";
+import { buildAiSearchResult } from './ai-search';
+import type { AiSearchResult } from './ai-search';
 import { normalizeSkillTags } from "../tags/ai-tagging";
 import { toSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
@@ -172,10 +173,7 @@ export interface SkillsServiceDeps {
   findSkillBySlug: (slug: string) => Promise<SkillListRow | null>;
   listAuthors: () => Promise<AuthorRow[]>;
   listSkillsHistoryInfoByIds: (skillIds: string[]) => Promise<SkillHistoryInfoRow[]>;
-  deprecateSnapshotsBeyondLimit: (input: {
-    keepLatest: number;
-    skillId: string;
-  }) => Promise<void>;
+  deprecateSnapshotsBeyondLimit: (input: { keepLatest: number; skillId: string }) => Promise<void>;
   ensureRepo: (input: {
     createdAt: number;
     defaultBranch: string;
@@ -352,11 +350,7 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
   };
 
   return {
-    async checkDuplicated(input: {
-      directoryPath?: string;
-      repoName: string;
-      repoOwner: string;
-    }) {
+    async checkDuplicated(input: { directoryPath?: string; repoName: string; repoOwner: string }) {
       return await deps.checkDuplicatedRepo(input);
     },
 
@@ -431,11 +425,7 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
       };
     },
 
-    async getByPath(input: {
-      authorHandle: string;
-      repoName?: string;
-      skillSlug: string;
-    }) {
+    async getByPath(input: { authorHandle: string; repoName?: string; skillSlug: string }) {
       const row = await deps.findSkillByPath(input);
       return row ? toSearchSkillItem(row) : null;
     },

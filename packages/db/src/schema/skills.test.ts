@@ -2,12 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  skillsRelations,
-  skillsTable,
-  skillsTagsRelations,
-  skillsTagsTable,
-} from "./skills";
+import { skillsRelations, skillsTable, skillsTagsRelations, skillsTagsTable } from "./skills";
 
 describe("skills schema", () => {
   test("exports the skills tables and relations", () => {
@@ -46,9 +41,9 @@ describe("skills schema", () => {
       String(symbol).includes("ExtraConfigBuilder"),
     );
     expect(builderKey).toBeDefined();
-    const builders = ((skillsTable as Record<symbol, unknown>)[builderKey as symbol] as (
-      table: object,
-    ) => unknown[])(skillsTable);
+    const builders = (
+      (skillsTable as Record<symbol, unknown>)[builderKey as symbol] as (table: object) => unknown[]
+    )(skillsTable);
     const names = builders
       .map((item) => {
         const typedItem = item as { name?: string; config?: { name?: string } };

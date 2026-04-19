@@ -1,23 +1,21 @@
-import { toSearchSkillItem, type SearchSkillRow } from "../shared/search-skill";
-import {
-  generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl,
-  skillCategorySlugSchema,
-  type SkillCategoryDefinition,
-} from "./ai-categorization";
+import { toSearchSkillItem } from '../shared/search-skill';
+import type { SearchSkillRow } from '../shared/search-skill';
+import { generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl, skillCategorySlugSchema } from './ai-categorization';
+import type { SkillCategoryDefinition } from './ai-categorization';
 import type { AiTaskRuntime } from "../ai/runtime";
 import { asCategoryId, asSkillId } from "@skills-re/db/utils";
 import type { CategoryId } from "@skills-re/db/utils";
 
-type CategoryListRow = {
+interface CategoryListRow {
   count: number;
   description: string;
   id: string;
   name: string;
   slug: string;
   status?: "active" | "deprecated";
-};
+}
 
-type CategoriesServiceDeps = {
+interface CategoriesServiceDeps {
   countCategories: () => Promise<number>;
   computeSkillCountForCategory: (categoryId: CategoryId) => Promise<number>;
   findCategoryBySlug: (slug: string) => Promise<CategoryListRow | null>;
@@ -33,7 +31,7 @@ type CategoriesServiceDeps = {
         title: string;
       }[];
     },
-    aiTasks?: AiTaskRuntime
+    aiTasks?: AiTaskRuntime,
   ) => Promise<{
     items: {
       confidence: number;
@@ -43,19 +41,21 @@ type CategoriesServiceDeps = {
       scores: Record<string, number>;
     }[];
   }>;
-  listSkillCategorizationTargetsByIds: (skillIds: string[]) => Promise<{
-    categoryId: string | null;
-    description: string;
-    id: string;
-    tags: string[];
-    title: string;
-  }[]>;
+  listSkillCategorizationTargetsByIds: (skillIds: string[]) => Promise<
+    {
+      categoryId: string | null;
+      description: string;
+      id: string;
+      tags: string[];
+      title: string;
+    }[]
+  >;
   listCategories: (input?: { all?: boolean; limit?: number }) => Promise<CategoryListRow[]>;
   listCategoriesForAi: (input?: { limit?: number }) => Promise<string[]>;
   listDefinitionsForAi: () => Promise<SkillCategoryDefinition[]>;
   patchCategoryCount: (input: { categoryId: CategoryId; count: number }) => Promise<void>;
   updateSkillCategory: (input: { categoryId: string | null; skillId: string }) => Promise<void>;
-};
+}
 
 const createDefaultCategoriesDeps = async (): Promise<CategoriesServiceDeps> => {
   const repo = await import("./repo");
@@ -70,7 +70,7 @@ const createDefaultCategoriesDeps = async (): Promise<CategoriesServiceDeps> => 
           getModel: () => {
             throw new Error("AI categorization runtime is unavailable.");
           },
-        }
+        },
       ),
     findCategoryBySlug: repo.findCategoryBySlug,
     getRelatedTagsByCategorySlug: repo.getRelatedTagsByCategorySlug,
@@ -164,8 +164,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
         overrides.getRelatedTagsByCategorySlug ??
         (await getDefaultDeps()).getRelatedTagsByCategorySlug;
       const getTopSkillsByCategorySlug =
-        overrides.getTopSkillsByCategorySlug ??
-        (await getDefaultDeps()).getTopSkillsByCategorySlug;
+        overrides.getTopSkillsByCategorySlug ?? (await getDefaultDeps()).getTopSkillsByCategorySlug;
 
       const relatedTags = await getRelatedTagsByCategorySlug(input.slug);
       const topSkills = await getTopSkillsByCategorySlug(input.slug);
@@ -188,7 +187,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
       const listCategories = overrides.listCategories ?? (await getDefaultDeps()).listCategories;
       return (await listCategories(input))
         .filter((row) => row.status === "active")
-        .sort((left, right) => {
+        .toSorted((left, right) => {
           if (right.count !== left.count) {
             return right.count - left.count;
           }
@@ -234,11 +233,10 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
       }
     },
 
-    async runSkillsCategorizationPipeline(
-      input: { skillIds: string[] },
-      aiTasks?: AiTaskRuntime
-    ) {
-      const skillIds = [...new Set(input.skillIds.map((skillId) => skillId.trim()).filter(Boolean))];
+    async runSkillsCategorizationPipeline(input: { skillIds: string[] }, aiTasks?: AiTaskRuntime) {
+      const skillIds = [
+        ...new Set(input.skillIds.map((skillId) => skillId.trim()).filter(Boolean)),
+      ];
       if (skillIds.length === 0) {
         return { failedCount: 0, updatedCount: 0 };
       }
@@ -247,7 +245,8 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
         overrides.listSkillCategorizationTargetsByIds ??
         (await getDefaultDeps()).listSkillCategorizationTargetsByIds;
       const generateSkillCategoriesBatch =
-        overrides.generateSkillCategoriesBatch ?? (await getDefaultDeps()).generateSkillCategoriesBatch;
+        overrides.generateSkillCategoriesBatch ??
+        (await getDefaultDeps()).generateSkillCategoriesBatch;
       const updateSkillCategory =
         overrides.updateSkillCategory ?? (await getDefaultDeps()).updateSkillCategory;
       const findCategoryBySlug =
@@ -272,7 +271,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
             title: target.title,
           })),
         },
-        aiTasks
+        aiTasks,
       );
 
       let updatedCount = 0;
@@ -296,18 +295,18 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
           topScore,
         });
 
-      const nextCategory = await findCategoryBySlug(selectedSlug);
-      const nextCategoryId = nextCategory?.id ? asCategoryId(nextCategory.id) : null;
-      if (nextCategoryId !== target.categoryId) {
-        await updateSkillCategory({
-          categoryId: nextCategoryId,
-          skillId: target.id,
-        });
-        await categoriesService.onSkillCategoryChanged({
-          nextCategoryId,
-          previousCategoryId: target.categoryId ? asCategoryId(target.categoryId) : null,
-        });
-      }
+        const nextCategory = await findCategoryBySlug(selectedSlug);
+        const nextCategoryId = nextCategory?.id ? asCategoryId(nextCategory.id) : null;
+        if (nextCategoryId !== target.categoryId) {
+          await updateSkillCategory({
+            categoryId: nextCategoryId,
+            skillId: target.id,
+          });
+          await categoriesService.onSkillCategoryChanged({
+            nextCategoryId,
+            previousCategoryId: target.categoryId ? asCategoryId(target.categoryId) : null,
+          });
+        }
         updatedCount += 1;
       }
 
@@ -336,10 +335,7 @@ export async function listCategoriesForAiPublic(input?: { limit?: number }) {
 
 export async function runSkillsCategorizationPipeline(
   input: { skillIds: string[] },
-  aiTasks?: AiTaskRuntime
+  aiTasks?: AiTaskRuntime,
 ) {
-  return await (await createCategoriesService()).runSkillsCategorizationPipeline(
-    input,
-    aiTasks
-  );
+  return await (await createCategoriesService()).runSkillsCategorizationPipeline(input, aiTasks);
 }

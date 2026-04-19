@@ -1,9 +1,9 @@
-import { createNewsletterSubscription, findNewsletterByEmail } from "./repo";
+import type { createNewsletterSubscription, findNewsletterByEmail } from "./repo";
 
-type NewsletterServiceDeps = {
+interface NewsletterServiceDeps {
   createNewsletterSubscription: typeof createNewsletterSubscription;
   findNewsletterByEmail: typeof findNewsletterByEmail;
-};
+}
 
 const createDefaultNewsletterDeps = async (): Promise<NewsletterServiceDeps> => {
   const repo = await import("./repo");

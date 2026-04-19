@@ -2,10 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  tagDetailSchema,
-  tagListItemSchema,
-} from "./common/content";
+import { tagDetailSchema, tagListItemSchema } from "./common/content";
 import { tagsContract } from "./tags";
 
 describe("tags contract", () => {

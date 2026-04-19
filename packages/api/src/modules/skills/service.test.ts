@@ -692,7 +692,9 @@ describe("skills service", () => {
                     sourceCommitDate: 1,
                     sourceCommitSha: "abc123",
                     sourceRef: "main",
-                    tree: [{ path: "skills/example/skill.md", sha: "abc123", type: "blob" as const }],
+                    tree: [
+                      { path: "skills/example/skill.md", sha: "abc123", type: "blob" as const },
+                    ],
                   },
                   slug: "example-skill",
                   sourceLocator: "github:example/skills/skills/example/skill.md",
@@ -741,9 +743,7 @@ describe("skills service", () => {
       },
     });
 
-    await expect(
-      service.getSkillsHistoryInfo({ skillIds: ["skill-1"] }),
-    ).resolves.toEqual([
+    await expect(service.getSkillsHistoryInfo({ skillIds: ["skill-1"] })).resolves.toEqual([
       {
         directoryPath: "skills/example",
         entryPath: "skill.md",
@@ -771,9 +771,7 @@ describe("skills service", () => {
       ],
     });
 
-    await expect(
-      service.getSkillsHistoryInfo({ skillIds: ["skill-1"] }),
-    ).resolves.toEqual([
+    await expect(service.getSkillsHistoryInfo({ skillIds: ["skill-1"] })).resolves.toEqual([
       {
         directoryPath: "skills/example",
         entryPath: "skill.md",

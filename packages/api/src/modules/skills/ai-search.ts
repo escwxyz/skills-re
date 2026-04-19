@@ -1,4 +1,5 @@
-import { toSearchSkillItem, type SearchSkillRow } from "../shared/search-skill";
+import { toSearchSkillItem } from '../shared/search-skill';
+import type { SearchSkillRow } from '../shared/search-skill';
 
 const skillMarkdownFilenamePattern = /^skill\.md$/i;
 const slugPattern = /^[a-z0-9-]+$/;
@@ -147,9 +148,7 @@ const parseSkillPathDetails = (value: unknown) => {
 
   const owner = normalizedParts[0]?.toLowerCase() ?? null;
   const repo = normalizedParts[1] ?? null;
-  const skillMdIndex = normalizedParts.findIndex((part) =>
-    skillMarkdownFilenamePattern.test(part),
-  );
+  const skillMdIndex = normalizedParts.findIndex((part) => skillMarkdownFilenamePattern.test(part));
   let skillsIndex = -1;
   for (let index = normalizedParts.length - 1; index >= 0; index -= 1) {
     if ((normalizedParts[index] ?? "").toLowerCase() === "skills") {
@@ -406,9 +405,7 @@ const extractAiRows = (raw: unknown): AiSearchRow[] => {
     return {
       authorHandle: directPathDetails?.authorHandle ?? null,
       content:
-        coerceSnippet(contentFromArray) ??
-        coerceSnippet(item.content) ??
-        coerceSnippet(item.text),
+        coerceSnippet(contentFromArray) ?? coerceSnippet(item.content) ?? coerceSnippet(item.text),
       key,
       repoName: directPathDetails?.repoName ?? null,
       score: coerceFiniteNumber(item.score),
@@ -490,13 +487,17 @@ export async function buildAiSearchResult(input: {
   const aiRows = extractAiRows(input.raw);
   const resolvedByPath = (
     await Promise.all(
-      pathCandidates.slice(0, 40).map(async (candidate) => await input.resolveSkillByPath(candidate)),
+      pathCandidates
+        .slice(0, 40)
+        .map(async (candidate) => await input.resolveSkillByPath(candidate)),
     )
   ).filter(isDefined);
 
   const seenSkillIds = new Set(resolvedByPath.map((skill) => skill.id));
   const resolvedBySlug = (
-    await Promise.all(slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)))
+    await Promise.all(
+      slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)),
+    )
   )
     .filter(isDefined)
     .filter((skill): skill is AiSearchResolvedSkillRow => !seenSkillIds.has(skill.id));

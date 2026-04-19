@@ -75,7 +75,7 @@ describe("static audits service", () => {
           },
         ]),
         filesScanned: 4,
-        generatedAt: 1704067200000,
+        generatedAt: 1_704_067_200_000,
         id: asStaticAuditId("audit-1"),
         isBlocked: false,
         modelVersion: null,
@@ -85,7 +85,7 @@ describe("static audits service", () => {
         safeToPublish: true,
         status: "pass",
         summary: "summary",
-        syncTime: 1704067200000,
+        syncTime: 1_704_067_200_000,
         totalLines: 123,
       }),
     });
@@ -127,7 +127,7 @@ describe("static audits service", () => {
       },
       status: "pass",
       summary: "summary",
-      syncTime: 1704067200000,
+      syncTime: 1_704_067_200_000,
     });
   });
 
@@ -136,22 +136,20 @@ describe("static audits service", () => {
     Date.now = () => 0;
 
     try {
-      const countCalls: Array<{ maxSyncTime?: number }> = [];
-      const listCalls: Array<{
+      const countCalls: { maxSyncTime?: number }[] = [];
+      const listCalls: {
         limit: number;
         maxSyncTime?: number;
         offset?: number;
-      }> = [];
-      const dispatchCalls: Array<
-        {
+      }[] = [];
+      const dispatchCalls: {
           owner: string;
           repo: string;
           snapshotId?: string;
           skillRootPath?: string;
           sourceCommitSha?: string;
           sourceRef?: string;
-        }[]
-      > = [];
+        }[][] = [];
 
       const service = createStaticAuditsService({
         countSnapshotsMissingStaticAudits: async (input) => {
@@ -168,23 +166,23 @@ describe("static audits service", () => {
         },
         listSnapshotsMissingStaticAudits: async (input) => {
           listCalls.push(input);
-        return [
-          {
-            owner: "acme",
-            repo: "skills",
-            skillRootPath: "tools/formatter",
-            snapshotId: asSnapshotId("snapshot-1"),
-            sourceCommitSha: "commit-1",
-            syncTime: 1000,
-          },
-          {
-            owner: "acme",
-            repo: "skills",
-            skillRootPath: "tools/linter",
-            snapshotId: asSnapshotId("snapshot-2"),
-            sourceCommitSha: "commit-2",
-            syncTime: 2000,
-          },
+          return [
+            {
+              owner: "acme",
+              repo: "skills",
+              skillRootPath: "tools/formatter",
+              snapshotId: asSnapshotId("snapshot-1"),
+              sourceCommitSha: "commit-1",
+              syncTime: 1000,
+            },
+            {
+              owner: "acme",
+              repo: "skills",
+              skillRootPath: "tools/linter",
+              snapshotId: asSnapshotId("snapshot-2"),
+              sourceCommitSha: "commit-2",
+              syncTime: 2000,
+            },
           ];
         },
       });
@@ -241,16 +239,14 @@ describe("static audits service", () => {
   });
 
   test("returns no-targets when there are no eligible snapshots", async () => {
-    const dispatchCalls: Array<
-      {
+    const dispatchCalls: {
         owner: string;
         repo: string;
         snapshotId?: string;
         skillRootPath?: string;
         sourceCommitSha?: string;
         sourceRef?: string;
-      }[]
-    > = [];
+      }[][] = [];
 
     const service = createStaticAuditsService({
       countSnapshotsMissingStaticAudits: async () => 0,

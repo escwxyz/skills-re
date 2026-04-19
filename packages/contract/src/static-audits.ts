@@ -2,12 +2,7 @@ import { z } from "zod";
 
 import { baseContract } from "./common/base";
 
-export const staticAuditSeveritySchema = z.enum([
-  "critical",
-  "high",
-  "medium",
-  "low",
-]);
+export const staticAuditSeveritySchema = z.enum(["critical", "high", "medium", "low"]);
 
 export const staticAuditCategorySchema = z.enum([
   "execution",

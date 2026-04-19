@@ -23,9 +23,11 @@ describe("static audits schema", () => {
       String(symbol).includes("ExtraConfigBuilder"),
     );
     expect(builderKey).toBeDefined();
-    const builders = ((staticAuditsTable as Record<symbol, unknown>)[builderKey as symbol] as (
-      table: object,
-    ) => unknown[])(staticAuditsTable);
+    const builders = (
+      (staticAuditsTable as Record<symbol, unknown>)[builderKey as symbol] as (
+        table: object,
+      ) => unknown[]
+    )(staticAuditsTable);
     const names = builders
       .map((item) => {
         const typedItem = item as { name?: string; config?: { name?: string } };

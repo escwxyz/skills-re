@@ -231,9 +231,7 @@ describe("categories service", () => {
             }
           : null,
       generateSkillCategoriesBatch: async (input) => {
-        expect(input.categories.map((category) => category.slug)).toEqual([
-          "code-frameworks",
-        ]);
+        expect(input.categories.map((category) => category.slug)).toEqual(["code-frameworks"]);
         expect(input.items).toEqual([
           {
             description: "A code framework for apps.",
@@ -291,7 +289,7 @@ describe("categories service", () => {
     });
 
     await expect(
-      service.runSkillsCategorizationPipeline({ skillIds: ["skill-1"] })
+      service.runSkillsCategorizationPipeline({ skillIds: ["skill-1"] }),
     ).resolves.toEqual({
       failedCount: 0,
       updatedCount: 1,

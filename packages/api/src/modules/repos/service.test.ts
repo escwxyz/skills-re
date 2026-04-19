@@ -81,7 +81,8 @@ describe("repos service", () => {
 
   test("updates repo stats and records changed repos when syncing stats", async () => {
     const fetched: { name: string; owner: string }[] = [];
-    const updated: { nameWithOwner: string; forks: number; stars: number; updatedAt: number }[] = [];
+    const updated: { nameWithOwner: string; forks: number; stars: number; updatedAt: number }[] =
+      [];
 
     const service = createReposService({
       fetchRepoStats: async (_query, variables) => {
@@ -163,7 +164,6 @@ describe("repos service", () => {
           return { workId: "work_123" };
         },
       },
-      undefined,
     );
 
     expect(result).toEqual({ workId: "work_123" });

@@ -50,7 +50,10 @@ export const staticAuditsTable = sqliteTable(
     treeHash: text("tree_hash"),
   },
   (table) => [
-    check("static_audits_overall_score_range", sql`${table.overallScore} >= 0 AND ${table.overallScore} <= 100`),
+    check(
+      "static_audits_overall_score_range",
+      sql`${table.overallScore} >= 0 AND ${table.overallScore} <= 100`,
+    ),
     check("static_audits_files_scanned_non_negative", sql`${table.filesScanned} >= 0`),
     check("static_audits_total_lines_non_negative", sql`${table.totalLines} >= 0`),
     check("static_audits_generated_at_non_negative", sql`${table.generatedAt} >= 0`),

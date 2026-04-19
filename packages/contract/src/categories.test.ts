@@ -2,10 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  categoryDetailSchema,
-  categoryListItemSchema,
-} from "./common/content";
+import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
 import { categoriesContract } from "./categories";
 
 describe("categories contract", () => {

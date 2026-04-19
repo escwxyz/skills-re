@@ -1,7 +1,7 @@
 import { asSkillId, asUserId } from "@skills-re/db/utils";
 
 import type { ReviewWithAuthor } from "./repo";
-import { createReview, getReviewBySkillIdAndUserId, listReviewsBySkillId } from "./repo";
+import type { createReview, getReviewBySkillIdAndUserId, listReviewsBySkillId } from "./repo";
 
 const toOutputItem = (row: ReviewWithAuthor) => ({
   author: {
@@ -17,11 +17,11 @@ const toOutputItem = (row: ReviewWithAuthor) => ({
   userId: String(row.userId),
 });
 
-type ReviewsServiceDeps = {
+interface ReviewsServiceDeps {
   createReview: typeof createReview;
   getReviewBySkillIdAndUserId: typeof getReviewBySkillIdAndUserId;
   listReviewsBySkillId: typeof listReviewsBySkillId;
-};
+}
 
 const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
   const repo = await import("./repo");
@@ -44,7 +44,8 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     async create(input: { skillId: string; userId: string; rating: number; content: string }) {
       const createReviewFn = overrides.createReview ?? (await getDefaultDeps()).createReview;
       const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ?? (await getDefaultDeps()).getReviewBySkillIdAndUserId;
+        overrides.getReviewBySkillIdAndUserId ??
+        (await getDefaultDeps()).getReviewBySkillIdAndUserId;
 
       const skillId = asSkillId(input.skillId);
       const userId = asUserId(input.userId);
@@ -77,7 +78,8 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
 
     async getMineBySkill(input: { skillId: string; userId: string }) {
       const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ?? (await getDefaultDeps()).getReviewBySkillIdAndUserId;
+        overrides.getReviewBySkillIdAndUserId ??
+        (await getDefaultDeps()).getReviewBySkillIdAndUserId;
       const row = await getReviewBySkillIdAndUserIdFn({
         skillId: asSkillId(input.skillId),
         userId: asUserId(input.userId),

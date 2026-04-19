@@ -10,7 +10,12 @@ import {
   skillListItemSchema,
   skillPathSchema,
 } from "./common/content";
-import { githubOwnerSchema, githubRepoSchema, skillSlugSchema, tagSlugSchema } from "./common/slugs";
+import {
+  githubOwnerSchema,
+  githubRepoSchema,
+  skillSlugSchema,
+  tagSlugSchema,
+} from "./common/slugs";
 
 const skillLookupInputSchema = z.object({
   slug: skillSlugSchema,
@@ -49,14 +54,7 @@ const searchSkillsInputSchema = z
     query: z.string().optional(),
     rewriteQuery: z.boolean().optional(),
     sort: z
-      .enum([
-        "newest",
-        "updated",
-        "views",
-        "downloads-trending",
-        "downloads-all-time",
-        "stars",
-      ])
+      .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
       .optional(),
     tags: z.array(tagSlugSchema).optional(),
   })
@@ -282,8 +280,7 @@ export const skillsContract = {
   resolvePathBySlug: resolveSkillPathContract,
   uploadSkills: baseContract
     .route({
-      description:
-        "Uploads a prepared GitHub skill payload into the background workflow pipeline.",
+      description: "Uploads a prepared GitHub skill payload into the background workflow pipeline.",
       method: "POST",
       path: "/skills/upload",
       tags: ["Skills"],

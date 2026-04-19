@@ -59,7 +59,7 @@ describe("newsletter repo", () => {
     };
 
     const originalNow = Date.now;
-    Date.now = () => 1700000000000;
+    Date.now = () => 1_700_000_000_000;
     try {
       await expect(
         createNewsletterSubscription(
@@ -81,7 +81,7 @@ describe("newsletter repo", () => {
       {
         city: "Berlin",
         country: null,
-        createdAt: 1700000000000,
+        createdAt: 1_700_000_000_000,
         device: "desktop",
         email: "a@example.com",
         ip: null,
