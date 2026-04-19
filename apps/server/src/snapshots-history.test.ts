@@ -17,21 +17,25 @@ describe("createSnapshotsHistoryRuntime", () => {
         return Promise.resolve(`snapshot-${calls.length}`);
       },
       githubHistory: {
-        buildSkillTreeEntries: (tree) => tree,
+        buildSkillTreeEntries: (tree) =>
+          tree.map((entry) => ({
+            ...entry,
+            path: entry.path.split("/").at(-1) ?? entry.path,
+          })),
         fetchCommitSha: ({ ref }) => Promise.resolve(`${ref.padEnd(40, "0")}`.slice(0, 40)),
         fetchSkillFilesForRoot: () =>
           Promise.resolve({
             files: [
               {
                 content: "skill content",
-                path: "acme/widget/skill.md",
+                path: "skill.md",
               },
             ],
           }),
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "acme/widget/skill.md",
+              path: "skills/acme/widget/skill.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -116,5 +120,96 @@ describe("createSnapshotsHistoryRuntime", () => {
         version: "1.0.0",
       },
     ]);
+  });
+
+  test("uses the persisted skill root when backfilling history", async () => {
+    type HistoricalSnapshotInput = Parameters<
+      CreateSnapshotHistoryRuntimeDeps["createHistoricalSnapshot"]
+    >[0];
+    const calls: HistoricalSnapshotInput[] = [];
+    const fetchedRoots: string[] = [];
+
+    const runtime = createSnapshotsHistoryRuntime({
+      createHistoricalSnapshot: (input) => {
+        calls.push(input);
+        return Promise.resolve(`snapshot-${calls.length}`);
+      },
+      githubHistory: {
+        buildSkillTreeEntries: (tree) =>
+          tree.map((entry) => ({
+            ...entry,
+            path: entry.path.split("/").at(-1) ?? entry.path,
+          })),
+        fetchCommitSha: ({ ref }) => Promise.resolve(`${ref.padEnd(40, "0")}`.slice(0, 40)),
+        fetchSkillFilesForRoot: ({ skillRootPath }) => {
+          fetchedRoots.push(skillRootPath);
+          return Promise.resolve({
+            files: [
+              {
+                content: "skill content",
+                path: "skill.md",
+              },
+            ],
+          });
+        },
+        fetchTree: () =>
+          Promise.resolve([
+            {
+              path: "content/widget/skill.md",
+              sha: "tree-sha-1",
+              type: "blob",
+            },
+          ]),
+        hasGithubToken: () => true,
+      },
+      listSkillsHistoryInfoByIds: () =>
+        Promise.resolve([
+          {
+            directoryPath: "content/widget",
+            entryPath: "content/widget/skill.md",
+            id: "skill-1",
+            latestDescription: "Widget skill",
+            latestName: "widget",
+            latestVersion: "1.2.0",
+          },
+        ]),
+    });
+
+    await expect(
+      runtime.createHistoricalSnapshots({
+        commits: [
+          {
+            message: "latest commit",
+            sha: "latest",
+            url: "https://github.com/acme/widget/commit/latest",
+          },
+          {
+            committedDate: "2024-01-02T00:00:00.000Z",
+            message: "feat: add widget",
+            sha: "next-one",
+            url: "https://github.com/acme/widget/commit/next-one",
+          },
+          {
+            committedDate: "2024-01-01T00:00:00.000Z",
+            message: "feat: add widget v2",
+            sha: "next-two",
+            url: "https://github.com/acme/widget/commit/next-two",
+          },
+        ],
+        repoName: "widget-repo",
+        repoOwner: "acme",
+        skillIds: ["skill-1"],
+      }),
+    ).resolves.toBeNull();
+
+    expect(fetchedRoots).toEqual(["content/widget", "content/widget"]);
+    expect(calls[0]).toMatchObject({
+      directoryPath: "content/widget/",
+      files: [
+        {
+          path: "content/widget/skill.md",
+        },
+      ],
+    });
   });
 });
