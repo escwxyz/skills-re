@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1776458013373,
+      "tag": "0000_abandoned_randall_flagg",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776500435149,
+      "tag": "0001_auth-refresh",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776500743006,
+      "tag": "0002_sour_annihilus",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1776527070845,
+      "tag": "0003_tiny_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1776599822333,
+      "tag": "0004_tearful_vargas",
+      "breakpoints": true
+    }
+  ]
+}

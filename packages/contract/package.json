@@ -1,0 +1,31 @@
+{
+  "name": "@skills-re/contract",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    },
+    "./common/*": {
+      "default": "./src/common/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@skills-re/config": "workspace:*",
+    "typescript": "^5"
+  }
+}

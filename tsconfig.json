@@ -1,0 +1,6 @@
+{
+  "extends": "@skills-re/config/tsconfig.base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}

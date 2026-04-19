@@ -1,0 +1,42 @@
+{
+  "name": "@skills-re/db",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    },
+    "./utils": {
+      "default": "./src/utils/index.ts"
+    },
+    "./utils/*": {
+      "default": "./src/utils/*.ts"
+    },
+    "./schema": {
+      "default": "./src/schema/index.ts"
+    },
+    "./schema/*": {
+      "default": "./src/schema/*.ts"
+    }
+  },
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@libsql/client": "catalog:",
+    "@skills-re/env": "workspace:*",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "libsql": "catalog:",
+    "nanoid": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@skills-re/config": "workspace:*",
+    "drizzle-kit": "^0.31.8",
+    "typescript": "catalog:"
+  }
+}
