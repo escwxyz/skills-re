@@ -359,6 +359,7 @@ describe("repos service", () => {
       version: string;
     }[] = [];
     const uploaded: { files: { content: string; path: string }[]; snapshotId: string }[] = [];
+    const fetchedRoots: string[] = [];
     const latestUpdates: {
       latestCommitDate?: number | null;
       latestCommitMessage?: string | null;
@@ -389,17 +390,20 @@ describe("repos service", () => {
         ],
         headSha: "sha-1",
       }),
-      fetchSkillFilesForRoot: async () => ({
-        files: [
-          {
-            content: "---\nname: widget\n---\n# widget\n",
-            path: "skills/acme/widget/skill.md",
-          },
-        ],
-      }),
+      fetchSkillFilesForRoot: async (input) => {
+        fetchedRoots.push(input.skillRootPath);
+        return {
+          files: [
+            {
+              content: "---\nname: widget\n---\n# widget\n",
+              path: `${input.skillRootPath}/skill.md`,
+            },
+          ],
+        };
+      },
       fetchTree: async () => [
         {
-          path: "skills/acme/widget/skill.md",
+          path: "custom/boards/widget/skill.md",
           sha: "blob-1",
           type: "blob",
         },
@@ -411,8 +415,8 @@ describe("repos service", () => {
       githubConfigured: () => true,
       listRepoSkillSnapshotHeadsByRepoId: async () => [
         {
-          directoryPath: "skills/acme/widget/",
-          entryPath: "skills/acme/widget/skill.md",
+          directoryPath: "custom/boards/widget/",
+          entryPath: "custom/boards/widget/skill.md",
           latestDescription: "Widget skill snapshot",
           latestHash: "old-hash",
           latestName: "widget",
@@ -451,8 +455,8 @@ describe("repos service", () => {
     expect(createSnapshotCalls).toHaveLength(1);
     expect(createSnapshotCalls[0]).toMatchObject({
       description: "Widget skill snapshot",
-      directoryPath: "skills/acme/widget/",
-      entryPath: "skills/acme/widget/skill.md",
+      directoryPath: "custom/boards/widget/",
+      entryPath: "custom/boards/widget/skill.md",
       name: "widget",
       skillId: "skill-1",
       sourceCommitDate: Date.parse("2026-04-18T12:00:00.000Z"),
@@ -467,12 +471,13 @@ describe("repos service", () => {
         files: [
           {
             content: "---\nname: widget\n---\n# widget\n",
-            path: "skills/acme/widget/skill.md",
+            path: "custom/boards/widget/skill.md",
           },
         ],
         snapshotId: "snapshot-1",
       },
     ]);
+    expect(fetchedRoots).toEqual(["custom/boards/widget"]);
     expect(latestUpdates).toEqual([
       {
         latestCommitDate: Date.parse("2026-04-18T12:00:00.000Z"),

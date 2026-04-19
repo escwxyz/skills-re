@@ -2,6 +2,8 @@ import { z } from "zod/v4";
 
 import { asRepoId, asSkillId, asSnapshotId } from "@skills-re/db/utils";
 
+import { normalizeDirectoryPath } from "./directory-path";
+
 const repoStatsQueryResultSchema = z.object({
   repository: z
     .object({
@@ -186,6 +188,9 @@ const normalizeFiles = (files: { content: string; path: string }[]) =>
     path: normalizeRelativePath(file.path),
   }));
 
+const normalizeSkillDirectoryRoot = (directoryPath: string) =>
+  normalizeDirectoryPath(directoryPath).replace(/\/$/, "");
+
 const truncateCommitMessage = (value?: string | null) => {
   const normalized = value?.trim();
   if (!normalized) {
@@ -240,23 +245,15 @@ const defaultDeps: ReposServiceDeps = {
     const { createRepo } = await import("./repo");
     return await createRepo(input);
   },
-  fetchRepoStats: async () => {
-    throw new Error("GitHub stats fetch is not configured.");
-  },
+  fetchRepoStats: () => Promise.reject(new Error("GitHub stats fetch is not configured.")),
   githubConfigured: () =>
     Boolean(
       typeof process !== "undefined" &&
         (process.env.GH_PAT || process.env.GITHUB_TOKEN),
     ),
-  fetchRepoOverview: async () => {
-    throw new Error("GitHub repo overview fetch is not configured.");
-  },
-  fetchSkillFilesForRoot: async () => {
-    throw new Error("GitHub file fetch is not configured.");
-  },
-  fetchTree: async () => {
-    throw new Error("GitHub tree fetch is not configured.");
-  },
+  fetchRepoOverview: () => Promise.reject(new Error("GitHub repo overview fetch is not configured.")),
+  fetchSkillFilesForRoot: () => Promise.reject(new Error("GitHub file fetch is not configured.")),
+  fetchTree: () => Promise.reject(new Error("GitHub tree fetch is not configured.")),
   findRepoById: async (id) => {
     const { findRepoById } = await import("./repo");
     return await findRepoById(id);
@@ -288,9 +285,7 @@ const defaultDeps: ReposServiceDeps = {
       snapshotId: asSnapshotId(input.snapshotId),
     });
   },
-  uploadSnapshotFiles: async () => {
-    throw new Error("Snapshot upload workflow is not configured.");
-  },
+  uploadSnapshotFiles: () => Promise.reject(new Error("Snapshot upload workflow is not configured.")),
   deprecateSnapshotsBeyondLimit: async (input) => {
     const { deprecateSnapshotsBeyondLimit } = await import("../snapshots/repo");
     await deprecateSnapshotsBeyondLimit({
@@ -519,7 +514,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         owner: input.repoOwner,
         repo: input.repoName,
       })) as RepoOverview;
-      const headCommit = overview.commits[0];
+      const [headCommit] = overview.commits;
       if (!(overview.headSha && headCommit)) {
         return {
           checkedSkills: 0,
@@ -544,13 +539,23 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         owner: input.repoOwner,
         repo: input.repoName,
       });
-      const filesResponse = await activeDeps.fetchSkillFilesForRoot({
-        owner: input.repoOwner,
-        repo: input.repoName,
-        skillRootPath: "skills",
-        tree,
-      });
-      const allSkillFiles = normalizeFiles(filesResponse.files);
+      const skillRoots = [
+        ...new Set(
+          skills
+            .map((skill) => normalizeSkillDirectoryRoot(skill.directoryPath))
+            .filter((skillRootPath) => skillRootPath.length > 0),
+        ),
+      ];
+      const allSkillFiles: { content: string; path: string }[] = [];
+      for (const skillRootPath of skillRoots) {
+        const filesResponse = await activeDeps.fetchSkillFilesForRoot({
+          owner: input.repoOwner,
+          repo: input.repoName,
+          skillRootPath,
+          tree,
+        });
+        allSkillFiles.push(...normalizeFiles(filesResponse.files));
+      }
 
       let createdSnapshots = 0;
       let unchangedByCommit = 0;
