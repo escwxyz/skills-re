@@ -27,7 +27,7 @@ describe("feedback repo", () => {
       }),
     };
 
-    const now = 1700000000000;
+    const now = 1_700_000_000_000;
     const originalNow = Date.now;
     Date.now = () => now;
     try {
@@ -63,26 +63,27 @@ describe("feedback repo", () => {
     const database = {
       select: () => ({
         from: () => ({
-          orderBy: () => ({
-            limit: () => ({
-              where: (value: unknown) => {
-                calls.push(value);
-                return Promise.resolve([
-                  {
-                    content: "Something is broken",
-                    createdAt: 1,
-                    id: asFeedbackId("feedback-1"),
-                    response: null,
-                    status: "resolved" as const,
-                    title: "Bug report",
-                    type: "bug" as const,
-                    updatedAt: 1,
-                    userId: asUserId("user-1"),
-                  },
-                ]);
-              },
-            }),
-          }),
+          where: (value: unknown) => {
+            calls.push(value);
+            return {
+              orderBy: () => ({
+                limit: () =>
+                  Promise.resolve([
+                    {
+                      content: "Something is broken",
+                      createdAt: 1,
+                      id: asFeedbackId("feedback-1"),
+                      response: null,
+                      status: "resolved" as const,
+                      title: "Bug report",
+                      type: "bug" as const,
+                      updatedAt: 1,
+                      userId: asUserId("user-1"),
+                    },
+                  ]),
+              }),
+            };
+          },
         }),
       }),
     };
@@ -154,7 +155,7 @@ describe("feedback repo", () => {
         set: (value: unknown) => ({
           where: (value2: unknown) => {
             updates.push({ set: value, where: value2 });
-            return Promise.resolve(undefined);
+            return Promise.resolve();
           },
         }),
       }),

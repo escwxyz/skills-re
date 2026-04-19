@@ -3,8 +3,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { feedbackTable } from "@skills-re/db/schema/feedback";
 import { asFeedbackId, asUserId } from "@skills-re/db/utils";
 import type { FeedbackId, UserId } from "@skills-re/db/utils";
+import type { db as sharedDb } from "../shared/db";
 
-type FeedbackDb = typeof import("../shared/db").db;
+type FeedbackDb = typeof sharedDb;
 
 export type FeedbackStatus = "pending" | "resolved" | "in_review";
 export type FeedbackType = "bug" | "request" | "general";
@@ -21,8 +22,14 @@ export interface FeedbackRow {
   userId: string | null;
 }
 
-const getDb = async (database?: FeedbackDb) =>
-  database ?? (await import("../shared/db")).db;
+const getDb = async (database?: FeedbackDb) => {
+  if (database) {
+    return database;
+  }
+
+  const { db } = await import("../shared/db");
+  return db;
+};
 
 export async function createFeedback(
   input: {
@@ -51,7 +58,7 @@ export async function createFeedback(
       id: feedbackTable.id,
     });
 
-  const created = rows[0];
+  const [created] = rows;
   if (!created) {
     throw new Error("Failed to create feedback");
   }
@@ -68,13 +75,13 @@ export async function listFeedback(
 ) {
   const db = await getDb(database);
   const limit = input?.limit ?? 100;
-  const baseQuery = db.select().from(feedbackTable).orderBy(desc(feedbackTable.createdAt)).limit(limit);
+  let baseQuery = db.select().from(feedbackTable);
 
   if (input?.status) {
-    return await baseQuery.where(eq(feedbackTable.status, input.status));
+    baseQuery = baseQuery.where(eq(feedbackTable.status, input.status));
   }
 
-  return await baseQuery;
+  return await baseQuery.orderBy(desc(feedbackTable.createdAt)).limit(limit);
 }
 
 export async function listFeedbackByUser(
