@@ -113,4 +113,14 @@ describe("createSkillArchiveDownloadResponse", () => {
     expect(response.status).toBe(404);
     await expect(response.text()).resolves.toBe("Snapshot archive not found.");
   });
+
+  test("returns a 400 for invalid download params", async () => {
+    const response = await createSkillArchiveDownloadResponse({
+      skillId: "",
+      version: "",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.text()).resolves.toBe("Invalid download params.");
+  });
 });

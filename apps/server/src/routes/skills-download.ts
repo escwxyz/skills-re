@@ -82,10 +82,14 @@ export const createSkillArchiveDownloadResponse = async (
     ...defaultDeps,
     ...deps,
   };
-  const parsed = snapshotArchiveDownloadInputSchema.parse(input);
+  const parsed = snapshotArchiveDownloadInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return new Response("Invalid download params.", { status: 400 });
+  }
+  const { skillId, version } = parsed.data;
   const snapshot = await activeDeps.getBySkillAndVersion({
-    skillId: parsed.skillId,
-    version: parsed.version,
+    skillId,
+    version,
   });
 
   if (!snapshot) {
@@ -104,8 +108,8 @@ export const createSkillArchiveDownloadResponse = async (
   const contentType = archive.object.httpMetadata?.contentType ?? "application/gzip";
 
   await activeDeps.recordSuccessfulSkillDownload({
-    skillId: parsed.skillId,
-    version: parsed.version,
+    skillId,
+    version,
   });
 
   return new Response(archive.object.body as never, {
