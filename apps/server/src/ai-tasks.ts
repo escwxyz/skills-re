@@ -10,51 +10,11 @@ interface AiClients {
   unified: ReturnType<typeof createUnified>;
 }
 
-let cachedAiClients: AiClients | null = null;
-
-const getAiClients = (
-  env: Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CLOUDFLARE_GATEWAY">,
-): AiClients => {
-  if (cachedAiClients) {
-    return cachedAiClients;
-  }
-
-  const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  if (!accountId) {
-    throw new Error("CLOUDFLARE_ACCOUNT_ID is required for AI tagging.");
-  }
-
-  const gateway = env.CLOUDFLARE_GATEWAY?.trim();
-  if (!gateway) {
-    throw new Error("CLOUDFLARE_GATEWAY is required for AI tagging.");
-  }
-  const apiToken = env.CLOUDFLARE_API_TOKEN?.trim();
-  if (!apiToken) {
-    throw new Error("CLOUDFLARE_API_TOKEN is required for AI tagging.");
-  }
-
-  const headers = {
-    "cf-aig-authorization": `Bearer ${apiToken}`,
-  };
-
-  cachedAiClients = {
-    aiGateway: createAiGateway({
-      accountId,
-      apiKey: apiToken,
-      gateway,
-      options: {
-        cacheTtl: 3600,
-        retries: {
-          maxAttempts: 2,
-        },
-      },
-    }),
-    groq: createGroq({ headers }),
-    unified: createUnified({ headers }),
-  };
-
-  return cachedAiClients;
-};
+interface CreateAiTasksRuntimeOptions {
+  createAiGateway?: typeof createAiGateway;
+  createGroq?: typeof createGroq;
+  createUnified?: typeof createUnified;
+}
 
 const getTaskRoutes = (clients: AiClients) =>
   ({
@@ -74,10 +34,70 @@ const getTaskRoutes = (clients: AiClients) =>
 
 export const createAiTasksRuntime = (
   env: Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CLOUDFLARE_GATEWAY">,
-): AiTaskRuntime => ({
-  getModel(task) {
-    const clients = getAiClients(env);
-    const taskRoutes = getTaskRoutes(clients);
-    return clients.aiGateway([...taskRoutes[task]]);
-  },
-});
+  options: CreateAiTasksRuntimeOptions = {},
+): AiTaskRuntime => {
+  const {
+    createAiGateway: createAiGatewayClient = createAiGateway,
+    createGroq: createGroqClient = createGroq,
+    createUnified: createUnifiedClient = createUnified,
+  } = options;
+
+  let cachedAiClients: { key: string; clients: AiClients } | null = null;
+
+  const getAiClients = (): AiClients => {
+    const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
+    if (!accountId) {
+      throw new Error("CLOUDFLARE_ACCOUNT_ID is required for AI tagging.");
+    }
+
+    const gateway = env.CLOUDFLARE_GATEWAY?.trim();
+    if (!gateway) {
+      throw new Error("CLOUDFLARE_GATEWAY is required for AI tagging.");
+    }
+
+    const apiToken = env.CLOUDFLARE_API_TOKEN?.trim();
+    if (!apiToken) {
+      throw new Error("CLOUDFLARE_API_TOKEN is required for AI tagging.");
+    }
+
+    const key = `${accountId}|${gateway}|${apiToken}`;
+    if (cachedAiClients?.key === key) {
+      return cachedAiClients.clients;
+    }
+
+    const headers = {
+      "cf-aig-authorization": `Bearer ${apiToken}`,
+    };
+
+    const clients = {
+      aiGateway: createAiGatewayClient({
+        accountId,
+        apiKey: apiToken,
+        gateway,
+        options: {
+          cacheTtl: 3600,
+          retries: {
+            maxAttempts: 2,
+          },
+        },
+      }),
+      groq: createGroqClient({ headers }),
+      unified: createUnifiedClient({ headers }),
+    };
+
+    cachedAiClients = {
+      clients,
+      key,
+    };
+
+    return clients;
+  };
+
+  return {
+    getModel(task) {
+      const clients = getAiClients();
+      const taskRoutes = getTaskRoutes(clients);
+      return clients.aiGateway([...taskRoutes[task]]);
+    },
+  };
+};
