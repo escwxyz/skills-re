@@ -1,0 +1,41 @@
+{
+  "name": "@skills-re/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./modules": {
+      "default": "./src/modules/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    },
+    "./routers": {
+      "default": "./src/routers/index.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.64",
+    "@ai-sdk/groq": "^3.0.35",
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@skills-re/auth": "workspace:*",
+    "@skills-re/contract": "workspace:*",
+    "@skills-re/db": "workspace:*",
+    "@skills-re/env": "workspace:*",
+    "ai": "^6.0.168",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "modern-tar": "^0.7.3",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@skills-re/config": "workspace:*",
+    "hono": "catalog:",
+    "typescript": "catalog:"
+  }
+}
