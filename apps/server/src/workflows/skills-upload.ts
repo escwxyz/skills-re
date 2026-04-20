@@ -83,9 +83,7 @@ const isStagingPayload = (
 ): input is SkillsUploadWorkflowStagingPayload =>
   typeof (input as { stagingKey?: unknown }).stagingKey === "string";
 
-export const getSkillsUploadStagingKey = (
-  input: SkillsUploadWorkflowPayload,
-): string | null =>
+export const getSkillsUploadStagingKey = (input: SkillsUploadWorkflowPayload): string | null =>
   isStagingPayload(input) ? input.stagingKey : null;
 
 // Staging is intentionally stubbed for now; the inline upload payload is the supported path.

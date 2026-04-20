@@ -2,7 +2,10 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { WorkflowEntrypoint } from "cloudflare:workers";
 
 import { createAiTasksRuntime } from "../ai-tasks";
-import { createCategorizationWorkflowScheduler, runSkillsTaggingWorkflow } from "./skills-tagging-runner";
+import {
+  createCategorizationWorkflowScheduler,
+  runSkillsTaggingWorkflow,
+} from "./skills-tagging-runner";
 import type { SkillsTaggingWorkflowPayload } from "./skills-tagging-runner";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
 

@@ -104,10 +104,7 @@ const toRootedSnapshotPath = (rootPath: string, value: string) => {
     return normalizedPath;
   }
 
-  if (
-    normalizedPath === normalizedRoot ||
-    normalizedPath.startsWith(`${normalizedRoot}/`)
-  ) {
+  if (normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`)) {
     return normalizedPath;
   }
 
@@ -119,15 +116,15 @@ const normalizeTreeAndFiles = (
   treeEntries: GithubSnapshotTreeEntry[],
   files: { content: string; path: string }[],
 ) => ({
-    files: files.map((file) => ({
-      ...file,
-      path: toRootedSnapshotPath(rootPath, file.path),
-    })),
-    tree: treeEntries.map((entry) => ({
-      ...entry,
-      path: toRootedSnapshotPath(rootPath, entry.path),
-    })),
-  });
+  files: files.map((file) => ({
+    ...file,
+    path: toRootedSnapshotPath(rootPath, file.path),
+  })),
+  tree: treeEntries.map((entry) => ({
+    ...entry,
+    path: toRootedSnapshotPath(rootPath, entry.path),
+  })),
+});
 
 const normalizeCommitSha = async (
   githubHistory: GithubSnapshotHistoryHelpers,
@@ -205,7 +202,10 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
             skillRootPath: rootPath,
             tree,
           });
-          normalizedByRoot.set(rootPath, normalizeTreeAndFiles(rootPath, treeEntries, filesResponse.files));
+          normalizedByRoot.set(
+            rootPath,
+            normalizeTreeAndFiles(rootPath, treeEntries, filesResponse.files),
+          );
         }
 
         for (const skill of skills) {

@@ -2,8 +2,8 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { WorkflowEntrypoint } from "cloudflare:workers";
 
 import { createAiTasksRuntime } from "../ai-tasks";
-import { runSkillsCategorizationWorkflow } from './skills-categorization-runner';
-import type { SkillsCategorizationWorkflowPayload } from './skills-categorization-runner';
+import { runSkillsCategorizationWorkflow } from "./skills-categorization-runner";
+import type { SkillsCategorizationWorkflowPayload } from "./skills-categorization-runner";
 
 export class SkillsCategorizationWorkflow extends WorkflowEntrypoint<
   Env,

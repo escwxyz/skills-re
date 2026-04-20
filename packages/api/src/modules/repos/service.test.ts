@@ -154,17 +154,15 @@ describe("repos service", () => {
     const enqueued: { limit: number; runAfterMs: number }[] = [];
     const service = createReposService();
 
-    const result = await service.enqueueStatsSync(
-      {
-        enqueue: async (input) => {
-          enqueued.push({
-            limit: input.limit ?? 20,
-            runAfterMs: input.runAfterMs ?? 0,
-          });
-          return { workId: "work_123" };
-        },
+    const result = await service.enqueueStatsSync({
+      enqueue: async (input) => {
+        enqueued.push({
+          limit: input.limit ?? 20,
+          runAfterMs: input.runAfterMs ?? 0,
+        });
+        return { workId: "work_123" };
       },
-    );
+    });
 
     expect(result).toEqual({ workId: "work_123" });
     expect(enqueued).toEqual([{ limit: 20, runAfterMs: 0 }]);

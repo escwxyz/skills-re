@@ -1,5 +1,5 @@
-import { toSearchSkillItem } from '../shared/search-skill';
-import type { SearchSkillRow } from '../shared/search-skill';
+import { toSearchSkillItem } from "../shared/search-skill";
+import type { SearchSkillRow } from "../shared/search-skill";
 
 const skillMarkdownFilenamePattern = /^skill\.md$/i;
 const slugPattern = /^[a-z0-9-]+$/;

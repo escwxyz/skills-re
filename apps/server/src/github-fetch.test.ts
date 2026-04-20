@@ -136,9 +136,7 @@ describe("createGithubFetchRuntime", () => {
     deferredResponses.get(secondBlobUrl)?.resolve(
       Response.json(
         {
-          content: encodeBase64(
-            `---\nname: beta-skill\ndescription: Beta skill\n---\n# Beta`,
-          ),
+          content: encodeBase64(`---\nname: beta-skill\ndescription: Beta skill\n---\n# Beta`),
           encoding: "base64",
         },
         { status: 200 },
@@ -147,9 +145,7 @@ describe("createGithubFetchRuntime", () => {
     deferredResponses.get(firstBlobUrl)?.resolve(
       Response.json(
         {
-          content: encodeBase64(
-            `---\nname: alpha-skill\ndescription: Alpha skill\n---\n# Alpha`,
-          ),
+          content: encodeBase64(`---\nname: alpha-skill\ndescription: Alpha skill\n---\n# Alpha`),
           encoding: "base64",
         },
         { status: 200 },

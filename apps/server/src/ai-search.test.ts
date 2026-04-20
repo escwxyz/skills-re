@@ -31,7 +31,9 @@ describe("createAiSearchRuntime", () => {
       .catch((error: unknown) => error);
 
     expect(caughtError).toBeInstanceOf(Error);
-    expect((caughtError as Error).message).toBe("AI Search request failed with 503 Service Unavailable");
+    expect((caughtError as Error).message).toBe(
+      "AI Search request failed with 503 Service Unavailable",
+    );
     expect((caughtError as Error).message).not.toContain("secret customer data");
   });
 });

@@ -9,8 +9,8 @@ import type {
   SnapshotUploadScheduler,
 } from "../../types";
 
-import { buildAiSearchResult } from './ai-search';
-import type { AiSearchResult } from './ai-search';
+import { buildAiSearchResult } from "./ai-search";
+import type { AiSearchResult } from "./ai-search";
 import { normalizeSkillTags } from "../tags/ai-tagging";
 import { toSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";

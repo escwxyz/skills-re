@@ -1,7 +1,10 @@
-import { toSearchSkillItem } from '../shared/search-skill';
-import type { SearchSkillRow } from '../shared/search-skill';
-import { generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl, skillCategorySlugSchema } from './ai-categorization';
-import type { SkillCategoryDefinition } from './ai-categorization';
+import { toSearchSkillItem } from "../shared/search-skill";
+import type { SearchSkillRow } from "../shared/search-skill";
+import {
+  generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl,
+  skillCategorySlugSchema,
+} from "./ai-categorization";
+import type { SkillCategoryDefinition } from "./ai-categorization";
 import type { AiTaskRuntime } from "../ai/runtime";
 import { asCategoryId, asSkillId } from "@skills-re/db/utils";
 import type { CategoryId } from "@skills-re/db/utils";

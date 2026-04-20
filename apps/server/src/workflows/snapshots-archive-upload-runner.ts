@@ -16,7 +16,9 @@ export type SnapshotArchiveUploadResult = Omit<SnapshotArchiveStagingResult, "st
 
 export interface SnapshotsArchiveUploadWorkflowDeps {
   snapshotsService: {
-    createSnapshotArchiveStaging: (input: { snapshotId: string }) => Promise<SnapshotArchiveStagingResult>;
+    createSnapshotArchiveStaging: (input: {
+      snapshotId: string;
+    }) => Promise<SnapshotArchiveStagingResult>;
     uploadSnapshotArchiveFromStaging: (
       input: SnapshotArchiveStagingResult,
     ) => Promise<SnapshotArchiveUploadResult>;

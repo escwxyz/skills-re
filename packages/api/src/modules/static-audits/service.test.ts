@@ -143,13 +143,13 @@ describe("static audits service", () => {
         offset?: number;
       }[] = [];
       const dispatchCalls: {
-          owner: string;
-          repo: string;
-          snapshotId?: string;
-          skillRootPath?: string;
-          sourceCommitSha?: string;
-          sourceRef?: string;
-        }[][] = [];
+        owner: string;
+        repo: string;
+        snapshotId?: string;
+        skillRootPath?: string;
+        sourceCommitSha?: string;
+        sourceRef?: string;
+      }[][] = [];
 
       const service = createStaticAuditsService({
         countSnapshotsMissingStaticAudits: async (input) => {
@@ -240,13 +240,13 @@ describe("static audits service", () => {
 
   test("returns no-targets when there are no eligible snapshots", async () => {
     const dispatchCalls: {
-        owner: string;
-        repo: string;
-        snapshotId?: string;
-        skillRootPath?: string;
-        sourceCommitSha?: string;
-        sourceRef?: string;
-      }[][] = [];
+      owner: string;
+      repo: string;
+      snapshotId?: string;
+      skillRootPath?: string;
+      sourceCommitSha?: string;
+      sourceRef?: string;
+    }[][] = [];
 
     const service = createStaticAuditsService({
       countSnapshotsMissingStaticAudits: async () => 0,

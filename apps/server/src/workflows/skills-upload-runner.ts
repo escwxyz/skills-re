@@ -6,8 +6,8 @@ import type {
 } from "@skills-re/api/types";
 import { runUploadSkillsPipeline } from "@skills-re/api/modules/skills/service";
 
-import { loadStagedSkillsUploadPayload } from './skills-upload';
-import type { SkillsUploadWorkflowPayload } from './skills-upload';
+import { loadStagedSkillsUploadPayload } from "./skills-upload";
+import type { SkillsUploadWorkflowPayload } from "./skills-upload";
 
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;

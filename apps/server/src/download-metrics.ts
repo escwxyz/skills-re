@@ -17,7 +17,7 @@ export const createDownloadMetricsRecorder = (env: DownloadMetricsEnv) => {
     try {
       await Promise.resolve(
         dataset.writeDataPoint({
-        blobs: [input.skillId, input.version],
+          blobs: [input.skillId, input.version],
         }),
       );
     } catch (error) {
