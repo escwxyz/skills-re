@@ -8,7 +8,7 @@ describe("static audit github runtime", () => {
   test("returns no-targets when there are no dispatch targets", async () => {
     const runtime = createStaticAuditGithubRuntime({});
 
-    expect(runtime.dispatchStaticAuditWorkflow([])).resolves.toEqual({
+    await expect(runtime.dispatchStaticAuditWorkflow([])).resolves.toEqual({
       dispatched: false,
       reason: "no-targets",
     });

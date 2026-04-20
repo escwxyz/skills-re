@@ -1,11 +1,4 @@
-import { nanoid } from "nanoid";
 import { z } from "zod/v4";
-
-import type { SkillsUploadScheduler } from "@skills-re/api/types";
-
-interface WorkflowCreateBinding<TPayload> {
-  create: (options?: { id?: string; params?: TPayload }) => Promise<{ id: string }>;
-}
 
 const skillsUploadContentPayloadSchema = z.object({
   recentCommits: z
@@ -83,12 +76,6 @@ export type SkillsUploadWorkflowPayload =
   | SkillsUploadWorkflowStagingPayload
   | z.infer<typeof skillsUploadContentPayloadSchema>;
 
-type SkillsUploadWorkflowEnv = Env & {
-  SKILLS_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SkillsUploadWorkflowPayload>;
-};
-
-const createWorkflowInstanceId = () => `skills-upload-${nanoid()}`;
-
 const isStagingPayload = (
   input: SkillsUploadWorkflowPayload,
 ): input is SkillsUploadWorkflowStagingPayload =>
@@ -97,38 +84,20 @@ const isStagingPayload = (
 export const getSkillsUploadStagingKey = (input: SkillsUploadWorkflowPayload) =>
   isStagingPayload(input) ? input.stagingKey : null;
 
-export const loadStagedSkillsUploadPayload = async (input: SkillsUploadWorkflowPayload) => {
+export const loadStagedSkillsUploadPayload = (input: SkillsUploadWorkflowPayload) => {
   if (!isStagingPayload(input)) {
     const inlineValidated = skillsUploadContentPayloadSchema.safeParse(input);
     if (!inlineValidated.success) {
-      throw new Error("[skills-upload:validate-inline-payload] invalid legacy payload shape");
+      return Promise.reject(
+        new Error("[skills-upload:validate-inline-payload] invalid legacy payload shape"),
+      );
     }
-    return inlineValidated.data;
+    return Promise.resolve(inlineValidated.data);
   }
 
-  throw new Error("Skill upload staging is not configured.");
+  return Promise.reject(new Error("Skill upload staging is not configured."));
 };
 
-export const cleanupStagedSkillsUploadPayload = async (_input: SkillsUploadWorkflowPayload) => {
-  return;
-};
-
-export const createSkillsUploadWorkflowScheduler = (
-  binding: WorkflowCreateBinding<SkillsUploadWorkflowPayload>,
-): SkillsUploadScheduler => ({
-  async enqueue(payload) {
-    const instance = await binding.create({
-      id: createWorkflowInstanceId(),
-      params: payload,
-    });
-
-    return { workId: instance.id };
-  },
-});
-
-export const getSkillsUploadWorkflowScheduler = (
-  env: SkillsUploadWorkflowEnv,
-): SkillsUploadScheduler | null => {
-  const binding = env.SKILLS_UPLOAD_WORKFLOW;
-  return binding ? createSkillsUploadWorkflowScheduler(binding) : null;
+export const cleanupStagedSkillsUploadPayload = (_input: SkillsUploadWorkflowPayload) => {
+  void _input;
 };

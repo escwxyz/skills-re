@@ -1,13 +1,11 @@
 import type { AiTaskRuntime } from "@skills-re/api/types";
 import { runSkillsTaggingPipeline } from "@skills-re/api/modules/tags/service";
+import type { WorkflowCreateBinding } from "./lib/scheduler";
+import { makeWorkflowScheduler } from "./lib/scheduler";
 
 export interface SkillsTaggingWorkflowPayload {
   skillIds: string[];
   triggerCategorizationAfterTagging?: boolean;
-}
-
-interface WorkflowCreateBinding<TPayload> {
-  create: (options?: { id?: string; params?: TPayload }) => Promise<{ id: string }>;
 }
 
 type SkillsCategorizationWorkflowBinding = WorkflowCreateBinding<{
@@ -19,8 +17,6 @@ export interface RunSkillsTaggingWorkflowDeps {
   runSkillsTaggingPipeline?: typeof runSkillsTaggingPipeline;
   scheduleCategorization?: (input: { skillIds: string[] }) => Promise<{ workId: string }>;
 }
-
-const createWorkflowInstanceId = () => `skills-categorization-${crypto.randomUUID()}`;
 
 export const runSkillsTaggingWorkflow = async (
   event: Readonly<{ payload: SkillsTaggingWorkflowPayload }>,
@@ -56,11 +52,6 @@ export const createCategorizationWorkflowScheduler = (
     return;
   }
 
-  return async (input: { skillIds: string[] }) => {
-    const instance = await binding.create({
-      id: createWorkflowInstanceId(),
-      params: input,
-    });
-    return { workId: instance.id };
-  };
+  const scheduler = makeWorkflowScheduler("skills-categorization", binding);
+  return (input: { skillIds: string[] }) => scheduler.enqueue(input);
 };
