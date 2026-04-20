@@ -16,16 +16,14 @@ import { logger } from "hono/logger";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
 
-export {
-  RepoSnapshotSyncWorkflow,
-  RepoStatsSyncWorkflow,
-  SnapshotUploadWorkflow,
-  SnapshotsArchiveUploadWorkflow,
-  SkillsCategorizationWorkflow,
-  SkillsTaggingWorkflow,
-  SkillsUploadWorkflow,
-  StaticAuditBackfillWorkflow,
-} from "./workflows";
+export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
+export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
+export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
+export { SnapshotsArchiveUploadWorkflow } from "./workflows/snapshots-archive-upload-workflow";
+export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization";
+export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
+export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
+export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -132,8 +130,8 @@ app.get("/", (c) => c.text("OK"));
 const server = {
   fetch: (request: Request, workerEnv: Env, executionContext: ExecutionContext) =>
     app.fetch(request, workerEnv, executionContext),
-  async queue(batch: MessageBatch<unknown>, env: Env) {
-    await processWorkflowQueueBatch(batch, env as WorkflowQueueEnv);
+  async queue(batch: MessageBatch<unknown>, workerEnv: Env) {
+    await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv);
   },
 };
 
