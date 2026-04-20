@@ -66,6 +66,15 @@ const deriveHistoricalVersion = (latestVersion: string | undefined, offset: numb
   return `${Math.floor(nextRank / 100)}.${nextRank % 100}.0`;
 };
 
+const parseCommitDate = (value: string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const normalizeRelativePath = (value: string) => {
   const segments: string[] = [];
   for (const rawSegment of value.split("/")) {
@@ -219,7 +228,7 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
             })),
             name: skill.latestName,
             skillId: skill.id,
-            sourceCommitDate: commit.committedDate ? Date.parse(commit.committedDate) : undefined,
+            sourceCommitDate: parseCommitDate(commit.committedDate) ?? undefined,
             sourceCommitMessage: truncateCommitMessage(commit.message),
             sourceCommitSha: commitSha,
             sourceCommitUrl: commit.url ?? undefined,

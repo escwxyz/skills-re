@@ -290,4 +290,82 @@ describe("createSnapshotsHistoryRuntime", () => {
     expect(calls[0]?.version).toBe("1.0.0");
     expect(calls[1]?.version).toBe("1.0.0");
   });
+
+  test("drops invalid commit dates instead of storing NaN", async () => {
+    type HistoricalSnapshotInput = Parameters<
+      CreateSnapshotHistoryRuntimeDeps["createHistoricalSnapshot"]
+    >[0];
+    const calls: HistoricalSnapshotInput[] = [];
+
+    const runtime = createSnapshotsHistoryRuntime({
+      createHistoricalSnapshot: (input) => {
+        calls.push(input);
+        return Promise.resolve(`snapshot-${calls.length}`);
+      },
+      githubHistory: {
+        buildSkillTreeEntries: (tree) => tree,
+        fetchCommitSha: ({ ref }) => Promise.resolve(`${ref.padEnd(40, "0")}`.slice(0, 40)),
+        fetchSkillFilesForRoot: () =>
+          Promise.resolve({
+            files: [
+              {
+                content: "skill content",
+                path: "skill.md",
+              },
+            ],
+          }),
+        fetchTree: () =>
+          Promise.resolve([
+            {
+              path: "skills/acme/widget/skill.md",
+              sha: "tree-sha-1",
+              type: "blob",
+            },
+          ]),
+        hasGithubToken: () => true,
+      },
+      listSkillsHistoryInfoByIds: () =>
+        Promise.resolve([
+          {
+            directoryPath: "skills/acme/widget",
+            entryPath: "skills/acme/widget/skill.md",
+            id: "skill-1",
+            latestDescription: "Widget skill",
+            latestName: "widget",
+            latestVersion: "1.2.0",
+          },
+        ]),
+    });
+
+    await expect(
+      runtime.createHistoricalSnapshots({
+        commits: [
+          {
+            message: "latest commit",
+            sha: "latest",
+            url: "https://github.com/acme/widget/commit/latest",
+          },
+          {
+            committedDate: "not-a-date",
+            message: "feat: add widget",
+            sha: "next-one",
+            url: "https://github.com/acme/widget/commit/next-one",
+          },
+          {
+            committedDate: "2024-01-01T00:00:00.000Z",
+            message: "feat: add widget v2",
+            sha: "next-two",
+            url: "https://github.com/acme/widget/commit/next-two",
+          },
+        ],
+        repoName: "widget-repo",
+        repoOwner: "acme",
+        skillIds: ["skill-1"],
+      }),
+    ).resolves.toBeNull();
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.sourceCommitDate).toBeUndefined();
+    expect(calls[1]?.sourceCommitDate).toBe(Date.parse("2024-01-01T00:00:00.000Z"));
+  });
 });
