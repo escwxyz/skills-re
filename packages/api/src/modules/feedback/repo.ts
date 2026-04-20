@@ -75,11 +75,9 @@ export async function listFeedback(
 ) {
   const db = await getDb(database);
   const limit = input?.limit ?? 100;
-  let baseQuery = db.select().from(feedbackTable);
-
-  if (input?.status) {
-    baseQuery = baseQuery.where(eq(feedbackTable.status, input.status));
-  }
+  const baseQuery = input?.status
+    ? db.select().from(feedbackTable).where(eq(feedbackTable.status, input.status))
+    : db.select().from(feedbackTable);
 
   return await baseQuery.orderBy(desc(feedbackTable.createdAt)).limit(limit);
 }

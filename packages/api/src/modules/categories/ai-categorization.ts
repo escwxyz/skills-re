@@ -40,7 +40,7 @@ const categorizationOutputSchema = z.object({
       primaryCategory: skillCategorySlugSchema,
       reasoning: z.string().min(1),
       scores: categoryScoresSchema,
-    })
+    }),
   ),
 });
 
@@ -185,18 +185,14 @@ const parseCategorizationOutput = (text: string) => {
   }
 
   if (!parsed) {
-    throw new Error(
-      "Categorization model returned invalid JSON after fence/braces normalization."
-    );
+    throw new Error("Categorization model returned invalid JSON after fence/braces normalization.");
   }
 
   const unwrappedJson = unwrapCategorizationPayload(parsedJson);
 
   const parsedOutput = categorizationOutputSchema.safeParse(unwrappedJson);
   if (!parsedOutput.success) {
-    throw new Error(
-      `Categorization model returned invalid schema: ${parsedOutput.error.message}`
-    );
+    throw new Error(`Categorization model returned invalid schema: ${parsedOutput.error.message}`);
   }
 
   return parsedOutput.data;
@@ -224,7 +220,7 @@ export const generateSkillCategoriesBatch = async (
   deps?: {
     generateText?: typeof generateText;
     getModel: AiTaskRuntime["getModel"];
-  }
+  },
 ) => {
   const resolvedDeps = resolveCategorizationDeps(deps);
 
@@ -247,14 +243,14 @@ export const generateSkillCategoriesBatch = async (
   const categoriesText = input.categories
     .map(
       (category) =>
-        `- ${category.slug} (${category.name}): ${category.description} | keywords: ${category.keywords.join(", ")}`
+        `- ${category.slug} (${category.name}): ${category.description} | keywords: ${category.keywords.join(", ")}`,
     )
     .join("\n");
 
   const skillsText = input.items
     .map(
       (item) =>
-        `- key: ${item.key}\n  title: ${item.title}\n  description: ${compressDescription(item.description)}\n  tags: ${item.tags.join(", ") || "(none)"}`
+        `- key: ${item.key}\n  title: ${item.title}\n  description: ${compressDescription(item.description)}\n  tags: ${item.tags.join(", ") || "(none)"}`,
     )
     .join("\n\n");
 
@@ -275,12 +271,14 @@ export const generateSkillCategoriesBatch = async (
   const output = parseCategorizationOutput(result.text);
 
   return {
-    items: output.items.map((item): SkillCategorizationOutputItem => ({
-      confidence: item.confidence,
-      key: item.key,
-      primaryCategory: item.primaryCategory,
-      reasoning: item.reasoning,
-      scores: item.scores,
-    })),
+    items: output.items.map(
+      (item): SkillCategorizationOutputItem => ({
+        confidence: item.confidence,
+        key: item.key,
+        primaryCategory: item.primaryCategory,
+        reasoning: item.reasoning,
+        scores: item.scores,
+      }),
+    ),
   };
 };

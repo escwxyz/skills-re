@@ -413,19 +413,25 @@ const decodeSearchCursor = (cursor: string | undefined) => {
 
 const getSearchSortExpression = (sort: NonNullable<SearchSkillsPageInput["sort"]>) => {
   switch (sort) {
-    case "downloads-all-time":
+    case "downloads-all-time": {
       return desc(skillsTable.downloadsAllTime);
-    case "downloads-trending":
+    }
+    case "downloads-trending": {
       return desc(skillsTable.downloadsTrending);
-    case "stars":
+    }
+    case "stars": {
       return desc(reposTable.stars);
-    case "updated":
+    }
+    case "updated": {
       return desc(skillsTable.updatedAt);
-    case "views":
+    }
+    case "views": {
       return desc(skillsTable.viewsAllTime);
+    }
     case "newest":
-    default:
+    default: {
       return desc(skillsTable.syncTime);
+    }
   }
 };
 

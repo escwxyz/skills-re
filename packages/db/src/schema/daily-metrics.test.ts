@@ -17,9 +17,11 @@ describe("daily metrics schema", () => {
       String(symbol).includes("ExtraConfigBuilder"),
     );
     expect(builderKey).toBeDefined();
-    const builders = ((dailyMetricsTable as Record<symbol, unknown>)[builderKey as symbol] as (
-      table: object,
-    ) => unknown[])(dailyMetricsTable);
+    const builders = (
+      (dailyMetricsTable as Record<symbol, unknown>)[builderKey as symbol] as (
+        table: object,
+      ) => unknown[]
+    )(dailyMetricsTable);
     const names = builders
       .map((item) => {
         const typedItem = item as { name?: string; config?: { name?: string } };

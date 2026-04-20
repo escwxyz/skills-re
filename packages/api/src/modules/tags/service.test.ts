@@ -382,13 +382,13 @@ describe("tags service", () => {
           snapshotId: "snapshot-1",
         },
       },
-        {
-          syncSkillTags: {
-            createMissingStatus: "active",
-            skillId: "skill-1",
-            tags: ["ai", "ai-tools", "automation"],
-          },
+      {
+        syncSkillTags: {
+          createMissingStatus: "active",
+          skillId: "skill-1",
+          tags: ["ai", "ai-tools", "automation"],
         },
-      ]);
+      },
+    ]);
   });
 });

@@ -1,6 +1,6 @@
 import { changelogTypeSchema } from "@skills-re/contract/common/changelog";
 
-type ChangelogRow = {
+interface ChangelogRow {
   changesJson: string[];
   createdAt: number;
   description: string;
@@ -12,9 +12,9 @@ type ChangelogRow = {
   versionMajor: number;
   versionMinor: number;
   versionPatch: number;
-};
+}
 
-type ChangelogsServiceDeps = {
+interface ChangelogsServiceDeps {
   createChangelog: (input: {
     changesJson: string[];
     description: string;
@@ -48,7 +48,7 @@ type ChangelogsServiceDeps = {
     versionMinor: number;
     versionPatch: number;
   }) => Promise<void>;
-};
+}
 
 const createDefaultChangelogDeps = async (): Promise<ChangelogsServiceDeps> => {
   const repo = await import("./repo");
@@ -116,8 +116,7 @@ export const createChangelogsService = (overrides: Partial<ChangelogsServiceDeps
     },
 
     async remove(id: string) {
-      const deleteChangelog =
-        overrides.deleteChangelog ?? (await getDefaultDeps()).deleteChangelog;
+      const deleteChangelog = overrides.deleteChangelog ?? (await getDefaultDeps()).deleteChangelog;
       await deleteChangelog(id);
       return null;
     },
@@ -143,8 +142,7 @@ export const createChangelogsService = (overrides: Partial<ChangelogsServiceDeps
       const changesJson = input.changes;
 
       const hasVersionTripletConflict =
-        overrides.hasVersionTripletConflict ??
-        (await getDefaultDeps()).hasVersionTripletConflict;
+        overrides.hasVersionTripletConflict ?? (await getDefaultDeps()).hasVersionTripletConflict;
       const conflict = await hasVersionTripletConflict({
         excludeId: input.id,
         versionMajor: input.versionMajor,
@@ -173,8 +171,7 @@ export const createChangelogsService = (overrides: Partial<ChangelogsServiceDeps
         return { id: input.id };
       }
 
-      const createChangelog =
-        overrides.createChangelog ?? (await getDefaultDeps()).createChangelog;
+      const createChangelog = overrides.createChangelog ?? (await getDefaultDeps()).createChangelog;
       const id = await createChangelog({
         changesJson,
         description: input.description,

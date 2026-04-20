@@ -104,9 +104,7 @@
       "indexes": {
         "accounts_userId_idx": {
           "name": "accounts_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -115,12 +113,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -290,16 +284,12 @@
       "indexes": {
         "apikeys_key_idx": {
           "name": "apikeys_key_idx",
-          "columns": [
-            "key"
-          ],
+          "columns": ["key"],
           "isUnique": false
         },
         "apikeys_userId_idx": {
           "name": "apikeys_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -308,12 +298,8 @@
           "name": "apikeys_user_id_users_id_fk",
           "tableFrom": "apikeys",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -381,9 +367,7 @@
       "indexes": {
         "categories_slug_unique": {
           "name": "categories_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -495,16 +479,12 @@
       "indexes": {
         "repos_ownerHandle_idx": {
           "name": "repos_ownerHandle_idx",
-          "columns": [
-            "owner_handle"
-          ],
+          "columns": ["owner_handle"],
           "isUnique": false
         },
         "repos_nameWithOwner_unique": {
           "name": "repos_nameWithOwner_unique",
-          "columns": [
-            "name_with_owner"
-          ],
+          "columns": ["name_with_owner"],
           "isUnique": true
         }
       },
@@ -585,16 +565,12 @@
       "indexes": {
         "sessions_token_unique": {
           "name": "sessions_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "sessions_userId_idx": {
           "name": "sessions_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -603,12 +579,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -745,30 +717,22 @@
       "indexes": {
         "skills_repoId_idx": {
           "name": "skills_repoId_idx",
-          "columns": [
-            "repo_id"
-          ],
+          "columns": ["repo_id"],
           "isUnique": false
         },
         "skills_slug_idx": {
           "name": "skills_slug_idx",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": false
         },
         "skills_syncTime_idx": {
           "name": "skills_syncTime_idx",
-          "columns": [
-            "sync_time"
-          ],
+          "columns": ["sync_time"],
           "isUnique": false
         },
         "skills_slug_unique": {
           "name": "skills_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -777,12 +741,8 @@
           "name": "skills_repo_id_repos_id_fk",
           "tableFrom": "skills",
           "tableTo": "repos",
-          "columnsFrom": [
-            "repo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["repo_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -812,10 +772,7 @@
       "indexes": {
         "skills_tags_unique": {
           "name": "skills_tags_unique",
-          "columns": [
-            "skill_id",
-            "tag_id"
-          ],
+          "columns": ["skill_id", "tag_id"],
           "isUnique": true
         }
       },
@@ -824,12 +781,8 @@
           "name": "skills_tags_skill_id_skills_id_fk",
           "tableFrom": "skills_tags",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["skill_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -837,12 +790,8 @@
           "name": "skills_tags_tag_id_tags_id_fk",
           "tableFrom": "skills_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -896,9 +845,7 @@
       "indexes": {
         "tags_slug_unique": {
           "name": "tags_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -1002,16 +949,12 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "users_github_idx": {
           "name": "users_github_idx",
-          "columns": [
-            "github"
-          ],
+          "columns": ["github"],
           "isUnique": false
         }
       },
@@ -1071,9 +1014,7 @@
       "indexes": {
         "verifications_identifier_idx": {
           "name": "verifications_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },

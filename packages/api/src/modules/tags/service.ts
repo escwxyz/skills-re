@@ -240,7 +240,7 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
       const listTags = overrides.listTags ?? (await getDefaultDeps()).listTags;
       return (await listTags(input))
         .filter((row) => row.status === "active")
-        .sort((left, right) => {
+        .toSorted((left, right) => {
           if (right.count !== left.count) {
             return right.count - left.count;
           }

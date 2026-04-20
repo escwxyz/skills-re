@@ -72,10 +72,7 @@ export interface ReposServiceDeps {
   }) => Promise<string>;
   fetchRepoStats: (query: string, variables: { name: string; owner: string }) => Promise<unknown>;
   githubConfigured: () => boolean;
-  fetchRepoOverview: (input: {
-    owner: string;
-    repo: string;
-  }) => Promise<{
+  fetchRepoOverview: (input: { owner: string; repo: string }) => Promise<{
     commits: {
       committedDate?: string | null;
       message?: string | null;
@@ -129,18 +126,20 @@ export interface ReposServiceDeps {
     isDone: boolean;
     repos: { nameWithOwner: string; repoName: string; repoOwner: string }[];
   }>;
-  listRepoSkillSnapshotHeadsByRepoId: (repoId: string) => Promise<{
-    directoryPath: string;
-    entryPath: string;
-    latestDescription: string;
-    latestHash: string;
-    latestName: string;
-    latestSnapshotId: string;
-    latestSourceCommitSha: string | null;
-    latestVersion: string;
-    skillId: string;
-    slug: string;
-  }[]>;
+  listRepoSkillSnapshotHeadsByRepoId: (repoId: string) => Promise<
+    {
+      directoryPath: string;
+      entryPath: string;
+      latestDescription: string;
+      latestHash: string;
+      latestName: string;
+      latestSnapshotId: string;
+      latestSourceCommitSha: string | null;
+      latestVersion: string;
+      skillId: string;
+      slug: string;
+    }[]
+  >;
   setSkillLatestSnapshot: (input: {
     latestCommitDate?: number | null;
     latestCommitMessage?: string | null;
@@ -160,10 +159,7 @@ export interface ReposServiceDeps {
     stars: number;
     updatedAt: number;
   }) => Promise<{ changed: boolean }>;
-  deprecateSnapshotsBeyondLimit: (input: {
-    keepLatest: number;
-    skillId: string;
-  }) => Promise<void>;
+  deprecateSnapshotsBeyondLimit: (input: { keepLatest: number; skillId: string }) => Promise<void>;
 }
 
 const normalizeRelativePath = (value: string) => {
@@ -247,11 +243,9 @@ const defaultDeps: ReposServiceDeps = {
   },
   fetchRepoStats: () => Promise.reject(new Error("GitHub stats fetch is not configured.")),
   githubConfigured: () =>
-    Boolean(
-      typeof process !== "undefined" &&
-        (process.env.GH_PAT || process.env.GITHUB_TOKEN),
-    ),
-  fetchRepoOverview: () => Promise.reject(new Error("GitHub repo overview fetch is not configured.")),
+    Boolean(typeof process !== "undefined" && (process.env.GH_PAT || process.env.GITHUB_TOKEN)),
+  fetchRepoOverview: () =>
+    Promise.reject(new Error("GitHub repo overview fetch is not configured.")),
   fetchSkillFilesForRoot: () => Promise.reject(new Error("GitHub file fetch is not configured.")),
   fetchTree: () => Promise.reject(new Error("GitHub tree fetch is not configured.")),
   findRepoById: async (id) => {
@@ -285,7 +279,8 @@ const defaultDeps: ReposServiceDeps = {
       snapshotId: asSnapshotId(input.snapshotId),
     });
   },
-  uploadSnapshotFiles: () => Promise.reject(new Error("Snapshot upload workflow is not configured.")),
+  uploadSnapshotFiles: () =>
+    Promise.reject(new Error("Snapshot upload workflow is not configured.")),
   deprecateSnapshotsBeyondLimit: async (input) => {
     const { deprecateSnapshotsBeyondLimit } = await import("../snapshots/repo");
     await deprecateSnapshotsBeyondLimit({
@@ -306,11 +301,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
   };
 
   const service = {
-    async checkDuplicated(input: {
-      repoOwner: string;
-      repoName: string;
-      directoryPath?: string;
-    }) {
+    async checkDuplicated(input: { repoOwner: string; repoName: string; directoryPath?: string }) {
       return await deps.checkDuplicatedRepo(input);
     },
 
@@ -583,7 +574,9 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           continue;
         }
 
-        const committedDate = headCommit.committedDate ? Date.parse(headCommit.committedDate) : null;
+        const committedDate = headCommit.committedDate
+          ? Date.parse(headCommit.committedDate)
+          : null;
         const commitMessage = truncateCommitMessage(headCommit.message);
         const snapshotId = await activeDeps.createSnapshot({
           description: skill.latestDescription,
@@ -642,8 +635,7 @@ export const checkDuplicated = (input: {
   directoryPath?: string;
 }) => reposService.checkDuplicated(input);
 
-export const checkExisting = (input: { repoOwner: string }) =>
-  reposService.checkExisting(input);
+export const checkExisting = (input: { repoOwner: string }) => reposService.checkExisting(input);
 
 export const ensureRepo = (input: {
   nameWithOwner: string;

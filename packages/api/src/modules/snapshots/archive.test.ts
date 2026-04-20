@@ -2,10 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  buildSnapshotArchiveTarEntries,
-  createSnapshotArchiveBuffer,
-} from "./archive";
+import { buildSnapshotArchiveTarEntries, createSnapshotArchiveBuffer } from "./archive";
 
 describe("snapshots archive helpers", () => {
   test("builds tar entries relative to the snapshot directory", () => {

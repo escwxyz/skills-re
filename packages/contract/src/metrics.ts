@@ -4,9 +4,15 @@ import { baseContract } from "./common/base";
 
 const dailyMetricsQueryInputSchema = z
   .object({
-    fromDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    fromDay: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     limit: z.number().int().min(1).max(365).optional(),
-    toDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    toDay: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   })
   .optional();
 

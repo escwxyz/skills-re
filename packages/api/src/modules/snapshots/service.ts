@@ -86,18 +86,17 @@ export interface SnapshotsServiceDeps {
     skillId: string;
     sourceCommitSha: string;
   }) => Promise<SnapshotListItem | null>;
-  getSnapshotArchiveStagingObject: (stagingKey: string) => Promise<SnapshotArchiveStagingObject | null>;
+  getSnapshotArchiveStagingObject: (
+    stagingKey: string,
+  ) => Promise<SnapshotArchiveStagingObject | null>;
   getSnapshotArchiveObject: (archiveKey: string) => Promise<SnapshotArchiveObject | null>;
-  getSnapshotStorageContext: (snapshotId: SnapshotId) => Promise<
-    | {
-        directoryPath: string;
-        repoName: string | null;
-        repoOwner: string | null;
-        snapshotId: SnapshotId;
-        version: string;
-      }
-    | null
-  >;
+  getSnapshotStorageContext: (snapshotId: SnapshotId) => Promise<{
+    directoryPath: string;
+    repoName: string | null;
+    repoOwner: string | null;
+    snapshotId: SnapshotId;
+    version: string;
+  } | null>;
   hasGithubToken: () => boolean;
   listSnapshotFiles: (snapshotId: SnapshotId) => Promise<SnapshotFileRow[]>;
   listSnapshotsPageBySkill: (input: {
@@ -317,10 +316,7 @@ const toRootedSnapshotPath = (rootPath: string, value: string) => {
     return normalizedPath;
   }
 
-  if (
-    normalizedPath === normalizedRoot ||
-    normalizedPath.startsWith(`${normalizedRoot}/`)
-  ) {
+  if (normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`)) {
     return normalizedPath;
   }
 
@@ -517,8 +513,8 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       }
 
       const files = await deps.listSnapshotFiles(snapshotId);
-      const filesWithR2Key = files.filter(
-        (file): file is typeof file & { r2Key: string } => Boolean(file.r2Key),
+      const filesWithR2Key = files.filter((file): file is typeof file & { r2Key: string } =>
+        Boolean(file.r2Key),
       );
       if (filesWithR2Key.length === 0) {
         throw new Error("Snapshot files are not available in R2.");
@@ -545,11 +541,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       const archiveKey = await buildSnapshotArchiveR2Key(deps, snapshotId);
       const stagingKey = buildSnapshotArchiveStagingKey();
 
-      await deps.putSnapshotArchiveStagingObject(
-        stagingKey,
-        archiveBuffer,
-        "application/gzip",
-      );
+      await deps.putSnapshotArchiveStagingObject(stagingKey, archiveBuffer, "application/gzip");
 
       return {
         archiveBytes: archiveBuffer.byteLength,
@@ -598,7 +590,9 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         return null;
       }
 
-      const skillRoots = [...new Set(skills.map((skill) => normalizeSkillDirectoryRoot(skill.directoryPath)))];
+      const skillRoots = [
+        ...new Set(skills.map((skill) => normalizeSkillDirectoryRoot(skill.directoryPath))),
+      ];
 
       for (const [commitIndex, commit] of commits.entries()) {
         const commitSha = await normalizeCommitSha(historyDeps, {
@@ -612,10 +606,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
           owner: input.repoOwner,
           repo: input.repoName,
         });
-        const normalizedByRoot = new Map<
-          string,
-          ReturnType<typeof normalizeTreeAndFiles>
-        >();
+        const normalizedByRoot = new Map<string, ReturnType<typeof normalizeTreeAndFiles>>();
 
         for (const rootPath of skillRoots) {
           const treeEntries = historyDeps.buildSkillTreeEntries(tree, rootPath);
@@ -854,27 +845,29 @@ export const readSnapshotFileContent = (input: {
   snapshotId: string;
 }) => snapshotsService.readSnapshotFileContent(input);
 
-export const createHistoricalSnapshots = (input: {
-  commits: {
-    committedDate?: string | null;
-    message?: string | null;
-    sha: string;
-    url?: string | null;
-  }[];
-  repoName: string;
-  repoOwner: string;
-  skillIds: string[];
-},
-runtimeDeps?: Partial<
-  Pick<
-    SnapshotsServiceDeps,
-    | "buildSkillTreeEntries"
-    | "fetchCommitSha"
-    | "fetchSkillFilesForRoot"
-    | "fetchTree"
-    | "hasGithubToken"
-  >
->) => snapshotsService.createHistoricalSnapshots(input, runtimeDeps);
+export const createHistoricalSnapshots = (
+  input: {
+    commits: {
+      committedDate?: string | null;
+      message?: string | null;
+      sha: string;
+      url?: string | null;
+    }[];
+    repoName: string;
+    repoOwner: string;
+    skillIds: string[];
+  },
+  runtimeDeps?: Partial<
+    Pick<
+      SnapshotsServiceDeps,
+      | "buildSkillTreeEntries"
+      | "fetchCommitSha"
+      | "fetchSkillFilesForRoot"
+      | "fetchTree"
+      | "hasGithubToken"
+    >
+  >,
+) => snapshotsService.createHistoricalSnapshots(input, runtimeDeps);
 
 export const createHistoricalSnapshot = (input: {
   description: string;

@@ -37,8 +37,6 @@ describe("categories schema", () => {
   });
 
   test("retains the legacy count check constraint", () => {
-    expect(getExtraConfigNames(categoriesTable)).toContain(
-      "categories_count_non_negative",
-    );
+    expect(getExtraConfigNames(categoriesTable)).toContain("categories_count_non_negative");
   });
 });

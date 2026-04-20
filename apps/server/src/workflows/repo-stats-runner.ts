@@ -1,0 +1,115 @@
+import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
+import { reposService } from "@skills-re/api/modules/repos/service";
+import type { RepoSnapshotSyncScheduler } from "@skills-re/api/types";
+
+import type { RepoStatsSyncWorkflowPayload } from "./repo-stats";
+
+export interface WorkflowEvent<TPayload> {
+  payload: TPayload;
+}
+
+export interface WorkflowStep {
+  do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+}
+
+export interface RepoStatsSyncWorkflowDeps {
+  snapshotSyncScheduler?: RepoSnapshotSyncScheduler | null;
+  syncStats: typeof reposService.syncStats;
+}
+
+const DEFAULT_LIMIT = 20;
+const MAX_PAGES_PER_RUN = 25;
+
+const defaultDeps: RepoStatsSyncWorkflowDeps = {
+  snapshotSyncScheduler: null,
+  syncStats: reposService.syncStats,
+};
+
+export const runRepoStatsSyncWorkflow = async (
+  event: Readonly<WorkflowEvent<RepoStatsSyncWorkflowPayload>>,
+  step: WorkflowStep,
+  deps: Partial<RepoStatsSyncWorkflowDeps> = {},
+) => {
+  const activeDeps = {
+    ...defaultDeps,
+    ...deps,
+  };
+  const snapshotWorkflowScheduler = activeDeps.snapshotSyncScheduler;
+  if (!snapshotWorkflowScheduler) {
+    throw new Error("Repo snapshot sync scheduler is unavailable.");
+  }
+  const limit = Math.max(1, Math.min(event.payload.limit ?? DEFAULT_LIMIT, 20));
+  let { cursor } = event.payload;
+  let processedPages = 0;
+  const changed: {
+    repoOwner: string;
+    repoName: string;
+    updatedAt: number;
+  }[] = [];
+  let scheduledSnapshotSyncCount = 0;
+
+  while (processedPages < MAX_PAGES_PER_RUN) {
+    const result = await step.do(
+      `sync-repo-stats-page-${processedPages + 1}`,
+      workflowStepRetryPolicy.repoSyncPage,
+      async () =>
+        await activeDeps.syncStats({
+          cursor,
+          limit,
+        }),
+    );
+
+    processedPages += 1;
+    if (!result) {
+      return {
+        changedCount: changed.length,
+        continueCursor: "",
+        processedPages,
+        status: "completed",
+      } as const;
+    }
+
+    changed.push(...result.changed);
+    if (result.changed.length > 0) {
+      const scheduled = await step.do(
+        `enqueue-repo-snapshot-sync-${processedPages}`,
+        workflowStepRetryPolicy.repoSnapshotEnqueue,
+        async () => {
+          const settled = await Promise.allSettled(
+            result.changed.map(
+              async (repo) =>
+                await snapshotWorkflowScheduler.enqueue({
+                  expectedUpdatedAt: repo.updatedAt,
+                  repoName: repo.repoName,
+                  repoOwner: repo.repoOwner,
+                }),
+            ),
+          );
+
+          return settled.filter((item) => item.status === "fulfilled").length;
+        },
+      );
+      scheduledSnapshotSyncCount += scheduled;
+    }
+
+    if (result.isDone || !result.continueCursor) {
+      return {
+        changedCount: changed.length,
+        continueCursor: "",
+        processedPages,
+        scheduledSnapshotSyncCount,
+        status: "completed",
+      } as const;
+    }
+
+    cursor = result.continueCursor;
+  }
+
+  return {
+    changedCount: changed.length,
+    continueCursor: cursor ?? "",
+    processedPages,
+    scheduledSnapshotSyncCount,
+    status: "partial",
+  } as const;
+};

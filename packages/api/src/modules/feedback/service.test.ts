@@ -54,8 +54,8 @@ describe("feedback service", () => {
       getFeedbackById: async (_id, _database?) => null,
       getFeedbackByIdAndUser: async (_input, _database?) => null,
       listFeedbackByUser: async (_input, _database?) => [],
-      updateFeedbackResponse: async (_input, _database?) => undefined,
-      updateFeedbackStatus: async (_input, _database?) => undefined,
+      updateFeedbackResponse: async (_input, _database?) => {},
+      updateFeedbackStatus: async (_input, _database?) => {},
     });
 
     await expect(service.list()).resolves.toEqual([
@@ -83,7 +83,7 @@ describe("feedback service", () => {
       getFeedbackByIdAndUser: async (_input, _database?) => null,
       listFeedback: async (_input, _database?) => [],
       listFeedbackByUser: async (_input, _database?) => [],
-      updateFeedbackResponse: async (_input, _database?) => undefined,
+      updateFeedbackResponse: async (_input, _database?) => {},
     });
 
     await expect(

@@ -1,0 +1,28 @@
+import { WorkflowEntrypoint } from "cloudflare:workers";
+import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
+
+import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
+import { createSnapshotsService } from "@skills-re/api/modules/snapshots/service";
+
+import { runSnapshotArchiveUploadWorkflow } from "./snapshots-archive-upload-runner";
+import type { SnapshotArchiveUploadWorkflowPayload } from "./snapshots-archive-upload";
+
+export class SnapshotsArchiveUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
+  run(event: Readonly<WorkflowEvent<SnapshotArchiveUploadWorkflowPayload>>, step: WorkflowStep) {
+    const archiveStorage = createSnapshotArchiveStorageRuntime(this.env);
+    const snapshotsService = createSnapshotsService({
+      getSnapshotArchiveStagingObject: archiveStorage.getSnapshotArchiveStagingObject,
+      getSnapshotStorageContext: async (snapshotId) => {
+        const { getSnapshotStorageContext } = await import("@skills-re/api/modules/snapshots/repo");
+        return await getSnapshotStorageContext(snapshotId);
+      },
+      putSnapshotArchiveObject: archiveStorage.putSnapshotArchiveObject,
+      putSnapshotArchiveStagingObject: archiveStorage.putSnapshotArchiveStagingObject,
+      readSnapshotFileObject: archiveStorage.getSnapshotFileObject,
+    });
+
+    return runSnapshotArchiveUploadWorkflow(event, step, {
+      snapshotsService,
+    });
+  }
+}

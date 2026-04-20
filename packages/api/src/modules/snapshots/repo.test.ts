@@ -69,7 +69,7 @@ describe("snapshots repo", () => {
         set: (value: unknown) => {
           updates.push(value);
           return {
-            where: () => Promise.resolve(undefined),
+            where: () => Promise.resolve(),
           };
         },
       }),
@@ -120,7 +120,7 @@ describe("snapshots repo", () => {
         set: (value: unknown) => ({
           where: (value2: unknown) => {
             deprecations.push({ set: value, where: value2 });
-            return Promise.resolve(undefined);
+            return Promise.resolve();
           },
         }),
       }),

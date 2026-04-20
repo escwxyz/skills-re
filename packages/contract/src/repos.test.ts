@@ -42,9 +42,7 @@ describe("repos contract", () => {
   });
 
   test("keeps the duplicate result shape stable", () => {
-    expect(
-      repoDuplicateResultSchema.parse({ duplicated: true, reason: "path" }),
-    ).toEqual({
+    expect(repoDuplicateResultSchema.parse({ duplicated: true, reason: "path" })).toEqual({
       duplicated: true,
       reason: "path",
     });

@@ -130,6 +130,8 @@ describe("reviews service", () => {
       getReviewBySkillIdAndUserId: async () => null,
     });
 
-    await expect(service.getMineBySkill({ skillId: "skill-1", userId: "user-1" })).resolves.toBeNull();
+    await expect(
+      service.getMineBySkill({ skillId: "skill-1", userId: "user-1" }),
+    ).resolves.toBeNull();
   });
 });

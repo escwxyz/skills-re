@@ -161,19 +161,19 @@ describe("feedback repo", () => {
       }),
     };
 
-      await updateFeedbackStatus(
-        {
-          id: asFeedbackId("feedback-1"),
-          status: "resolved",
-        },
-        database as never,
-      );
-      await updateFeedbackResponse(
-        {
-          id: asFeedbackId("feedback-1"),
-          response: "Thanks",
-        },
-        database as never,
+    await updateFeedbackStatus(
+      {
+        id: asFeedbackId("feedback-1"),
+        status: "resolved",
+      },
+      database as never,
+    );
+    await updateFeedbackResponse(
+      {
+        id: asFeedbackId("feedback-1"),
+        response: "Thanks",
+      },
+      database as never,
     );
 
     expect(updates).toHaveLength(2);

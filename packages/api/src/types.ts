@@ -26,6 +26,14 @@ export interface RepoStatsSyncScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface RepoSnapshotSyncScheduler {
+  enqueue(input: {
+    expectedUpdatedAt?: number;
+    repoName: string;
+    repoOwner: string;
+  }): Promise<{ workId: string }>;
+}
+
 export interface SnapshotUploadScheduler {
   enqueue(input: {
     files: {
@@ -106,20 +114,14 @@ export interface SkillsTaggingScheduler {
 }
 
 export interface GithubSubmitRuntime {
-  buildPayload(input: {
-    owner: string;
-    repo: string;
-    skillRootPath?: string;
-  }): Promise<{
+  buildPayload(input: { owner: string; repo: string; skillRootPath?: string }): Promise<{
     payload: SkillsUploadContentPayload | null;
     reason?: string;
   }>;
 }
 
 export interface GithubFetchRuntime {
-  fetchRepo(input: {
-    githubUrl: string;
-  }): Promise<{
+  fetchRepo(input: { githubUrl: string }): Promise<{
     branch: string;
     commitDate: string | null;
     commitMessage: string | null;
@@ -237,6 +239,7 @@ export interface Context {
     snapshotArchiveUpload?: SnapshotArchiveUploadScheduler;
     snapshotUpload?: SnapshotUploadScheduler;
     repoStatsSync?: RepoStatsSyncScheduler;
+    repoSnapshotSync?: RepoSnapshotSyncScheduler;
     skillsUpload?: SkillsUploadScheduler;
     skillsTagging?: SkillsTaggingScheduler;
   };

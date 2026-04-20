@@ -24,10 +24,7 @@ export {
   upsertChangelogPublic as upsertChangelog,
 } from "./changelogs/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
-export {
-  dailySkillsSnapshots,
-  refreshDailySkillsSnapshots,
-} from "./metrics/service";
+export { dailySkillsSnapshots, refreshDailySkillsSnapshots } from "./metrics/service";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
 export {
   createFeedbackRecord,

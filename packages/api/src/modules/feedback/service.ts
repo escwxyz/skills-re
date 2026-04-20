@@ -1,7 +1,7 @@
 import { asFeedbackId, asUserId } from "@skills-re/db/utils";
 
 import type { FeedbackRow, FeedbackStatus, FeedbackType } from "./repo";
-import {
+import type {
   createFeedback,
   getFeedbackById,
   getFeedbackByIdAndUser,
@@ -22,7 +22,7 @@ const toOutputItem = (row: FeedbackRow) => ({
   userId: row.userId ?? "",
 });
 
-type FeedbackServiceDeps = {
+interface FeedbackServiceDeps {
   createFeedback: typeof createFeedback;
   getFeedbackById: typeof getFeedbackById;
   getFeedbackByIdAndUser: typeof getFeedbackByIdAndUser;
@@ -30,7 +30,7 @@ type FeedbackServiceDeps = {
   listFeedbackByUser: typeof listFeedbackByUser;
   updateFeedbackResponse: typeof updateFeedbackResponse;
   updateFeedbackStatus: typeof updateFeedbackStatus;
-};
+}
 
 const createDefaultFeedbackDeps = async (): Promise<FeedbackServiceDeps> => {
   const repo = await import("./repo");
@@ -54,7 +54,12 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
   };
 
   return {
-    async create(input: { title: string; content: string; type?: FeedbackType; userId?: string | null }) {
+    async create(input: {
+      title: string;
+      content: string;
+      type?: FeedbackType;
+      userId?: string | null;
+    }) {
       const createFeedbackFn = overrides.createFeedback ?? (await getDefaultDeps()).createFeedback;
       const id = await createFeedbackFn({
         content: input.content,
@@ -66,7 +71,8 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     },
 
     async getById(id: string) {
-      const getFeedbackByIdFn = overrides.getFeedbackById ?? (await getDefaultDeps()).getFeedbackById;
+      const getFeedbackByIdFn =
+        overrides.getFeedbackById ?? (await getDefaultDeps()).getFeedbackById;
       const row = await getFeedbackByIdFn(asFeedbackId(id));
       return row ? toOutputItem(row) : null;
     },
@@ -146,7 +152,10 @@ export async function listMineFeedback(input: { userId: string; limit?: number }
   return await feedbackService.listMine(input);
 }
 
-export async function updateFeedbackResponsePublic(input: { id: string; response?: string | null }) {
+export async function updateFeedbackResponsePublic(input: {
+  id: string;
+  response?: string | null;
+}) {
   return await feedbackService.updateResponse(input);
 }
 
