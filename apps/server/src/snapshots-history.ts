@@ -28,6 +28,8 @@ export interface CreateSnapshotHistoryRuntimeDeps {
 }
 
 const DEFAULT_INITIAL_VERSION = "1.0.0";
+const OLDER_COMMITS_START = 1;
+const MAX_OLDER_COMMITS = 2;
 const MAX_COMMIT_MESSAGE_LENGTH = 280;
 
 const truncateCommitMessage = (value: string | null | undefined) => {
@@ -169,8 +171,11 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
       }
 
       const skills = await listSkillsHistoryInfoByIds(input.skillIds);
-      const commits = input.commits.slice(1, 3);
-      if (skills.length === 0 || commits.length < 2) {
+      const commits = input.commits.slice(
+        OLDER_COMMITS_START,
+        OLDER_COMMITS_START + MAX_OLDER_COMMITS,
+      );
+      if (skills.length === 0 || commits.length === 0) {
         return null;
       }
 
