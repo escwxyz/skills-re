@@ -217,7 +217,7 @@ const mapWithConcurrency = async <T, U>(
 
       const currentItem = items[currentIndex];
       if (currentItem === undefined) {
-        return;
+        continue;
       }
 
       results[currentIndex] = await mapper(currentItem, currentIndex);
