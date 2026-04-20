@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 
 export interface WorkflowCreateBinding<TPayload> {
-  create: (options?: { id?: string; params?: TPayload }) => Promise<{ id: string }>;
+  create: (options: { id: string; params: TPayload }) => Promise<{ id: string }>;
 }
 
 export interface WorkflowScheduler<TPayload> {

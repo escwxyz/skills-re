@@ -9,8 +9,8 @@ describe("makeWorkflowScheduler", () => {
   test("calls binding.create with a prefixed workflow id and returns the work id", async () => {
     let received:
       | {
-          id?: string;
-          params?: { snapshotId: string };
+          id: string;
+          params: { snapshotId: string };
         }
       | undefined;
 
