@@ -28,6 +28,10 @@ export interface SnapshotsArchiveUploadWorkflowDeps {
   };
 }
 
+interface SnapshotsArchiveUploadWorkflowDepsOverride {
+  snapshotsService?: Partial<SnapshotsArchiveUploadWorkflowDeps["snapshotsService"]>;
+}
+
 const defaultDeps: SnapshotsArchiveUploadWorkflowDeps = {
   snapshotsService: {
     createSnapshotArchiveStaging: () =>
@@ -40,11 +44,14 @@ const defaultDeps: SnapshotsArchiveUploadWorkflowDeps = {
 export const runSnapshotArchiveUploadWorkflow = async (
   event: Readonly<WorkflowEvent<SnapshotArchiveUploadWorkflowPayload>>,
   step: WorkflowStep,
-  deps: Partial<SnapshotsArchiveUploadWorkflowDeps> = {},
+  deps: SnapshotsArchiveUploadWorkflowDepsOverride = {},
 ) => {
   const activeDeps = {
     ...defaultDeps,
-    ...deps,
+    snapshotsService: {
+      ...defaultDeps.snapshotsService,
+      ...deps.snapshotsService,
+    },
   };
 
   const stagedArchive = await step.do(
