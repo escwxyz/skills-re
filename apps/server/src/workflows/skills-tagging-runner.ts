@@ -18,10 +18,15 @@ export interface RunSkillsTaggingWorkflowDeps {
   scheduleCategorization?: (input: { skillIds: string[] }) => Promise<{ workId: string }>;
 }
 
+type SkillsTaggingWorkflowResult = Awaited<ReturnType<typeof runSkillsTaggingPipeline>>;
+type CategorizationWorkflowScheduler = (input: { skillIds: string[] }) => Promise<{
+  workId: string;
+}>;
+
 export const runSkillsTaggingWorkflow = async (
   event: Readonly<{ payload: SkillsTaggingWorkflowPayload }>,
   deps: RunSkillsTaggingWorkflowDeps = {},
-) => {
+): Promise<SkillsTaggingWorkflowResult> => {
   const { scheduleCategorization } = deps;
   if (event.payload.triggerCategorizationAfterTagging && !scheduleCategorization) {
     throw new Error(
@@ -55,7 +60,7 @@ export const runSkillsTaggingWorkflow = async (
 
 export const createCategorizationWorkflowScheduler = (
   binding?: SkillsCategorizationWorkflowBinding,
-) => {
+): CategorizationWorkflowScheduler | undefined => {
   if (!binding) {
     return;
   }

@@ -72,19 +72,26 @@ export interface SkillsUploadWorkflowStagingPayload {
   stagingKey: string;
 }
 
+export type SkillsUploadContentPayload = z.infer<typeof skillsUploadContentPayloadSchema>;
+
 export type SkillsUploadWorkflowPayload =
   | SkillsUploadWorkflowStagingPayload
-  | z.infer<typeof skillsUploadContentPayloadSchema>;
+  | SkillsUploadContentPayload;
 
 const isStagingPayload = (
   input: SkillsUploadWorkflowPayload,
 ): input is SkillsUploadWorkflowStagingPayload =>
   typeof (input as { stagingKey?: unknown }).stagingKey === "string";
 
-export const getSkillsUploadStagingKey = (input: SkillsUploadWorkflowPayload) =>
+export const getSkillsUploadStagingKey = (
+  input: SkillsUploadWorkflowPayload,
+): string | null =>
   isStagingPayload(input) ? input.stagingKey : null;
 
-export const loadStagedSkillsUploadPayload = (input: SkillsUploadWorkflowPayload) => {
+// Staging is intentionally stubbed for now; the inline upload payload is the supported path.
+export const loadStagedSkillsUploadPayload = (
+  input: SkillsUploadWorkflowPayload,
+): Promise<SkillsUploadContentPayload> => {
   if (!isStagingPayload(input)) {
     const inlineValidated = skillsUploadContentPayloadSchema.safeParse(input);
     if (!inlineValidated.success) {

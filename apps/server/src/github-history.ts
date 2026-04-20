@@ -2,16 +2,17 @@ import type { GithubSnapshotHistoryHelpers, GithubSnapshotTreeEntry } from "@ski
 
 const GITHUB_API_ROOT = "https://api.github.com";
 // const SKILL_ROOT_PREFIX = "skills/";
-const EXCLUDED_PREFIXES = [
-  "node_modules/",
-  "dist/",
-  "build/",
-  "out/",
-  ".next/",
-  ".turbo/",
-  "target/",
+const EXCLUDED_SEGMENTS = [
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  ".next",
+  ".turbo",
+  "target",
   ".DS_Store",
-];
+] as const;
+const EXCLUDED_SEGMENT_SET: ReadonlySet<string> = new Set(EXCLUDED_SEGMENTS);
 
 interface CreateGithubSnapshotHistoryHelpersOptions {
   fetch?: typeof fetch;
@@ -38,8 +39,15 @@ const normalizeSkillRootPath = (value: string) => {
   return normalized.replace(/\/+$/, "");
 };
 
-const shouldExcludePath = (relativePath: string) =>
-  EXCLUDED_PREFIXES.some((prefix) => relativePath.startsWith(prefix));
+const shouldExcludePath = (relativePath: string) => {
+  const segments = relativePath
+    .replaceAll("\\", "/")
+    .split("/")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+  return segments.some((segment) => EXCLUDED_SEGMENT_SET.has(segment));
+};
 
 const isDefined = <T>(value: T | null | undefined): value is T => value !== null;
 

@@ -4,27 +4,22 @@ import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 
 import type { SnapshotArchiveUploadWorkflowPayload } from "./snapshots-archive-upload";
 
+export interface SnapshotArchiveStagingResult {
+  archiveBytes: number;
+  archiveKey: string;
+  filesCount: number;
+  snapshotId: string;
+  stagingKey: string;
+}
+
+export type SnapshotArchiveUploadResult = Omit<SnapshotArchiveStagingResult, "stagingKey">;
+
 export interface SnapshotsArchiveUploadWorkflowDeps {
   snapshotsService: {
-    createSnapshotArchiveStaging: (input: { snapshotId: string }) => Promise<{
-      archiveBytes: number;
-      archiveKey: string;
-      filesCount: number;
-      snapshotId: string;
-      stagingKey: string;
-    }>;
-    uploadSnapshotArchiveFromStaging: (input: {
-      archiveBytes: number;
-      archiveKey: string;
-      filesCount: number;
-      snapshotId: string;
-      stagingKey: string;
-    }) => Promise<{
-      archiveBytes: number;
-      archiveKey: string;
-      filesCount: number;
-      snapshotId: string;
-    }>;
+    createSnapshotArchiveStaging: (input: { snapshotId: string }) => Promise<SnapshotArchiveStagingResult>;
+    uploadSnapshotArchiveFromStaging: (
+      input: SnapshotArchiveStagingResult,
+    ) => Promise<SnapshotArchiveUploadResult>;
   };
 }
 
@@ -45,7 +40,7 @@ export const runSnapshotArchiveUploadWorkflow = async (
   event: Readonly<WorkflowEvent<SnapshotArchiveUploadWorkflowPayload>>,
   step: WorkflowStep,
   deps: SnapshotsArchiveUploadWorkflowDepsOverride = {},
-) => {
+): Promise<SnapshotArchiveUploadResult> => {
   const activeDeps = {
     ...defaultDeps,
     snapshotsService: {
