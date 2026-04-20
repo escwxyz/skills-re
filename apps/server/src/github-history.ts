@@ -51,7 +51,14 @@ const decodeBase64 = (value: string) => {
     return Buffer.from(value, "base64").toString("utf-8");
   }
 
-  return atob(value);
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.codePointAt(index) ?? 0;
+  }
+
+  return new TextDecoder().decode(bytes);
 };
 
 const fetchJson = async <T>(fetchImpl: typeof fetch, input: string, init: RequestInit) => {
