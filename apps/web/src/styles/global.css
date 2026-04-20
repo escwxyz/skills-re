@@ -1,12 +1,79 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource/libre-caslon-text";
+@import "@fontsource-variable/manrope";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f3efe6;
+  --foreground: #14120e;
+  --card: #ffffff;
+  --card-foreground: #14120e;
+  --popover: #ffffff;
+  --popover-foreground: #14120e;
+  --primary: #14120e;
+  --primary-foreground: #f3efe6;
+  --secondary: #ece7d9;
+  --secondary-foreground: #14120e;
+  --muted: #ece7d9;
+  --muted-foreground: #6b6659;
+  --accent: #ece7d9;
+  --accent-foreground: #14120e;
+  --destructive: #b23314;
+  --destructive-foreground: #ffffff;
+  --border: #14120e;
+  --input: #14120e;
+  --ring: #14120e;
+  /* editorial aliases — no shadcn equivalent */
+  --ink-2: #2a2720;
+  --muted-text-2: #8a8475;
+  --editorial-blue: #1d3a8a;
+  --editorial-green: #2d5a3d;
+  /* editorial aliases — point to shadcn vars */
+  --paper: var(--background);
+  --paper-2: var(--secondary);
+  --ink: var(--foreground);
+  --rule: var(--border);
+  --muted-text: var(--muted-foreground);
+  --editorial-red: var(--destructive);
+}
+
+.dark,
+[data-theme="dark"] {
+  --background: #0e0d0b;
+  --foreground: #efe8d8;
+  --card: #161410;
+  --card-foreground: #efe8d8;
+  --popover: #161410;
+  --popover-foreground: #efe8d8;
+  --primary: #efe8d8;
+  --primary-foreground: #0e0d0b;
+  --secondary: #151310;
+  --secondary-foreground: #efe8d8;
+  --muted: #151310;
+  --muted-foreground: #8a8475;
+  --accent: #151310;
+  --accent-foreground: #efe8d8;
+  --destructive: #e05a3a;
+  --destructive-foreground: #ffffff;
+  --border: #3a3428;
+  --input: #3a3428;
+  --ring: #efe8d8;
+  --ink-2: #c8c1af;
+  --muted-text-2: #5f5a4f;
+}
 
 @theme inline {
   /* ===== Fonts ===== */
   --font-sans: "Inter Tight", "IBM Plex Sans", -apple-system, system-ui, sans-serif;
   --font-serif: "Libre Caslon Text", "Newsreader", Georgia, serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --font-display: "DM Serif Display", "Playfair Display", Georgia, serif;
+  --font-display: "Manrope", "DM Serif Display", "Playfair Display", Georgia, serif;
 
   /* ===== shadcn color utility mappings ===== */
   --color-background: var(--background);
@@ -30,14 +97,14 @@
   --color-ring: var(--ring);
 
   /* ===== Editorial color utilities ===== */
-  --color-paper: var(--paper);
-  --color-paper-2: var(--paper-2);
-  --color-ink: var(--ink);
+  --color-paper: var(--background);
+  --color-paper-2: var(--secondary);
+  --color-ink: var(--foreground);
   --color-ink-2: var(--ink-2);
-  --color-rule: var(--rule);
-  --color-muted-text: var(--muted-text);
+  --color-rule: var(--border);
+  --color-muted-text: var(--muted-foreground);
   --color-muted-text-2: var(--muted-text-2);
-  --color-editorial-red: var(--editorial-red);
+  --color-editorial-red: var(--destructive);
   --color-editorial-blue: var(--editorial-blue);
   --color-editorial-green: var(--editorial-green);
 
@@ -51,54 +118,6 @@
 }
 
 @layer base {
-  :root {
-    /* ===== Editorial design tokens ===== */
-    --paper: #f3efe6;
-    --paper-2: #ece7d9;
-    --ink: #14120e;
-    --ink-2: #2a2720;
-    --rule: #14120e;
-    --muted-text: #6b6659;
-    --muted-text-2: #8a8475;
-    --editorial-red: #b23314;
-    --editorial-blue: #1d3a8a;
-    --editorial-green: #2d5a3d;
-
-    /* ===== shadcn CSS variable mappings ===== */
-    --background: var(--paper);
-    --foreground: var(--ink);
-    --card: #ffffff;
-    --card-foreground: var(--ink);
-    --popover: #ffffff;
-    --popover-foreground: var(--ink);
-    --primary: var(--ink);
-    --primary-foreground: var(--paper);
-    --secondary: var(--paper-2);
-    --secondary-foreground: var(--ink);
-    --muted: var(--paper-2);
-    --muted-foreground: var(--muted-text);
-    --accent: var(--paper-2);
-    --accent-foreground: var(--ink);
-    --destructive: var(--editorial-red);
-    --destructive-foreground: #ffffff;
-    --border: var(--rule);
-    --input: var(--rule);
-    --ring: var(--ink);
-  }
-
-  .dark,
-  [data-theme="dark"] {
-    --paper: #0e0d0b;
-    --paper-2: #151310;
-    --ink: #efe8d8;
-    --ink-2: #c8c1af;
-    --rule: #3a3428;
-    --muted-text: #8a8475;
-    --muted-text-2: #5f5a4f;
-    --editorial-red: #e05a3a;
-    --card: #161410;
-  }
-
   * {
     box-sizing: border-box;
     border-color: var(--border);
@@ -111,8 +130,8 @@
   }
 
   body {
-    background-color: var(--paper);
-    color: var(--ink);
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-serif);
     font-size: 15px;
     line-height: 1.55;
@@ -131,8 +150,8 @@
   }
 
   ::selection {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--foreground);
+    color: var(--background);
   }
 
   input,
@@ -141,16 +160,16 @@
     font-family: var(--font-mono);
     font-size: 12px;
     background: transparent;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--border);
     padding: 10px 12px;
-    color: var(--ink);
+    color: var(--foreground);
     width: 100%;
   }
 
   input:focus,
   textarea:focus,
   select:focus {
-    outline: 1px solid var(--ink);
+    outline: 1px solid var(--foreground);
     outline-offset: -2px;
   }
 
@@ -159,14 +178,14 @@
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--muted-text);
+    color: var(--muted-foreground);
     display: block;
     margin-bottom: 6px;
   }
 
   hr {
     border: 0;
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid var(--border);
   }
 }
 
@@ -181,24 +200,24 @@
     font-size: 10.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--muted-text);
+    color: var(--muted-foreground);
   }
 
   /* ===== Rules ===== */
   .rule {
     border: 0;
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid var(--border);
   }
 
   .rule-thick {
     border: 0;
-    border-top: 3px solid var(--rule);
+    border-top: 3px solid var(--border);
   }
 
   .rule-double {
     border: 0;
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     height: 4px;
   }
 
@@ -213,9 +232,9 @@
     font-size: 11px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: var(--paper);
+    border: 1px solid var(--foreground);
+    background: var(--foreground);
+    color: var(--background);
     cursor: pointer;
     transition: all 0.15s ease;
     text-decoration: none;
@@ -223,24 +242,24 @@
 
   .btn:hover {
     background: transparent;
-    color: var(--ink);
+    color: var(--foreground);
     text-decoration: none;
   }
 
   .btn.ghost {
     background: transparent;
-    color: var(--ink);
+    color: var(--foreground);
   }
 
   .btn.ghost:hover {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--foreground);
+    color: var(--background);
   }
 
   .btn.accent-btn {
-    background: var(--editorial-red);
-    border-color: var(--editorial-red);
-    color: #fff;
+    background: var(--destructive);
+    border-color: var(--destructive);
+    color: var(--destructive-foreground);
   }
 
   .btn.sm {
@@ -255,30 +274,30 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 3px 7px;
-    border: 1px solid var(--rule);
-    color: var(--ink);
+    border: 1px solid var(--border);
+    color: var(--foreground);
     display: inline-block;
   }
 
   .tag.solid {
-    background: var(--ink);
-    color: var(--paper);
-    border-color: var(--ink);
+    background: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
   }
 
   .tag.tag-accent {
-    background: var(--editorial-red);
-    color: #fff;
-    border-color: var(--editorial-red);
+    background: var(--destructive);
+    color: var(--destructive-foreground);
+    border-color: var(--destructive);
   }
 
   /* ===== Keyboard shortcut ===== */
   .kbd {
     font-family: var(--font-mono);
     font-size: 10.5px;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--border);
     padding: 2px 6px;
-    background: var(--paper-2);
+    background: var(--secondary);
   }
 
   /* ===== Placeholder image ===== */
@@ -326,7 +345,7 @@
 
   /* ===== Masthead ===== */
   .masthead {
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid var(--border);
     padding: 10px 24px;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -346,7 +365,7 @@
     letter-spacing: 0;
     text-transform: none;
     text-align: center;
-    color: var(--ink);
+    color: var(--foreground);
   }
 
   .masthead-lockup b {
@@ -357,7 +376,7 @@
 
   /* ===== Sub-nav ===== */
   .sub-nav {
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid var(--border);
     padding: 8px 24px;
     display: flex;
     gap: 22px;
@@ -365,17 +384,17 @@
     font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--muted-text);
+    color: var(--muted-foreground);
     align-items: center;
   }
 
   .sub-nav a {
-    color: var(--muted-text);
+    color: var(--muted-foreground);
   }
 
   .sub-nav a.active {
-    color: var(--ink);
-    border-bottom: 2px solid var(--ink);
+    color: var(--foreground);
+    border-bottom: 2px solid var(--foreground);
     padding-bottom: 7px;
     margin-bottom: -9px;
   }
@@ -440,8 +459,8 @@
 
   /* ===== Skill card ===== */
   .reg-card {
-    border-right: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     padding: 18px 18px 20px;
     display: flex;
     flex-direction: column;
@@ -451,7 +470,7 @@
   }
 
   .reg-card:hover {
-    background: var(--paper-2);
+    background: var(--secondary);
     text-decoration: none;
   }
 
@@ -469,24 +488,24 @@
 
   .pagination a {
     padding: 6px 10px;
-    border: 1px solid var(--rule);
-    color: var(--ink);
+    border: 1px solid var(--border);
+    color: var(--foreground);
   }
 
   .pagination a.active {
-    background: var(--ink);
-    color: var(--paper);
-    border-color: var(--ink);
+    background: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
   }
 
   .pagination a:hover {
     text-decoration: none;
-    background: var(--paper-2);
+    background: var(--secondary);
   }
 
   .pagination a.active:hover {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--foreground);
+    color: var(--background);
   }
 
   /* ===== Section title ===== */
@@ -495,7 +514,7 @@
     align-items: baseline;
     justify-content: space-between;
     padding: 30px 0 12px;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid var(--border);
   }
 
   .section-title h3 {
