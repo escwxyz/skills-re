@@ -1,0 +1,22 @@
+---
+interface Props {
+  pageId?: string;
+  pageSection?: string;
+}
+
+const { pageId = "skr-0001", pageSection = "front page" } = Astro.props;
+---
+
+<div class="masthead">
+  <div class="flex gap-[18px] items-center">
+    <span>id: {pageId}</span>
+    <span>{pageSection}</span>
+  </div>
+  <a href="/" class="masthead-lockup"><b>skills</b><i>.re</i></a>
+  <div class="flex gap-[18px] justify-end items-center">
+    <a href="/registry">Registry</a>
+    <a href="/collections">Collections</a>
+    <a href="/submit">Submit</a>
+    <a href="#" id="theme-toggle" title="Toggle theme">☾</a>
+  </div>
+</div>

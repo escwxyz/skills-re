@@ -1,0 +1,19 @@
+---
+interface Props {
+  statusText?: string
+  skillCount?: string
+}
+
+const { statusText = "all agents aligned", skillCount = "14,208" } = Astro.props
+
+const year = new Date().getFullYear()
+---
+
+<div
+  class="text-muted-foreground bg-background/80 fixed bottom-0 left-0 z-50 flex w-full items-center justify-between border-t px-4 py-2 font-mono text-xs tracking-widest uppercase backdrop-blur-sm"
+>
+  <span>System status: {statusText} — [{skillCount} skills indexed]</span>
+  <span
+    >Latency 4ms // <span id="statusbar-clock">© {year} skills.re</span></span
+  >
+</div>
