@@ -22,6 +22,13 @@ export const runSkillsTaggingWorkflow = async (
   event: Readonly<{ payload: SkillsTaggingWorkflowPayload }>,
   deps: RunSkillsTaggingWorkflowDeps = {},
 ) => {
+  const { scheduleCategorization } = deps;
+  if (event.payload.triggerCategorizationAfterTagging && !scheduleCategorization) {
+    throw new Error(
+      "Skills categorization workflow binding is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW.",
+    );
+  }
+
   const pipeline = deps.runSkillsTaggingPipeline ?? runSkillsTaggingPipeline;
   const result = await pipeline(
     {
@@ -31,13 +38,14 @@ export const runSkillsTaggingWorkflow = async (
   );
 
   if (event.payload.triggerCategorizationAfterTagging) {
-    if (!deps.scheduleCategorization) {
+    const requiredScheduleCategorization = scheduleCategorization;
+    if (!requiredScheduleCategorization) {
       throw new Error(
         "Skills categorization workflow binding is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW.",
       );
     }
 
-    await deps.scheduleCategorization({
+    await requiredScheduleCategorization({
       skillIds: event.payload.skillIds,
     });
   }
