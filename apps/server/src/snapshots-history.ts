@@ -59,6 +59,9 @@ const deriveHistoricalVersion = (latestVersion: string | undefined, offset: numb
 
   const baseRank = Math.max(major * 100 + minor, 0);
   const nextRank = Math.max(baseRank - offset, 0);
+  if (nextRank < 100) {
+    return DEFAULT_INITIAL_VERSION;
+  }
 
   return `${Math.floor(nextRank / 100)}.${nextRank % 100}.0`;
 };
