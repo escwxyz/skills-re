@@ -3,13 +3,9 @@ import Layout from "@/layouts/main.astro"
 import SubmitTabs from "@/components/submit"
 ---
 
-<Layout
-  title="Submit a Skill — skills.re"
-  pageId="skr-submit"
-  pageSection="author path"
->
+<Layout title="Submit a Skill — skills.re">
   <!-- HERO -->
-  <section class="grid grid-cols-1 border-b border-rule lg:grid-cols-2">
+  <section class="border-rule grid grid-cols-1 border-b lg:grid-cols-2">
     <div class="border-rule px-6 py-10 lg:border-r lg:px-8 lg:py-12">
       <div class="eyebrow text-editorial-red">§ For Authors</div>
       <h1
@@ -17,10 +13,12 @@ import SubmitTabs from "@/components/submit"
       >
         Publish a <em>skill.</em>
       </h1>
-      <p class="font-serif text-base leading-relaxed text-ink-2 lg:max-w-[560px] lg:text-[18px]">
-        A skill is a folder. It holds a <span class="font-mono">skill.md</span>, optional
-        scaffolding, and an evals file. Sign it, describe it, and hand it to the index. No build
-        step. No manifest gymnastics.
+      <p
+        class="text-ink-2 font-serif text-base leading-relaxed lg:max-w-140 lg:text-[18px]"
+      >
+        A skill is a folder. It holds a <span class="font-mono">skill.md</span>,
+        optional scaffolding, and an evals file. Sign it, describe it, and hand
+        it to the index. No build step. No manifest gymnastics.
       </p>
     </div>
 

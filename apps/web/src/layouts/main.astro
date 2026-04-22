@@ -15,8 +15,6 @@ interface Props {
   canonicalPath?: string
   noIndex?: boolean
   structuredData?: (WithContext<Thing> | Thing)[]
-  pageId?: string
-  pageSection?: string
   showFooter?: boolean
   showStatusBar?: boolean
   enableViewTransitions?: boolean
@@ -29,8 +27,6 @@ const {
   canonicalPath,
   noIndex,
   structuredData,
-  pageId,
-  pageSection,
   showFooter = true,
   showStatusBar = true,
   enableViewTransitions = false,

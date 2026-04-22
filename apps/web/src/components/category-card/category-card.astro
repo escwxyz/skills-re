@@ -1,0 +1,57 @@
+---
+import type { CategoryCardItem } from "@/lib/registry-data"
+import { getLocale } from "@/paraglide/runtime"
+
+interface Props {
+  category: CategoryCardItem
+  href?: string
+}
+
+const { category, href = `/categories/${category.id}` } = Astro.props
+
+const titleVariantClass = {
+  default: "",
+  accent: "text-destructive",
+  blue: "text-editorial-blue italic",
+  green: "text-editorial-green",
+  italic: "italic",
+}[category.variant ?? "default"]
+
+const locale = getLocale()
+---
+
+<a
+  href={href}
+  class="flex min-h-80 flex-col bg-background p-[22px_18px_20px] no-underline hover:bg-secondary hover:no-underline"
+>
+  <div class="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+    {category.num}
+  </div>
+  <h4
+    class:list={[
+      "font-display mt-0 mb-3 text-[36px] leading-[.95] font-normal",
+      titleVariantClass,
+    ]}
+  >
+    {category.title}
+  </h4>
+  <p class="mb-auto font-serif text-sm leading-normal text-ink-2">
+    {category.description}
+  </p>
+  <div
+    class="mt-4.5 flex gap-4.5 font-mono text-[10.5px] tracking-widest uppercase text-muted-foreground"
+  >
+    <div>
+      SKILLS
+      <b class="block font-medium text-foreground">{category.skillCount.toLocaleString(locale)}</b>
+    </div>
+    {
+      category.passRate && (
+        <div>
+          PASS RATE
+          <b class="block font-medium text-foreground">{category.passRate}</b>
+        </div>
+      )
+    }
+  </div>
+</a>
