@@ -725,6 +725,72 @@ describe("skills service", () => {
     expect(submitted).toHaveLength(2);
   });
 
+  test("submits only the selected github skill roots", async () => {
+    const scheduledPayloads: SkillsUploadContentPayload[] = [];
+
+    const result = await submitGithubRepoPublic(
+      {
+        owner: "example",
+        repo: "skills",
+        skillRootPaths: ["skills/selected"],
+      },
+      {
+        buildPayload: async () => ({
+          payload: {
+            skills: [
+              {
+                description: "Selected skill",
+                directoryPath: "skills/selected/",
+                entryPath: "skills/selected/skill.md",
+                initialSnapshot: {
+                  files: [{ content: "selected", path: "skills/selected/skill.md" }],
+                  sourceCommitDate: 1,
+                  sourceCommitSha: "sha-selected",
+                  sourceRef: "main",
+                  tree: [{ path: "skills/selected/skill.md", sha: "sha-selected", type: "blob" }],
+                },
+                slug: "selected",
+                sourceLocator: "github:example/skills/skills/selected/skill.md",
+                sourceType: "github",
+                title: "Selected",
+              },
+              {
+                description: "Ignored skill",
+                directoryPath: "skills/ignored/",
+                entryPath: "skills/ignored/skill.md",
+                initialSnapshot: {
+                  files: [{ content: "ignored", path: "skills/ignored/skill.md" }],
+                  sourceCommitDate: 1,
+                  sourceCommitSha: "sha-ignored",
+                  sourceRef: "main",
+                  tree: [{ path: "skills/ignored/skill.md", sha: "sha-ignored", type: "blob" }],
+                },
+                slug: "ignored",
+                sourceLocator: "github:example/skills/skills/ignored/skill.md",
+                sourceType: "github",
+                title: "Ignored",
+              },
+            ],
+          },
+        }),
+      },
+      {
+        enqueue: async (input) => {
+          scheduledPayloads.push(input);
+          return { workId: "workflow-selected" };
+        },
+      },
+    );
+
+    expect(result).toEqual({
+      skillsCount: 1,
+      status: "submitted",
+      workflowId: "workflow-selected",
+    });
+    expect(scheduledPayloads).toHaveLength(1);
+    expect(scheduledPayloads[0]?.skills.map((skill) => skill.slug)).toEqual(["selected"]);
+  });
+
   test("returns snapshot history info for the requested skills", async () => {
     const calls: string[][] = [];
     const service = createSkillsService({

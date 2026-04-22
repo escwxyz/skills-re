@@ -74,6 +74,7 @@ interface SubmitGithubRepoPublicInput {
   owner: string;
   repo: string;
   skillRootPath?: string;
+  skillRootPaths?: string[];
 }
 
 interface SubmitGithubRepoPublicResult {
@@ -82,6 +83,17 @@ interface SubmitGithubRepoPublicResult {
   status: "skipped" | "submitted";
   workflowId?: string;
 }
+
+const getSelectedSkillRootPathSet = (skillRootPaths?: string[]) =>
+  new Set((skillRootPaths ?? []).map((path) => normalizeDirectoryPath(path)));
+
+const filterSelectedPayloadSkills = (
+  skills: SkillsUploadContentPayload["skills"],
+  selectedSkillRootPaths: Set<string>,
+) =>
+  selectedSkillRootPaths.size > 0
+    ? skills.filter((skill) => selectedSkillRootPaths.has(normalizeDirectoryPath(skill.directoryPath)))
+    : skills;
 
 interface SearchSkillRow {
   authorHandle: string;
@@ -834,6 +846,7 @@ export async function submitGithubRepoPublic(
   runtime: GithubSubmitRuntime,
   scheduler?: SkillsUploadScheduler,
 ): Promise<SubmitGithubRepoPublicResult> {
+  const selectedSkillRootPaths = getSelectedSkillRootPathSet(input.skillRootPaths);
   const result = await runtime.buildPayload({
     owner: input.owner,
     repo: input.repo,
@@ -848,9 +861,28 @@ export async function submitGithubRepoPublic(
     };
   }
 
-  const uploaded = await uploadSkills(result.payload, scheduler);
+  const selectedPayloadSkills = filterSelectedPayloadSkills(
+    result.payload.skills,
+    selectedSkillRootPaths,
+  );
+
+  if (selectedPayloadSkills.length === 0) {
+    return {
+      reason: selectedSkillRootPaths.size > 0 ? "no-selected-skills" : "no-valid-skills",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
+  const uploaded = await uploadSkills(
+    {
+      ...result.payload,
+      skills: selectedPayloadSkills,
+    },
+    scheduler,
+  );
   return {
-    skillsCount: result.payload.skills.length,
+    skillsCount: selectedPayloadSkills.length,
     status: "submitted",
     workflowId: uploaded.workId,
   };
