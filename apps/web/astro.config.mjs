@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import alchemy from "alchemy/cloudflare/astro";
 import { defineConfig, envField } from "astro/config";
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
-
 import react from "@astrojs/react";
 
 // https://astro.build/config
@@ -18,6 +17,11 @@ export default defineConfig({
         access: "public",
         context: "client",
         default: "http://localhost:3000",
+      }),
+      PUBLIC_SITE_URL: envField.string({
+        access: "public",
+        context: "server",
+        default: "http://localhost:5173",
       }),
     },
   },

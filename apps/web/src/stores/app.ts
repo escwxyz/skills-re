@@ -6,6 +6,13 @@ export const loginDialogOnlyGithubAtom = atom(false);
 export const isMobileMenuOpenAtom = atom(false);
 export const isHeroSearchInViewAtom = atom(false);
 
+export const skillsFiltersSidebarOpenAtom = atom(false);
+
+export const skillsViewModeAtom = persistentAtom<"grid" | "list">("skills-view-mode", "grid", {
+  encode: JSON.stringify,
+  decode: JSON.parse,
+});
+
 export interface MaybeAuthUser {
   id: string;
   name?: string | null;
