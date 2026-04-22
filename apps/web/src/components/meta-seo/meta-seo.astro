@@ -1,0 +1,113 @@
+---
+/**
+ * MetaSeo — drop this inside <head> on every page.
+ *
+ * Renders title, description, OG/Twitter cards, canonical link, favicons,
+ * and optional JSON-LD structured-data blocks.
+ *
+ * TODO: add hreflang alternate links once the i18n library is finalised.
+ */
+import { Schema } from "astro-seo-schema"
+import type { Thing, WebSite, WithContext } from "schema-dts"
+import {
+  OG_IMAGE_DEFAULT,
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/constants"
+
+interface Props {
+  /** Page title — site name suffix is appended automatically. */
+  title?: string
+  /** Meta description (falls back to site-wide default). */
+  description?: string
+  /** Absolute URL or root-relative path for the OG image. */
+  image?: string
+  /** Root-relative path used for <link rel="canonical"> and OG url. */
+  canonicalPath?: string
+  /** Prevent search engines from indexing this page. */
+  noIndex?: boolean
+  /** Additional JSON-LD objects rendered as <script type="application/ld+json">. */
+  structuredData?: (WithContext<Thing> | Thing)[]
+}
+
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image = OG_IMAGE_DEFAULT,
+  canonicalPath,
+  noIndex = false,
+  structuredData = [],
+} = Astro.props
+
+const resolvedTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME
+const resolvedRobots = noIndex ? "noindex, nofollow" : "index, follow"
+
+const resolveUrl = (pathOrUrl: string) =>
+  pathOrUrl.startsWith("http") ? pathOrUrl : `${SITE_URL}${pathOrUrl}`
+
+const canonicalUrl = canonicalPath ? resolveUrl(canonicalPath) : SITE_URL
+const ogImage = resolveUrl(image)
+
+const websiteSchema: WithContext<WebSite> = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+    },
+    // @ts-expect-error - queryInput is valid but absent from schema-dts types
+    queryInput: "required name=search_term_string",
+  },
+}
+---
+
+<!-- Primary -->
+<meta name="description" content={description} />
+<meta name="keywords" content={SITE_KEYWORDS.join(", ")} />
+<meta name="robots" content={resolvedRobots} />
+<meta name="googlebot" content={resolvedRobots} />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:title" content={resolvedTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:alt" content={resolvedTitle} />
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={resolvedTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:image" content={ogImage} />
+
+<!-- Canonical -->
+{canonicalPath && <link rel="canonical" href={canonicalUrl} />}
+
+<!--
+  TODO: hreflang alternate links — skipped until the i18n library is finalised.
+  When ready, emit one <link rel="alternate" hreflang={locale} href={...} />
+  per supported locale, plus hreflang="x-default" pointing to the base locale URL.
+-->
+
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+<!-- JSON-LD: Website (always) -->
+<Schema item={websiteSchema} />
+
+<!-- JSON-LD: page-specific structured data -->
+{structuredData.map((item) => <Schema item={item as WithContext<Thing>} />)}
