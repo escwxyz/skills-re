@@ -1,0 +1,90 @@
+---
+import Layout from "@/layouts/main.astro"
+import { render } from "astro:content"
+import { getFaqs } from "@/lib/content"
+
+const faqs = await getFaqs()
+const rendered = await Promise.all(
+  faqs.map(async (faq) => {
+    const { Content } = await render(faq)
+    return { faq, Content }
+  })
+)
+---
+
+<Layout
+  title="Frequently Asked Questions"
+  description="Common questions about installing, publishing, and using skills for AI agents."
+  canonicalPath="/faq"
+>
+  <div class="mx-auto max-w-3xl px-6 py-16">
+    <div class="border-rule mb-10 border-b pb-8">
+      <p
+        class="text-muted-foreground mb-2 font-mono text-[10.5px] tracking-[.14em] uppercase"
+      >
+        Support
+      </p>
+      <h1 class="font-display text-5xl font-normal">
+        Frequently Asked Questions
+      </h1>
+      <p class="text-ink-2 mt-4 font-serif text-lg leading-relaxed">
+        Can't find what you're looking for?
+        <a href="/docs" class="underline underline-offset-4">Browse the docs</a> or
+        <a href="mailto:support@skills.re" class="underline underline-offset-4"
+          >contact support</a
+        >.
+      </p>
+    </div>
+
+    <div>
+      {
+        rendered.map(({ faq, Content }, i) => (
+          <details class="border-rule group border-b" name="faq">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 [&::-webkit-details-marker]:hidden">
+              <h2 class="font-display text-xl font-normal sm:text-2xl">
+                {faq.data.question}
+              </h2>
+              <span
+                class="text-muted-foreground shrink-0 font-mono text-2xl leading-none transition-transform group-open:rotate-45"
+                aria-hidden="true"
+              >
+                +
+              </span>
+            </summary>
+            <div class="prose prose-neutral dark:prose-invert pb-6 font-serif">
+              <Content />
+            </div>
+          </details>
+        ))
+      }
+    </div>
+
+    <div class="border-rule mt-12 border-t pt-8">
+      <p
+        class="text-muted-foreground font-mono text-[10.5px] tracking-[.14em] uppercase"
+      >
+        Still have questions?
+      </p>
+      <div class="mt-4 flex flex-wrap gap-4">
+        <a
+          href="/docs"
+          class="border-rule hover:bg-paper-2 border px-4 py-2 font-mono text-xs tracking-[.06em] transition-colors"
+        >
+          Read the docs →
+        </a>
+        <a
+          href="mailto:support@skills.re"
+          class="border-rule hover:bg-paper-2 border px-4 py-2 font-mono text-xs tracking-[.06em] transition-colors"
+        >
+          Open a support ticket →
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  details[open] summary {
+    padding-bottom: 0.75rem;
+  }
+</style>

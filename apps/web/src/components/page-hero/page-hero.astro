@@ -1,0 +1,102 @@
+---
+interface Stat {
+  label: string
+  value: string
+  accent?: "green" | "blue" | "red"
+}
+
+interface Props {
+  eyebrow: string
+  description: string
+  descriptionItalic?: boolean
+  stats?: Stat[]
+  borderThick?: boolean
+}
+
+const {
+  eyebrow,
+  description,
+  descriptionItalic = false,
+  stats,
+  borderThick = false,
+} = Astro.props
+
+const hasMedia = Astro.slots.has("media")
+const hasAside = Astro.slots.has("aside")
+const hasStats = Boolean(stats?.length)
+const hasSecondaryColumn = hasAside || hasStats
+const gridColumns = hasMedia
+  ? hasSecondaryColumn
+    ? "md:grid-cols-[auto_minmax(0,1fr)_auto]"
+    : "md:grid-cols-[auto_minmax(0,1fr)]"
+  : hasSecondaryColumn
+    ? "md:grid-cols-[1fr_auto]"
+    : "md:grid-cols-1"
+
+const accentClass = (accent?: Stat["accent"]) => {
+  if (accent === "green") {
+    return "text-editorial-green"
+  }
+  if (accent === "blue") {
+    return "text-editorial-blue"
+  }
+  if (accent === "red") {
+    return "text-destructive"
+  }
+  return "text-foreground"
+}
+---
+
+<section
+  class:list={[
+    "grid grid-cols-1 items-end gap-8 p-10",
+    gridColumns,
+    borderThick ? "border-border border-b-[3px]" : "border-border border-b",
+  ]}
+>
+  {
+    hasMedia && (
+      <div class="border-border flex flex-col items-center border-b pb-8 text-center md:border-r md:border-b-0 md:pr-8">
+        <slot name="media" />
+      </div>
+    )
+  }
+
+  <div class:list={[hasMedia && "min-w-0"]}>
+    <div
+      class="text-destructive mb-3 font-mono text-[10.5px] tracking-[.2em] uppercase"
+    >
+      {eyebrow}
+    </div>
+    <h1
+      class="font-display m-0 text-[clamp(52px,9vw,104px)] leading-[.92] font-normal tracking-[-0.025em]"
+    >
+      <slot />
+    </h1>
+    <p
+      class:list={[
+        "text-ink-2 mt-5 max-w-170 font-serif text-[20px] leading-[1.45]",
+        descriptionItalic && "italic",
+      ]}
+    >
+      {description}
+    </p>
+  </div>
+
+  {
+    hasSecondaryColumn && (
+      <div class="text-muted-foreground font-mono text-[11px] leading-loose tracking-widest uppercase md:text-right">
+        {hasStats &&
+          stats?.map((s) => (
+            <div>
+              {s.label}{" "}
+              <b class:list={["font-medium", accentClass(s.accent)]}>
+                {s.value}
+              </b>
+            </div>
+          ))}
+        {hasAside && <slot name="aside" />}
+      </div>
+    )
+  }
+</section>

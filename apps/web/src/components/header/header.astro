@@ -1,0 +1,88 @@
+---
+import { ThemeToggle } from "@/components/theme-toggle"
+import { LoginButton } from "@/components/login-button"
+import { MobileMenu } from "@/components/mobile-menu"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { buttonVariants } from "@/components/ui/button"
+import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
+
+const { user: currentUser } = Astro.locals
+
+const isActive = (href: string) => Astro.url.pathname.includes(href)
+const pathname = Astro.url.pathname
+
+const MENUS = [
+  {
+    label: "Skills",
+    path: "skills",
+  },
+  {
+    label: "Categories",
+    path: "categories",
+  },
+  {
+    label: "Collections",
+    path: "collections",
+  },
+  {
+    label: "Authors",
+    path: "authors",
+  },
+  {
+    label: "Docs",
+    path: "docs",
+  },
+]
+---
+
+<header
+  class="bg-background/80 sticky top-0 z-100 grid place-items-center border-b pr-3 pl-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm"
+  style="height: var(--header-height)"
+>
+  <nav class="grid w-full grid-cols-[1fr_auto_1fr] items-center">
+    <div class="hidden items-center gap-4.5 md:flex">
+      {
+        MENUS.map((menu) => (
+          <a
+            href={`/${menu.path}`}
+            class={
+              isActive(`/${menu.path}`) ? "underline" : "text-muted-foreground"
+            }
+          >
+            {menu.label}
+          </a>
+        ))
+      }
+    </div>
+    <div class="flex items-center md:hidden">
+      <MobileMenu client:load currentPathname={pathname} />
+    </div>
+
+    <a
+      href="/"
+      class="font-display text-foreground text-center text-[22px] tracking-normal normal-case italic"
+      ><b class="font-serif not-italic">skills</b><i>.re</i></a
+    >
+    <div class="flex items-center justify-end gap-4.5">
+      <a
+        href="/search"
+        class={`hidden md:inline ${isActive("/search") ? "underline" : "text-muted-foreground"}`}
+        ><MagnifyingGlassIcon size={20} /></a
+      >
+
+      <LanguageSwitcher className="hidden md:flex" client:load />
+      <ThemeToggle className="hidden md:block" client:load />
+      <a href="/submit" class={buttonVariants({ variant: "secondary" })}>
+        <CloudArrowUpIcon />
+        <span class="hidden md:inline">Submit</span>
+      </a>
+      {
+        currentUser ? (
+          <a href="/account">{currentUser.name}</a>
+        ) : (
+          <LoginButton client:load />
+        )
+      }
+    </div>
+  </nav>
+</header>

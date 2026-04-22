@@ -1,0 +1,64 @@
+---
+interface Props {
+  className?: string
+}
+
+const { className = "" } = Astro.props
+---
+
+<footer
+  class:list={[
+    "border-border mx-auto mt-7.5 mb-1.5 grid w-full grid-cols-1 gap-8 border-t-[3px] px-2.5 py-10 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr]",
+    className,
+  ]}
+>
+  <div>
+    <div class="font-display mb-4 text-[40px] leading-none italic">
+      skills.<em>re</em>
+    </div>
+    <p class="text-ink-2 font-serif text-[13px]">
+      An open reference catalogue of agent skills. Read the index, audit the
+      evals, sandbox the code, then hand the right skill to the right agent.
+      Published continuously from a modest infrastructure.
+    </p>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      The Platform
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li><a href="/registry">Index</a></li>
+      <li><a href="/collections">Collections</a></li>
+      <li><a href="/authors">Authors</a></li>
+      <li><a href="/search">Search</a></li>
+    </ul>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      Publish
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li><a href="/submit">Submit a skill</a></li>
+      <li><a href="/changelog">Changelog / diffs</a></li>
+      <li><a href="#">Docs — skill.md</a></li>
+      <li><a href="#">Signing guide</a></li>
+    </ul>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      Legal
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li><a href="/imprint">Imprint</a></li>
+      <li><a href="/terms">Terms of Service</a></li>
+      <li><a href="/privacy">Privacy Policy</a></li>
+      <li><a href="/cookies">Cookies Policy</a></li>
+    </ul>
+  </div>
+</footer>

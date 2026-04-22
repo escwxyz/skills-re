@@ -1,0 +1,7 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+Disallow: /api/
+Disallow: /dashboard
+
+Sitemap: https://skills.re/sitemap.xml

@@ -1,0 +1,24 @@
+import { defineMiddleware, sequence } from "astro:middleware";
+import { paraglideMiddleware } from "@/paraglide/server";
+import { authClient } from "@/lib/auth-client";
+
+const authMiddleware = defineMiddleware(async (context, next) => {
+  const cookie = context.request.headers.get("cookie") ?? "";
+  try {
+    const { data } = await authClient.getSession({
+      fetchOptions: { headers: { cookie } },
+    });
+    context.locals.user = data?.user ?? null;
+    context.locals.session = data?.session ?? null;
+  } catch {
+    context.locals.user = null;
+    context.locals.session = null;
+  }
+  return next();
+});
+
+const i18nMiddleware = defineMiddleware((context, next) =>
+  paraglideMiddleware(context.request, ({ request }) => next(request)),
+);
+
+export const onRequest = sequence(authMiddleware, i18nMiddleware);

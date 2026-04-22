@@ -1,0 +1,46 @@
+---
+import Layout from "@/layouts/main.astro"
+import SubmitTabs from "@/components/submit"
+---
+
+<Layout title="Submit a Skill — skills.re">
+  <!-- HERO -->
+  <section class="border-rule grid grid-cols-1 border-b lg:grid-cols-2">
+    <div class="border-rule px-6 py-10 lg:border-r lg:px-8 lg:py-12">
+      <div class="eyebrow text-editorial-red">§ For Authors</div>
+      <h1
+        class="font-display my-3.5 text-[52px] leading-[.9] font-normal tracking-[-0.02em] sm:text-[68px] lg:text-[88px]"
+      >
+        Publish a <em>skill.</em>
+      </h1>
+      <p
+        class="text-ink-2 font-serif text-base leading-relaxed lg:max-w-140 lg:text-[18px]"
+      >
+        A skill is a folder. It holds a <span class="font-mono">skill.md</span>,
+        optional scaffolding, and an evals file. Sign it, describe it, and hand
+        it to the index. No build step. No manifest gymnastics.
+      </p>
+    </div>
+
+    <!-- Terminal: desktop only -->
+    <div
+      class="terminal-panel hidden lg:block"
+      style="border-radius: 0; margin: 0; border-bottom: 0; border-top: 0; border-right: 0;"
+    >
+      <div class="tbar">
+        <span>author@skills.re ~ %</span>
+        <span>one-line publish</span>
+      </div>
+      <pre><span class="m1"># one-line publish from your terminal</span>
+<span class="p1">$</span> <span class="k1">skr init</span> my-skill
+<span class="p1">$</span> <span class="k1">skr add</span> ./skill.md
+<span class="p1">$</span> <span class="k1">skr eval</span>  <span class="m1"># run acceptance evals</span>
+<span class="p1">$</span> <span class="k1">skr sign</span>  <span class="m1"># pgp sign the release</span>
+<span class="p1">$</span> <span class="k1">skr publish</span> --registry skills.re
+
+<span class="m1"># or fill out the form below</span><span class="cursor-blink" /></pre>
+    </div>
+  </section>
+
+  <SubmitTabs client:load />
+</Layout>

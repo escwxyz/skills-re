@@ -1,0 +1,113 @@
+---
+import Layout from "@/layouts/main.astro"
+import { render } from "astro:content"
+import { getDoc, getDocs } from "@/lib/content"
+
+const { slug } = Astro.params
+const entry = await getDoc(slug!)
+if (!entry) return Astro.redirect("/404")
+
+const docs = await getDocs()
+const { Content } = await render(entry)
+const { title, description, category, updatedAt } = entry.data
+---
+
+<Layout title={title} description={description} canonicalPath={`/docs/${slug}`}>
+  <div class="mx-auto max-w-6xl px-6 py-16">
+    <div class="flex gap-12">
+      <!-- Sidebar nav -->
+      <aside class="hidden w-52 shrink-0 lg:block">
+        <nav class="sticky top-8">
+          <p class="text-muted-foreground mb-3 font-mono text-[10px] tracking-[.14em] uppercase">
+            Documentation
+          </p>
+          <ul class="space-y-0.5">
+            {
+              docs.map((doc) => {
+                const docSlug = doc.id.split("/")[1]
+                const isCurrent = docSlug === slug
+                return (
+                  <li>
+                    <a
+                      href={`/docs/${docSlug}`}
+                      class:list={[
+                        "block border-l-2 py-1.5 pl-3 font-mono text-[11px] tracking-[.04em] transition-colors",
+                        isCurrent
+                          ? "border-ink text-ink font-medium"
+                          : "border-transparent text-muted-foreground hover:border-border hover:text-ink",
+                      ]}
+                    >
+                      {doc.data.title}
+                    </a>
+                  </li>
+                )
+              })
+            }
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="min-w-0 flex-1">
+        <div class="border-rule mb-8 border-b pb-6">
+          {
+            category && (
+              <p class="text-muted-foreground mb-2 font-mono text-[10.5px] tracking-[.14em] uppercase">
+                {category}
+              </p>
+            )
+          }
+          <h1 class="font-display text-5xl font-normal">{title}</h1>
+          {
+            description && (
+              <p class="text-ink-2 font-serif mt-4 text-lg leading-relaxed">{description}</p>
+            )
+          }
+          {
+            updatedAt && (
+              <p class="text-muted-foreground mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase">
+                Last updated {updatedAt.toLocaleDateString("en", { dateStyle: "long" })}
+              </p>
+            )
+          }
+        </div>
+        <article class="prose prose-neutral dark:prose-invert max-w-none font-serif">
+          <Content />
+        </article>
+
+        <!-- Mobile doc nav -->
+        <nav class="border-rule mt-12 flex justify-between border-t pt-6 lg:hidden">
+          {
+            (() => {
+              const currentIndex = docs.findIndex((d) => d.id.split("/")[1] === slug)
+              const prev = docs[currentIndex - 1]
+              const next = docs[currentIndex + 1]
+              return (
+                <>
+                  {prev ? (
+                    <a
+                      href={`/docs/${prev.id.split("/")[1]}`}
+                      class="text-muted-foreground hover:text-ink font-mono text-[11px] tracking-[.04em]"
+                    >
+                      ← {prev.data.title}
+                    </a>
+                  ) : (
+                    <span />
+                  )}
+                  {next && (
+                    <a
+                      href={`/docs/${next.id.split("/")[1]}`}
+                      class="text-muted-foreground hover:text-ink font-mono text-[11px] tracking-[.04em]"
+                    >
+                      {next.data.title} →
+                    </a>
+                  )}
+                </>
+              )
+            })()
+          }
+        </nav>
+      </main>
+    </div>
+  </div>
+</Layout>

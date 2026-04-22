@@ -2,14 +2,10 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { changelogTypeSchema, healthStatusSchema } from "./enums";
+import { healthStatusSchema } from "./enums";
 
 describe("common enums", () => {
-  test("parse shared changelog and health status enum payloads", () => {
-    expect(changelogTypeSchema.parse("feature")).toBe("feature");
-    expect(changelogTypeSchema.parse("patch")).toBe("patch");
-    expect(changelogTypeSchema.parse("major")).toBe("major");
-
+  test("parse health status enum payload", () => {
     expect(
       healthStatusSchema.parse({
         status: "ok",

@@ -186,6 +186,7 @@ const submitGithubRepoPublicInputSchema = z.object({
   owner: githubOwnerSchema,
   repo: githubRepoSchema,
   skillRootPath: z.string().optional(),
+  skillRootPaths: z.array(z.string()).optional(),
 });
 
 const submitGithubRepoPublicResultSchema = z.object({
