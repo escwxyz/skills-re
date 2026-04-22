@@ -52,18 +52,28 @@ const faqsCollection = defineCollection({
 });
 
 /**
- * Platform changelog entries.
+ * Platform changelog entries — static content, multi-locale.
  *
- * File layout:  src/content/changelogs/{locale}/{version}.md
+ * File layout:  src/content/changelogs/{locale}/{versionMajor}.{versionMinor}.{versionPatch}.md
  * Entry IDs:    "{locale}/{version}"  e.g. "en/2.4.1"
+ *
+ * Version is encoded as three separate integer fields to enable range queries
+ * and sorting without parsing strings. The filename should match the version
+ * triplet for discoverability but is not validated at build time.
  */
 const changelogCollection = defineCollection({
   loader: glob({ base: "./src/content/changelogs", pattern: "**/*.{md,mdx}" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    version: z.string().regex(/^(\d+\.)?(\d+\.)?(\*|\d+)$/),
+    type: z.enum(["feature", "patch", "major"]),
+    versionMajor: z.number().int().nonnegative(),
+    versionMinor: z.number().int().nonnegative(),
+    versionPatch: z.number().int().nonnegative(),
+    isPublished: z.boolean(),
+    isStable: z.boolean(),
     date: z.coerce.date(),
+    changes: z.array(z.string()),
   }),
 });
 
@@ -71,5 +81,5 @@ export const collections = {
   pages: pagesCollection,
   docs: docsCollection,
   faqs: faqsCollection,
-  // changelogs: changelogCollection,
+  changelogs: changelogCollection,
 };

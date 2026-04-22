@@ -10,6 +10,7 @@ const STATIC_URLS = [
   { path: "/authors",    priority: "0.8", changefreq: "weekly"  },
   { path: "/collections",priority: "0.8", changefreq: "weekly"  },
   { path: "/docs",       priority: "0.7", changefreq: "monthly" },
+  { path: "/changelogs", priority: "0.6", changefreq: "monthly" },
   { path: "/faq",        priority: "0.6", changefreq: "monthly" },
   { path: "/submit",     priority: "0.7", changefreq: "weekly"  },
   { path: "/search",     priority: "0.6", changefreq: "weekly"  },

@@ -61,3 +61,25 @@ export async function getFaqs() {
     : all.filter((e) => e.id.startsWith(`${baseLocale}/`));
   return entries.sort((a, b) => a.data.order - b.data.order);
 }
+
+/**
+ * Fetches all published changelog entries for the current locale, falling
+ * back to "en". Results are sorted by semantic version, newest first.
+ */
+export async function getChangelogs() {
+  const locale = getLocale();
+  const all = await getCollection("changelogs");
+  const locale_changelogs = all.filter((e) => e.id.startsWith(`${locale}/`));
+  const entries = locale_changelogs.length > 0
+    ? locale_changelogs
+    : all.filter((e) => e.id.startsWith(`${baseLocale}/`));
+  return entries
+    .filter((e) => e.data.isPublished)
+    .sort((a, b) => {
+      const d = b.data.versionMajor - a.data.versionMajor;
+      if (d !== 0) return d;
+      const d2 = b.data.versionMinor - a.data.versionMinor;
+      if (d2 !== 0) return d2;
+      return b.data.versionPatch - a.data.versionPatch;
+    });
+}
