@@ -6,7 +6,6 @@ import {
   accountsRelations,
   accountsTable,
   authTables,
-  changelogsTable,
   newsletterTable,
   sessionsRelations,
   sessionsTable,
@@ -48,10 +47,6 @@ describe("database schema registry", () => {
   test("exports the repo tables and relations", () => {
     expect(reposTable).toBeDefined();
     expect(reposRelations).toBeDefined();
-  });
-
-  test("exports the changelog table", () => {
-    expect(changelogsTable).toBeDefined();
   });
 
   test("exports the feedback table", () => {

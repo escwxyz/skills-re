@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { baseContract } from "./common/base";
 import { categoriesContract } from "./categories";
-import { changelogsContract } from "./changelogs";
 import { feedbackContract } from "./feedback";
 import { githubContract } from "./github";
 import { metricsContract } from "./metrics";
@@ -30,7 +29,6 @@ const healthCheckContract = baseContract
 export const contract = {
   healthCheck: healthCheckContract,
   categories: categoriesContract,
-  changelogs: changelogsContract,
   feedback: feedbackContract,
   github: githubContract,
   metrics: metricsContract,

@@ -1,5 +1,4 @@
 export * from "./base";
-export * from "./changelog";
 export * from "./content";
 export * from "./enums";
 export * from "./errors";

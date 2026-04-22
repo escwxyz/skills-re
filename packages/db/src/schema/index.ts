@@ -18,7 +18,6 @@ export {
 } from "./snapshots";
 export { categoriesRelations, categoriesTable } from "./categories";
 export { feedbackTable } from "./feedback";
-export { changelogsTable } from "./changelogs";
 export { dailyMetricsTable } from "./daily-metrics";
 export { newsletterTable } from "./newsletter";
 export { reviewsRelations, reviewsTable } from "./reviews";
