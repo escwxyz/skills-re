@@ -1,3 +1,4 @@
+// oxlint-disable no-nested-ternary
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
 import { renderContentAsync, renderMarkdownAsync } from "./markdown";
@@ -255,8 +256,6 @@ const readFrontmatterValue = (
       return resolved;
     }
   }
-
-  return;
 };
 
 const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
@@ -295,9 +294,9 @@ const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
       const nextValue = stripWrappingQuotes(trimmed.slice(2).trim());
       values[currentKey] = Array.isArray(existing)
         ? [...existing, nextValue]
-        : (existing
+        : existing
           ? [existing, nextValue]
-          : [nextValue]);
+          : [nextValue];
     }
   }
 
@@ -330,8 +329,8 @@ export const parseSkillMarkdownDocument = (source: string) => {
   const body = lines.join("\n").trim();
   const tocItems = body
     .split(/\r?\n/)
-    .map((line) => line.match(/^##+\s+(.+)$/)?.[1]?.trim() ?? null)
-    .filter((line): line is string => Boolean(line));
+    .map((line) => line.match(/^##+\s+(.+)$/)?.[1]?.trim())
+    .filter((item): item is string => item !== undefined);
 
   return {
     body,
@@ -409,7 +408,7 @@ const buildSkillLayout = (input: {
             value: updatedLabel,
           }
         : undefined,
-    ].filter((item): item is SkillMetaItem => Boolean(item)),
+    ].filter((item): item is SkillMetaItem => item !== undefined),
     metricItems: [
       {
         label: "Audit Score",
@@ -527,14 +526,14 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     let currentNode = root;
     let currentPath = "";
 
-    segments.forEach((segment, index) => {
+    for (const [index, segment] of segments.entries()) {
       currentPath = currentPath ? `${currentPath}/${segment}` : segment;
       const type = index === segments.length - 1 ? "file" : "folder";
       const existing = currentNode.children.get(segment);
 
       if (existing) {
         currentNode = existing;
-        return;
+        continue;
       }
 
       const nextNode: TreeNode = {
@@ -545,7 +544,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
       };
       currentNode.children.set(segment, nextNode);
       currentNode = nextNode;
-    });
+    }
   }
 
   const rows: SkillFileTreeRow[] = [];
@@ -784,9 +783,9 @@ export const getSkillFileTreePageData = async (
   const activePath =
     requestedPath && filePaths.includes(requestedPath)
       ? requestedPath
-      : (filePaths.includes(base.latestSnapshot.entryPath)
+      : filePaths.includes(base.latestSnapshot.entryPath)
         ? base.latestSnapshot.entryPath
-        : filePaths[0]);
+        : filePaths[0];
 
   if (!activePath) {
     return {

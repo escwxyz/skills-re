@@ -76,9 +76,13 @@ export async function getChangelogs() {
     .filter((e) => e.data.isPublished)
     .toSorted((a, b) => {
       const d = b.data.versionMajor - a.data.versionMajor;
-      if (d !== 0) {return d;}
+      if (d !== 0) {
+        return d;
+      }
       const d2 = b.data.versionMinor - a.data.versionMinor;
-      if (d2 !== 0) {return d2;}
+      if (d2 !== 0) {
+        return d2;
+      }
       return b.data.versionPatch - a.data.versionPatch;
     });
 }

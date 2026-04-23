@@ -111,14 +111,18 @@ const getAuthorDisplayName = (author: AuthorItem) => author.name ?? `@${author.h
 const getAvatarLabel = (author: Pick<AuthorItem, "handle" | "name">) =>
   (author.name ?? author.handle).trim().charAt(0).toUpperCase();
 
-const sumDailyMetrics = (points: DailyMetricPoint[]) =>
-  points.reduce(
-    (total, point) => ({
+const sumDailyMetrics = (points: DailyMetricPoint[]) => {
+  let total = { newSkills: 0, newSnapshots: 0 };
+
+  for (const point of points) {
+    total = {
       newSkills: total.newSkills + point.newSkills,
       newSnapshots: total.newSnapshots + point.newSnapshots,
-    }),
-    { newSkills: 0, newSnapshots: 0 },
-  );
+    };
+  }
+
+  return total;
+};
 
 const sortAuthors = (authors: AuthorItem[]) =>
   [...authors].toSorted((left, right) => {
@@ -219,7 +223,9 @@ export const getAuthorsIndexData = async (client: AppRouterClient): Promise<Auth
 
   return {
     alphabeticalAuthors: [...sortedAuthors]
-      .toSorted((left, right) => getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right)))
+      .toSorted((left, right) =>
+        getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right)),
+      )
       .map(toAuthorIndexCard),
     stats: [
       { label: "Authors", value: formatInteger(authors.length) },

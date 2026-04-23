@@ -1,7 +1,7 @@
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
-import { formatInteger, toBrowseSkillItem } from './registry-data';
-import type { BrowseSkillItem } from './registry-data';
+import { formatInteger, toBrowseSkillItem } from "./registry-data";
+import type { BrowseSkillItem } from "./registry-data";
 
 interface SearchSkillListItem {
   author?: {
@@ -55,6 +55,6 @@ export const getSearchPageData = async (
     resultLabel: query
       ? `${formatInteger(items.length)} live skill matches`
       : `${formatInteger(items.length)} popular skills`,
-    titleLabel: query ? query : "Popular skills",
+    titleLabel: query || "Popular skills",
   };
 };

@@ -3,8 +3,8 @@
 import * as React from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -81,7 +81,10 @@ function SidebarProvider({
   );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = React.useCallback(() => isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open), [isMobile, setOpen, setOpenMobile]);
+  const toggleSidebar = React.useCallback(
+    () => (isMobile ? setOpenMobile((isOpen) => !isOpen) : setOpen((isOpen) => !isOpen)),
+    [isMobile, setOpen, setOpenMobile],
+  );
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
@@ -498,7 +501,7 @@ function SidebarMenuButton({
       },
       props,
     ),
-    render: !tooltip ? render : <TooltipTrigger render={render} />,
+    render: tooltip ? <TooltipTrigger render={render} /> : render,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -512,6 +515,7 @@ function SidebarMenuButton({
   }
 
   if (typeof tooltip === "string") {
+    // oxlint-disable-next-line no-param-reassign
     tooltip = {
       children: tooltip,
     };
