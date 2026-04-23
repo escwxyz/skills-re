@@ -92,7 +92,9 @@ const filterSelectedPayloadSkills = (
   selectedSkillRootPaths: Set<string>,
 ) =>
   selectedSkillRootPaths.size > 0
-    ? skills.filter((skill) => selectedSkillRootPaths.has(normalizeDirectoryPath(skill.directoryPath)))
+    ? skills.filter((skill) =>
+        selectedSkillRootPaths.has(normalizeDirectoryPath(skill.directoryPath)),
+      )
     : skills;
 
 interface SearchSkillRow {

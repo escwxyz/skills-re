@@ -54,10 +54,13 @@
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[astro]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.prettier": "always"
+    }
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll.oxc": "explicit",
-    "source.fixAll.prettier": "explicit"
+    "source.fixAll.oxc": "explicit"
   }
 }

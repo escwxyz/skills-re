@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
     skills.push(...page.page);
     cursor = page.continueCursor || undefined;
-    isDone = page.isDone;
+    ({ isDone } = page);
   }
 
   const entries = skills.map((skill) =>

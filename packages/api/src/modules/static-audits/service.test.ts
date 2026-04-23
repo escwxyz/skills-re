@@ -9,85 +9,86 @@ import { createStaticAuditsService } from "./service";
 describe("static audits service", () => {
   test("maps the latest audit row into the public report shape", async () => {
     const service = createStaticAuditsService({
-      getLatestStaticAuditBySnapshot: async (_snapshotId: string, _database?: unknown) => ({
-        auditJson: JSON.stringify({
-          evaluation: {
-            is_blocked: false,
-            overall_score: 92,
-            risk_level: "low",
-            safe_to_publish: true,
-            status: "pass",
-          },
-          meta: {
-            generated_at: "2024-01-01T00:00:00.000Z",
-            pipeline: "test-pipeline",
-            pipeline_run_id: "run-1",
-            rules_version: "1",
-            source_hash: "abc",
-            source_type: "github",
-          },
-          provider: {
-            name: "skill-scanner",
-            summary: {
-              findings_count: 1,
-              highest_severity: "low",
+      getLatestStaticAuditBySnapshot: (_snapshotId: string, _database?: unknown) =>
+        Promise.resolve({
+          auditJson: JSON.stringify({
+            evaluation: {
+              is_blocked: false,
+              overall_score: 92,
+              risk_level: "low",
+              safe_to_publish: true,
+              status: "pass",
             },
-          },
-          security_audit: {
-            files_scanned: 4,
-            findings: [
-              {
-                category: "execution",
-                confidence: 0.4,
-                evidence: "evidence",
-                location: {
-                  path: "skill.md",
-                  startLine: 1,
-                },
-                message: "message",
-                rule_id: "rule-1",
-                severity: "low",
-                source: "rule",
+            meta: {
+              generated_at: "2024-01-01T00:00:00.000Z",
+              pipeline: "test-pipeline",
+              pipeline_run_id: "run-1",
+              rules_version: "1",
+              source_hash: "abc",
+              source_type: "github",
+            },
+            provider: {
+              name: "skill-scanner",
+              summary: {
+                findings_count: 1,
+                highest_severity: "low",
               },
-            ],
-            risk_factors: ["factor"],
-            summary: "summary",
-            total_lines: 123,
-          },
-          target: {
-            owner: "acme",
-            repo: "skills",
-          },
-        }),
-        findingsJson: JSON.stringify([
-          {
-            category: "execution",
-            confidence: 0.4,
-            evidence: "evidence",
-            location: {
-              path: "skill.md",
-              startLine: 1,
             },
-            message: "message",
-            rule_id: "rule-1",
-            severity: "low",
-            source: "rule",
-          },
-        ]),
-        filesScanned: 4,
-        generatedAt: 1_704_067_200_000,
-        id: asStaticAuditId("audit-1"),
-        isBlocked: false,
-        modelVersion: null,
-        overallScore: 92,
-        reportR2Key: null,
-        riskLevel: "low",
-        safeToPublish: true,
-        status: "pass",
-        summary: "summary",
-        syncTime: 1_704_067_200_000,
-        totalLines: 123,
-      }),
+            security_audit: {
+              files_scanned: 4,
+              findings: [
+                {
+                  category: "execution",
+                  confidence: 0.4,
+                  evidence: "evidence",
+                  location: {
+                    path: "skill.md",
+                    startLine: 1,
+                  },
+                  message: "message",
+                  rule_id: "rule-1",
+                  severity: "low",
+                  source: "rule",
+                },
+              ],
+              risk_factors: ["factor"],
+              summary: "summary",
+              total_lines: 123,
+            },
+            target: {
+              owner: "acme",
+              repo: "skills",
+            },
+          }),
+          findingsJson: JSON.stringify([
+            {
+              category: "execution",
+              confidence: 0.4,
+              evidence: "evidence",
+              location: {
+                path: "skill.md",
+                startLine: 1,
+              },
+              message: "message",
+              rule_id: "rule-1",
+              severity: "low",
+              source: "rule",
+            },
+          ]),
+          filesScanned: 4,
+          generatedAt: 1_704_067_200_000,
+          id: asStaticAuditId("audit-1"),
+          isBlocked: false,
+          modelVersion: null,
+          overallScore: 92,
+          reportR2Key: null,
+          riskLevel: "low",
+          safeToPublish: true,
+          status: "pass",
+          summary: "summary",
+          syncTime: 1_704_067_200_000,
+          totalLines: 123,
+        }),
     });
 
     await expect(service.getReportBySnapshot("snapshot-1")).resolves.toEqual({
@@ -152,21 +153,21 @@ describe("static audits service", () => {
       }[][] = [];
 
       const service = createStaticAuditsService({
-        countSnapshotsMissingStaticAudits: async (input) => {
+        countSnapshotsMissingStaticAudits: (input) => {
           countCalls.push(input ?? {});
-          return 3;
+          return Promise.resolve(3);
         },
-        dispatchStaticAuditWorkflow: async (targets) => {
+        dispatchStaticAuditWorkflow: (targets) => {
           dispatchCalls.push(targets);
-          return {
+          return Promise.resolve({
             dispatched: true as const,
             repository: "acme/skills-audit",
             workflowFile: "skill-audit-submit.yml",
-          };
+          });
         },
-        listSnapshotsMissingStaticAudits: async (input) => {
+        listSnapshotsMissingStaticAudits: (input) => {
           listCalls.push(input);
-          return [
+          return Promise.resolve([
             {
               owner: "acme",
               repo: "skills",
@@ -183,7 +184,7 @@ describe("static audits service", () => {
               sourceCommitSha: "commit-2",
               syncTime: 2000,
             },
-          ];
+          ]);
         },
       });
 
@@ -249,15 +250,15 @@ describe("static audits service", () => {
     }[][] = [];
 
     const service = createStaticAuditsService({
-      countSnapshotsMissingStaticAudits: async () => 0,
-      dispatchStaticAuditWorkflow: async (targets) => {
+      countSnapshotsMissingStaticAudits: () => Promise.resolve(0),
+      dispatchStaticAuditWorkflow: (targets) => {
         dispatchCalls.push(targets);
-        return {
+        return Promise.resolve({
           dispatched: false as const,
           reason: "no-targets",
-        };
+        });
       },
-      listSnapshotsMissingStaticAudits: async () => [],
+      listSnapshotsMissingStaticAudits: () => Promise.resolve([]),
     });
 
     await expect(

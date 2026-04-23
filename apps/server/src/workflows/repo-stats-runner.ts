@@ -25,6 +25,67 @@ const defaultDeps: RepoStatsSyncWorkflowDeps = {
   syncStats: reposService.syncStats,
 };
 
+const enqueueRepoSnapshotSyncBatch = async (
+  snapshotWorkflowScheduler: RepoSnapshotSyncScheduler,
+  changedRepos: {
+    repoOwner: string;
+    repoName: string;
+    updatedAt: number;
+  }[],
+) => {
+  const settled = await Promise.allSettled(
+    changedRepos.map((repo) =>
+      snapshotWorkflowScheduler.enqueue({
+        expectedUpdatedAt: repo.updatedAt,
+        repoName: repo.repoName,
+        repoOwner: repo.repoOwner,
+      }),
+    ),
+  );
+
+  const failed = settled
+    .map((item, index) => ({
+      item,
+      repo: changedRepos[index],
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        item: PromiseRejectedResult;
+        repo: {
+          repoOwner: string;
+          repoName: string;
+          updatedAt: number;
+        };
+      } => entry.item.status === "rejected",
+    );
+
+  if (failed.length > 0) {
+    throw new Error(
+      [
+        "Failed to enqueue one or more repo snapshot sync jobs.",
+        ...failed.map(({ item, repo }) => {
+          const reason = String(item.reason);
+          return `- ${repo.repoOwner}/${repo.repoName}: ${reason}`;
+        }),
+      ].join("\n"),
+    );
+  }
+
+  return settled.filter((item) => item.status === "fulfilled").length;
+};
+
+const syncRepoStatsPage = (
+  syncStats: typeof reposService.syncStats,
+  cursor: string | undefined,
+  limit: number,
+) =>
+  syncStats({
+    cursor,
+    limit,
+  });
+
 export const runRepoStatsSyncWorkflow = async (
   event: Readonly<WorkflowEvent<RepoStatsSyncWorkflowPayload>>,
   step: WorkflowStep,
@@ -49,14 +110,11 @@ export const runRepoStatsSyncWorkflow = async (
   let scheduledSnapshotSyncCount = 0;
 
   while (processedPages < MAX_PAGES_PER_RUN) {
+    const currentCursor = cursor;
     const result = await step.do(
       `sync-repo-stats-page-${processedPages + 1}`,
       workflowStepRetryPolicy.repoSyncPage,
-      async () =>
-        await activeDeps.syncStats({
-          cursor,
-          limit,
-        }),
+      () => syncRepoStatsPage(activeDeps.syncStats, currentCursor, limit),
     );
 
     processedPages += 1;
@@ -74,20 +132,7 @@ export const runRepoStatsSyncWorkflow = async (
       const scheduled = await step.do(
         `enqueue-repo-snapshot-sync-${processedPages}`,
         workflowStepRetryPolicy.repoSnapshotEnqueue,
-        async () => {
-          const settled = await Promise.allSettled(
-            result.changed.map(
-              async (repo) =>
-                await snapshotWorkflowScheduler.enqueue({
-                  expectedUpdatedAt: repo.updatedAt,
-                  repoName: repo.repoName,
-                  repoOwner: repo.repoOwner,
-                }),
-            ),
-          );
-
-          return settled.filter((item) => item.status === "fulfilled").length;
-        },
+        () => enqueueRepoSnapshotSyncBatch(snapshotWorkflowScheduler, result.changed),
       );
       scheduledSnapshotSyncCount += scheduled;
     }

@@ -30,12 +30,8 @@ export default function SubmitTabs() {
             className={cn(
               "flex min-w-50 flex-1 items-center gap-3.5 border-0 px-5 py-4.5 text-left transition-colors",
               i === 0 && "border-r border-rule",
-              disabled
-                ? "cursor-not-allowed opacity-40"
-                : "cursor-pointer",
-              !disabled && method === key
-                ? "bg-ink text-paper"
-                : "bg-transparent text-ink",
+              disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+              !disabled && method === key ? "bg-ink text-paper" : "bg-transparent text-ink",
             )}
           >
             <span

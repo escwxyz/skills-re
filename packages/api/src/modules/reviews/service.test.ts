@@ -11,11 +11,11 @@ describe("reviews service", () => {
     const calls: unknown[] = [];
     let callCount = 0;
     const service = createReviewsService({
-      createReview: async (input) => {
+      createReview: (input) => {
         calls.push(input);
         return asReviewId("review-1");
       },
-      getReviewBySkillIdAndUserId: async () => {
+      getReviewBySkillIdAndUserId: () => {
         callCount += 1;
         if (callCount === 1) {
           return null;
@@ -67,8 +67,8 @@ describe("reviews service", () => {
 
   test("rejects duplicate reviews from the same user", async () => {
     const service = createReviewsService({
-      createReview: async () => asReviewId("review-1"),
-      getReviewBySkillIdAndUserId: async () => ({
+      createReview: () => asReviewId("review-1"),
+      getReviewBySkillIdAndUserId: () => ({
         authorAvatarUrl: null,
         authorName: "Ada",
         content: "Helpful",
@@ -93,7 +93,7 @@ describe("reviews service", () => {
 
   test("lists reviews for a skill", async () => {
     const service = createReviewsService({
-      listReviewsBySkillId: async () => [
+      listReviewsBySkillId: () => [
         {
           authorAvatarUrl: null,
           authorName: "Ada",
@@ -127,7 +127,7 @@ describe("reviews service", () => {
 
   test("returns null when the user has not reviewed the skill", async () => {
     const service = createReviewsService({
-      getReviewBySkillIdAndUserId: async () => null,
+      getReviewBySkillIdAndUserId: () => null,
     });
 
     await expect(

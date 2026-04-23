@@ -43,7 +43,7 @@ Use [Semantic Versioning](https://semver.org). Each published version is immutab
 
 ```yaml
 metadata:
-  version: 1.1.0   # bumped from 1.0.0
+  version: 1.1.0 # bumped from 1.0.0
   stage: stable
 ```
 

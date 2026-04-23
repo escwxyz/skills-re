@@ -63,9 +63,9 @@ const {
         theme =
           storedTheme === "dark" || storedTheme === "light"
             ? storedTheme
-            : window.matchMedia("(prefers-color-scheme: dark)").matches
+            : (window.matchMedia("(prefers-color-scheme: dark)").matches
               ? "dark"
-              : "light"
+              : "light")
       } catch {
         theme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"

@@ -6,6 +6,7 @@ export const env = createEnv({
   client: {
     PUBLIC_SERVER_URL: z.url(),
   },
+  // oxlint-disable-next-line typescript/no-explicit-any
   runtimeEnv: (import.meta as any).env,
   emptyStringAsUndefined: true,
 });

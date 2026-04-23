@@ -1,38 +1,35 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Props {
-  className?: string
+  className?: string;
 }
 
 export function ThemeToggle({ className }: Props) {
   const [isDark, setIsDark] = useState(
-    () =>
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("dark")
-  )
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme")
+    const storedTheme = localStorage.getItem("theme");
     const nextIsDark =
       storedTheme === "dark" ||
-      (storedTheme !== "light" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
+      (storedTheme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    document.documentElement.classList.toggle("dark", nextIsDark)
-    document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light"
-    setIsDark(nextIsDark)
-  }, [])
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light";
+    setIsDark(nextIsDark);
+  }, []);
 
   const toggle = () => {
-    const next = !isDark
-    document.documentElement.classList.toggle("dark", next)
-    document.documentElement.style.colorScheme = next ? "dark" : "light"
-    localStorage.setItem("theme", next ? "dark" : "light")
-    setIsDark(next)
-  }
+    const next = !isDark;
+    document.documentElement.classList.toggle("dark", next);
+    document.documentElement.style.colorScheme = next ? "dark" : "light";
+    localStorage.setItem("theme", next ? "dark" : "light");
+    setIsDark(next);
+  };
 
   return (
     <button
@@ -59,5 +56,5 @@ export function ThemeToggle({ className }: Props) {
         />
       </svg>
     </button>
-  )
+  );
 }

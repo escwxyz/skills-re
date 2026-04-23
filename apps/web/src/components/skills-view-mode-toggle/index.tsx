@@ -17,7 +17,6 @@ export const SkillsViewModeToggle = ({ className }: { className?: string }) => {
       multiple={false}
       onValueChange={toggleViewMode}
       className={className}
-
     >
       <ToggleGroupItem value="grid" className="cursor-pointer uppercase">
         Grid

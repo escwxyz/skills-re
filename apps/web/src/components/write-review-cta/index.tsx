@@ -51,7 +51,9 @@ function WriteReviewForm({ onClose }: WriteReviewFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      return;
+    }
     // TODO: wire to API
     setSubmitted(true);
   };
@@ -114,35 +116,31 @@ export function WriteReviewCta() {
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
-    if (!isAuthenticated) {
-      isLoginDialogOpenAtom.set(true);
-    } else {
+    if (isAuthenticated) {
       setOpen(true);
+    } else {
+      isLoginDialogOpenAtom.set(true);
     }
   };
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        className="btn w-full justify-between cursor-pointer"
-      >
+      <button onClick={handleClick} className="btn w-full justify-between cursor-pointer">
         Write a Review <span>→</span>
       </button>
 
       {isAuthenticated && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="w-[calc(100%-2rem)] max-w-lg p-4 sm:p-6" showCloseButton={false}>
+          <DialogContent
+            className="w-[calc(100%-2rem)] max-w-lg p-4 sm:p-6"
+            showCloseButton={false}
+          >
             <DialogHeader className="mb-2">
               <div className="flex items-start justify-between">
                 <DialogTitle className="font-display text-[28px] font-normal leading-tight">
                   Write a review
                 </DialogTitle>
-                <DialogClose
-                  render={
-                    <Button variant="ghost" size="icon-sm" aria-label="Close" />
-                  }
-                >
+                <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
                   ✕
                 </DialogClose>
               </div>

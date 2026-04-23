@@ -28,13 +28,7 @@ const formatCountdown = (seconds: number) => {
   return `${minutes}:${remaining.toString().padStart(2, "0")}`;
 };
 
-export const EmailOtpForm = ({
-  onBack,
-  callbackUrl,
-}: {
-  onBack: () => void;
-  callbackUrl?: string;
-}) => {
+export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: string }) => {
   const [didSend, setDidSend] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);

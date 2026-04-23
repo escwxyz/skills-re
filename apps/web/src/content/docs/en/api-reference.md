@@ -22,12 +22,12 @@ List skills with optional filtering.
 
 **Query parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `q` | string | Full-text search query |
-| `tag` | string | Filter by tag |
-| `author` | string | Filter by publisher handle |
-| `page` | integer | Page number (default: 1) |
+| Parameter  | Type    | Description                              |
+| ---------- | ------- | ---------------------------------------- |
+| `q`        | string  | Full-text search query                   |
+| `tag`      | string  | Filter by tag                            |
+| `author`   | string  | Filter by publisher handle               |
+| `page`     | integer | Page number (default: 1)                 |
 | `per_page` | integer | Results per page (default: 20, max: 100) |
 
 **Example**

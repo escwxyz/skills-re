@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,33 +8,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import {
-  clearCookieConsent,
-  readCookieConsent,
-  type CookieConsentChoice,
-  writeCookieConsent,
-} from "@/lib/cookie-consent"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib/cookie-consent";
+import type { CookieConsentChoice } from "@/lib/cookie-consent";
 
 export function CookieConsent() {
-  const [open, setOpen] = useState(false)
-  const [choice, setChoice] = useState<CookieConsentChoice>("essential")
+  const [open, setOpen] = useState(false);
+  const [choice, setChoice] = useState<CookieConsentChoice>("essential");
 
   useEffect(() => {
-    setChoice(readCookieConsent())
-  }, [])
+    setChoice(readCookieConsent());
+  }, []);
 
   const updateChoice = (nextChoice: CookieConsentChoice) => {
-    writeCookieConsent(nextChoice)
-    setChoice(nextChoice)
-    setOpen(false)
-  }
+    writeCookieConsent(nextChoice);
+    setChoice(nextChoice);
+    setOpen(false);
+  };
 
   const resetConsent = () => {
-    clearCookieConsent()
-    setChoice("essential")
-  }
+    clearCookieConsent();
+    setChoice("essential");
+  };
 
   return (
     <>
@@ -56,9 +52,8 @@ export function CookieConsent() {
               Cookie preferences
             </DialogTitle>
             <DialogDescription>
-              We use a session cookie for sign-in and first-party preference
-              cookies for locale and theme. There are no third-party analytics
-              or ad cookies on this site.
+              We use a session cookie for sign-in and first-party preference cookies for locale and
+              theme. There are no third-party analytics or ad cookies on this site.
             </DialogDescription>
           </DialogHeader>
 
@@ -73,8 +68,8 @@ export function CookieConsent() {
             </div>
 
             <p>
-              Changing this preference updates the consent cookie in your
-              browser. You can return here any time to revise it.
+              Changing this preference updates the consent cookie in your browser. You can return
+              here any time to revise it.
             </p>
           </div>
 
@@ -102,16 +97,12 @@ export function CookieConsent() {
             <a href="/cookies" className="hover:text-ink">
               Cookie policy
             </a>
-            <button
-              type="button"
-              onClick={resetConsent}
-              className="hover:text-ink"
-            >
+            <button type="button" onClick={resetConsent} className="hover:text-ink">
               Reset
             </button>
           </div>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

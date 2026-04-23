@@ -9,7 +9,7 @@ import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
 const { user: currentUser } = Astro.locals
 
 const isActive = (href: string) => Astro.url.pathname.includes(href)
-const pathname = Astro.url.pathname
+const { pathname } = Astro.url
 
 const MENUS = [
   {

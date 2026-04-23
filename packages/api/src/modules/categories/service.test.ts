@@ -9,7 +9,7 @@ describe("categories service", () => {
   test("maps category list rows directly", async () => {
     const calls: { all?: boolean; limit?: number }[] = [];
     const service = createCategoriesService({
-      listCategories: async (input) => {
+      listCategories: (input) => {
         calls.push(input ?? {});
         return [
           {
@@ -39,7 +39,7 @@ describe("categories service", () => {
 
   test("drops deprecated categories from public reads", async () => {
     const service = createCategoriesService({
-      findCategoryBySlug: async () => ({
+      findCategoryBySlug: () => ({
         count: 3,
         description: "Old",
         id: "category-1",
@@ -47,7 +47,7 @@ describe("categories service", () => {
         slug: "old",
         status: "deprecated",
       }),
-      listCategories: async () => [
+      listCategories: () => [
         {
           count: 3,
           description: "Old",
@@ -82,7 +82,7 @@ describe("categories service", () => {
 
   test("maps category detail payload with related tags and top skills", async () => {
     const service = createCategoriesService({
-      findCategoryBySlug: async (slug) =>
+      findCategoryBySlug: (slug) =>
         slug === "tools-platforms"
           ? {
               count: 5,
@@ -93,13 +93,13 @@ describe("categories service", () => {
               status: "active",
             }
           : null,
-      getRelatedTagsByCategorySlug: async (slug) => [
+      getRelatedTagsByCategorySlug: (slug) => [
         {
           count: slug === "tools-platforms" ? 2 : 0,
           slug: "automation",
         },
       ],
-      getTopSkillsByCategorySlug: async () => [
+      getTopSkillsByCategorySlug: () => [
         {
           authorHandle: "acme",
           createdAt: 100,
@@ -151,7 +151,7 @@ describe("categories service", () => {
   test("passes through ai category slugs", async () => {
     const calls: { limit?: number }[] = [];
     const service = createCategoriesService({
-      listCategoriesForAi: async (input) => {
+      listCategoriesForAi: (input) => {
         calls.push(input ?? {});
         return ["analysis-insights", "tools-platforms"];
       },
@@ -166,7 +166,7 @@ describe("categories service", () => {
 
   test("counts categories", async () => {
     const service = createCategoriesService({
-      countCategories: async () => 9,
+      countCategories: () => 9,
     });
 
     await expect(service.countCategories()).resolves.toBe(9);
@@ -177,8 +177,8 @@ describe("categories service", () => {
       patchCategoryCount?: unknown;
     }[] = [];
     const service = createCategoriesService({
-      computeSkillCountForCategory: async () => 4,
-      patchCategoryCount: async (input) => {
+      computeSkillCountForCategory: () => 4,
+      patchCategoryCount: (input) => {
         calls.push({ patchCategoryCount: input });
       },
     });
@@ -197,11 +197,11 @@ describe("categories service", () => {
   test("recomputes impacted category counts", async () => {
     const calls: string[] = [];
     const service = createCategoriesService({
-      computeSkillCountForCategory: async (categoryId) => {
+      computeSkillCountForCategory: (categoryId) => {
         calls.push(categoryId);
         return categoryId === "category-1" ? 3 : 6;
       },
-      patchCategoryCount: async () => {
+      patchCategoryCount: () => {
         // The ids are asserted via the recompute calls.
       },
     });
@@ -219,7 +219,7 @@ describe("categories service", () => {
       updateSkillCategory?: unknown;
     }[] = [];
     const service = createCategoriesService({
-      findCategoryBySlug: async (slug) =>
+      findCategoryBySlug: (slug) =>
         slug === "code-frameworks"
           ? {
               count: 5,
@@ -230,7 +230,7 @@ describe("categories service", () => {
               status: "active",
             }
           : null,
-      generateSkillCategoriesBatch: async (input) => {
+      generateSkillCategoriesBatch: (input) => {
         expect(input.categories.map((category) => category.slug)).toEqual(["code-frameworks"]);
         expect(input.items).toEqual([
           {
@@ -262,8 +262,8 @@ describe("categories service", () => {
           ],
         };
       },
-      computeSkillCountForCategory: async () => 5,
-      listDefinitionsForAi: async () => [
+      computeSkillCountForCategory: () => 5,
+      listDefinitionsForAi: () => [
         {
           description: "Code frameworks",
           keywords: ["framework", "sdk"],
@@ -271,7 +271,7 @@ describe("categories service", () => {
           slug: "code-frameworks",
         },
       ],
-      listSkillCategorizationTargetsByIds: async () => [
+      listSkillCategorizationTargetsByIds: () => [
         {
           categoryId: null,
           description: "A code framework for apps.",
@@ -280,10 +280,10 @@ describe("categories service", () => {
           title: "Framework Skill",
         },
       ],
-      patchCategoryCount: async () => {
+      patchCategoryCount: () => {
         // Count writes are verified by the update path.
       },
-      updateSkillCategory: async (input) => {
+      updateSkillCategory: (input) => {
         calls.push({ updateSkillCategory: input });
       },
     });

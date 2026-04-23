@@ -6,11 +6,11 @@ updatedAt: 2025-01-01
 
 ## Von uns gesetzte Cookies
 
-| Name | Zweck | Dauer |
-|------|-------|-------|
-| `session` | Hält Sie angemeldet | Sitzung |
-| `locale` | Speichert Ihre Spracheinstellung | 400 Tage |
-| `theme` | Speichert die Hell-/Dunkel-Einstellung | 400 Tage |
+| Name      | Zweck                                  | Dauer    |
+| --------- | -------------------------------------- | -------- |
+| `session` | Hält Sie angemeldet                    | Sitzung  |
+| `locale`  | Speichert Ihre Spracheinstellung       | 400 Tage |
+| `theme`   | Speichert die Hell-/Dunkel-Einstellung | 400 Tage |
 
 ## Cookies von Drittanbietern
 

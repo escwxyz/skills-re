@@ -10,13 +10,20 @@ import {
   Worker,
 } from "alchemy/cloudflare";
 
+import { GitHubComment } from "alchemy/github";
+
+import { CloudflareStateStore } from "alchemy/state";
+
 import { config } from "dotenv";
 
 config({ path: "./.env" });
 config({ path: "../../apps/web/.env" });
 config({ path: "../../apps/server/.env" });
 
-const app = await alchemy("skills-re");
+const app = await alchemy("skills-re", {
+  stateStore:
+    process.env.NODE_ENV === "production" ? (scope) => new CloudflareStateStore(scope) : undefined,
+});
 
 const db = await D1Database("database", {
   migrationsDir: "../../packages/db/src/migrations",
@@ -25,6 +32,7 @@ const db = await D1Database("database", {
 
 const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
   name: "skills-re-snapshots",
+  adopt: true,
   dev: {
     remote: true,
   },
@@ -32,6 +40,7 @@ const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
 
 const archiveFilesBucket = await R2Bucket("ARCHIVE_FILES", {
   name: "skills-re-archives",
+  adopt: true,
   dev: {
     remote: true,
   },
@@ -234,6 +243,7 @@ export const web = await Astro("web", {
   entrypoint: "dist/server/entry.mjs",
   assets: "dist/client",
   compatibility: "node",
+  compatibilityDate: "2026-03-10",
   bindings: {
     PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
   },
@@ -243,6 +253,7 @@ export const server = await Worker("server", {
   cwd: "../../apps/server",
   entrypoint: "src/index.ts",
   compatibility: "node",
+  compatibilityDate: "2026-03-10",
   bindings: {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,
@@ -250,8 +261,8 @@ export const server = await Worker("server", {
     BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
     GH_PAT: alchemy.secret.env.GH_PAT!,
-    GITHUB_CLIENT_ID: alchemy.env.GITHUB_CLIENT_ID!,
-    GITHUB_CLIENT_SECRET: alchemy.env.GITHUB_CLIENT_SECRET!,
+    GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,
+    GITHUB_CLIENT_SECRET: alchemy.env.GH_CLIENT_SECRET ?? alchemy.env.GITHUB_CLIENT_SECRET!,
     GITHUB_TOKEN: alchemy.secret.env.GITHUB_TOKEN!,
     GOOGLE_CLIENT_ID: alchemy.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: alchemy.env.GOOGLE_CLIENT_SECRET!,
@@ -276,5 +287,25 @@ export const server = await Worker("server", {
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
+
+if (process.env.PULL_REQUEST) {
+  // if this is a PR, add a comment to the PR with the preview URL
+  // it will auto-update with each push
+  await GitHubComment("preview-comment", {
+    owner: "escwxyz",
+    repository: "skills-re",
+    issueNumber: Number(process.env.PULL_REQUEST),
+    body: `## 🚀 Preview Deployed
+
+Your changes have been deployed to a preview environment:
+
+**🌐 Website:** ${web.url}
+
+Built from commit ${process.env.GITHUB_SHA?.slice(0, 7)}
+
++---
+<sub>🤖 This comment updates automatically with each push.</sub>`,
+  });
+}
 
 await app.finalize();

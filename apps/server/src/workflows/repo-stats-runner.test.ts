@@ -61,4 +61,54 @@ describe("runRepoStatsSyncWorkflow", () => {
       status: "completed",
     });
   });
+
+  test("fails when snapshot enqueue rejects", async () => {
+    const syncStatsCalls: RepoStatsSyncSchedulerInput[] = [];
+    const snapshotSyncCalls: Parameters<RepoSnapshotSyncScheduler["enqueue"]>[0][] = [];
+
+    await expect(
+      runRepoStatsSyncWorkflow(
+        {
+          payload: {
+            cursor: "cursor-1",
+            limit: 5,
+          },
+        } as never,
+        createWorkflowStepStub() as never,
+        {
+          syncStats: (input) => {
+            syncStatsCalls.push(input ?? {});
+            return Promise.resolve({
+              changed: [
+                {
+                  repoName: "skills",
+                  repoOwner: "acme",
+                  updatedAt: 123,
+                },
+              ],
+              continueCursor: "cursor-2",
+              isDone: true,
+            });
+          },
+          snapshotSyncScheduler: {
+            enqueue: (input) => {
+              snapshotSyncCalls.push({ ...input });
+              return Promise.reject(new Error("boom"));
+            },
+          },
+        },
+      ),
+    ).rejects.toThrow(
+      "Failed to enqueue one or more repo snapshot sync jobs.\n- acme/skills: Error: boom",
+    );
+
+    expect(syncStatsCalls).toEqual([{ cursor: "cursor-1", limit: 5 }]);
+    expect(snapshotSyncCalls).toEqual([
+      {
+        expectedUpdatedAt: 123,
+        repoName: "skills",
+        repoOwner: "acme",
+      },
+    ]);
+  });
 });

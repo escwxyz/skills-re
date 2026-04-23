@@ -100,7 +100,8 @@ export interface AiSearchResult {
   page: AiSearchPageItem[];
 }
 
-const isDefined = <T>(value: T | null | undefined): value is T => value != null;
+const isDefined = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
 
 const coerceNonEmptyString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -133,66 +134,100 @@ const coerceSnippet = (value: unknown) => {
   return `${normalized.slice(0, 317)}...`;
 };
 
-const parseSkillPathDetails = (value: unknown) => {
+const normalizeSkillPathParts = (value: unknown) => {
   const path = coerceNonEmptyString(value);
   if (!path) {
     return null;
   }
 
   const normalized = path.replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  const normalizedParts = parts.map((part) => part.trim());
-  if (normalizedParts.length === 0) {
+  const parts = normalized
+    .split("/")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) {
     return null;
   }
 
-  const owner = normalizedParts[0]?.toLowerCase() ?? null;
-  const repo = normalizedParts[1] ?? null;
-  const skillMdIndex = normalizedParts.findIndex((part) => skillMarkdownFilenamePattern.test(part));
-  let skillsIndex = -1;
-  for (let index = normalizedParts.length - 1; index >= 0; index -= 1) {
-    if ((normalizedParts[index] ?? "").toLowerCase() === "skills") {
-      skillsIndex = index;
-      break;
+  return { normalized, parts };
+};
+
+const findLastPartIndex = (parts: string[], matcher: (part: string) => boolean) => {
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    if (matcher(parts[index] ?? "")) {
+      return index;
     }
   }
 
-  let skillSlug: string | null = null;
-  let version: string | null = null;
+  return -1;
+};
 
-  if (skillsIndex !== -1 && skillsIndex + 1 < normalizedParts.length) {
-    skillSlug = normalizedParts[skillsIndex + 1] ?? null;
-    const maybeVersion = normalizedParts[skillsIndex + 2];
-    if (maybeVersion && semverLikePattern.test(maybeVersion)) {
-      version = maybeVersion;
-    }
-  } else if (skillMdIndex > 0) {
-    const immediate = normalizedParts[skillMdIndex - 1];
-    if (immediate && semverLikePattern.test(immediate) && skillMdIndex > 1) {
-      skillSlug = normalizedParts[skillMdIndex - 2] ?? null;
-      version = immediate;
-    } else {
-      skillSlug = immediate ?? null;
-    }
+const buildSkillPathDetails = (
+  normalized: string,
+  owner: string | null,
+  repo: string | null,
+  skillSlug: string | null,
+  version: string | null,
+) => ({
+  authorHandle: owner,
+  repoName: repo,
+  skillSlug: skillSlug && slugPattern.test(skillSlug) ? skillSlug.toLowerCase() : null,
+  sourcePath: normalized,
+  version,
+});
+
+const parseSkillsFolderPath = (parts: string[], skillsIndex: number) => {
+  if (skillsIndex === -1 || skillsIndex + 1 >= parts.length) {
+    return null;
   }
 
-  if (!(skillSlug && slugPattern.test(skillSlug))) {
+  const skillSlug = parts[skillsIndex + 1] ?? null;
+  const maybeVersion = parts[skillsIndex + 2];
+  return {
+    skillSlug,
+    version: maybeVersion && semverLikePattern.test(maybeVersion) ? maybeVersion : null,
+  };
+};
+
+const parseSkillMdPath = (parts: string[], skillMdIndex: number) => {
+  if (skillMdIndex <= 0) {
+    return null;
+  }
+
+  const immediate = parts[skillMdIndex - 1] ?? null;
+  if (immediate && semverLikePattern.test(immediate) && skillMdIndex > 1) {
     return {
-      authorHandle: owner,
-      repoName: repo,
-      skillSlug: null,
-      sourcePath: normalized,
-      version,
+      skillSlug: parts[skillMdIndex - 2] ?? null,
+      version: immediate,
     };
   }
 
   return {
-    authorHandle: owner,
-    repoName: repo,
-    skillSlug: skillSlug.toLowerCase(),
-    sourcePath: normalized,
-    version,
+    skillSlug: immediate,
+    version: null,
   };
+};
+
+const parseSkillPathDetails = (value: unknown) => {
+  const pathParts = normalizeSkillPathParts(value);
+  if (!pathParts) {
+    return null;
+  }
+
+  const { normalized, parts } = pathParts;
+  const [owner = null, repo = null] = parts;
+  const skillMdIndex = findLastPartIndex(parts, (part) => skillMarkdownFilenamePattern.test(part));
+  const skillsIndex = findLastPartIndex(parts, (part) => part.toLowerCase() === "skills");
+  const details =
+    parseSkillsFolderPath(parts, skillsIndex) ?? parseSkillMdPath(parts, skillMdIndex);
+
+  return buildSkillPathDetails(
+    normalized,
+    owner,
+    repo,
+    details?.skillSlug ?? null,
+    details?.version ?? null,
+  );
 };
 
 const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidates => {
@@ -229,13 +264,9 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
   };
 
   const resolveSkillSlugFromParts = (parts: string[]) => {
-    let skillMdIndex = -1;
-    for (let index = parts.length - 1; index >= 0; index -= 1) {
-      if (skillMarkdownFilenamePattern.test(parts[index] ?? "")) {
-        skillMdIndex = index;
-        break;
-      }
-    }
+    const skillMdIndex = findLastPartIndex(parts, (part) =>
+      skillMarkdownFilenamePattern.test(part),
+    );
 
     if (skillMdIndex > 0) {
       const immediate = parts[skillMdIndex - 1] ?? null;
@@ -253,6 +284,24 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     return null;
   };
 
+  const addPathCandidateFromParts = (
+    parts: string[],
+    owner: string | undefined,
+    repo: string | undefined,
+    explicitSkillSlug?: string | null,
+  ) => {
+    const skillSlug = explicitSkillSlug ?? resolveSkillSlugFromParts(parts);
+    if (!skillSlug || !owner || owner === "snapshots") {
+      return;
+    }
+
+    addPathCandidate({
+      authorHandle: owner,
+      repoName: repo,
+      skillSlug,
+    });
+  };
+
   const fromPath = (value: unknown) => {
     const path = coerceNonEmptyString(value);
     if (!path) {
@@ -262,41 +311,22 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     const normalized = path.replaceAll("\\", "/");
     const parts = normalized.split("/").filter(Boolean);
     const normalizedParts = parts.map((part) => part.trim());
-
-    const owner = normalizedParts[0]?.toLowerCase();
-    const repo = normalizedParts[1];
-
-    let skillsIndex = -1;
-    for (let index = normalizedParts.length - 1; index >= 0; index -= 1) {
-      if ((normalizedParts[index] ?? "").toLowerCase() === "skills") {
-        skillsIndex = index;
-        break;
-      }
-    }
-    if (skillsIndex !== -1 && skillsIndex + 1 < normalizedParts.length) {
-      const skillSlug = normalizedParts[skillsIndex + 1] ?? null;
-      addSlug(skillSlug);
-      if (owner && owner !== "snapshots") {
-        if (!skillSlug) {
-          return;
-        }
-        addPathCandidate({
-          authorHandle: owner,
-          repoName: repo,
-          skillSlug,
-        });
-      }
+    const [owner, repo] = normalizedParts;
+    const skillsIndex = findLastPartIndex(
+      normalizedParts,
+      (part) => part.toLowerCase() === "skills",
+    );
+    const skillsFolderSlug = skillsIndex === -1 ? null : (normalizedParts[skillsIndex + 1] ?? null);
+    addSlug(skillsFolderSlug);
+    if (skillsFolderSlug) {
+      addPathCandidateFromParts(normalizedParts, owner, repo, skillsFolderSlug);
     }
 
     const skillSlug = resolveSkillSlugFromParts(normalizedParts);
     if (skillSlug) {
       addSlug(skillSlug);
-      if (owner && owner !== "snapshots") {
-        addPathCandidate({
-          authorHandle: owner,
-          repoName: repo,
-          skillSlug,
-        });
+      if (skillSlug !== skillsFolderSlug) {
+        addPathCandidateFromParts(normalizedParts, owner, repo, skillSlug);
       }
     }
   };
@@ -345,75 +375,107 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
   };
 };
 
+const getAiRowKey = (item: {
+  filename?: unknown;
+  id?: unknown;
+  itemKey?: unknown;
+  item_key?: unknown;
+  key?: unknown;
+}) =>
+  coerceNonEmptyString(item.key) ??
+  coerceNonEmptyString(item.item_key) ??
+  coerceNonEmptyString(item.itemKey) ??
+  coerceNonEmptyString(item.filename) ??
+  coerceNonEmptyString(item.id) ??
+  null;
+
+const getAiRowDirectPathDetails = (item: {
+  attributes?: {
+    folder?: unknown;
+  };
+  filename?: unknown;
+  id?: unknown;
+  itemKey?: unknown;
+  item_key?: unknown;
+  key?: unknown;
+}) =>
+  parseSkillPathDetails(item.key) ??
+  parseSkillPathDetails(item.item_key) ??
+  parseSkillPathDetails(item.itemKey) ??
+  parseSkillPathDetails(item.filename) ??
+  parseSkillPathDetails(item.attributes?.folder) ??
+  parseSkillPathDetails(item.id);
+
+const getAiRowContent = (item: { content?: unknown; text?: unknown }) => {
+  const contentFromArray = Array.isArray(item.content)
+    ? item.content
+        .map((block) => {
+          const textBlock = block as { text?: unknown };
+          return coerceNonEmptyString(textBlock.text);
+        })
+        .filter((value): value is string => value !== null)
+        .join(" ")
+    : null;
+
+  return coerceSnippet(contentFromArray) ?? coerceSnippet(item.content) ?? coerceSnippet(item.text);
+};
+
+const getAiRowSkillSlug = (
+  item: {
+    metadata?: {
+      skillSlug?: unknown;
+      skill_slug?: unknown;
+      slug?: unknown;
+    };
+  },
+  directPathDetails: {
+    skillSlug: string | null;
+  } | null,
+) =>
+  coerceNonEmptyString(item.metadata?.skillSlug)?.toLowerCase() ??
+  coerceNonEmptyString(item.metadata?.skill_slug)?.toLowerCase() ??
+  coerceNonEmptyString(item.metadata?.slug)?.toLowerCase() ??
+  directPathDetails?.skillSlug ??
+  null;
+
+const extractAiRow = (row: unknown): AiSearchRow => {
+  const item = row as {
+    attributes?: {
+      folder?: unknown;
+    };
+    content?: unknown;
+    filename?: unknown;
+    id?: unknown;
+    itemKey?: unknown;
+    item_key?: unknown;
+    key?: unknown;
+    metadata?: {
+      skillSlug?: unknown;
+      skill_slug?: unknown;
+      slug?: unknown;
+    };
+    score?: unknown;
+    text?: unknown;
+  };
+  const directPathDetails = getAiRowDirectPathDetails(item);
+
+  return {
+    authorHandle: directPathDetails?.authorHandle ?? null,
+    content: getAiRowContent(item),
+    key: getAiRowKey(item),
+    repoName: directPathDetails?.repoName ?? null,
+    score: coerceFiniteNumber(item.score),
+    skillSlug: getAiRowSkillSlug(item, directPathDetails),
+    sourcePath: directPathDetails?.sourcePath ?? null,
+    version: directPathDetails?.version ?? null,
+  };
+};
+
 const extractAiRows = (raw: unknown): AiSearchRow[] => {
   const payload = raw as { data?: unknown } | null;
   const rows = Array.isArray(payload?.data) ? payload.data : [];
 
-  return rows.map((row) => {
-    const item = row as {
-      attributes?: {
-        folder?: unknown;
-      };
-      content?: unknown;
-      filename?: unknown;
-      id?: unknown;
-      itemKey?: unknown;
-      item_key?: unknown;
-      key?: unknown;
-      metadata?: {
-        skillSlug?: unknown;
-        skill_slug?: unknown;
-        slug?: unknown;
-      };
-      score?: unknown;
-      text?: unknown;
-    };
-
-    const key =
-      coerceNonEmptyString(item.key) ??
-      coerceNonEmptyString(item.item_key) ??
-      coerceNonEmptyString(item.itemKey) ??
-      coerceNonEmptyString(item.filename) ??
-      coerceNonEmptyString(item.id) ??
-      null;
-
-    const directPathDetails =
-      parseSkillPathDetails(item.key) ??
-      parseSkillPathDetails(item.item_key) ??
-      parseSkillPathDetails(item.itemKey) ??
-      parseSkillPathDetails(item.filename) ??
-      parseSkillPathDetails(item.attributes?.folder) ??
-      parseSkillPathDetails(item.id);
-
-    const contentFromArray = Array.isArray(item.content)
-      ? item.content
-          .map((block) => {
-            const textBlock = block as { text?: unknown };
-            return coerceNonEmptyString(textBlock.text);
-          })
-          .filter((value): value is string => Boolean(value))
-          .join(" ")
-      : null;
-
-    const skillSlug =
-      coerceNonEmptyString(item.metadata?.skillSlug)?.toLowerCase() ??
-      coerceNonEmptyString(item.metadata?.skill_slug)?.toLowerCase() ??
-      coerceNonEmptyString(item.metadata?.slug)?.toLowerCase() ??
-      directPathDetails?.skillSlug ??
-      null;
-
-    return {
-      authorHandle: directPathDetails?.authorHandle ?? null,
-      content:
-        coerceSnippet(contentFromArray) ?? coerceSnippet(item.content) ?? coerceSnippet(item.text),
-      key,
-      repoName: directPathDetails?.repoName ?? null,
-      score: coerceFiniteNumber(item.score),
-      skillSlug,
-      sourcePath: directPathDetails?.sourcePath ?? null,
-      version: directPathDetails?.version ?? null,
-    };
-  });
+  return rows.map((row) => extractAiRow(row));
 };
 
 const rowRank = (row: AiSearchRow) => row.score ?? Number.NEGATIVE_INFINITY;
@@ -478,6 +540,42 @@ const toResolvedSkillItem = (row: AiSearchResolvedSkillRow) => {
   };
 };
 
+const getAiSearchResultCount = (raw: unknown) =>
+  Array.isArray((raw as { data?: unknown })?.data) ? (raw as { data: unknown[] }).data.length : 0;
+
+const getAiMatch = (aiRows: AiSearchRow[], skill: AiSearchResolvedSkillRow) => {
+  const bestRowByPath = pickBestRowByPath(aiRows, {
+    authorHandle: "authorHandle" in skill ? skill.authorHandle : undefined,
+    repoName: "repoName" in skill ? skill.repoName : undefined,
+    skillSlug: skill.slug,
+  });
+  const bestRow = bestRowByPath ?? pickBestRowBySlug(aiRows, skill.slug);
+  if (!bestRow) {
+    return null;
+  }
+
+  return {
+    itemKey: bestRow.key ?? undefined,
+    score: bestRow.score ?? undefined,
+    snippet: bestRow.content ?? undefined,
+    sourcePath: bestRow.sourcePath ?? undefined,
+    version: bestRow.version ?? undefined,
+  };
+};
+
+const toAiSearchPageItem = (skill: AiSearchResolvedSkillRow, aiRows: AiSearchRow[]) => {
+  const pageItem = toResolvedSkillItem(skill);
+  const aiMatch = getAiMatch(aiRows, skill);
+  if (!aiMatch) {
+    return pageItem;
+  }
+
+  return {
+    ...pageItem,
+    aiMatch,
+  };
+};
+
 export async function buildAiSearchResult(input: {
   raw: unknown;
   resolveSkillByPath: (candidate: SkillPathCandidate) => Promise<SearchSkillRow | null>;
@@ -485,20 +583,16 @@ export async function buildAiSearchResult(input: {
 }): Promise<AiSearchResult> {
   const { pathCandidates, slugCandidates } = collectSkillResolutionCandidates(input.raw);
   const aiRows = extractAiRows(input.raw);
-  const resolvedByPath = (
-    await Promise.all(
-      pathCandidates
-        .slice(0, 40)
-        .map(async (candidate) => await input.resolveSkillByPath(candidate)),
-    )
-  ).filter(isDefined);
+  const resolvedByPathResults = await Promise.all(
+    pathCandidates.slice(0, 40).map(async (candidate) => await input.resolveSkillByPath(candidate)),
+  );
+  const resolvedByPath = resolvedByPathResults.filter(isDefined);
 
   const seenSkillIds = new Set(resolvedByPath.map((skill) => skill.id));
-  const resolvedBySlug = (
-    await Promise.all(
-      slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)),
-    )
-  )
+  const resolvedBySlugResults = await Promise.all(
+    slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)),
+  );
+  const resolvedBySlug = resolvedBySlugResults
     .filter(isDefined)
     .filter((skill): skill is AiSearchResolvedSkillRow => !seenSkillIds.has(skill.id));
   const resolvedSkills = [...resolvedByPath, ...resolvedBySlug].slice(0, 24);
@@ -514,34 +608,10 @@ export async function buildAiSearchResult(input: {
         response: input.raw,
       },
       resolvedSkillsCount: resolvedSkills.length,
-      resultCount: Array.isArray((input.raw as { data?: unknown })?.data)
-        ? (input.raw as { data: unknown[] }).data.length
-        : 0,
+      resultCount: getAiSearchResultCount(input.raw),
     },
     continueCursor: "",
     isDone: true,
-    page: resolvedSkills.map((skill) => {
-      const pageItem = toResolvedSkillItem(skill);
-      const bestRowByPath = pickBestRowByPath(aiRows, {
-        authorHandle: "authorHandle" in skill ? skill.authorHandle : undefined,
-        repoName: "repoName" in skill ? skill.repoName : undefined,
-        skillSlug: skill.slug,
-      });
-      const bestRow = bestRowByPath ?? pickBestRowBySlug(aiRows, skill.slug);
-      if (!bestRow) {
-        return pageItem;
-      }
-
-      return {
-        ...pageItem,
-        aiMatch: {
-          itemKey: bestRow.key ?? undefined,
-          score: bestRow.score ?? undefined,
-          snippet: bestRow.content ?? undefined,
-          sourcePath: bestRow.sourcePath ?? undefined,
-          version: bestRow.version ?? undefined,
-        },
-      };
-    }),
+    page: resolvedSkills.map((skill) => toAiSearchPageItem(skill, aiRows)),
   };
 }

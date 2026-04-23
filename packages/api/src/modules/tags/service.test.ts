@@ -9,7 +9,7 @@ describe("tags service", () => {
   test("maps list rows directly", async () => {
     const calls: { all?: boolean; limit?: number }[] = [];
     const service = createTagsService({
-      listTags: async (input) => {
+      listTags: (input) => {
         calls.push(input ?? {});
         return [
           {
@@ -35,13 +35,13 @@ describe("tags service", () => {
 
   test("drops non-active tags from public reads", async () => {
     const service = createTagsService({
-      findTagBySlug: async () => ({
+      findTagBySlug: () => ({
         count: 2,
         id: "tag-1",
         slug: "workflow",
         status: "pending",
       }),
-      listTags: async () => [
+      listTags: () => [
         {
           count: 2,
           id: "tag-1",
@@ -70,7 +70,7 @@ describe("tags service", () => {
 
   test("returns a tag detail payload with indexable and related data", async () => {
     const service = createTagsService({
-      findTagBySlug: async (slug) =>
+      findTagBySlug: (slug) =>
         slug === "automation"
           ? {
               count: 5,
@@ -79,20 +79,20 @@ describe("tags service", () => {
               status: "active",
             }
           : null,
-      getRelatedCategoriesByTagSlug: async () => [
+      getRelatedCategoriesByTagSlug: () => [
         {
           count: 2,
           name: "Tools & Platforms",
           slug: "tools-platforms",
         },
       ],
-      getRelatedTagsByTagSlug: async () => [
+      getRelatedTagsByTagSlug: () => [
         {
           count: 1,
           slug: "workflow",
         },
       ],
-      getTopSkillsByTagSlug: async () => [
+      getTopSkillsByTagSlug: () => [
         {
           authorHandle: "acme",
           createdAt: 100,
@@ -149,7 +149,7 @@ describe("tags service", () => {
 
   test("filters indexable tags by minCount", async () => {
     const service = createTagsService({
-      listIndexableTags: async () => [
+      listIndexableTags: () => [
         {
           count: 2,
           id: "tag-1",
@@ -178,7 +178,7 @@ describe("tags service", () => {
   test("passes through seo tag slugs", async () => {
     const calls: { limit?: number }[] = [];
     const service = createTagsService({
-      listTagsForSeo: async (limit) => {
+      listTagsForSeo: (limit) => {
         calls.push({ limit });
         return [
           {
@@ -204,7 +204,7 @@ describe("tags service", () => {
 
   test("counts tags", async () => {
     const service = createTagsService({
-      countTags: async () => 11,
+      countTags: () => 11,
     });
 
     await expect(service.count()).resolves.toBe(11);
@@ -215,8 +215,8 @@ describe("tags service", () => {
       patchTagCount?: unknown;
     }[] = [];
     const service = createTagsService({
-      computeSkillCountForTag: async () => 7,
-      patchTagCount: async (input) => {
+      computeSkillCountForTag: () => 7,
+      patchTagCount: (input) => {
         calls.push({ patchTagCount: input });
       },
     });
@@ -235,11 +235,11 @@ describe("tags service", () => {
   test("recomputes impacted tag counts", async () => {
     const calls: string[] = [];
     const service = createTagsService({
-      computeSkillCountForTag: async (tagId) => {
+      computeSkillCountForTag: (tagId) => {
         calls.push(tagId);
         return tagId === asTagId("tag-1") ? 5 : 8;
       },
-      patchTagCount: async () => {
+      patchTagCount: () => {
         // Count writes are verified via the recompute calls above.
       },
     });
@@ -257,7 +257,7 @@ describe("tags service", () => {
       syncSkillTags?: unknown;
     }[] = [];
     const service = createTagsService({
-      syncSkillTags: async (input) => {
+      syncSkillTags: (input) => {
         calls.push({ syncSkillTags: input });
         return input.tags;
       },
@@ -298,7 +298,7 @@ describe("tags service", () => {
       syncSkillTags?: unknown;
     }[] = [];
     const service = createTagsService({
-      generateSkillTagsBatch: async (input) => {
+      generateSkillTagsBatch: (input) => {
         expect(input.existingTagCandidates).toEqual(["ai", "workflow"]);
         expect(input.items).toEqual([
           {
@@ -331,7 +331,7 @@ describe("tags service", () => {
           ],
         };
       },
-      listSkillTaggingTargetsByIds: async () => [
+      listSkillTaggingTargetsByIds: () => [
         {
           description: "Builds automation tools.",
           id: "skill-1",
@@ -340,7 +340,7 @@ describe("tags service", () => {
           title: "Automation Builder",
         },
       ],
-      listTags: async () => [
+      listTags: () => [
         {
           count: 4,
           id: "tag-1",
@@ -354,7 +354,7 @@ describe("tags service", () => {
           status: "active",
         },
       ],
-      readSnapshotFileContent: async (input) => {
+      readSnapshotFileContent: (input) => {
         calls.push({ readSnapshotFileContent: input });
         return {
           bytesRead: 15,
@@ -364,7 +364,7 @@ describe("tags service", () => {
           totalBytes: 15,
         };
       },
-      syncSkillTags: async (input) => {
+      syncSkillTags: (input) => {
         calls.push({ syncSkillTags: input });
         return ["ai-tools", "ai", "automation"];
       },

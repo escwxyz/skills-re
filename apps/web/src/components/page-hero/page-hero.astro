@@ -1,4 +1,5 @@
 ---
+// oxlint-disable no-nested-ternary
 interface Stat {
   label: string
   value: string
@@ -26,12 +27,12 @@ const hasAside = Astro.slots.has("aside")
 const hasStats = Boolean(stats?.length)
 const hasSecondaryColumn = hasAside || hasStats
 const gridColumns = hasMedia
-  ? hasSecondaryColumn
+  ? (hasSecondaryColumn
     ? "md:grid-cols-[auto_minmax(0,1fr)_auto]"
-    : "md:grid-cols-[auto_minmax(0,1fr)]"
-  : hasSecondaryColumn
+    : "md:grid-cols-[auto_minmax(0,1fr)]")
+  : (hasSecondaryColumn
     ? "md:grid-cols-[1fr_auto]"
-    : "md:grid-cols-1"
+    : "md:grid-cols-1")
 
 const accentClass = (accent?: Stat["accent"]) => {
   if (accent === "green") {

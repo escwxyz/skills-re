@@ -1,3 +1,4 @@
+// oxlint-disable no-nested-ternary
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
 import { renderContentAsync, renderMarkdownAsync } from "./markdown";
@@ -220,8 +221,7 @@ const formatOptionalCompactNumber = (value?: number) =>
 const getRepositoryLabel = (path: SkillPathRecord) =>
   path.repoName ? `${path.authorHandle}/${path.repoName}` : path.authorHandle;
 
-const normalizeFrontmatterKey = (value: string) =>
-  value.trim().toLowerCase().replaceAll("_", "-");
+const normalizeFrontmatterKey = (value: string) => value.trim().toLowerCase().replaceAll("_", "-");
 
 const stripWrappingQuotes = (value: string) => {
   if (
@@ -236,7 +236,7 @@ const stripWrappingQuotes = (value: string) => {
 
 const toJoinedValue = (value: string | string[] | undefined) => {
   if (!value) {
-    return undefined;
+    return;
   }
 
   if (Array.isArray(value)) {
@@ -256,8 +256,6 @@ const readFrontmatterValue = (
       return resolved;
     }
   }
-
-  return undefined;
 };
 
 const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
@@ -331,8 +329,8 @@ export const parseSkillMarkdownDocument = (source: string) => {
   const body = lines.join("\n").trim();
   const tocItems = body
     .split(/\r?\n/)
-    .map((line) => line.match(/^##+\s+(.+)$/)?.[1]?.trim() ?? null)
-    .filter((line): line is string => Boolean(line));
+    .map((line) => line.match(/^##+\s+(.+)$/)?.[1]?.trim())
+    .filter((item): item is string => item !== undefined);
 
   return {
     body,
@@ -410,7 +408,7 @@ const buildSkillLayout = (input: {
             value: updatedLabel,
           }
         : undefined,
-    ].filter((item): item is SkillMetaItem => Boolean(item)),
+    ].filter((item): item is SkillMetaItem => item !== undefined),
     metricItems: [
       {
         label: "Audit Score",
@@ -509,12 +507,12 @@ const getFileKindLabel = (path: string) => {
 };
 
 export const buildFileTreeRows = (paths: string[], activePath: string): SkillFileTreeRow[] => {
-  type TreeNode = {
+  interface TreeNode {
     children: Map<string, TreeNode>;
     name: string;
     path: string;
     type: "file" | "folder";
-  };
+  }
 
   const root: TreeNode = {
     children: new Map(),
@@ -523,19 +521,19 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     type: "folder",
   };
 
-  for (const path of [...paths].sort((left, right) => left.localeCompare(right))) {
+  for (const path of [...paths].toSorted((left, right) => left.localeCompare(right))) {
     const segments = path.split("/").filter(Boolean);
     let currentNode = root;
     let currentPath = "";
 
-    segments.forEach((segment, index) => {
+    for (const [index, segment] of segments.entries()) {
       currentPath = currentPath ? `${currentPath}/${segment}` : segment;
       const type = index === segments.length - 1 ? "file" : "folder";
       const existing = currentNode.children.get(segment);
 
       if (existing) {
         currentNode = existing;
-        return;
+        continue;
       }
 
       const nextNode: TreeNode = {
@@ -546,7 +544,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
       };
       currentNode.children.set(segment, nextNode);
       currentNode = nextNode;
-    });
+    }
   }
 
   const rows: SkillFileTreeRow[] = [];
@@ -555,7 +553,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     const folders: TreeNode[] = [];
     const files: TreeNode[] = [];
 
-    for (const child of [...node.children.values()].sort((left, right) =>
+    for (const child of [...node.children.values()].toSorted((left, right) =>
       left.name.localeCompare(right.name),
     )) {
       if (child.type === "folder") {
@@ -779,9 +777,9 @@ export const getSkillFileTreePageData = async (
   const treeEntries = (await client.snapshots.getSnapshotTreeEntries({
     snapshotId: base.latestSnapshot.id,
   })) as SnapshotTreeEntry[];
-  const filePaths = treeEntries.map((entry) => entry.path).sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const filePaths = treeEntries
+    .map((entry) => entry.path)
+    .toSorted((left, right) => left.localeCompare(right));
   const activePath =
     requestedPath && filePaths.includes(requestedPath)
       ? requestedPath

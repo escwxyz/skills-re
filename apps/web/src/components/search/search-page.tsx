@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
+import { useState, useMemo } from "react";
 
-type ResultType = "skill" | "collection" | "author"
-type FilterType = "all" | "skills" | "collections" | "authors"
+type ResultType = "skill" | "collection" | "author";
+type FilterType = "all" | "skills" | "collections" | "authors";
 
 interface SearchResult {
-  idx: string
-  type: ResultType
-  id: string
-  version: string
-  author: string
-  title: string
-  titleHtml: string
-  desc: string
-  snippet?: string
-  tags: string[]
-  score: number
-  pass: string
-  installs: string
-  href: string
+  idx: string;
+  type: ResultType;
+  id: string;
+  version: string;
+  author: string;
+  title: string;
+  titleHtml: string;
+  desc: string;
+  snippet?: string;
+  tags: string[];
+  score: number;
+  pass: string;
+  installs: string;
+  href: string;
 }
 
 const MOCK_RESULTS: SearchResult[] = [
@@ -134,7 +134,7 @@ const MOCK_RESULTS: SearchResult[] = [
     installs: "38k",
     href: "/skills/code-review",
   },
-]
+];
 
 const RELATED_TAGS = [
   "pull-request",
@@ -146,36 +146,31 @@ const RELATED_TAGS = [
   "monorepo",
   "approval",
   "blameless",
-]
+];
 
-export default function SearchPage({
-  initialQuery = "",
-}: {
-  initialQuery?: string
-}) {
-  const [query, setQuery] = useState(initialQuery)
-  const [filter, setFilter] = useState<FilterType>("all")
+export default function SearchPage({ initialQuery = "" }: { initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery);
+  const [filter, setFilter] = useState<FilterType>("all");
 
   const typeMap: Record<Exclude<FilterType, "all">, ResultType> = {
     skills: "skill",
     collections: "collection",
     authors: "author",
-  }
+  };
 
   const filtered = useMemo(() => {
-    let results = MOCK_RESULTS
+    let results = MOCK_RESULTS;
     if (filter !== "all") {
-      results = results.filter((r) => r.type === typeMap[filter])
+      results = results.filter((r) => r.type === typeMap[filter]);
     }
     if (query.trim()) {
-      const q = query.toLowerCase()
+      const q = query.toLowerCase();
       results = results.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q)
-      )
+        (r) => r.title.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q),
+      );
     }
-    return results
-  }, [query, filter])
+    return results;
+  }, [query, filter]);
 
   const counts = useMemo(
     () => ({
@@ -184,15 +179,15 @@ export default function SearchPage({
       collections: MOCK_RESULTS.filter((r) => r.type === "collection").length,
       authors: MOCK_RESULTS.filter((r) => r.type === "author").length,
     }),
-    []
-  )
+    [],
+  );
 
   const chips: { id: FilterType; label: string; count: number }[] = [
     { id: "all", label: "All", count: counts.all },
     { id: "skills", label: "Skills", count: counts.skills },
     { id: "collections", label: "Collections", count: counts.collections },
     { id: "authors", label: "Authors", count: counts.authors },
-  ]
+  ];
 
   return (
     <div>
@@ -231,9 +226,7 @@ export default function SearchPage({
             }}
           >
             Results for{" "}
-            <em style={{ fontStyle: "italic", color: "var(--editorial-red)" }}>
-              "{query || "…"}"
-            </em>
+            <em style={{ fontStyle: "italic", color: "var(--editorial-red)" }}>"{query || "…"}"</em>
           </h1>
         </div>
         <div
@@ -249,8 +242,7 @@ export default function SearchPage({
         >
           Matches <b style={{ color: "var(--ink)" }}>{filtered.length}</b>
           <br />
-          Skills <b style={{ color: "var(--ink)" }}>{counts.skills}</b> ·
-          Collections{" "}
+          Skills <b style={{ color: "var(--ink)" }}>{counts.skills}</b> · Collections{" "}
           <b style={{ color: "var(--ink)" }}>{counts.collections}</b> · Authors{" "}
           <b style={{ color: "var(--ink)" }}>{counts.authors}</b>
         </div>
@@ -427,12 +419,10 @@ export default function SearchPage({
                 textDecoration: "none",
               }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.background =
-                  "var(--paper-2)")
+                ((e.currentTarget as HTMLElement).style.background = "var(--paper-2)")
               }
               onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.background =
-                  "transparent")
+                ((e.currentTarget as HTMLElement).style.background = "transparent")
               }
             >
               <div
@@ -457,8 +447,7 @@ export default function SearchPage({
                   }}
                 >
                   {result.type.toUpperCase()} · {result.id}
-                  {result.version ? ` · v.${result.version}` : ""} ·{" "}
-                  {result.author.toUpperCase()}
+                  {result.version ? ` · v.${result.version}` : ""} · {result.author.toUpperCase()}
                 </div>
                 <h4
                   style={{
@@ -728,14 +717,12 @@ export default function SearchPage({
                 textDecoration: "none",
               }}
               onMouseEnter={(e) => {
-                ;(e.currentTarget as HTMLElement).style.background =
-                  "var(--ink)"
-                ;(e.currentTarget as HTMLElement).style.color = "var(--paper)"
+                (e.currentTarget as HTMLElement).style.background = "var(--ink)";
+                (e.currentTarget as HTMLElement).style.color = "var(--paper)";
               }}
               onMouseLeave={(e) => {
-                ;(e.currentTarget as HTMLElement).style.background =
-                  "var(--paper)"
-                ;(e.currentTarget as HTMLElement).style.color = "inherit"
+                (e.currentTarget as HTMLElement).style.background = "var(--paper)";
+                (e.currentTarget as HTMLElement).style.color = "inherit";
               }}
             >
               <div
@@ -808,5 +795,5 @@ export default function SearchPage({
         </aside>
       </div>
     </div>
-  )
+  );
 }

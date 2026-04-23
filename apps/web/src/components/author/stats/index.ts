@@ -1,3 +1,3 @@
-import AuthorStats from "./stats.astro"
+import AuthorStats from "./stats.astro";
 
-export { AuthorStats }
+export { AuthorStats };

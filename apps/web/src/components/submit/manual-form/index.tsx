@@ -1,3 +1,4 @@
+// oxlint-disable no-nested-ternary
 "use client";
 
 import { useState } from "react";
@@ -7,8 +8,16 @@ import { cn } from "@/lib/utils";
 type Stage = "experimental" | "beta" | "stable";
 
 const AVAILABLE_TAGS = [
-  "review", "diff", "ci", "pr", "monorepo", "codeowners",
-  "silence", "github", "claude", "linter",
+  "review",
+  "diff",
+  "ci",
+  "pr",
+  "monorepo",
+  "codeowners",
+  "silence",
+  "github",
+  "claude",
+  "linter",
 ];
 
 const STEPS = [
@@ -41,16 +50,19 @@ export default function ManualSubmitForm() {
   const [description, setDescription] = useState(
     `The LX-44 reviewer is a high-fidelity diagnostic tool designed for pull requests. Unlike standard linters, it bypasses whitespace entirely, focusing on the behavioral delta of the change — intent drift, test gaps, and small naming opportunities.\n\nShips with structured output for CI, a better story for monorepos, and a tuned silence budget so it doesn't nitpick.`,
   );
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(
-    new Set(["review", "diff", "ci"]),
-  );
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set(["review", "diff", "ci"]));
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => {
-      if (prev.size >= 6 && !prev.has(tag)) return prev;
+      if (prev.size >= 6 && !prev.has(tag)) {
+        return prev;
+      }
       const next = new Set(prev);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
+      if (next.has(tag)) {
+        next.delete(tag);
+      } else {
+        next.add(tag);
+      }
       return next;
     });
   };
@@ -147,9 +159,7 @@ export default function ManualSubmitForm() {
 
           {/* Skill name */}
           <div className={fieldClass}>
-            <label className={labelClass}>
-              Skill Name — short, lowercase, hyphenated
-            </label>
+            <label className={labelClass}>Skill Name — short, lowercase, hyphenated</label>
             <input
               type="text"
               value={skillName}
@@ -158,9 +168,7 @@ export default function ManualSubmitForm() {
             />
             <p className="font-serif mt-1 text-xs italic text-muted-text">
               This becomes your install string:{" "}
-              <span className="font-mono not-italic">
-                skr install {skillName || "my-skill"}
-              </span>
+              <span className="font-mono not-italic">skr install {skillName || "my-skill"}</span>
             </p>
           </div>
 
@@ -254,9 +262,7 @@ export default function ManualSubmitForm() {
                   onClick={() => toggleTag(tag)}
                   className={cn(
                     "cursor-pointer border border-rule px-2 py-1 font-mono text-[10px] tracking-[.08em] uppercase transition-colors",
-                    selectedTags.has(tag)
-                      ? "bg-ink text-paper"
-                      : "text-ink hover:bg-paper-2",
+                    selectedTags.has(tag) ? "bg-ink text-paper" : "text-ink hover:bg-paper-2",
                   )}
                 >
                   {tag}
@@ -269,9 +275,7 @@ export default function ManualSubmitForm() {
           <div className={fieldClass}>
             <label className={labelClass}>Cover Image</label>
             <div className="cursor-pointer border-2 border-dashed border-rule p-7 text-center hover:bg-paper-2 transition-colors">
-              <b className="font-display mb-1.5 block text-2xl font-normal">
-                Drop an image
-              </b>
+              <b className="font-display mb-1.5 block text-2xl font-normal">Drop an image</b>
               <span className="font-mono text-xs text-muted-text">
                 16:9 · PNG or JPG · Up to 2MB · The registry crops to fit.
               </span>
@@ -295,7 +299,7 @@ export default function ManualSubmitForm() {
                   "repeating-linear-gradient(135deg, rgba(0,0,0,.06) 0 2px, transparent 2px 10px), #0b0a08",
               }}
             >
-              <span className="border border-white/10 bg-black/60 px-2 py-1 font-mono text-[10px] tracking-[.1em] uppercase text-[#c8c1af]">
+              <span className="border border-white/10 bg-black/60 px-2 py-1 font-mono text-[10px] tracking-widest uppercase text-[#c8c1af]">
                 your cover image
               </span>
             </div>

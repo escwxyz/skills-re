@@ -174,10 +174,7 @@ export interface SkillsBrowseData {
   totalSkillsLabel: string;
 }
 
-const CATEGORY_PRESENTATION: Record<
-  string,
-  Pick<CategoryCardItem, "num" | "variant">
-> = {
+const CATEGORY_PRESENTATION: Record<string, Pick<CategoryCardItem, "num" | "variant">> = {
   browsing: { num: "05", variant: "italic" },
   "code-craft": { num: "01", variant: "default" },
   data: { num: "03", variant: "default" },
@@ -226,10 +223,7 @@ const parsePageNumber = (value: string | null) => {
 };
 
 const encodeSearchOffsetCursor = (offset: number) =>
-  btoa(JSON.stringify({ offset }))
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
+  btoa(JSON.stringify({ offset })).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 
 const getLiveStats = (input: {
   authors: AuthorListItem[];
@@ -268,8 +262,7 @@ const getLiveStats = (input: {
 
 export const formatInteger = (value: number) => INTEGER_FORMATTER.format(value);
 
-export const formatCompactNumber = (value: number) =>
-  COMPACT_INTEGER_FORMATTER.format(value);
+export const formatCompactNumber = (value: number) => COMPACT_INTEGER_FORMATTER.format(value);
 
 export const sumDailyMetrics = (points: DailyMetricPoint[]) =>
   points.reduce(
@@ -285,26 +278,29 @@ export const sumDailyMetrics = (points: DailyMetricPoint[]) =>
 
 export const getBrowseSortLabel = (sort: BrowseSort) => {
   switch (sort) {
-    case "downloads-trending":
+    case "downloads-trending": {
       return "Trending";
-    case "newest":
+    }
+    case "newest": {
       return "Newest";
-    case "stars":
+    }
+    case "stars": {
       return "Stars";
-    case "updated":
+    }
+    case "updated": {
       return "Updated";
-    case "views":
+    }
+    case "views": {
       return "Views";
+    }
     case "downloads-all-time":
-    default:
+    default: {
       return "Installs";
+    }
   }
 };
 
-export const toCategoryCardItem = (
-  category: CategoryListItem,
-  index: number,
-): CategoryCardItem => {
+export const toCategoryCardItem = (category: CategoryListItem, index: number): CategoryCardItem => {
   const presentation = getCategoryPresentation(category.slug, index);
 
   return {
@@ -352,18 +348,13 @@ export const toBrowseSkillItem = (skill: SearchSkillListItem): BrowseSkillItem =
   latestVersionLabel: skill.latestVersion ? `v${skill.latestVersion}` : "latest",
 });
 
-export const toBrowseTagItem = (tag: {
-  count: number;
-  slug: string;
-}): BrowseTagItem => ({
+export const toBrowseTagItem = (tag: { count: number; slug: string }): BrowseTagItem => ({
   count: tag.count,
   countLabel: formatInteger(tag.count),
   slug: tag.slug,
 });
 
-export const toFeaturedPickItem = (
-  skill: SearchSkillListItem,
-): FeaturedPickItem => ({
+export const toFeaturedPickItem = (skill: SearchSkillListItem): FeaturedPickItem => ({
   description: skill.description,
   id: skill.id,
   installsLabel: formatCompactNumber(skill.downloadsAllTime ?? 0),
@@ -372,9 +363,7 @@ export const toFeaturedPickItem = (
   versionLabel: skill.latestVersion ? `v${skill.latestVersion}` : "latest",
 });
 
-export const getRegistryHomeData = async (
-  client: AppRouterClient,
-): Promise<RegistryHomeData> => {
+export const getRegistryHomeData = async (client: AppRouterClient): Promise<RegistryHomeData> => {
   const [authors, categories, categoryCount, dailyMetrics, featuredSkills, skillsCount] =
     await Promise.all([
       client.skills.listAuthors(),
@@ -444,15 +433,14 @@ export const getCategoryDetailData = async (
   }
 
   const categoryCards = categories.map((category, index) => toCategoryCardItem(category, index));
-  const currentCategory =
-    categoryCards.find((category) => category.id === categoryDetail.slug) ?? {
-      description: categoryDetail.description,
-      id: categoryDetail.slug,
-      num: getCategoryPresentation(categoryDetail.slug, categoryCards.length).num,
-      skillCount: categoryDetail.count,
-      title: categoryDetail.name,
-      variant: getCategoryPresentation(categoryDetail.slug, categoryCards.length).variant,
-    };
+  const currentCategory = categoryCards.find((category) => category.id === categoryDetail.slug) ?? {
+    description: categoryDetail.description,
+    id: categoryDetail.slug,
+    num: getCategoryPresentation(categoryDetail.slug, categoryCards.length).num,
+    skillCount: categoryDetail.count,
+    title: categoryDetail.name,
+    variant: getCategoryPresentation(categoryDetail.slug, categoryCards.length).variant,
+  };
 
   return {
     category: {
@@ -473,13 +461,18 @@ export const getSkillsBrowseData = async (
 ): Promise<SkillsBrowseData> => {
   const query = searchParams.get("q")?.trim() ?? "";
   const activeClass = searchParams.get("category")?.trim() || "all";
-  const tags = [...new Set(searchParams.getAll("tag").map((tag) => tag.trim()).filter(Boolean))];
+  const tags = [
+    ...new Set(
+      searchParams
+        .getAll("tag")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ];
   const sort = getBrowseSort(searchParams.get("sort"));
   const page = parsePageNumber(searchParams.get("page"));
   const cursor =
-    page > 1
-      ? encodeSearchOffsetCursor((page - 1) * SKILLS_BROWSE_PAGE_SIZE)
-      : undefined;
+    page > 1 ? encodeSearchOffsetCursor((page - 1) * SKILLS_BROWSE_PAGE_SIZE) : undefined;
 
   const [categories, dailyMetrics, searchResult, skillsCount, tagList] = await Promise.all([
     client.categories.list({ all: true, limit: 100 }),

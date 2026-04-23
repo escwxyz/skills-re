@@ -43,7 +43,9 @@ describe("github-submit", () => {
 
   test("converts blob urls for SKILL.md into skill root paths", () => {
     expect(
-      githubSubmitUrlSchema.parse("https://github.com/openai/codex/blob/main/skills/code-review/SKILL.md"),
+      githubSubmitUrlSchema.parse(
+        "https://github.com/openai/codex/blob/main/skills/code-review/SKILL.md",
+      ),
     ).toEqual({
       branch: "main",
       githubUrl: "https://github.com/openai/codex/blob/main/skills/code-review/SKILL.md",
