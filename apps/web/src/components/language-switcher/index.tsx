@@ -19,7 +19,9 @@ const LANGUAGES = [
 type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
 function getStoredLocale(): LanguageCode {
-  if (typeof localStorage === "undefined") return "en";
+  if (typeof localStorage === "undefined") {
+    return "en";
+  }
   return (localStorage.getItem("locale") as LanguageCode) ?? "en";
 }
 

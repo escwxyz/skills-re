@@ -1,3 +1,3 @@
-import AuthorSkillList from "./skill-list.astro"
+import AuthorSkillList from "./skill-list.astro";
 
-export { AuthorSkillList }
+export { AuthorSkillList };

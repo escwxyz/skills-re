@@ -1,3 +1,3 @@
-import AuthorActivity from "./activity.astro"
+import AuthorActivity from "./activity.astro";
 
-export { AuthorActivity }
+export { AuthorActivity };

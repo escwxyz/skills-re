@@ -16,8 +16,7 @@ export const SearchRow = ({
   sortLabel,
   onSortToggle,
   filtersTrigger,
-}: Props) => {
-  return (
+}: Props) => (
     <div className="grid grid-cols-[1fr_auto_auto] border-b border-rule sticky z-10 bg-paper top-(--header-height)">
       <input
         type="text"
@@ -39,4 +38,3 @@ export const SearchRow = ({
       </button>
     </div>
   );
-};
