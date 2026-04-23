@@ -288,8 +288,9 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     parts: string[],
     owner: string | undefined,
     repo: string | undefined,
+    explicitSkillSlug?: string | null,
   ) => {
-    const skillSlug = resolveSkillSlugFromParts(parts);
+    const skillSlug = explicitSkillSlug ?? resolveSkillSlugFromParts(parts);
     if (!skillSlug || !owner || owner === "snapshots") {
       return;
     }
@@ -318,13 +319,15 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     const skillsFolderSlug = skillsIndex === -1 ? null : (normalizedParts[skillsIndex + 1] ?? null);
     addSlug(skillsFolderSlug);
     if (skillsFolderSlug) {
-      addPathCandidateFromParts(normalizedParts, owner, repo);
+      addPathCandidateFromParts(normalizedParts, owner, repo, skillsFolderSlug);
     }
 
     const skillSlug = resolveSkillSlugFromParts(normalizedParts);
     if (skillSlug) {
       addSlug(skillSlug);
-      addPathCandidateFromParts(normalizedParts, owner, repo);
+      if (skillSlug !== skillsFolderSlug) {
+        addPathCandidateFromParts(normalizedParts, owner, repo, skillSlug);
+      }
     }
   };
 
