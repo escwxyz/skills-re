@@ -7,6 +7,18 @@ import { createGithubFetchRuntime } from "./github-fetch";
 const encodeBase64 = (value: string) =>
   typeof btoa === "function" ? btoa(value) : Buffer.from(value, "utf-8").toString("base64");
 
+const getRequestUrl = (input: string | URL | Request) => {
+  if (typeof input === "string") {
+    return input;
+  }
+
+  if (input instanceof Request) {
+    return input.url;
+  }
+
+  return input.toString();
+};
+
 describe("createGithubFetchRuntime", () => {
   test("fetches multiple skill roots concurrently while preserving order", async () => {
     interface DeferredResponse {
@@ -15,6 +27,7 @@ describe("createGithubFetchRuntime", () => {
     }
 
     const startedBlobUrls: string[] = [];
+    const requests: Request[] = [];
     const deferredResponses = new Map<string, DeferredResponse>();
     const getDeferredResponse = (input: string) => {
       const existing = deferredResponses.get(input);
@@ -36,8 +49,11 @@ describe("createGithubFetchRuntime", () => {
         GH_PAT: "test-token",
       },
       {
-        fetch: (async (input: string) => {
-          if (input.endsWith("/repos/acme/skills")) {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -60,7 +76,7 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/commits?per_page=2")) {
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
             return await Promise.resolve(
               Response.json(
                 [
@@ -79,7 +95,7 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -101,14 +117,14 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/blobs/blob-a")) {
-            startedBlobUrls.push(input);
-            return await getDeferredResponse(input).promise;
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-a")) {
+            startedBlobUrls.push(request.url);
+            return await getDeferredResponse(request.url).promise;
           }
 
-          if (input.includes("/repos/acme/skills/git/blobs/blob-b")) {
-            startedBlobUrls.push(input);
-            return await getDeferredResponse(input).promise;
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-b")) {
+            startedBlobUrls.push(request.url);
+            return await getDeferredResponse(request.url).promise;
           }
 
           return new Response("not found", { status: 404 });
@@ -131,6 +147,10 @@ describe("createGithubFetchRuntime", () => {
     }
     expect(firstBlobUrl).toContain("blob-a");
     expect(secondBlobUrl).toContain("blob-b");
+    expect(requests.length).toBeGreaterThan(0);
+    expect(
+      requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
+    ).toBe(true);
 
     deferredResponses.get(secondBlobUrl)?.resolve(
       Response.json(
@@ -151,7 +171,7 @@ describe("createGithubFetchRuntime", () => {
       ),
     );
 
-    expect(await fetchPromise).resolves.toMatchObject({
+    await expect(fetchPromise).resolves.toMatchObject({
       invalidSkills: [],
       skills: [
         {
@@ -169,13 +189,17 @@ describe("createGithubFetchRuntime", () => {
   });
 
   test("fetches repo metadata and skill previews from github api responses", async () => {
+    const requests: Request[] = [];
     const runtime = createGithubFetchRuntime(
       {
         GH_PAT: "test-token",
       },
       {
-        fetch: (async (input: string) => {
-          if (input.endsWith("/repos/acme/skills")) {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -198,7 +222,7 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/commits?per_page=2")) {
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
             return await Promise.resolve(
               Response.json(
                 [
@@ -217,7 +241,7 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -234,7 +258,7 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/blobs/blob-1")) {
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-1")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -253,8 +277,8 @@ describe("createGithubFetchRuntime", () => {
       },
     );
 
-    expect(
-      await runtime.fetchRepo({
+    await expect(
+      runtime.fetchRepo({
         githubUrl: "https://github.com/acme/skills",
       }),
     ).resolves.toEqual({
@@ -313,15 +337,19 @@ describe("createGithubFetchRuntime", () => {
         },
       ],
     });
+    expect(requests.length).toBeGreaterThan(0);
+    expect(
+      requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
+    ).toBe(true);
   });
 
-  test("rejects invalid github urls", async () => {
+  test("rejects invalid github urls", () => {
     const runtime = createGithubFetchRuntime({
       GH_PAT: "",
     });
 
     expect(
-      await runtime.fetchRepo({
+      runtime.fetchRepo({
         githubUrl: "https://example.com/acme/skills",
       }),
     ).rejects.toThrow("Invalid GitHub repository URL.");

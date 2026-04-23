@@ -51,6 +51,7 @@ describe("static audit github runtime", () => {
     });
 
     expect(requests).toHaveLength(1);
+    expect(requests[0]?.headers.get("authorization")).toBe("Bearer token");
     expect(requests[0]?.url).toBe(
       "https://api.github.com/repos/acme/skills-audit/actions/workflows/skill-audit-submit.yml/dispatches",
     );

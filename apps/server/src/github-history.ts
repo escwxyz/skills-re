@@ -1,6 +1,7 @@
 import type { GithubSnapshotHistoryHelpers, GithubSnapshotTreeEntry } from "@skills-re/api/types";
 
-const GITHUB_API_ROOT = "https://api.github.com";
+import { GITHUB_API_ROOT, createGithubHeaders, fetchGithubJson } from "./github-api";
+
 // const SKILL_ROOT_PREFIX = "skills/";
 const EXCLUDED_SEGMENTS = [
   "node_modules",
@@ -51,9 +52,6 @@ const shouldExcludePath = (relativePath: string) => {
 
 const isDefined = <T>(value: T | null | undefined): value is T => value !== null;
 
-const getGithubToken = (env: Partial<Pick<Env, "GH_PAT" | "GITHUB_TOKEN">>) =>
-  env.GH_PAT || env.GITHUB_TOKEN || null;
-
 const decodeBase64 = (value: string) => {
   if (typeof Buffer !== "undefined") {
     return Buffer.from(value, "base64").toString("utf-8");
@@ -69,34 +67,12 @@ const decodeBase64 = (value: string) => {
   return new TextDecoder().decode(bytes);
 };
 
-const fetchJson = async <T>(fetchImpl: typeof fetch, input: string, init: RequestInit) => {
-  const response = await fetchImpl(input, init);
-  if (!response.ok) {
-    throw new Error(`GitHub request failed with ${response.status} for ${input}`);
-  }
-
-  return (await response.json()) as T;
-};
-
 export function createGithubSnapshotHistoryHelpers(
-  env: Partial<Pick<Env, "GH_PAT" | "GITHUB_TOKEN">>,
+  env: Partial<Pick<Env, "GH_PAT">>,
   options: CreateGithubSnapshotHistoryHelpersOptions = {},
 ): GithubSnapshotHistoryHelpers {
   const fetchImpl = options.fetch ?? fetch;
-  const token = getGithubToken(env);
-
-  const createHeaders = () => {
-    const headers = new Headers({
-      accept: "application/vnd.github+json",
-      "x-github-api-version": "2022-11-28",
-    });
-
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
-
-    return headers;
-  };
+  const headers = createGithubHeaders(env);
 
   return {
     buildSkillTreeEntries(tree, skillRootPath) {
@@ -143,11 +119,11 @@ export function createGithubSnapshotHistoryHelpers(
     },
 
     async fetchCommitSha({ owner, ref, repo }) {
-      const response = await fetchJson<{ sha: string }>(
+      const response = await fetchGithubJson<{ sha: string }>(
         fetchImpl,
         `${GITHUB_API_ROOT}/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}`,
         {
-          headers: createHeaders(),
+          headers,
         },
       );
 
@@ -172,11 +148,11 @@ export function createGithubSnapshotHistoryHelpers(
           continue;
         }
 
-        const blob = await fetchJson<{
+        const blob = await fetchGithubJson<{
           content: string;
           encoding: string;
         }>(fetchImpl, `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`, {
-          headers: createHeaders(),
+          headers,
         });
 
         if (blob.encoding !== "base64") {
@@ -195,7 +171,7 @@ export function createGithubSnapshotHistoryHelpers(
     },
 
     async fetchTree({ commitSha, owner, repo }) {
-      const response = await fetchJson<{
+      const response = await fetchGithubJson<{
         truncated?: boolean;
         tree: {
           path: string;
@@ -207,7 +183,7 @@ export function createGithubSnapshotHistoryHelpers(
         fetchImpl,
         `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
         {
-          headers: createHeaders(),
+          headers,
         },
       );
 
@@ -227,7 +203,7 @@ export function createGithubSnapshotHistoryHelpers(
     },
 
     hasGithubToken() {
-      return Boolean(token);
+      return Boolean(env.GH_PAT);
     },
   };
 }
