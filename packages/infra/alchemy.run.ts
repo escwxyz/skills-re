@@ -57,16 +57,46 @@ const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
 //   name: "skills-re-evaluation-workflow",
 //   adopt: true,
 // });
-await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", { name: "skills-re-repo-sync-workflow", adopt: true });
-await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", { name: "skills-re-repo-snapshot-sync-workflow", adopt: true });
-await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", { name: "skills-re-skills-upload-workflow", adopt: true });
-await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", { name: "skills-re-skills-tagging-workflow", adopt: true });
-await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", { name: "skills-re-skills-categorization-workflow", adopt: true });
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", { name: "skills-re-snapshot-upload-workflow-0", adopt: true });
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", { name: "skills-re-snapshot-upload-workflow-1", adopt: true });
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", { name: "skills-re-snapshot-upload-workflow-2", adopt: true });
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", { name: "skills-re-snapshot-upload-workflow-3", adopt: true });
-await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", { name: "skills-re-snapshot-archive-upload-workflow", adopt: true });
+await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
+  name: "skills-re-repo-sync-workflow",
+  adopt: true,
+});
+await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", {
+  name: "skills-re-repo-snapshot-sync-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-upload-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-tagging-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-categorization-workflow",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", {
+  name: "skills-re-snapshot-upload-workflow-0",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", {
+  name: "skills-re-snapshot-upload-workflow-1",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", {
+  name: "skills-re-snapshot-upload-workflow-2",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", {
+  name: "skills-re-snapshot-upload-workflow-3",
+  adopt: true,
+});
+await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
+  name: "skills-re-snapshot-archive-upload-workflow",
+  adopt: true,
+});
 
 // New queues for this worker (skills-re-server-prod). Fresh Cloudflare IDs, no consumer conflicts.
 // const evaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE_V1", {
@@ -109,9 +139,12 @@ const snapshotUploadWorkflowQueue3 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE
   name: "skills-re-v1-snapshot-upload-workflow-3",
 });
 
-const snapshotsArchiveUploadWorkflowQueue = await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE_V1", {
-  name: "skills-re-v1-snapshot-archive-upload-workflow",
-});
+const snapshotsArchiveUploadWorkflowQueue = await Queue(
+  "SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE_V1",
+  {
+    name: "skills-re-v1-snapshot-archive-upload-workflow",
+  },
+);
 
 const workflowQueueEventSources = [
   // {
