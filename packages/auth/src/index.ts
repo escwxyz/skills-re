@@ -31,6 +31,7 @@ export interface CreateAuthOptions {
   env: AuthEnv;
 }
 
+// replace with https://alchemy.run/providers/cloudflare/email-sender/
 const resendApiUrl = "https://api.resend.com/emails";
 
 export function createAuth({ db, env }: CreateAuthOptions) {
