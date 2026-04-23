@@ -27,7 +27,7 @@ export interface SkillClaimContext {
   skillId: SkillId;
 }
 
-const isDefined = <T>(value: T | null | undefined): value is T => value != null;
+const isDefined = <T>(value: T | null | undefined): value is T => value !== null;
 
 export async function listSkillsPageBySyncTime(input?: { cursor?: string; limit?: number }) {
   const limit = input?.limit ?? defaultLimit;
@@ -103,12 +103,12 @@ export async function createSkill(input: {
       id: skillsTable.id,
     });
 
-  const created = rows[0];
+  const [created] = rows;
   if (!created) {
     throw new Error("Failed to create skill record");
   }
 
-  if (input.categoryId != null) {
+  if (input.categoryId) {
     await db
       .update(skillsTable)
       .set({
@@ -428,7 +428,6 @@ const getSearchSortExpression = (sort: NonNullable<SearchSkillsPageInput["sort"]
     case "views": {
       return desc(skillsTable.viewsAllTime);
     }
-    case "newest":
     default: {
       return desc(skillsTable.syncTime);
     }

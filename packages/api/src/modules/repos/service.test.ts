@@ -9,7 +9,7 @@ describe("repos service", () => {
   test("returns null when syncing stats for an empty repo page", async () => {
     const service = createReposService({
       githubConfigured: () => true,
-      listReposPageBySyncTime: async () => ({
+      listReposPageBySyncTime: () => ({
         continueCursor: "",
         isDone: true,
         repos: [],
@@ -22,7 +22,7 @@ describe("repos service", () => {
   test("maps listPage cursors and repo fields using the contract shape", async () => {
     const calls: { cursor?: string; limit?: number }[] = [];
     const service = createReposService({
-      listReposPageBySyncTime: async (input) => {
+      listReposPageBySyncTime: (input) => {
         calls.push({
           cursor: input?.cursor,
           limit: input?.limit,
@@ -85,7 +85,7 @@ describe("repos service", () => {
       [];
 
     const service = createReposService({
-      fetchRepoStats: async (_query, variables) => {
+      fetchRepoStats: (_query, variables) => {
         fetched.push(variables);
         return {
           repository: {
@@ -97,7 +97,7 @@ describe("repos service", () => {
         };
       },
       githubConfigured: () => true,
-      listReposPageBySyncTime: async () => ({
+      listReposPageBySyncTime: () => ({
         continueCursor: encodeRepoCursor({
           id: "repo-2",
           syncTime: 456,
@@ -111,7 +111,7 @@ describe("repos service", () => {
           },
         ],
       }),
-      updateRepoStatsByNameWithOwner: async (input) => {
+      updateRepoStatsByNameWithOwner: (input) => {
         updated.push(input);
         return { changed: true };
       },
@@ -155,7 +155,7 @@ describe("repos service", () => {
     const service = createReposService();
 
     const result = await service.enqueueStatsSync({
-      enqueue: async (input) => {
+      enqueue: (input) => {
         enqueued.push({
           limit: input.limit ?? 20,
           runAfterMs: input.runAfterMs ?? 0,
@@ -176,7 +176,7 @@ describe("repos service", () => {
       updatedAt: number;
     }[] = [];
     const service = createReposService({
-      updateRepoStatsByNameWithOwner: async (input) => {
+      updateRepoStatsByNameWithOwner: (input) => {
         calls.push(input);
         return { changed: true };
       },
@@ -202,7 +202,7 @@ describe("repos service", () => {
 
   test("returns a repo by id through getById", async () => {
     const service = createReposService({
-      findRepoById: async (id) =>
+      findRepoById: (id) =>
         id === "repo-1"
           ? {
               forks: 4,
@@ -233,13 +233,13 @@ describe("repos service", () => {
 
   test("reuses an existing repo in ensureRepo", async () => {
     const service = createReposService({
-      findRepoByNameWithOwner: async (nameWithOwner) =>
+      findRepoByNameWithOwner: (nameWithOwner) =>
         nameWithOwner === "acme/widget"
           ? {
               id: "repo-9",
             }
           : null,
-      createRepo: async () => {
+      createRepo: () => {
         throw new Error("should not create a repo when one already exists");
       },
     });
@@ -279,11 +279,11 @@ describe("repos service", () => {
     }[] = [];
 
     const service = createReposService({
-      createRepo: async (input) => {
+      createRepo: (input) => {
         calls.push(input);
         return "repo-10";
       },
-      findRepoByNameWithOwner: async () => null,
+      findRepoByNameWithOwner: () => null,
     });
 
     await expect(
@@ -304,7 +304,10 @@ describe("repos service", () => {
     ).resolves.toEqual("repo-10");
 
     expect(calls).toHaveLength(1);
-    const createdRepo = calls[0]!;
+    const createdRepo = calls.at(0);
+    if (!createdRepo) {
+      throw new Error("Expected repo creation call.");
+    }
     expect(createdRepo).toMatchObject({
       createdAt: 100,
       defaultBranch: "main",
@@ -325,7 +328,7 @@ describe("repos service", () => {
   test("skips repo snapshot sync when the repo does not exist", async () => {
     const service = createReposService({
       githubConfigured: () => true,
-      findRepoByNameWithOwner: async () => null,
+      findRepoByNameWithOwner: () => null,
     });
 
     await expect(
@@ -370,14 +373,14 @@ describe("repos service", () => {
     const deprecated: { keepLatest: number; skillId: string }[] = [];
 
     const service = createReposService({
-      createSnapshot: async (input) => {
+      createSnapshot: (input) => {
         createSnapshotCalls.push(input);
         return "snapshot-1";
       },
-      deprecateSnapshotsBeyondLimit: async (input) => {
+      deprecateSnapshotsBeyondLimit: (input) => {
         deprecated.push(input);
       },
-      fetchRepoOverview: async () => ({
+      fetchRepoOverview: () => ({
         commits: [
           {
             committedDate: "2026-04-18T12:00:00.000Z",
@@ -388,7 +391,7 @@ describe("repos service", () => {
         ],
         headSha: "sha-1",
       }),
-      fetchSkillFilesForRoot: async (input) => {
+      fetchSkillFilesForRoot: (input) => {
         fetchedRoots.push(input.skillRootPath);
         return {
           files: [
@@ -399,19 +402,19 @@ describe("repos service", () => {
           ],
         };
       },
-      fetchTree: async () => [
+      fetchTree: () => [
         {
           path: "custom/boards/widget/skill.md",
           sha: "blob-1",
           type: "blob",
         },
       ],
-      findRepoByNameWithOwner: async () => ({
+      findRepoByNameWithOwner: () => ({
         id: "repo-1",
         updatedAt: 200,
       }),
       githubConfigured: () => true,
-      listRepoSkillSnapshotHeadsByRepoId: async () => [
+      listRepoSkillSnapshotHeadsByRepoId: () => [
         {
           directoryPath: "custom/boards/widget/",
           entryPath: "custom/boards/widget/skill.md",
@@ -425,10 +428,10 @@ describe("repos service", () => {
           slug: "widget",
         },
       ],
-      setSkillLatestSnapshot: async (input) => {
+      setSkillLatestSnapshot: (input) => {
         latestUpdates.push(input);
       },
-      uploadSnapshotFiles: async (input) => {
+      uploadSnapshotFiles: (input) => {
         uploaded.push(input);
         return { workId: "work-1" };
       },

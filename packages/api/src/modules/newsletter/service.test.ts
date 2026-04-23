@@ -11,7 +11,7 @@ describe("newsletter service", () => {
   test("does not create a duplicate subscription", async () => {
     const calls: string[] = [];
     const service = createNewsletterService({
-      findNewsletterByEmail: async (email, _database?) => {
+      findNewsletterByEmail: (email, _database?) => {
         calls.push(email);
         return {
           city: null,
@@ -39,11 +39,11 @@ describe("newsletter service", () => {
   test("creates a subscription when the email is new", async () => {
     const calls: unknown[] = [];
     const service = createNewsletterService({
-      createNewsletterSubscription: async (input, _database?) => {
+      createNewsletterSubscription: (input, _database?) => {
         calls.push(input);
         return asNewsletterId("newsletter-1");
       },
-      findNewsletterByEmail: async (_email, _database?) => null,
+      findNewsletterByEmail: (_email, _database?) => null,
     });
 
     await expect(

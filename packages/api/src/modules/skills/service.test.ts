@@ -10,7 +10,7 @@ describe("skills service", () => {
   test("maps list cursors and public skill fields using the contract shape", async () => {
     const calls: { cursor?: string; limit?: number }[] = [];
     const service = createSkillsService({
-      listSkillsPageBySyncTime: async (input) => {
+      listSkillsPageBySyncTime: (input) => {
         calls.push({
           cursor: input?.cursor,
           limit: input?.limit,
@@ -35,7 +35,7 @@ describe("skills service", () => {
       },
     });
 
-    expect(
+    await expect(
       service.list({
         cursor: encodeRepoCursor({
           id: "skill-0",
@@ -73,7 +73,7 @@ describe("skills service", () => {
 
   test("maps author profiles into the public author shape", async () => {
     const service = createSkillsService({
-      findAuthorByHandle: async (handle) => ({
+      findAuthorByHandle: (handle) => ({
         avatarUrl: null,
         githubUrl: `https://github.com/${handle}`,
         handle,
@@ -84,7 +84,7 @@ describe("skills service", () => {
       }),
     });
 
-    expect(service.getAuthorByHandle({ handle: "acme" })).resolves.toEqual({
+    await expect(service.getAuthorByHandle({ handle: "acme" })).resolves.toEqual({
       avatarUrl: undefined,
       githubUrl: "https://github.com/acme",
       handle: "acme",
@@ -98,10 +98,10 @@ describe("skills service", () => {
   test("claims a skill when the authenticated github handle matches the repo owner", async () => {
     const claimed: { skillId: string; userId: string }[] = [];
     const service = createSkillsService({
-      claimSkillById: async (input) => {
+      claimSkillById: (input) => {
         claimed.push(input);
       },
-      findSkillClaimContextBySlug: async (slug) =>
+      findSkillClaimContextBySlug: (slug) =>
         slug === "widget"
           ? {
               claimedUserId: null,
@@ -132,10 +132,10 @@ describe("skills service", () => {
   test("returns alreadyClaimed when the same account claims again", async () => {
     const claimed: { skillId: string; userId: string }[] = [];
     const service = createSkillsService({
-      claimSkillById: async (input) => {
+      claimSkillById: (input) => {
         claimed.push(input);
       },
-      findSkillClaimContextBySlug: async () => ({
+      findSkillClaimContextBySlug: () => ({
         claimedUserId: "user-1",
         repoOwnerHandle: "acme",
         skillId: "skill-1",
@@ -157,7 +157,7 @@ describe("skills service", () => {
 
   test("rejects claims when the github handle does not match the repo owner", async () => {
     const service = createSkillsService({
-      findSkillClaimContextBySlug: async () => ({
+      findSkillClaimContextBySlug: () => ({
         claimedUserId: null,
         repoOwnerHandle: "acme",
         skillId: "skill-1",
@@ -188,7 +188,7 @@ describe("skills service", () => {
   test("forwards search filters to the search repo helper", async () => {
     const calls: unknown[] = [];
     const service = createSkillsService({
-      searchSkillsPageByFilters: async (input) => {
+      searchSkillsPageByFilters: (input) => {
         calls.push(input);
         return {
           continueCursor: "cursor-2",
@@ -280,7 +280,7 @@ describe("skills service", () => {
 
   test("resolves ai search results into the public search shape", async () => {
     const service = createSkillsService({
-      findSkillByPath: async (input) =>
+      findSkillByPath: (input) =>
         input.authorHandle === "acme" && input.skillSlug === "widget"
           ? {
               authorHandle: "acme",
@@ -304,7 +304,7 @@ describe("skills service", () => {
               viewsAllTime: 88,
             }
           : null,
-      findSkillBySlug: async () => null,
+      findSkillBySlug: () => null,
     });
 
     const result = await service.search(
@@ -314,7 +314,7 @@ describe("skills service", () => {
         rewriteQuery: false,
       },
       {
-        async search() {
+        search() {
           return {
             data: [
               {
@@ -373,7 +373,7 @@ describe("skills service", () => {
           rewriteQuery: true,
         },
         {
-          async search(input) {
+          search(input) {
             calls.push(input);
             return {
               data: [],
@@ -432,7 +432,7 @@ describe("skills service", () => {
 
     const scheduled: SkillsUploadContentPayload[] = [];
     const result = await uploadSkills(payload, {
-      enqueue: async (input) => {
+      enqueue: (input) => {
         scheduled.push(input);
         return { workId: "workflow-1" };
       },
@@ -459,29 +459,29 @@ describe("skills service", () => {
     const scheduledSnapshotHistory: unknown[] = [];
 
     const service = createSkillsService({
-      checkSkillExistingBySlug: async () => false,
-      createSkill: async (input) => {
+      checkSkillExistingBySlug: () => false,
+      createSkill: (input) => {
         calls.push({ createSkill: input });
         return "skill-1";
       },
-      createSnapshot: async (input) => {
+      createSnapshot: (input) => {
         calls.push({ createSnapshot: input });
         return "snapshot-1";
       },
-      deprecateSnapshotsBeyondLimit: async (input) => {
+      deprecateSnapshotsBeyondLimit: (input) => {
         calls.push({ deprecateSnapshotsBeyondLimit: input });
       },
-      ensureRepo: async (input) => {
+      ensureRepo: (input) => {
         calls.push({ ensureRepo: input });
         return "repo-1";
       },
-      setSkillLatestSnapshot: async (input) => {
+      setSkillLatestSnapshot: (input) => {
         calls.push({ setSkillLatestSnapshot: input });
       },
-      syncSkillTags: async (input) => {
+      syncSkillTags: (input) => {
         calls.push({ syncSkillTags: input });
       },
-      uploadSnapshotFiles: async (input) => {
+      uploadSnapshotFiles: (input) => {
         calls.push({ uploadSnapshotFiles: input });
         return { workId: "snapshot-upload-1" };
       },
@@ -541,19 +541,19 @@ describe("skills service", () => {
       },
       {
         scheduleSkillsTagging: {
-          enqueue: async (input) => {
+          enqueue: (input) => {
             scheduledTagging.push(input);
             return { workId: "tagging-1" };
           },
         },
         snapshotHistory: {
-          createHistoricalSnapshots: async (input) => {
+          createHistoricalSnapshots: (input) => {
             scheduledSnapshotHistory.push(input);
             return null;
           },
         },
         snapshotUploadScheduler: {
-          enqueue: async () => ({ workId: "snapshot-upload-1" }),
+          enqueue: () => ({ workId: "snapshot-upload-1" }),
         },
       },
     );
@@ -662,7 +662,7 @@ describe("skills service", () => {
     const result = await submitGithubRepoPublic(
       { owner: "example", repo: "skills" },
       {
-        buildPayload: async (input) => {
+        buildPayload: (input) => {
           submitted.push({
             input,
             payload: null,
@@ -707,7 +707,7 @@ describe("skills service", () => {
         },
       },
       {
-        enqueue: async (input) => {
+        enqueue: (input) => {
           submitted.push({
             input: null,
             payload: input,
@@ -735,7 +735,7 @@ describe("skills service", () => {
         skillRootPaths: ["skills/selected"],
       },
       {
-        buildPayload: async () => ({
+        buildPayload: () => ({
           payload: {
             skills: [
               {
@@ -775,7 +775,7 @@ describe("skills service", () => {
         }),
       },
       {
-        enqueue: async (input) => {
+        enqueue: (input) => {
           scheduledPayloads.push(input);
           return { workId: "workflow-selected" };
         },
@@ -794,7 +794,7 @@ describe("skills service", () => {
   test("returns snapshot history info for the requested skills", async () => {
     const calls: string[][] = [];
     const service = createSkillsService({
-      listSkillsHistoryInfoByIds: async (skillIds) => {
+      listSkillsHistoryInfoByIds: (skillIds) => {
         calls.push(skillIds);
         return [
           {
@@ -825,7 +825,7 @@ describe("skills service", () => {
 
   test("normalizes nullable snapshot versions when returning history info", async () => {
     const service = createSkillsService({
-      listSkillsHistoryInfoByIds: async () => [
+      listSkillsHistoryInfoByIds: () => [
         {
           directoryPath: "skills/example",
           entryPath: "skill.md",

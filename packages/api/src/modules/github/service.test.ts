@@ -12,7 +12,7 @@ describe("github service", () => {
         githubUrl: "https://github.com/acme/skills",
       },
       {
-        async fetchRepo(input) {
+        fetchRepo(input) {
           calls.push(input);
           return {
             branch: "main",

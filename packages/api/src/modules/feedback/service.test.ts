@@ -10,11 +10,11 @@ describe("feedback service", () => {
   test("creates feedback for the authenticated user", async () => {
     const calls: unknown[] = [];
     const service = createFeedbackService({
-      createFeedback: async (input, _database?) => {
+      createFeedback: (input, _database?) => {
         calls.push(input);
         return asFeedbackId("feedback-1");
       },
-      getFeedbackById: async (_id, _database?) => null,
+      getFeedbackById: (_id, _database?) => null,
     });
 
     await expect(
@@ -37,7 +37,7 @@ describe("feedback service", () => {
 
   test("maps feedback rows into the public item shape", async () => {
     const service = createFeedbackService({
-      listFeedback: async () => [
+      listFeedback: () => [
         {
           content: "Something is broken",
           createdAt: 123,
@@ -50,12 +50,12 @@ describe("feedback service", () => {
           userId: null,
         },
       ],
-      createFeedback: async () => asFeedbackId("feedback-1"),
-      getFeedbackById: async (_id, _database?) => null,
-      getFeedbackByIdAndUser: async (_input, _database?) => null,
-      listFeedbackByUser: async (_input, _database?) => [],
-      updateFeedbackResponse: async (_input, _database?) => {},
-      updateFeedbackStatus: async (_input, _database?) => {},
+      createFeedback: () => asFeedbackId("feedback-1"),
+      getFeedbackById: (_id, _database?) => null,
+      getFeedbackByIdAndUser: (_input, _database?) => null,
+      listFeedbackByUser: (_input, _database?) => [],
+      updateFeedbackResponse: (_input, _database?) => {},
+      updateFeedbackStatus: (_input, _database?) => {},
     });
 
     await expect(service.list()).resolves.toEqual([
@@ -75,15 +75,15 @@ describe("feedback service", () => {
   test("updates feedback status", async () => {
     const calls: unknown[] = [];
     const service = createFeedbackService({
-      updateFeedbackStatus: async (input, _database?) => {
+      updateFeedbackStatus: (input, _database?) => {
         calls.push(input);
       },
-      createFeedback: async (_input, _database?) => asFeedbackId("feedback-1"),
-      getFeedbackById: async (_id, _database?) => null,
-      getFeedbackByIdAndUser: async (_input, _database?) => null,
-      listFeedback: async (_input, _database?) => [],
-      listFeedbackByUser: async (_input, _database?) => [],
-      updateFeedbackResponse: async (_input, _database?) => {},
+      createFeedback: (_input, _database?) => asFeedbackId("feedback-1"),
+      getFeedbackById: (_id, _database?) => null,
+      getFeedbackByIdAndUser: (_input, _database?) => null,
+      listFeedback: (_input, _database?) => [],
+      listFeedbackByUser: (_input, _database?) => [],
+      updateFeedbackResponse: (_input, _database?) => {},
     });
 
     await expect(

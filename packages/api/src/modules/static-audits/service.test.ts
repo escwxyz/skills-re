@@ -9,7 +9,7 @@ import { createStaticAuditsService } from "./service";
 describe("static audits service", () => {
   test("maps the latest audit row into the public report shape", async () => {
     const service = createStaticAuditsService({
-      getLatestStaticAuditBySnapshot: async (_snapshotId: string, _database?: unknown) => ({
+      getLatestStaticAuditBySnapshot: (_snapshotId: string, _database?: unknown) => ({
         auditJson: JSON.stringify({
           evaluation: {
             is_blocked: false,
@@ -152,11 +152,11 @@ describe("static audits service", () => {
       }[][] = [];
 
       const service = createStaticAuditsService({
-        countSnapshotsMissingStaticAudits: async (input) => {
+        countSnapshotsMissingStaticAudits: (input) => {
           countCalls.push(input ?? {});
           return 3;
         },
-        dispatchStaticAuditWorkflow: async (targets) => {
+        dispatchStaticAuditWorkflow: (targets) => {
           dispatchCalls.push(targets);
           return {
             dispatched: true as const,
@@ -164,7 +164,7 @@ describe("static audits service", () => {
             workflowFile: "skill-audit-submit.yml",
           };
         },
-        listSnapshotsMissingStaticAudits: async (input) => {
+        listSnapshotsMissingStaticAudits: (input) => {
           listCalls.push(input);
           return [
             {
@@ -249,15 +249,15 @@ describe("static audits service", () => {
     }[][] = [];
 
     const service = createStaticAuditsService({
-      countSnapshotsMissingStaticAudits: async () => 0,
-      dispatchStaticAuditWorkflow: async (targets) => {
+      countSnapshotsMissingStaticAudits: () => 0,
+      dispatchStaticAuditWorkflow: (targets) => {
         dispatchCalls.push(targets);
         return {
           dispatched: false as const,
           reason: "no-targets",
         };
       },
-      listSnapshotsMissingStaticAudits: async () => [],
+      listSnapshotsMissingStaticAudits: () => [],
     });
 
     await expect(

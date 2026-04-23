@@ -8,7 +8,7 @@ describe("metrics service", () => {
   test("forwards list and refresh calls to the repo layer", async () => {
     const calls: unknown[] = [];
     const service = createMetricsService({
-      listDailySkillsAndSnapshotsMetrics: async (input) => {
+      listDailySkillsAndSnapshotsMetrics: (input) => {
         calls.push({ kind: "list", input });
         return [
           {
@@ -19,7 +19,7 @@ describe("metrics service", () => {
           },
         ];
       },
-      refreshDailySkillsAndSnapshotsMetrics: async (input) => {
+      refreshDailySkillsAndSnapshotsMetrics: (input) => {
         calls.push({ kind: "refresh", input });
         return {
           days: 7,

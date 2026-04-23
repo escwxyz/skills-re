@@ -45,7 +45,7 @@ jobs:
       - name: Create alchemy local config
         run: |
           mkdir -p apps/web/.alchemy/local
-          printf '{"name":"skills-re-web","compatibility_date":"2026-04-21","compatibility_flags":["nodejs_compat","nodejs_compat_populate_process_env"]}' \
+          printf '{"name":"skills-re-web","compatibility_date":"2026-03-10","compatibility_flags":["nodejs_compat","nodejs_compat_populate_process_env"]}' \
             > apps/web/.alchemy/local/wrangler.jsonc
 
       - name: Build

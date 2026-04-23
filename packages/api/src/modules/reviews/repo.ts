@@ -6,6 +6,7 @@ import { reviewsTable } from "@skills-re/db/schema/reviews";
 
 import { usersTable } from "@skills-re/db/schema/auth";
 
+// oxlint-disable-next-line typescript/consistent-type-imports
 type ReviewsDb = typeof import("../shared/db").db;
 
 export interface ReviewWithAuthor {
@@ -32,7 +33,14 @@ const selectWithAuthor = {
   userId: reviewsTable.userId,
 } as const;
 
-const getDb = async (database?: ReviewsDb) => database ?? (await import("../shared/db")).db;
+const getDb = async (database?: ReviewsDb) => {
+  if (database) {
+    return database;
+  }
+  const result = await import("../shared/db");
+
+  return result.db;
+};
 
 export async function listReviewsBySkillId(
   input: {
@@ -96,7 +104,7 @@ export async function createReview(
       id: reviewsTable.id,
     });
 
-  const created = rows[0];
+  const [created] = rows;
   if (!created) {
     throw new Error("Failed to create review.");
   }

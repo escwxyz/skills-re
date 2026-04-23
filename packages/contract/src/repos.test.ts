@@ -9,7 +9,6 @@ import {
   repoListItemSchema,
   repoStatsSyncResultSchema,
   repoStatsUpdateInputSchema,
-  repoStatsUpdateResultSchema,
 } from "./common/content";
 
 describe("repos contract", () => {

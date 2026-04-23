@@ -9,7 +9,7 @@ describe("search-data", () => {
     const data = await getSearchPageData(
       {
         skills: {
-          search: async () => ({
+          search: () => ({
             continueCursor: "",
             isDone: true,
             page: [
@@ -41,7 +41,7 @@ describe("search-data", () => {
     const data = await getSearchPageData(
       {
         skills: {
-          search: async () => ({
+          search: () => ({
             continueCursor: "",
             isDone: true,
             page: [],

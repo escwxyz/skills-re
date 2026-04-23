@@ -30,7 +30,7 @@ export async function updateRepoStatsByNameWithOwner(input: {
     .where(eq(reposTable.nameWithOwner, input.nameWithOwner))
     .limit(1);
 
-  const existing = rows[0];
+  const [existing] = rows;
   if (!existing) {
     return { changed: false };
   }
@@ -106,7 +106,7 @@ export async function createRepo(input: {
       id: reposTable.id,
     });
 
-  const created = rows[0];
+  const [created] = rows;
   if (!created) {
     throw new Error("Failed to create repository record");
   }
