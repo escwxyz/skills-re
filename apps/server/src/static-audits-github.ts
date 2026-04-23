@@ -1,3 +1,5 @@
+import { createGithubHeaders } from "./github-api";
+
 interface GitHubWorkflowDispatchConfig {
   owner: string;
   ref: string;
@@ -117,22 +119,6 @@ const buildWorkflowDispatchApiUrl = (config: GitHubWorkflowDispatchConfig) =>
     config.workflowFile,
   )}/dispatches`;
 
-const buildHeaders = (token: string | null) => {
-  const headers = new Headers({
-    accept: "application/vnd.github+json",
-    "x-github-api-version": "2022-11-28",
-  });
-
-  if (token) {
-    headers.set("authorization", `Bearer ${token}`);
-  }
-
-  return headers;
-};
-
-const getGithubToken = (env: Partial<Pick<Env, "GH_PAT" | "GITHUB_TOKEN">>) =>
-  env.GH_PAT || env.GITHUB_TOKEN || null;
-
 const describeDispatchError = (error: unknown, config: GitHubWorkflowDispatchConfig) => {
   const apiUrl = buildWorkflowDispatchApiUrl(config);
   const baseMessage = error instanceof Error ? error.message : String(error);
@@ -156,7 +142,6 @@ export const createStaticAuditGithubRuntime = (
     Pick<
       Env,
       | "GH_PAT"
-      | "GITHUB_TOKEN"
       | "SKILL_AUDIT_GITHUB_REPO"
       | "SKILL_AUDIT_GITHUB_WORKFLOW_FILE"
       | "SKILL_AUDIT_GITHUB_WORKFLOW_REF"
@@ -165,7 +150,6 @@ export const createStaticAuditGithubRuntime = (
   options: StaticAuditGithubRuntimeOptions = {},
 ) => {
   const fetchImpl = options.fetch ?? fetch;
-  const token = getGithubToken(env);
   const config = getWorkflowConfig(env);
 
   return {
@@ -194,7 +178,7 @@ export const createStaticAuditGithubRuntime = (
           },
           ref: config.ref,
         }),
-        headers: buildHeaders(token),
+        headers: createGithubHeaders(env),
         method: "POST",
       });
 

@@ -7,16 +7,31 @@ import { createGithubSubmitRuntime } from "./github-submit";
 const encodeBase64 = (value: string) =>
   typeof btoa === "function" ? btoa(value) : Buffer.from(value, "utf-8").toString("base64");
 
+const getRequestUrl = (input: string | URL | Request) => {
+  if (typeof input === "string") {
+    return input;
+  }
+
+  if (input instanceof Request) {
+    return input.url;
+  }
+
+  return input.toString();
+};
+
 describe("createGithubSubmitRuntime", () => {
   test("builds a prepared upload payload from github api responses", async () => {
+    const requests: Request[] = [];
     const runtime = createGithubSubmitRuntime(
       {
         GH_PAT: "test-token",
-        GITHUB_TOKEN: "",
       },
       {
-        fetch: (async (input: string) => {
-          if (input.endsWith("/repos/acme/skills")) {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -42,7 +57,7 @@ describe("createGithubSubmitRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/commits?per_page=2")) {
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
             return await Promise.resolve(
               Response.json(
                 [
@@ -61,7 +76,7 @@ describe("createGithubSubmitRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -78,7 +93,7 @@ describe("createGithubSubmitRuntime", () => {
             );
           }
 
-          if (input.includes("/repos/acme/skills/git/blobs/blob-1")) {
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-1")) {
             return await Promise.resolve(
               Response.json(
                 {
@@ -161,5 +176,9 @@ describe("createGithubSubmitRuntime", () => {
       },
       reason: undefined,
     });
+    expect(requests.length).toBeGreaterThan(0);
+    expect(
+      requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
+    ).toBe(true);
   });
 });
