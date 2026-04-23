@@ -4,10 +4,7 @@ import type {
   SkillsUploadContentPayload,
 } from "@skills-re/api/types";
 
-import {
-  buildGithubRepoOverview,
-  createGithubHeaders,
-} from "./github-api";
+import { buildGithubRepoOverview, createGithubHeaders } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import {
@@ -17,13 +14,12 @@ import {
   parseFrontmatter,
 } from "./github-skill-utils";
 
-
 const isRepoIneligible = (overview: GithubRepoOverview) =>
   Boolean(
     overview.repo.isFork ||
-      overview.repo.isArchived ||
-      overview.repo.isDisabled ||
-      overview.repo.isPrivate,
+    overview.repo.isArchived ||
+    overview.repo.isDisabled ||
+    overview.repo.isPrivate,
   );
 
 const buildSubmitRepoPayload = (

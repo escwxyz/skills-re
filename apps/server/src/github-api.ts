@@ -141,8 +141,8 @@ const mapGithubRepoOverview = (
 ): GithubRepoOverview["repo"] => ({
   createdAt: repoResponse.created_at ?? null,
   forkCount: repoResponse.forks_count ?? null,
-  isArchived: includeLifecycleFlags ? repoResponse.archived ?? null : null,
-  isDisabled: includeLifecycleFlags ? repoResponse.disabled ?? null : null,
+  isArchived: includeLifecycleFlags ? (repoResponse.archived ?? null) : null,
+  isDisabled: includeLifecycleFlags ? (repoResponse.disabled ?? null) : null,
   isEmpty: null,
   isFork: repoResponse.fork ?? null,
   isPrivate: repoResponse.private ?? null,
@@ -182,12 +182,7 @@ export const buildGithubRepoOverview = async (
     defaultBranch,
     headSha: commitsResponse[0]?.sha ?? null,
     owner: mapGithubOwner(repoResponse, owner),
-    repo: mapGithubRepoOverview(
-      repoResponse,
-      owner,
-      repo,
-      options.includeLifecycleFlags ?? false,
-    ),
+    repo: mapGithubRepoOverview(repoResponse, owner, repo, options.includeLifecycleFlags ?? false),
   };
 };
 

@@ -8,11 +8,7 @@ import {
 } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
-import {
-  SKILL_FILENAME,
-  discoverSkillRoots,
-  parseFrontmatter,
-} from "./github-skill-utils";
+import { SKILL_FILENAME, discoverSkillRoots, parseFrontmatter } from "./github-skill-utils";
 import { parseGithubRepoUrl } from "./github-url";
 
 interface CreateGithubFetchRuntimeOptions {
@@ -101,9 +97,14 @@ const fetchRepoTree = async (
   const response = await fetchGithubJson<{
     truncated?: boolean;
     tree: { path: string; sha: string; size?: number; type: "blob" | "tree" | string }[];
-  }>(fetchImpl, `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`, {
-    headers,
-  }, { includeResponseMessage: true });
+  }>(
+    fetchImpl,
+    `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
+    {
+      headers,
+    },
+    { includeResponseMessage: true },
+  );
 
   if (response.truncated) {
     throw new Error("Repository tree is too large to fetch.");
