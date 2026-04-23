@@ -32,7 +32,7 @@ describe("author-data", () => {
       toAuthorSkillRowData(
         {
           description: "Diff-first review.",
-          downloadsAllTime: 412000,
+          downloadsAllTime: 412_000,
           id: "skill_123",
           latestVersion: "2.4.1",
           license: "MIT",

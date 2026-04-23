@@ -9,7 +9,10 @@ import { createServerClient } from "@/lib/server-orpc"
 const { slug } = Astro.params
 const client = createServerClient(Astro.request)
 const categoryPage = slug ? await getCategoryDetailData(client, slug) : null
-if (!categoryPage) return Astro.redirect("/categories")
+if (!categoryPage) {
+  // oxlint-disable-next-line unicorn/prefer-module
+  return Astro.redirect("/categories")
+}
 
 const locale = getLocale()
 
@@ -31,9 +34,13 @@ const titleVariantClass = {
   <div
     class="border-border text-muted-foreground flex items-center gap-1.5 border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase"
   >
-    <a href="/categories" class="hover:text-foreground transition-colors">Categories</a>
+    <a href="/categories" class="hover:text-foreground transition-colors"
+      >Categories</a
+    >
     <span>/</span>
-    <span class="text-foreground font-medium">{categoryPage.category.title}</span>
+    <span class="text-foreground font-medium"
+      >{categoryPage.category.title}</span
+    >
   </div>
 
   <!-- HERO -->
@@ -43,14 +50,19 @@ const titleVariantClass = {
     borderThick
   >
     <span class:list={[titleVariantClass]}>{categoryPage.category.title}</span>
-    <div slot="aside" class="text-muted-foreground space-y-1 font-mono text-[11px] tracking-widest uppercase">
+    <div
+      slot="aside"
+      class="text-muted-foreground space-y-1 font-mono text-[11px] tracking-widest uppercase"
+    >
       <div>
         Skills Indexed{" "}
-        <b class="font-medium text-foreground">{categoryPage.category.skillCount.toLocaleString(locale)}</b>
+        <b class="text-foreground font-medium"
+          >{categoryPage.category.skillCount.toLocaleString(locale)}</b
+        >
       </div>
       <div>
         Related Tags{" "}
-        <b class="font-medium text-editorial-green">
+        <b class="text-editorial-green font-medium">
           {categoryPage.relatedTags.length.toLocaleString(locale)}
         </b>
       </div>
@@ -68,7 +80,7 @@ const titleVariantClass = {
           {categoryPage.relatedTags.map(({ slug: tag, count }) => (
             <a
               href={`/skills?tag=${tag}`}
-              class="border-border text-muted-foreground hover:border-foreground hover:text-foreground rounded-none border px-3 py-1.5 font-mono text-[10.5px] tracking-[.1em] uppercase transition-colors"
+              class="border-border text-muted-foreground hover:border-foreground hover:text-foreground rounded-none border px-3 py-1.5 font-mono text-[10.5px] tracking-widest uppercase transition-colors"
             >
               #{tag} · {count}
             </a>
@@ -82,11 +94,16 @@ const titleVariantClass = {
   <section class="border-border border-b px-6 py-10">
     <div class="mb-6 flex items-center justify-between gap-4">
       <div>
-        <div class="text-muted-foreground font-mono text-[11px] tracking-[.16em] uppercase">
+        <div
+          class="text-muted-foreground font-mono text-[11px] tracking-[.16em] uppercase"
+        >
           Top Skills
         </div>
-        <div class="text-muted-foreground mt-1 font-mono text-[10.5px] tracking-[.12em] uppercase">
-          {categoryPage.category.skillCount.toLocaleString(locale)} skills in this classification
+        <div
+          class="text-muted-foreground mt-1 font-mono text-[10.5px] tracking-[.12em] uppercase"
+        >
+          {categoryPage.category.skillCount.toLocaleString(locale)} skills in this
+          classification
         </div>
       </div>
       <a
@@ -100,7 +117,9 @@ const titleVariantClass = {
     {
       categoryPage.topSkills.length > 0 ? (
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-          {categoryPage.topSkills.map((skill) => <SkillCard skill={skill} />)}
+          {categoryPage.topSkills.map((skill) => (
+            <SkillCard skill={skill} />
+          ))}
         </div>
       ) : (
         <div class="border-border text-muted-foreground border px-6 py-10 font-mono text-sm">
@@ -112,7 +131,9 @@ const titleVariantClass = {
 
   <!-- RELATED CLASSIFICATIONS -->
   <section class="border-border border-b px-6 py-8">
-    <div class="text-muted-foreground mb-4 font-mono text-[10px] tracking-[.16em] uppercase">
+    <div
+      class="text-muted-foreground mb-4 font-mono text-[10px] tracking-[.16em] uppercase"
+    >
       Other Classifications
     </div>
     <div class="flex flex-wrap gap-x-6 gap-y-2">
@@ -120,7 +141,7 @@ const titleVariantClass = {
         categoryPage.otherCategories.map((category) => (
           <a
             href={`/categories/${category.id}`}
-            class="text-muted-foreground hover:text-foreground font-mono text-[10.5px] tracking-[.1em] uppercase transition-colors"
+            class="text-muted-foreground hover:text-foreground font-mono text-[10.5px] tracking-widest uppercase transition-colors"
           >
             {category.num} {category.title}
           </a>

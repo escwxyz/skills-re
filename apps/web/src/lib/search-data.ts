@@ -1,10 +1,7 @@
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
-import {
-  formatInteger,
-  type BrowseSkillItem,
-  toBrowseSkillItem,
-} from "./registry-data";
+import { formatInteger, toBrowseSkillItem } from './registry-data';
+import type { BrowseSkillItem } from './registry-data';
 
 interface SearchSkillListItem {
   author?: {

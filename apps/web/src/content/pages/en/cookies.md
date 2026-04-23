@@ -6,12 +6,12 @@ updatedAt: 2025-01-01
 
 ## Cookies We Set
 
-| Name             | Purpose                                 | Duration |
-| ---------------- | --------------------------------------- | -------- |
-| `session`        | Keeps you signed in                     | Session  |
-| `locale`         | Remembers your language preference      | 400 days |
-| `theme`          | Remembers light/dark preference         | 400 days |
-| `cookie_consent` | Remembers your cookie preference choice | 365 days |
+| Name             | Purpose                                       | Duration |
+| ---------------- | --------------------------------------------- | -------- |
+| `session`        | Keeps you signed in                           | Session  |
+| `locale`         | Remembers your language preference            | 400 days |
+| `theme`          | Remembers light/dark preference               | 400 days |
+| `cookie_consent` | Remembers your cookie preference choice       | 365 days |
 | `sidebar_state`  | Remembers whether the filters sidebar is open | 7 days   |
 
 ## Third-Party Cookies

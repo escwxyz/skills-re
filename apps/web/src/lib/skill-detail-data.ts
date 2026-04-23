@@ -220,8 +220,7 @@ const formatOptionalCompactNumber = (value?: number) =>
 const getRepositoryLabel = (path: SkillPathRecord) =>
   path.repoName ? `${path.authorHandle}/${path.repoName}` : path.authorHandle;
 
-const normalizeFrontmatterKey = (value: string) =>
-  value.trim().toLowerCase().replaceAll("_", "-");
+const normalizeFrontmatterKey = (value: string) => value.trim().toLowerCase().replaceAll("_", "-");
 
 const stripWrappingQuotes = (value: string) => {
   if (
@@ -236,7 +235,7 @@ const stripWrappingQuotes = (value: string) => {
 
 const toJoinedValue = (value: string | string[] | undefined) => {
   if (!value) {
-    return undefined;
+    return;
   }
 
   if (Array.isArray(value)) {
@@ -257,7 +256,7 @@ const readFrontmatterValue = (
     }
   }
 
-  return undefined;
+  return;
 };
 
 const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
@@ -296,9 +295,9 @@ const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
       const nextValue = stripWrappingQuotes(trimmed.slice(2).trim());
       values[currentKey] = Array.isArray(existing)
         ? [...existing, nextValue]
-        : existing
+        : (existing
           ? [existing, nextValue]
-          : [nextValue];
+          : [nextValue]);
     }
   }
 
@@ -509,12 +508,12 @@ const getFileKindLabel = (path: string) => {
 };
 
 export const buildFileTreeRows = (paths: string[], activePath: string): SkillFileTreeRow[] => {
-  type TreeNode = {
+  interface TreeNode {
     children: Map<string, TreeNode>;
     name: string;
     path: string;
     type: "file" | "folder";
-  };
+  }
 
   const root: TreeNode = {
     children: new Map(),
@@ -523,7 +522,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     type: "folder",
   };
 
-  for (const path of [...paths].sort((left, right) => left.localeCompare(right))) {
+  for (const path of [...paths].toSorted((left, right) => left.localeCompare(right))) {
     const segments = path.split("/").filter(Boolean);
     let currentNode = root;
     let currentPath = "";
@@ -555,7 +554,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     const folders: TreeNode[] = [];
     const files: TreeNode[] = [];
 
-    for (const child of [...node.children.values()].sort((left, right) =>
+    for (const child of [...node.children.values()].toSorted((left, right) =>
       left.name.localeCompare(right.name),
     )) {
       if (child.type === "folder") {
@@ -779,15 +778,15 @@ export const getSkillFileTreePageData = async (
   const treeEntries = (await client.snapshots.getSnapshotTreeEntries({
     snapshotId: base.latestSnapshot.id,
   })) as SnapshotTreeEntry[];
-  const filePaths = treeEntries.map((entry) => entry.path).sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const filePaths = treeEntries
+    .map((entry) => entry.path)
+    .toSorted((left, right) => left.localeCompare(right));
   const activePath =
     requestedPath && filePaths.includes(requestedPath)
       ? requestedPath
-      : filePaths.includes(base.latestSnapshot.entryPath)
+      : (filePaths.includes(base.latestSnapshot.entryPath)
         ? base.latestSnapshot.entryPath
-        : filePaths[0];
+        : filePaths[0]);
 
   if (!activePath) {
     return {

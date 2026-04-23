@@ -121,7 +121,7 @@ const sumDailyMetrics = (points: DailyMetricPoint[]) =>
   );
 
 const sortAuthors = (authors: AuthorItem[]) =>
-  [...authors].sort((left, right) => {
+  [...authors].toSorted((left, right) => {
     const bySkills = (right.skillCount ?? 0) - (left.skillCount ?? 0);
     if (bySkills !== 0) {
       return bySkills;
@@ -161,7 +161,7 @@ export const toAuthorSkillRowData = (
 
 const buildAuthorActivity = (skills: SearchSkillListItem[]): AuthorActivityItem[] =>
   [...skills]
-    .sort((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
+    .toSorted((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
     .slice(0, 5)
     .map((skill) => ({
       dateLabel: DATE_FORMATTER.format(new Date(skill.updatedAt ?? skill.createdAt ?? Date.now())),
@@ -206,9 +206,7 @@ const buildAuthorStats = (author: AuthorItem, skills: SearchSkillListItem[]): Au
   };
 };
 
-export const getAuthorsIndexData = async (
-  client: AppRouterClient,
-): Promise<AuthorsIndexData> => {
+export const getAuthorsIndexData = async (client: AppRouterClient): Promise<AuthorsIndexData> => {
   const [authors, dailyMetrics, skillsCount] = await Promise.all([
     client.skills.listAuthors(),
     client.metrics.dailySkillsSnapshots({ limit: 7 }),
@@ -221,7 +219,7 @@ export const getAuthorsIndexData = async (
 
   return {
     alphabeticalAuthors: [...sortedAuthors]
-      .sort((left, right) => getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right)))
+      .toSorted((left, right) => getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right)))
       .map(toAuthorIndexCard),
     stats: [
       { label: "Authors", value: formatInteger(authors.length) },

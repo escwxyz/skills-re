@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { clearCookieConsent, readCookieConsent, writeCookieConsent } from '@/lib/cookie-consent';
-import type { CookieConsentChoice } from '@/lib/cookie-consent';
+import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib/cookie-consent";
+import type { CookieConsentChoice } from "@/lib/cookie-consent";
 
 export function CookieConsent() {
   const [open, setOpen] = useState(false);

@@ -16,11 +16,7 @@ if (!author || !handle) {
 }
 ---
 
-<Layout
-  title={`${author.name} — skills.re`}
-  pageId={`skr-author-${handle}`}
-  pageSection="author profile"
->
+<Layout title={`${author.name} — skills.re`}>
   <PageHero
     eyebrow="Author · Public profile"
     description={`Public author profile for @${author.handle}. Additional bio, tags, and social actions still require backend contract work.`}
@@ -46,7 +42,9 @@ if (!author || !handle) {
       {
         author.githubUrl && (
           <div class="mt-6 flex flex-wrap justify-center gap-2.5">
-            <a href={author.githubUrl} class="btn">GitHub Profile <span>→</span></a>
+            <a href={author.githubUrl} class="btn">
+              GitHub Profile <span>→</span>
+            </a>
           </div>
         )
       }

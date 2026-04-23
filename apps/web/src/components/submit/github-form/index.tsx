@@ -83,8 +83,7 @@ export default function GithubSubmitForm() {
 
   const form = useForm({ defaultValues: { repoUrl: "" } });
 
-  const addLogs = (...lines: string[]) =>
-    setLogs((prev) => [...prev, ...lines.filter(Boolean)]);
+  const addLogs = (...lines: string[]) => setLogs((prev) => [...prev, ...lines.filter(Boolean)]);
 
   useEffect(() => {
     if (logBoxRef.current) {
