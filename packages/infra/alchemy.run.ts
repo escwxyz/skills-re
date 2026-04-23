@@ -52,58 +52,47 @@ const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
 });
 
 // const evaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE", {
-//   name: "skills-re-evaluation-workflow",
-//   adopt: true,
+//   name: "skills-re-v1-evaluation-workflow",
 // });
 
 const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
-  name: "skills-re-repo-sync-workflow",
-  adopt: true,
+  name: "skills-re-v1-repo-sync-workflow",
 });
 
 const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", {
-  name: "skills-re-repo-snapshot-sync-workflow",
-  adopt: true,
+  name: "skills-re-v1-repo-snapshot-sync-workflow",
 });
 
 const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-upload-workflow",
-  adopt: true,
+  name: "skills-re-v1-skills-upload-workflow",
 });
 
 const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-tagging-workflow",
-  adopt: true,
+  name: "skills-re-v1-skills-tagging-workflow",
 });
 
 const skillsCategorizationWorkflowQueue = await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-categorization-workflow",
-  adopt: true,
+  name: "skills-re-v1-skills-categorization-workflow",
 });
 
 const snapshotUploadWorkflowQueue0 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", {
-  name: "skills-re-snapshot-upload-workflow-0",
-  adopt: true,
+  name: "skills-re-v1-snapshot-upload-workflow-0",
 });
 
 const snapshotUploadWorkflowQueue1 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", {
-  name: "skills-re-snapshot-upload-workflow-1",
-  adopt: true,
+  name: "skills-re-v1-snapshot-upload-workflow-1",
 });
 
 const snapshotUploadWorkflowQueue2 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", {
-  name: "skills-re-snapshot-upload-workflow-2",
-  adopt: true,
+  name: "skills-re-v1-snapshot-upload-workflow-2",
 });
 
 const snapshotUploadWorkflowQueue3 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", {
-  name: "skills-re-snapshot-upload-workflow-3",
-  adopt: true,
+  name: "skills-re-v1-snapshot-upload-workflow-3",
 });
 
 const snapshotsArchiveUploadWorkflowQueue = await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
-  name: "skills-re-snapshot-archive-upload-workflow",
-  adopt: true,
+  name: "skills-re-v1-snapshot-archive-upload-workflow",
 });
 
 const workflowQueueEventSources = [
@@ -193,35 +182,35 @@ const workflowBindings = {
   // }),
   REPO_SNAPSHOT_SYNC_WORKFLOW: Workflow("REPO_SNAPSHOT_SYNC_WORKFLOW", {
     className: "RepoSnapshotSyncWorkflow",
-    workflowName: "skills-re-repo-snapshot-sync",
+    workflowName: "skills-re-v1-repo-snapshot-sync",
   }),
   REPO_STATS_SYNC_WORKFLOW: Workflow("REPO_STATS_SYNC_WORKFLOW", {
     className: "RepoStatsSyncWorkflow",
-    workflowName: "skills-re-repo-sync",
+    workflowName: "skills-re-v1-repo-sync",
   }),
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW: Workflow("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW", {
     className: "SnapshotsArchiveUploadWorkflow",
-    workflowName: "skills-re-snapshots-archive-upload",
+    workflowName: "skills-re-v1-snapshots-archive-upload",
   }),
   SNAPSHOT_UPLOAD_WORKFLOW: Workflow("SNAPSHOT_UPLOAD_WORKFLOW", {
     className: "SnapshotUploadWorkflow",
-    workflowName: "skills-re-snapshot-upload",
+    workflowName: "skills-re-v1-snapshot-upload",
   }),
   SKILLS_CATEGORIZATION_WORKFLOW: Workflow("SKILLS_CATEGORIZATION_WORKFLOW", {
     className: "SkillsCategorizationWorkflow",
-    workflowName: "skills-re-skills-categorization",
+    workflowName: "skills-re-v1-skills-categorization",
   }),
   SKILLS_TAGGING_WORKFLOW: Workflow("SKILLS_TAGGING_WORKFLOW", {
     className: "SkillsTaggingWorkflow",
-    workflowName: "skills-re-skills-tagging",
+    workflowName: "skills-re-v1-skills-tagging",
   }),
   SKILLS_UPLOAD_WORKFLOW: Workflow("SKILLS_UPLOAD_WORKFLOW", {
     className: "SkillsUploadWorkflow",
-    workflowName: "skills-re-skills-upload",
+    workflowName: "skills-re-v1-skills-upload",
   }),
   STATIC_AUDIT_BACKFILL_WORKFLOW: Workflow("STATIC_AUDIT_BACKFILL_WORKFLOW", {
     className: "StaticAuditBackfillWorkflow",
-    workflowName: "skills-re-static-audit-backfill",
+    workflowName: "skills-re-v1-static-audit-backfill",
   }),
 } as const;
 
