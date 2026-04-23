@@ -303,10 +303,11 @@ export const server = await Worker("server", {
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
     GH_PAT: alchemy.secret.env.GH_PAT!,
     GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,
-    GITHUB_CLIENT_SECRET: alchemy.env.GH_CLIENT_SECRET ?? alchemy.env.GITHUB_CLIENT_SECRET!,
+    GITHUB_CLIENT_SECRET:
+      alchemy.secret.env.GH_CLIENT_SECRET ?? alchemy.secret.env.GITHUB_CLIENT_SECRET!,
     GITHUB_TOKEN: alchemy.secret.env.GITHUB_TOKEN!,
     GOOGLE_CLIENT_ID: alchemy.env.GOOGLE_CLIENT_ID!,
-    GOOGLE_CLIENT_SECRET: alchemy.env.GOOGLE_CLIENT_SECRET!,
+    GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
