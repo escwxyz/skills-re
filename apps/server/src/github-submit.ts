@@ -76,7 +76,7 @@ const buildSubmitSkill = async (
   return {
     description: frontmatter.description,
     directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : normalizedRoot,
-    entryPath: skillMd.path,
+    entryPath: root.skillMdPath,
     initialSnapshot: {
       files: filesResponse.files,
       sourceCommitDate: Date.parse(overview.commits[0]?.committedDate ?? "") || Date.now(),
@@ -88,7 +88,7 @@ const buildSubmitSkill = async (
     },
     license: overview.repo.licenseName ?? undefined,
     slug: frontmatter.name,
-    sourceLocator: `github:${input.owner}/${input.repo}/${skillMd.path}`,
+    sourceLocator: `github:${input.owner}/${input.repo}/${root.skillMdPath}`,
     sourceType: "github" as const,
     title: frontmatter.name,
   };

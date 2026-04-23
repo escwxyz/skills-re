@@ -145,7 +145,7 @@ describe("createGithubSubmitRuntime", () => {
           {
             description: "Example skill",
             directoryPath: "skills/example/",
-            entryPath: "skill.md",
+            entryPath: "skills/example/skill.md",
             initialSnapshot: {
               files: [
                 {
@@ -162,13 +162,14 @@ describe("createGithubSubmitRuntime", () => {
                 {
                   path: "skill.md",
                   sha: "blob-1",
+                  size: undefined,
                   type: "blob",
                 },
               ],
             },
             license: "MIT",
             slug: "example-skill",
-            sourceLocator: "github:acme/skills/skill.md",
+            sourceLocator: "github:acme/skills/skills/example/skill.md",
             sourceType: "github",
             title: "example-skill",
           },
