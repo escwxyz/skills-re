@@ -27,7 +27,8 @@ export interface SkillClaimContext {
   skillId: SkillId;
 }
 
-const isDefined = <T>(value: T | null | undefined): value is T => value !== null;
+const isDefined = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
 
 export async function listSkillsPageBySyncTime(input?: { cursor?: string; limit?: number }) {
   const limit = input?.limit ?? defaultLimit;
