@@ -33,6 +33,6 @@
     "alchemy": "catalog:",
     "tsdown": "^0.16.5",
     "typescript": "catalog:",
-    "wrangler": "^4.84.1"
+    "wrangler": "catalog:"
   }
 }

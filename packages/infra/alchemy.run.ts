@@ -32,6 +32,7 @@ const db = await D1Database("database", {
 
 const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
   name: "skills-re-snapshots",
+  adopt: true,
   dev: {
     remote: true,
   },
@@ -39,6 +40,7 @@ const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
 
 const archiveFilesBucket = await R2Bucket("ARCHIVE_FILES", {
   name: "skills-re-archives",
+  adopt: true,
   dev: {
     remote: true,
   },
@@ -241,7 +243,7 @@ export const web = await Astro("web", {
   entrypoint: "dist/server/entry.mjs",
   assets: "dist/client",
   compatibility: "node",
-  compatibilityDate: "2026-04-21",
+  compatibilityDate: "2026-03-10",
   bindings: {
     PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
   },
@@ -251,6 +253,7 @@ export const server = await Worker("server", {
   cwd: "../../apps/server",
   entrypoint: "src/index.ts",
   compatibility: "node",
+  compatibilityDate: "2026-03-10",
   bindings: {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,
