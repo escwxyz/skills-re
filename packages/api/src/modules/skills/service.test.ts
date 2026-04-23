@@ -16,7 +16,7 @@ describe("skills service", () => {
           limit: input?.limit,
         });
 
-        return {
+        return Promise.resolve({
           continueCursor: encodeRepoCursor({
             id: "skill-2",
             syncTime: 456,
@@ -31,7 +31,7 @@ describe("skills service", () => {
               title: "Widget",
             },
           ],
-        };
+        });
       },
     });
 
@@ -73,15 +73,16 @@ describe("skills service", () => {
 
   test("maps author profiles into the public author shape", async () => {
     const service = createSkillsService({
-      findAuthorByHandle: (handle) => ({
-        avatarUrl: null,
-        githubUrl: `https://github.com/${handle}`,
-        handle,
-        isVerified: 1,
-        name: "Widget Author",
-        repoCount: 2,
-        skillCount: 3,
-      }),
+      findAuthorByHandle: (handle) =>
+        Promise.resolve({
+          avatarUrl: null,
+          githubUrl: `https://github.com/${handle}`,
+          handle,
+          isVerified: 1,
+          name: "Widget Author",
+          repoCount: 2,
+          skillCount: 3,
+        }),
     });
 
     await expect(service.getAuthorByHandle({ handle: "acme" })).resolves.toEqual({
@@ -100,15 +101,18 @@ describe("skills service", () => {
     const service = createSkillsService({
       claimSkillById: (input) => {
         claimed.push(input);
+        return Promise.resolve();
       },
       findSkillClaimContextBySlug: (slug) =>
-        slug === "widget"
-          ? {
-              claimedUserId: null,
-              repoOwnerHandle: "acme",
-              skillId: "skill-1",
-            }
-          : null,
+        Promise.resolve(
+          slug === "widget"
+            ? {
+                claimedUserId: null,
+                repoOwnerHandle: "acme",
+                skillId: "skill-1",
+              }
+            : null,
+        ),
     });
 
     await expect(
@@ -134,12 +138,14 @@ describe("skills service", () => {
     const service = createSkillsService({
       claimSkillById: (input) => {
         claimed.push(input);
+        return Promise.resolve();
       },
-      findSkillClaimContextBySlug: () => ({
-        claimedUserId: "user-1",
-        repoOwnerHandle: "acme",
-        skillId: "skill-1",
-      }),
+      findSkillClaimContextBySlug: () =>
+        Promise.resolve({
+          claimedUserId: "user-1",
+          repoOwnerHandle: "acme",
+          skillId: "skill-1",
+        }),
     });
 
     await expect(
@@ -157,11 +163,12 @@ describe("skills service", () => {
 
   test("rejects claims when the github handle does not match the repo owner", async () => {
     const service = createSkillsService({
-      findSkillClaimContextBySlug: () => ({
-        claimedUserId: null,
-        repoOwnerHandle: "acme",
-        skillId: "skill-1",
-      }),
+      findSkillClaimContextBySlug: () =>
+        Promise.resolve({
+          claimedUserId: null,
+          repoOwnerHandle: "acme",
+          skillId: "skill-1",
+        }),
     });
 
     await expect(
@@ -190,7 +197,7 @@ describe("skills service", () => {
     const service = createSkillsService({
       searchSkillsPageByFilters: (input) => {
         calls.push(input);
-        return {
+        return Promise.resolve({
           continueCursor: "cursor-2",
           isDone: false,
           page: [
@@ -216,7 +223,7 @@ describe("skills service", () => {
               viewsAllTime: 8,
             },
           ],
-        };
+        });
       },
     });
 
@@ -281,30 +288,32 @@ describe("skills service", () => {
   test("resolves ai search results into the public search shape", async () => {
     const service = createSkillsService({
       findSkillByPath: (input) =>
-        input.authorHandle === "acme" && input.skillSlug === "widget"
-          ? {
-              authorHandle: "acme",
-              createdAt: 11,
-              description: "Widget skill",
-              downloadsAllTime: 22,
-              downloadsTrending: 33,
-              forkCount: 44,
-              id: "skill-1",
-              isVerified: true,
-              latestVersion: "1.0.0",
-              license: "MIT",
-              primaryCategory: "productivity",
-              repoName: "skills",
-              repoUrl: "https://github.com/acme/skills",
-              slug: "widget",
-              stargazerCount: 55,
-              syncTime: 66,
-              title: "Widget",
-              updatedAt: 77,
-              viewsAllTime: 88,
-            }
-          : null,
-      findSkillBySlug: () => null,
+        Promise.resolve(
+          input.authorHandle === "acme" && input.skillSlug === "widget"
+            ? {
+                authorHandle: "acme",
+                createdAt: 11,
+                description: "Widget skill",
+                downloadsAllTime: 22,
+                downloadsTrending: 33,
+                forkCount: 44,
+                id: "skill-1",
+                isVerified: true,
+                latestVersion: "1.0.0",
+                license: "MIT",
+                primaryCategory: "productivity",
+                repoName: "skills",
+                repoUrl: "https://github.com/acme/skills",
+                slug: "widget",
+                stargazerCount: 55,
+                syncTime: 66,
+                title: "Widget",
+                updatedAt: 77,
+                viewsAllTime: 88,
+              }
+            : null,
+        ),
+      findSkillBySlug: () => Promise.resolve(null),
     });
 
     const result = await service.search(
@@ -315,7 +324,7 @@ describe("skills service", () => {
       },
       {
         search() {
-          return {
+          return Promise.resolve({
             data: [
               {
                 content: [{ text: "Widget docs" }],
@@ -328,7 +337,7 @@ describe("skills service", () => {
             ],
             has_more: false,
             search_query: "widget",
-          };
+          });
         },
       },
     );
@@ -375,10 +384,10 @@ describe("skills service", () => {
         {
           search(input) {
             calls.push(input);
-            return {
+            return Promise.resolve({
               data: [],
               has_more: true,
-            };
+            });
           },
         },
       ),
@@ -434,7 +443,7 @@ describe("skills service", () => {
     const result = await uploadSkills(payload, {
       enqueue: (input) => {
         scheduled.push(input);
-        return { workId: "workflow-1" };
+        return Promise.resolve({ workId: "workflow-1" });
       },
     });
 
@@ -459,31 +468,34 @@ describe("skills service", () => {
     const scheduledSnapshotHistory: unknown[] = [];
 
     const service = createSkillsService({
-      checkSkillExistingBySlug: () => false,
+      checkSkillExistingBySlug: () => Promise.resolve(false),
       createSkill: (input) => {
         calls.push({ createSkill: input });
-        return "skill-1";
+        return Promise.resolve("skill-1");
       },
       createSnapshot: (input) => {
         calls.push({ createSnapshot: input });
-        return "snapshot-1";
+        return Promise.resolve("snapshot-1");
       },
       deprecateSnapshotsBeyondLimit: (input) => {
         calls.push({ deprecateSnapshotsBeyondLimit: input });
+        return Promise.resolve();
       },
       ensureRepo: (input) => {
         calls.push({ ensureRepo: input });
-        return "repo-1";
+        return Promise.resolve("repo-1");
       },
       setSkillLatestSnapshot: (input) => {
         calls.push({ setSkillLatestSnapshot: input });
+        return Promise.resolve();
       },
       syncSkillTags: (input) => {
         calls.push({ syncSkillTags: input });
+        return Promise.resolve();
       },
       uploadSnapshotFiles: (input) => {
         calls.push({ uploadSnapshotFiles: input });
-        return { workId: "snapshot-upload-1" };
+        return Promise.resolve({ workId: "snapshot-upload-1" });
       },
     });
 
@@ -543,17 +555,17 @@ describe("skills service", () => {
         scheduleSkillsTagging: {
           enqueue: (input) => {
             scheduledTagging.push(input);
-            return { workId: "tagging-1" };
+            return Promise.resolve({ workId: "tagging-1" });
           },
         },
         snapshotHistory: {
           createHistoricalSnapshots: (input) => {
             scheduledSnapshotHistory.push(input);
-            return null;
+            return Promise.resolve(null);
           },
         },
         snapshotUploadScheduler: {
-          enqueue: () => ({ workId: "snapshot-upload-1" }),
+          enqueue: () => Promise.resolve({ workId: "snapshot-upload-1" }),
         },
       },
     );
@@ -667,7 +679,7 @@ describe("skills service", () => {
             input,
             payload: null,
           });
-          return {
+          return Promise.resolve({
             payload: {
               recentCommits: [{ sha: "abc123" }],
               repo: {
@@ -703,7 +715,7 @@ describe("skills service", () => {
                 },
               ],
             },
-          };
+          });
         },
       },
       {
@@ -712,7 +724,7 @@ describe("skills service", () => {
             input: null,
             payload: input,
           });
-          return { workId: "workflow-1" };
+          return Promise.resolve({ workId: "workflow-1" });
         },
       },
     );
@@ -735,49 +747,50 @@ describe("skills service", () => {
         skillRootPaths: ["skills/selected"],
       },
       {
-        buildPayload: () => ({
-          payload: {
-            skills: [
-              {
-                description: "Selected skill",
-                directoryPath: "skills/selected/",
-                entryPath: "skills/selected/skill.md",
-                initialSnapshot: {
-                  files: [{ content: "selected", path: "skills/selected/skill.md" }],
-                  sourceCommitDate: 1,
-                  sourceCommitSha: "sha-selected",
-                  sourceRef: "main",
-                  tree: [{ path: "skills/selected/skill.md", sha: "sha-selected", type: "blob" }],
+        buildPayload: () =>
+          Promise.resolve({
+            payload: {
+              skills: [
+                {
+                  description: "Selected skill",
+                  directoryPath: "skills/selected/",
+                  entryPath: "skills/selected/skill.md",
+                  initialSnapshot: {
+                    files: [{ content: "selected", path: "skills/selected/skill.md" }],
+                    sourceCommitDate: 1,
+                    sourceCommitSha: "sha-selected",
+                    sourceRef: "main",
+                    tree: [{ path: "skills/selected/skill.md", sha: "sha-selected", type: "blob" }],
+                  },
+                  slug: "selected",
+                  sourceLocator: "github:example/skills/skills/selected/skill.md",
+                  sourceType: "github",
+                  title: "Selected",
                 },
-                slug: "selected",
-                sourceLocator: "github:example/skills/skills/selected/skill.md",
-                sourceType: "github",
-                title: "Selected",
-              },
-              {
-                description: "Ignored skill",
-                directoryPath: "skills/ignored/",
-                entryPath: "skills/ignored/skill.md",
-                initialSnapshot: {
-                  files: [{ content: "ignored", path: "skills/ignored/skill.md" }],
-                  sourceCommitDate: 1,
-                  sourceCommitSha: "sha-ignored",
-                  sourceRef: "main",
-                  tree: [{ path: "skills/ignored/skill.md", sha: "sha-ignored", type: "blob" }],
+                {
+                  description: "Ignored skill",
+                  directoryPath: "skills/ignored/",
+                  entryPath: "skills/ignored/skill.md",
+                  initialSnapshot: {
+                    files: [{ content: "ignored", path: "skills/ignored/skill.md" }],
+                    sourceCommitDate: 1,
+                    sourceCommitSha: "sha-ignored",
+                    sourceRef: "main",
+                    tree: [{ path: "skills/ignored/skill.md", sha: "sha-ignored", type: "blob" }],
+                  },
+                  slug: "ignored",
+                  sourceLocator: "github:example/skills/skills/ignored/skill.md",
+                  sourceType: "github",
+                  title: "Ignored",
                 },
-                slug: "ignored",
-                sourceLocator: "github:example/skills/skills/ignored/skill.md",
-                sourceType: "github",
-                title: "Ignored",
-              },
-            ],
-          },
-        }),
+              ],
+            },
+          }),
       },
       {
         enqueue: (input) => {
           scheduledPayloads.push(input);
-          return { workId: "workflow-selected" };
+          return Promise.resolve({ workId: "workflow-selected" });
         },
       },
     );
@@ -796,7 +809,7 @@ describe("skills service", () => {
     const service = createSkillsService({
       listSkillsHistoryInfoByIds: (skillIds) => {
         calls.push(skillIds);
-        return [
+        return Promise.resolve([
           {
             directoryPath: "skills/example",
             entryPath: "skill.md",
@@ -805,7 +818,7 @@ describe("skills service", () => {
             latestName: "Example",
             latestVersion: "1.0.0",
           },
-        ];
+        ]);
       },
     });
 
@@ -825,16 +838,17 @@ describe("skills service", () => {
 
   test("normalizes nullable snapshot versions when returning history info", async () => {
     const service = createSkillsService({
-      listSkillsHistoryInfoByIds: () => [
-        {
-          directoryPath: "skills/example",
-          entryPath: "skill.md",
-          id: "skill-1",
-          latestDescription: "Example skill",
-          latestName: "Example",
-          latestVersion: null,
-        },
-      ],
+      listSkillsHistoryInfoByIds: () =>
+        Promise.resolve([
+          {
+            directoryPath: "skills/example",
+            entryPath: "skill.md",
+            id: "skill-1",
+            latestDescription: "Example skill",
+            latestName: "Example",
+            latestVersion: null,
+          },
+        ]),
     });
 
     await expect(service.getSkillsHistoryInfo({ skillIds: ["skill-1"] })).resolves.toEqual([
