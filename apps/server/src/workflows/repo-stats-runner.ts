@@ -43,6 +43,36 @@ const enqueueRepoSnapshotSyncBatch = async (
     ),
   );
 
+  const failed = settled
+    .map((item, index) => ({
+      item,
+      repo: changedRepos[index],
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        item: PromiseRejectedResult;
+        repo: {
+          repoOwner: string;
+          repoName: string;
+          updatedAt: number;
+        };
+      } => entry.item.status === "rejected",
+    );
+
+  if (failed.length > 0) {
+    throw new Error(
+      [
+        "Failed to enqueue one or more repo snapshot sync jobs.",
+        ...failed.map(({ item, repo }) => {
+          const reason = String(item.reason);
+          return `- ${repo.repoOwner}/${repo.repoName}: ${reason}`;
+        }),
+      ].join("\n"),
+    );
+  }
+
   return settled.filter((item) => item.status === "fulfilled").length;
 };
 
@@ -102,7 +132,7 @@ export const runRepoStatsSyncWorkflow = async (
       const scheduled = await step.do(
         `enqueue-repo-snapshot-sync-${processedPages}`,
         workflowStepRetryPolicy.repoSnapshotEnqueue,
-        async () => await enqueueRepoSnapshotSyncBatch(snapshotWorkflowScheduler, result.changed),
+        () => enqueueRepoSnapshotSyncBatch(snapshotWorkflowScheduler, result.changed),
       );
       scheduledSnapshotSyncCount += scheduled;
     }
