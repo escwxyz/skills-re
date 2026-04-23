@@ -51,47 +51,65 @@ const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills_re_download_events",
 });
 
-// const evaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE", {
+// Legacy queues – owned by the skills.re worker; kept here so Alchemy does not delete them.
+// DO NOT add these as eventSources for the server worker below.
+// const _legacyEvaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE", {
+//   name: "skills-re-evaluation-workflow",
+//   adopt: true,
+// });
+await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", { name: "skills-re-repo-sync-workflow", adopt: true });
+await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", { name: "skills-re-repo-snapshot-sync-workflow", adopt: true });
+await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", { name: "skills-re-skills-upload-workflow", adopt: true });
+await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", { name: "skills-re-skills-tagging-workflow", adopt: true });
+await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", { name: "skills-re-skills-categorization-workflow", adopt: true });
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", { name: "skills-re-snapshot-upload-workflow-0", adopt: true });
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", { name: "skills-re-snapshot-upload-workflow-1", adopt: true });
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", { name: "skills-re-snapshot-upload-workflow-2", adopt: true });
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", { name: "skills-re-snapshot-upload-workflow-3", adopt: true });
+await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", { name: "skills-re-snapshot-archive-upload-workflow", adopt: true });
+
+// New queues for this worker (skills-re-server-prod). Fresh Cloudflare IDs, no consumer conflicts.
+// const evaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE_V1", {
 //   name: "skills-re-v1-evaluation-workflow",
 // });
 
-const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
+const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-sync-workflow",
 });
 
-const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", {
+const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-snapshot-sync-workflow",
 });
 
-const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
+const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-upload-workflow",
 });
 
-const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
+const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-tagging-workflow",
 });
 
-const skillsCategorizationWorkflowQueue = await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", {
+const skillsCategorizationWorkflowQueue = await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-categorization-workflow",
 });
 
-const snapshotUploadWorkflowQueue0 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", {
+const snapshotUploadWorkflowQueue0 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_V1_0", {
   name: "skills-re-v1-snapshot-upload-workflow-0",
 });
 
-const snapshotUploadWorkflowQueue1 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", {
+const snapshotUploadWorkflowQueue1 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_V1_1", {
   name: "skills-re-v1-snapshot-upload-workflow-1",
 });
 
-const snapshotUploadWorkflowQueue2 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", {
+const snapshotUploadWorkflowQueue2 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_V1_2", {
   name: "skills-re-v1-snapshot-upload-workflow-2",
 });
 
-const snapshotUploadWorkflowQueue3 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", {
+const snapshotUploadWorkflowQueue3 = await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_V1_3", {
   name: "skills-re-v1-snapshot-upload-workflow-3",
 });
 
-const snapshotsArchiveUploadWorkflowQueue = await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
+const snapshotsArchiveUploadWorkflowQueue = await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-snapshot-archive-upload-workflow",
 });
 
