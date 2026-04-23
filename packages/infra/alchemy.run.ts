@@ -21,6 +21,7 @@ config({ path: "../../apps/web/.env" });
 config({ path: "../../apps/server/.env" });
 
 const app = await alchemy("skills-re", {
+  adopt: process.env.NODE_ENV === "production",
   stateStore:
     process.env.NODE_ENV === "production" ? (scope) => new CloudflareStateStore(scope) : undefined,
 });
