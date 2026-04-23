@@ -241,6 +241,7 @@ export const web = await Astro("web", {
   entrypoint: "dist/server/entry.mjs",
   assets: "dist/client",
   compatibility: "node",
+  compatibilityDate: "2026-04-21",
   bindings: {
     PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
   },

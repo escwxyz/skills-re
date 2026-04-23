@@ -1,9 +1,10 @@
 import { defineConfig } from "oxlint";
+
 import core from "ultracite/oxlint/core";
+import astro from "ultracite/oxlint/astro";
 
 export default defineConfig({
-  extends: [core],
-  overrides: [],
+  extends: [core, astro],
   rules: {
     "sort-keys": "off",
     "eslint/no-use-before-define": "off",
