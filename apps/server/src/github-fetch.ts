@@ -87,8 +87,7 @@ interface GithubFetchResult {
   tree: { path: string; sha: string; size?: number; type: "blob" | "tree" }[];
 }
 
-const getGithubToken = (env: Partial<Pick<Env, "GH_PAT" | "GITHUB_TOKEN">>) =>
-  env.GH_PAT || env.GITHUB_TOKEN || null;
+const getGithubToken = (env: Partial<Pick<Env, "GH_PAT">>) => env.GH_PAT || null;
 
 const buildHeaders = (token: string | null) => {
   const headers = new Headers({
@@ -310,7 +309,7 @@ const fetchRepoTree = async (
 };
 
 export function createGithubFetchRuntime(
-  env: Partial<Pick<Env, "GH_PAT" | "GITHUB_TOKEN">>,
+  env: Partial<Pick<Env, "GH_PAT">>,
   options: CreateGithubFetchRuntimeOptions = {},
 ): GithubFetchRuntime {
   const fetchImpl = options.fetch ?? fetch;

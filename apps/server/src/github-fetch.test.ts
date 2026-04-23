@@ -34,7 +34,6 @@ describe("createGithubFetchRuntime", () => {
     const runtime = createGithubFetchRuntime(
       {
         GH_PAT: "test-token",
-        GITHUB_TOKEN: "",
       },
       {
         fetch: (async (input: string) => {
@@ -152,7 +151,7 @@ describe("createGithubFetchRuntime", () => {
       ),
     );
 
-    await expect(fetchPromise).resolves.toMatchObject({
+    expect(await fetchPromise).resolves.toMatchObject({
       invalidSkills: [],
       skills: [
         {
@@ -173,7 +172,6 @@ describe("createGithubFetchRuntime", () => {
     const runtime = createGithubFetchRuntime(
       {
         GH_PAT: "test-token",
-        GITHUB_TOKEN: "",
       },
       {
         fetch: (async (input: string) => {
@@ -255,8 +253,8 @@ describe("createGithubFetchRuntime", () => {
       },
     );
 
-    await expect(
-      runtime.fetchRepo({
+    expect(
+      await runtime.fetchRepo({
         githubUrl: "https://github.com/acme/skills",
       }),
     ).resolves.toEqual({
@@ -320,11 +318,10 @@ describe("createGithubFetchRuntime", () => {
   test("rejects invalid github urls", async () => {
     const runtime = createGithubFetchRuntime({
       GH_PAT: "",
-      GITHUB_TOKEN: "",
     });
 
-    await expect(
-      runtime.fetchRepo({
+    expect(
+      await runtime.fetchRepo({
         githubUrl: "https://example.com/acme/skills",
       }),
     ).rejects.toThrow("Invalid GitHub repository URL.");

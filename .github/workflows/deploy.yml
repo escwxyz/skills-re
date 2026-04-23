@@ -90,7 +90,6 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GH_CLIENT_ID: ${{ vars.GH_CLIENT_ID }}
           GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

@@ -305,7 +305,6 @@ export const server = await Worker("server", {
     GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,
     GITHUB_CLIENT_SECRET:
       alchemy.secret.env.GH_CLIENT_SECRET ?? alchemy.secret.env.GITHUB_CLIENT_SECRET!,
-    GITHUB_TOKEN: alchemy.secret.env.GITHUB_TOKEN!,
     GOOGLE_CLIENT_ID: alchemy.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
