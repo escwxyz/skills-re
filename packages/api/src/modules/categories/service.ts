@@ -1,5 +1,6 @@
 import { toSearchSkillItem } from "../shared/search-skill";
 import type { SearchSkillRow } from "../shared/search-skill";
+import { createDepGetter } from "../shared/deps";
 import {
   generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl,
   skillCategorySlugSchema,
@@ -149,27 +150,23 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
     return await defaultDepsPromise;
   };
 
+  const getDep = createDepGetter(overrides, getDefaultDeps);
+
   const categoriesService = {
     async countCategories() {
-      const deps = await getDefaultDeps();
-
-      const countCategories = overrides.countCategories ?? deps.countCategories;
+      const countCategories = await getDep("countCategories");
       return await countCategories();
     },
 
     async getCategoryBySlug(input: { slug: string }) {
-      const deps = await getDefaultDeps();
-
-      const findCategoryBySlug = overrides.findCategoryBySlug ?? deps.findCategoryBySlug;
+      const findCategoryBySlug = await getDep("findCategoryBySlug");
       const row = await findCategoryBySlug(input.slug);
       if (!(row && row.status === "active")) {
         return null;
       }
 
-      const getRelatedTagsByCategorySlug =
-        overrides.getRelatedTagsByCategorySlug ?? deps.getRelatedTagsByCategorySlug;
-      const getTopSkillsByCategorySlug =
-        overrides.getTopSkillsByCategorySlug ?? deps.getTopSkillsByCategorySlug;
+      const getRelatedTagsByCategorySlug = await getDep("getRelatedTagsByCategorySlug");
+      const getTopSkillsByCategorySlug = await getDep("getTopSkillsByCategorySlug");
 
       const relatedTags = await getRelatedTagsByCategorySlug(input.slug);
       const topSkills = await getTopSkillsByCategorySlug(input.slug);
@@ -189,9 +186,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
     },
 
     async listCategories(input?: { all?: boolean; limit?: number }) {
-      const deps = await getDefaultDeps();
-
-      const listCategories = overrides.listCategories ?? deps.listCategories;
+      const listCategories = await getDep("listCategories");
       const categories = await listCategories(input);
       return categories
         .filter((row) => row.status === "active")
@@ -204,18 +199,14 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
     },
 
     async listCategoriesForAi(input?: { limit?: number }) {
-      const deps = await getDefaultDeps();
-      const listCategoriesForAi = overrides.listCategoriesForAi ?? deps.listCategoriesForAi;
+      const listCategoriesForAi = await getDep("listCategoriesForAi");
       const categories = await listCategoriesForAi(input);
       return categories.filter((slug) => typeof slug === "string");
     },
 
     async recomputeCount(categoryId: string) {
-      const deps = await getDefaultDeps();
-
-      const computeSkillCountForCategory =
-        overrides.computeSkillCountForCategory ?? deps.computeSkillCountForCategory;
-      const patchCategoryCount = overrides.patchCategoryCount ?? deps.patchCategoryCount;
+      const computeSkillCountForCategory = await getDep("computeSkillCountForCategory");
+      const patchCategoryCount = await getDep("patchCategoryCount");
       const typedCategoryId = categoryId as CategoryId;
       const nextCount = await computeSkillCountForCategory(typedCategoryId);
       await patchCategoryCount({
@@ -250,15 +241,13 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
         return { failedCount: 0, updatedCount: 0 };
       }
 
-      const deps = await getDefaultDeps();
-
-      const listSkillCategorizationTargetsByIds =
-        overrides.listSkillCategorizationTargetsByIds ?? deps.listSkillCategorizationTargetsByIds;
-      const generateSkillCategoriesBatch =
-        overrides.generateSkillCategoriesBatch ?? deps.generateSkillCategoriesBatch;
-      const updateSkillCategory = overrides.updateSkillCategory ?? deps.updateSkillCategory;
-      const findCategoryBySlug = overrides.findCategoryBySlug ?? deps.findCategoryBySlug;
-      const listDefinitionsForAi = overrides.listDefinitionsForAi ?? deps.listDefinitionsForAi;
+      const listSkillCategorizationTargetsByIds = await getDep(
+        "listSkillCategorizationTargetsByIds",
+      );
+      const generateSkillCategoriesBatch = await getDep("generateSkillCategoriesBatch");
+      const updateSkillCategory = await getDep("updateSkillCategory");
+      const findCategoryBySlug = await getDep("findCategoryBySlug");
+      const listDefinitionsForAi = await getDep("listDefinitionsForAi");
 
       const targets = await listSkillCategorizationTargetsByIds(skillIds);
       if (targets.length === 0) {

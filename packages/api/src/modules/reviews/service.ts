@@ -1,4 +1,5 @@
 import { asSkillId, asUserId } from "@skills-re/db/utils";
+import { createDepGetter } from "../shared/deps";
 
 import type {
   ReviewWithAuthor,
@@ -44,12 +45,12 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     return await defaultDepsPromise;
   };
 
+  const getDep = createDepGetter(overrides, getDefaultDeps);
+
   return {
     async create(input: { skillId: string; userId: string; rating: number; content: string }) {
-      const deps = await getDefaultDeps();
-      const createReviewFn = overrides.createReview ?? deps.createReview;
-      const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ?? deps.getReviewBySkillIdAndUserId;
+      const createReviewFn = await getDep("createReview");
+      const getReviewBySkillIdAndUserIdFn = await getDep("getReviewBySkillIdAndUserId");
 
       const skillId = asSkillId(input.skillId);
       const userId = asUserId(input.userId);
@@ -81,9 +82,7 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     },
 
     async getMineBySkill(input: { skillId: string; userId: string }) {
-      const deps = await getDefaultDeps();
-      const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ?? deps.getReviewBySkillIdAndUserId;
+      const getReviewBySkillIdAndUserIdFn = await getDep("getReviewBySkillIdAndUserId");
       const row = await getReviewBySkillIdAndUserIdFn({
         skillId: asSkillId(input.skillId),
         userId: asUserId(input.userId),
@@ -93,8 +92,7 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     },
 
     async listBySkill(input: { skillId: string; limit?: number }) {
-      const deps = await getDefaultDeps();
-      const listReviewsBySkillIdFn = overrides.listReviewsBySkillId ?? deps.listReviewsBySkillId;
+      const listReviewsBySkillIdFn = await getDep("listReviewsBySkillId");
       const rows = await listReviewsBySkillIdFn({
         limit: input.limit,
         skillId: asSkillId(input.skillId),
