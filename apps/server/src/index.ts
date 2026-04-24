@@ -32,6 +32,17 @@ const RPC_PREFIX = "/rpc";
 const normalizeUnknownError = (error: unknown) =>
   error instanceof Error ? error : new Error(String(error));
 
+const getCompletedStatus = (error?: unknown, responseStatus = 500) => {
+  if (error && typeof error === "object") {
+    const { status } = error as { status?: unknown };
+    if (typeof status === "number") {
+      return status;
+    }
+  }
+
+  return responseStatus >= 200 && responseStatus < 600 ? responseStatus : 500;
+};
+
 const app = new Hono<{
   Bindings: Env;
   Variables: {
@@ -60,12 +71,17 @@ app.use("/*", async (c, next) => {
     url: `${requestUrl.origin}${requestUrl.pathname}`,
   });
 
+  let completedStatus = 500;
   try {
     await next();
+    completedStatus = c.res.status;
+  } catch (error) {
+    completedStatus = getCompletedStatus(error, c.res.status);
+    throw error;
   } finally {
     logger.info("http.request.completed", {
       durationMs: Date.now() - startedAt,
-      status: c.res.status,
+      status: completedStatus,
     });
   }
 });
