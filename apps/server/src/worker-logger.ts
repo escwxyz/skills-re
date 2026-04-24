@@ -65,9 +65,7 @@ const normalizeFields = (fields: WorkerLogFields) => {
   const normalized: Record<string, WorkerLogValue | undefined> = {};
 
   for (const [key, value] of Object.entries(fields)) {
-    const fieldValue = value as WorkerLogValue | Error | undefined;
-    normalized[key] =
-      fieldValue instanceof Error ? normalizeError(fieldValue) : fieldValue;
+    normalized[key] = value instanceof Error ? normalizeError(value) : value;
   }
 
   return normalized;
