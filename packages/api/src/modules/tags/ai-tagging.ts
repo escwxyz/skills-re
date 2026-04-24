@@ -92,6 +92,10 @@ export const normalizeSkillTags = (tags: string[]) => {
 
 const isBlockedTagSlug = (slug: string) => BLOCKED_TAG_SLUGS.has(slug);
 
+const isDefinedTag = (
+  value: { matchScore: number; slug: string; source: "existing" | "new" } | null,
+): value is { matchScore: number; slug: string; source: "existing" | "new" } => value !== null;
+
 const compressTaggingContent = (content: string) => {
   const trimmed = content.trim();
   if (trimmed.length <= MAX_TAGGING_CONTENT_CHARS) {
@@ -390,15 +394,7 @@ export const generateSkillTagsBatch = async (
               source,
             };
           })
-          .filter(
-            (
-              value,
-            ): value is {
-              slug: string;
-              source: "existing" | "new";
-              matchScore: number;
-            } => Boolean(value),
-          );
+          .filter(isDefinedTag);
 
         const unique: {
           slug: string;

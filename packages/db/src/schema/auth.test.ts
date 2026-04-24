@@ -2,16 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import {
-  accountsRelations,
-  accountsTable,
-  authTables,
-  sessionsRelations,
-  sessionsTable,
-  usersRelations,
-  usersTable,
-  verificationsTable,
-} from "./auth";
+import { accountsTable, authTables, sessionsTable, usersTable, verificationsTable } from "./auth";
+import { accountsRelations, sessionsRelations, usersRelations } from "./relations";
 
 describe("auth schema", () => {
   test("exports the auth tables and relations", () => {

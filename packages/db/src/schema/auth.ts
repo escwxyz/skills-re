@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { baseTableColumns, timestampMsColumn } from "../utils";
@@ -107,26 +106,6 @@ export const authTables = {
   users: usersTable,
   verifications: verificationsTable,
 } as const;
-
-export const usersRelations = relations(usersTable, ({ many }) => ({
-  accounts: many(accountsTable),
-  // apiKeys: many(apikeysTable),
-  sessions: many(sessionsTable),
-}));
-
-export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
-  user: one(usersTable, {
-    fields: [sessionsTable.userId],
-    references: [usersTable.id],
-  }),
-}));
-
-export const accountsRelations = relations(accountsTable, ({ one }) => ({
-  user: one(usersTable, {
-    fields: [accountsTable.userId],
-    references: [usersTable.id],
-  }),
-}));
 
 // export const apikeysRelations = relations(apikeysTable, ({ one }) => ({
 //   user: one(usersTable, {

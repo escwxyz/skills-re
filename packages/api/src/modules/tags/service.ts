@@ -1,5 +1,6 @@
 import { toSearchSkillItem } from "../shared/search-skill";
 import type { SearchSkillRow } from "../shared/search-skill";
+import { createDepGetter } from "../shared/deps";
 
 import { getIndexableTagMinCount, isTagIndexable } from "./indexable";
 import {
@@ -110,7 +111,6 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
         removeSkillTagLinks,
       } = await import("./repo");
 
-      const { asSkillId } = await import("@skills-re/db/utils");
       const skillId = asSkillId(input.skillId);
       const skill = await getSkillById(skillId);
       if (!skill) {
@@ -135,7 +135,7 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
             continue;
           }
           const existing = await findTagsBySlugs([slug]);
-          const existingTag = existing[0];
+          const [existingTag] = existing;
           if (existingTag) {
             slugToId.set(slug, existingTag.id);
           }
@@ -144,7 +144,7 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
 
       const desiredTagIds = normalizedTags
         .map((slug) => slugToId.get(slug))
-        .filter((value): value is TagId => value != null);
+        .filter((value): value is TagId => value !== null);
       const desiredSet = new Set(desiredTagIds);
       const add = desiredTagIds.filter((id) => !existingTagIds.has(id));
       const remove = [...existingTagIds].filter((id) => !desiredSet.has(id));
@@ -190,26 +190,24 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
     return await defaultDepsPromise;
   };
 
+  const getDep = createDepGetter(overrides, getDefaultDeps);
+
   const tagsService = {
     async count() {
-      const countTags = overrides.countTags ?? (await getDefaultDeps()).countTags;
+      const countTags = await getDep("countTags");
       return await countTags();
     },
 
     async getBySlug(input: { slug: string }) {
-      const findTagBySlug = overrides.findTagBySlug ?? (await getDefaultDeps()).findTagBySlug;
+      const findTagBySlug = await getDep("findTagBySlug");
       const row = await findTagBySlug(input.slug);
       if (!(row && row.status === "active")) {
         return null;
       }
 
-      const getRelatedCategoriesByTagSlug =
-        overrides.getRelatedCategoriesByTagSlug ??
-        (await getDefaultDeps()).getRelatedCategoriesByTagSlug;
-      const getRelatedTagsByTagSlug =
-        overrides.getRelatedTagsByTagSlug ?? (await getDefaultDeps()).getRelatedTagsByTagSlug;
-      const getTopSkillsByTagSlug =
-        overrides.getTopSkillsByTagSlug ?? (await getDefaultDeps()).getTopSkillsByTagSlug;
+      const getRelatedCategoriesByTagSlug = await getDep("getRelatedCategoriesByTagSlug");
+      const getRelatedTagsByTagSlug = await getDep("getRelatedTagsByTagSlug");
+      const getTopSkillsByTagSlug = await getDep("getTopSkillsByTagSlug");
       const minCount = getIndexableTagMinCount();
 
       const [relatedCategories, relatedTags, topSkills] = await Promise.all([
@@ -237,8 +235,9 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
     },
 
     async list(input?: { all?: boolean; limit?: number }) {
-      const listTags = overrides.listTags ?? (await getDefaultDeps()).listTags;
-      return (await listTags(input))
+      const listTags = await getDep("listTags");
+      const rows = await listTags(input);
+      return rows
         .filter((row) => row.status === "active")
         .toSorted((left, right) => {
           if (right.count !== left.count) {
@@ -249,13 +248,13 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
     },
 
     async listForSeo(input?: { limit?: number }) {
-      const listTagsForSeo = overrides.listTagsForSeo ?? (await getDefaultDeps()).listTagsForSeo;
-      return (await listTagsForSeo(input?.limit)).filter((row) => row.status === "active");
+      const listTagsForSeo = await getDep("listTagsForSeo");
+      const rows = await listTagsForSeo(input?.limit);
+      return rows.filter((row) => row.status === "active");
     },
 
     async listIndexable(input?: { limit?: number; minCount?: number }) {
-      const listIndexableTags =
-        overrides.listIndexableTags ?? (await getDefaultDeps()).listIndexableTags;
+      const listIndexableTags = await getDep("listIndexableTags");
       const minCount = input?.minCount ?? getIndexableTagMinCount();
       const rows = await listIndexableTags(input?.limit);
       return rows.filter((row) => row.status === "active" && isTagIndexable(row.count, minCount));
@@ -266,8 +265,8 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
       skillId: string;
       tags: string[];
     }) {
-      const syncSkillTags = overrides.syncSkillTags ?? (await getDefaultDeps()).syncSkillTags;
-      return await syncSkillTags(input);
+      const syncFn = await getDep("syncSkillTags");
+      return await syncFn(input);
     },
 
     async syncSkillTagsFromAi(input: {
@@ -290,9 +289,8 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
     },
 
     async recomputeCount(tagId: string) {
-      const computeSkillCountForTag =
-        overrides.computeSkillCountForTag ?? (await getDefaultDeps()).computeSkillCountForTag;
-      const patchTagCount = overrides.patchTagCount ?? (await getDefaultDeps()).patchTagCount;
+      const computeSkillCountForTag = await getDep("computeSkillCountForTag");
+      const patchTagCount = await getDep("patchTagCount");
       const typedTagId = tagId as TagId;
       const nextCount = await computeSkillCountForTag(typedTagId);
       await patchTagCount({
@@ -319,25 +317,18 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
         return { failedCount: 0, updatedCount: 0 };
       }
 
-      const listSkillTaggingTargetsByIds =
-        overrides.listSkillTaggingTargetsByIds ??
-        (await getDefaultDeps()).listSkillTaggingTargetsByIds;
-      const readSnapshotFileContent =
-        overrides.readSnapshotFileContent ?? (await getDefaultDeps()).readSnapshotFileContent;
-      const generateSkillTagsBatch =
-        overrides.generateSkillTagsBatch ?? (await getDefaultDeps()).generateSkillTagsBatch;
-      const listTags = overrides.listTags ?? (await getDefaultDeps()).listTags;
+      const listSkillTaggingTargetsByIds = await getDep("listSkillTaggingTargetsByIds");
+      const readSnapshotFileContent = await getDep("readSnapshotFileContent");
+      const generateSkillTagsBatch = await getDep("generateSkillTagsBatch");
+      const listTags = await getDep("listTags");
 
       const targets = await listSkillTaggingTargetsByIds(skillIds);
       if (targets.length === 0) {
         return { failedCount: 0, updatedCount: 0 };
       }
 
-      const existingTagCandidates = (
-        await listTags({
-          limit: 50,
-        })
-      ).map((tag) => tag.slug);
+      const tagList = await listTags({ limit: 50 });
+      const existingTagCandidates = tagList.map((tag) => tag.slug);
 
       const items = await Promise.all(
         targets.map(async (target) => {
@@ -394,15 +385,15 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
 };
 
 export async function countTagsPublic() {
-  return await (await createTagsService()).count();
+  return await createTagsService().count();
 }
 
 export async function listTagsPublic(input?: { all?: boolean; limit?: number }) {
-  return await (await createTagsService()).list(input);
+  return await createTagsService().list(input);
 }
 
 export async function getTagBySlug(input: { slug: string }) {
-  return await (await createTagsService()).getBySlug(input);
+  return await createTagsService().getBySlug(input);
 }
 
 export async function listTagsForSeoPublic(input?: { limit?: number }) {
@@ -410,7 +401,7 @@ export async function listTagsForSeoPublic(input?: { limit?: number }) {
 }
 
 export async function listIndexableTagsPublic(input?: { limit?: number; minCount?: number }) {
-  return await (await createTagsService()).listIndexable(input);
+  return await createTagsService().listIndexable(input);
 }
 
 export async function syncSkillTags(input: {
@@ -418,7 +409,7 @@ export async function syncSkillTags(input: {
   skillId: string;
   tags: string[];
 }) {
-  return await (await createTagsService()).syncSkillTags(input);
+  return await createTagsService().syncSkillTags(input);
 }
 
 export async function syncSkillTagsFromAi(input: {
@@ -427,12 +418,12 @@ export async function syncSkillTagsFromAi(input: {
   newTags?: { slug: string; matchScore: number }[];
   skillId: string;
 }) {
-  return await (await createTagsService()).syncSkillTagsFromAi(input);
+  return await createTagsService().syncSkillTagsFromAi(input);
 }
 
 export async function runSkillsTaggingPipeline(
   input: { skillIds: string[] },
   aiTasks?: AiTaskRuntime,
 ) {
-  return await (await createTagsService()).runSkillsTaggingPipeline(input, aiTasks);
+  return await createTagsService().runSkillsTaggingPipeline(input, aiTasks);
 }

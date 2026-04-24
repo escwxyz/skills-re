@@ -349,14 +349,6 @@ const toAuthor = (row: AuthorRow) => ({
   skillCount: row.skillCount,
 });
 
-const throwMissingSchedulerError = (name: string): never => {
-  throw new Error(`${name} is unavailable. Configure the server workflow binding.`);
-};
-
-const throwMissingAiSearchRuntimeError = (): never => {
-  throw new Error("AI search runtime is unavailable. Configure the server AI search binding.");
-};
-
 export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) => {
   const deps = {
     ...defaultDeps,
@@ -482,10 +474,12 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
         const runtime = aiSearchRuntime;
         if (!runtime) {
-          throwMissingAiSearchRuntimeError();
+          throw new Error(
+            "AI search runtime is unavailable. Configure the server AI search binding.",
+          );
         }
 
-        const raw = await runtime!.search({
+        const raw = await runtime.search({
           query,
           rewriteQuery: input.rewriteQuery,
         });
@@ -494,11 +488,11 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
           raw,
           resolveSkillByPath: async (candidate) => {
             const row = await deps.findSkillByPath(candidate);
-            return row ? row : null;
+            return row || null;
           },
           resolveSkillBySlug: async (slug) => {
             const row = await deps.findSkillBySlug(slug);
-            return row ? row : null;
+            return row || null;
           },
         });
       }
@@ -521,11 +515,7 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
     async runUploadSkillsPipeline(
       input: SkillsUploadContentPayload,
-      runtimeDeps: {
-        scheduleSkillsTagging?: SkillsTaggingScheduler | null;
-        snapshotHistory?: SnapshotHistoryRuntime | null;
-        snapshotUploadScheduler?: SnapshotUploadScheduler | null;
-      } = {},
+      runtimeDeps: UploadRuntimeDeps = {},
     ) {
       return await runUploadSkillsPipelineImpl(input, deps, runtimeDeps);
     },
@@ -543,6 +533,12 @@ type UploadSkillsPipelineDeps = Pick<
   | "syncSkillTags"
   | "uploadSnapshotFiles"
 >;
+
+interface UploadRuntimeDeps {
+  scheduleSkillsTagging?: SkillsTaggingScheduler | null;
+  snapshotHistory?: SnapshotHistoryRuntime | null;
+  snapshotUploadScheduler?: SnapshotUploadScheduler | null;
+}
 
 const truncateUploadCommitMessage = (value: string | null | undefined) => {
   const normalized = value?.trim();
@@ -599,14 +595,86 @@ const resolveUploadSkillSlug = async (input: {
   }
 };
 
+type PreparedSkill = Awaited<ReturnType<typeof prepareUploadSkills>>[number];
+
+const uploadSingleSkill = async (
+  skill: PreparedSkill,
+  context: {
+    deps: UploadSkillsPipelineDeps;
+    now: number;
+    repoId: string;
+    runtimeDeps: UploadRuntimeDeps;
+    usedSlugs: Set<string>;
+  },
+) => {
+  const { deps, now, repoId, runtimeDeps, usedSlugs } = context;
+
+  const slug = await resolveUploadSkillSlug({
+    checkSkillExistingBySlug: deps.checkSkillExistingBySlug,
+    preferredSlug: skill.slug,
+    usedSlugs,
+  });
+
+  const skillId = await deps.createSkill({
+    categoryId: null,
+    description: skill.description,
+    repoId,
+    slug,
+    syncTime: now,
+    title: skill.title,
+    userId: null,
+    visibility: "public",
+  });
+
+  const snapshotId = await deps.createSnapshot({
+    description: skill.description,
+    directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
+    entryPath: normalizeUploadEntryPath(skill.entryPath),
+    frontmatterHash: skill.frontmatterHash ?? null,
+    hash: skill.snapshotHash,
+    name: skill.title,
+    skillContentHash: skill.skillContentHash ?? null,
+    skillId,
+    sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
+    sourceCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
+    sourceCommitSha: skill.initialSnapshot.sourceCommitSha,
+    sourceCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
+    syncTime: now,
+    version: skill.preferredVersion ?? "0.0.1",
+  });
+
+  const upload = await deps.uploadSnapshotFiles(
+    { files: skill.initialSnapshot.files, snapshotId },
+    runtimeDeps.snapshotUploadScheduler ?? null,
+  );
+
+  await deps.setSkillLatestSnapshot({
+    latestCommitDate: skill.initialSnapshot.sourceCommitDate,
+    latestCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
+    latestCommitSha: skill.initialSnapshot.sourceCommitSha,
+    latestCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
+    skillId,
+    snapshotId,
+    syncTime: now,
+  });
+
+  await deps.syncSkillTags({ skillId, tags: normalizeSkillTags(skill.tags ?? []) });
+  await deps.deprecateSnapshotsBeyondLimit({ keepLatest: 3, skillId });
+
+  if (runtimeDeps.scheduleSkillsTagging) {
+    await runtimeDeps.scheduleSkillsTagging.enqueue({
+      skillIds: [skillId],
+      triggerCategorizationAfterTagging: true,
+    });
+  }
+
+  return { skillId, workId: upload.workId };
+};
+
 const runUploadSkillsPipelineImpl = async (
   input: SkillsUploadContentPayload,
   deps: UploadSkillsPipelineDeps,
-  runtimeDeps: {
-    scheduleSkillsTagging?: SkillsTaggingScheduler | null;
-    snapshotHistory?: SnapshotHistoryRuntime | null;
-    snapshotUploadScheduler?: SnapshotUploadScheduler | null;
-  } = {},
+  runtimeDeps: UploadRuntimeDeps = {},
 ) => {
   if (!input.repo) {
     throw new Error("Repo metadata is required for skill upload.");
@@ -626,83 +694,17 @@ const runUploadSkillsPipelineImpl = async (
     stars: input.repo.stars,
     updatedAt: input.repo.updatedAt,
   });
+
   const now = Date.now();
   const preparedSkills = await prepareUploadSkills(input.skills);
   const usedSlugs = new Set<string>();
-  const createdIds: string[] = [];
-  let firstWorkId: string | null = null;
+  const results: { skillId: string; workId: string }[] = [];
 
   for (const skill of preparedSkills) {
-    const slug = await resolveUploadSkillSlug({
-      checkSkillExistingBySlug: deps.checkSkillExistingBySlug,
-      preferredSlug: skill.slug,
-      usedSlugs,
-    });
-    const skillId = await deps.createSkill({
-      categoryId: null,
-      description: skill.description,
-      repoId,
-      slug,
-      syncTime: now,
-      title: skill.title,
-      userId: null,
-      visibility: "public",
-    });
-    const snapshotId = await deps.createSnapshot({
-      description: skill.description,
-      directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
-      entryPath: normalizeUploadEntryPath(skill.entryPath),
-      frontmatterHash: skill.frontmatterHash ?? null,
-      hash: skill.snapshotHash,
-      name: skill.title,
-      skillContentHash: skill.skillContentHash ?? null,
-      skillId,
-      sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
-      sourceCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
-      sourceCommitSha: skill.initialSnapshot.sourceCommitSha,
-      sourceCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
-      syncTime: now,
-      version: skill.preferredVersion ?? "0.0.1",
-    });
-
-    const upload = await deps.uploadSnapshotFiles(
-      {
-        files: skill.initialSnapshot.files,
-        snapshotId,
-      },
-      runtimeDeps.snapshotUploadScheduler ?? null,
-    );
-
-    await deps.setSkillLatestSnapshot({
-      latestCommitDate: skill.initialSnapshot.sourceCommitDate,
-      latestCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
-      latestCommitSha: skill.initialSnapshot.sourceCommitSha,
-      latestCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
-      skillId,
-      snapshotId,
-      syncTime: now,
-    });
-    await deps.syncSkillTags({
-      skillId,
-      tags: normalizeSkillTags(skill.tags ?? []),
-    });
-    await deps.deprecateSnapshotsBeyondLimit({
-      keepLatest: 3,
-      skillId,
-    });
-
-    if (runtimeDeps.scheduleSkillsTagging) {
-      await runtimeDeps.scheduleSkillsTagging.enqueue({
-        skillIds: [skillId],
-        triggerCategorizationAfterTagging: true,
-      });
-    }
-
-    createdIds.push(skillId);
-    if (!firstWorkId) {
-      firstWorkId = upload.workId;
-    }
+    results.push(await uploadSingleSkill(skill, { deps, now, repoId, runtimeDeps, usedSlugs }));
   }
+
+  const createdIds = results.map((r) => r.skillId);
 
   if (
     runtimeDeps.snapshotHistory &&
@@ -724,7 +726,7 @@ const runUploadSkillsPipelineImpl = async (
 
   return {
     ids: createdIds,
-    workId: firstWorkId ?? `upload-${crypto.randomUUID()}`,
+    workId: results[0]?.workId ?? `upload-${crypto.randomUUID()}`,
   };
 };
 
@@ -732,11 +734,7 @@ export const skillsService = createSkillsService();
 
 export async function runUploadSkillsPipeline(
   input: SkillsUploadContentPayload,
-  runtimeDeps: {
-    scheduleSkillsTagging?: SkillsTaggingScheduler | null;
-    snapshotHistory?: SnapshotHistoryRuntime | null;
-    snapshotUploadScheduler?: SnapshotUploadScheduler | null;
-  } = {},
+  runtimeDeps: UploadRuntimeDeps = {},
 ) {
   return await skillsService.runUploadSkillsPipeline(input, runtimeDeps);
 }
@@ -806,10 +804,10 @@ export async function aiSearch(
 ): Promise<AiSearchRuntimeResult> {
   const runtime = aiSearchRuntime;
   if (!runtime) {
-    throwMissingAiSearchRuntimeError();
+    throw new Error("AI search runtime is unavailable. Configure the server AI search binding.");
   }
 
-  return await runtime!.search({
+  return await runtime.search({
     query: input.query,
     rewriteQuery: input.rewriteQuery,
   });
@@ -833,10 +831,10 @@ export async function uploadSkills(
 ) {
   const activeScheduler = scheduler;
   if (!activeScheduler) {
-    throwMissingSchedulerError("Skills upload workflow scheduler");
+    throw new Error("SkillsUploadScheduler is unavailable. Configure the server workflow binding.");
   }
 
-  const scheduled = await activeScheduler!.enqueue(input);
+  const scheduled = await activeScheduler.enqueue(input);
   return {
     ids: [] as string[],
     workId: scheduled.workId,

@@ -1,4 +1,5 @@
 import type { createNewsletterSubscription, findNewsletterByEmail } from "./repo";
+import { createDepGetter } from "../shared/deps";
 
 interface NewsletterServiceDeps {
   createNewsletterSubscription: typeof createNewsletterSubscription;
@@ -21,6 +22,8 @@ export const createNewsletterService = (overrides: Partial<NewsletterServiceDeps
     return await defaultDepsPromise;
   };
 
+  const getDep = createDepGetter(overrides, getDefaultDeps);
+
   return {
     async create(input: {
       city?: string | null;
@@ -29,16 +32,13 @@ export const createNewsletterService = (overrides: Partial<NewsletterServiceDeps
       email: string;
       ip?: string | null;
     }) {
-      const findNewsletterByEmailFn =
-        overrides.findNewsletterByEmail ?? (await getDefaultDeps()).findNewsletterByEmail;
+      const findNewsletterByEmailFn = await getDep("findNewsletterByEmail");
       const existing = await findNewsletterByEmailFn(input.email);
       if (existing) {
         return null;
       }
 
-      const createNewsletterSubscriptionFn =
-        overrides.createNewsletterSubscription ??
-        (await getDefaultDeps()).createNewsletterSubscription;
+      const createNewsletterSubscriptionFn = await getDep("createNewsletterSubscription");
       await createNewsletterSubscriptionFn(input);
       return null;
     },

@@ -61,6 +61,7 @@ const {
       try {
         const storedTheme = window.localStorage.getItem(themeStorageKey)
         theme =
+          // oxlint-disable-next-line no-nested-ternary
           storedTheme === "dark" || storedTheme === "light"
             ? storedTheme
             : (window.matchMedia("(prefers-color-scheme: dark)").matches

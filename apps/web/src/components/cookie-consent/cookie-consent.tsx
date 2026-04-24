@@ -18,17 +18,21 @@ export function CookieConsent() {
   const [choice, setChoice] = useState<CookieConsentChoice>("essential");
 
   useEffect(() => {
-    setChoice(readCookieConsent());
+    const run = async () => {
+      const saved = await readCookieConsent();
+      setChoice(saved);
+    };
+    run();
   }, []);
 
-  const updateChoice = (nextChoice: CookieConsentChoice) => {
-    writeCookieConsent(nextChoice);
+  const updateChoice = async (nextChoice: CookieConsentChoice) => {
+    await writeCookieConsent(nextChoice);
     setChoice(nextChoice);
     setOpen(false);
   };
 
-  const resetConsent = () => {
-    clearCookieConsent();
+  const resetConsent = async () => {
+    await clearCookieConsent();
     setChoice("essential");
   };
 

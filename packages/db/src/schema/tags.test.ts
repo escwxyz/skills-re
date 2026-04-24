@@ -2,7 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { tagsRelations, tagsTable } from "./tags";
+import { tagsTable } from "./tags";
+import { tagsRelations } from "./relations";
 
 const getExtraConfigNames = (table: object) => {
   const builderKey = Object.getOwnPropertySymbols(table).find((symbol) =>

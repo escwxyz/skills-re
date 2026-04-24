@@ -6,12 +6,12 @@ import { skillsTable } from "@skills-re/db/schema/skills";
 import { asSkillId, asSnapshotId, createId } from "@skills-re/db/utils";
 import type { SkillId, SnapshotId } from "@skills-re/db/utils";
 
+import { db } from "../shared/db";
+
 export interface SnapshotPageCursor {
   id: string;
   syncTime: number;
 }
-
-type SnapshotDb = typeof import("../shared/db").db;
 
 export interface SnapshotListItem {
   archiveR2Key: string | null;
@@ -67,8 +67,6 @@ const selectSnapshotFileFields = {
   sourceSha: snapshotFilesTable.sourceSha,
 } as const;
 
-const getDb = async (database?: SnapshotDb) => database ?? (await import("../shared/db")).db;
-
 export async function createSnapshot(
   input: {
     description: string;
@@ -87,11 +85,10 @@ export async function createSnapshot(
     syncTime: number;
     version: string;
   },
-  database?: SnapshotDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const snapshotId = asSnapshotId(createId());
-  const rows = await db
+  const rows = await database
     .insert(snapshotsTable)
     .values({
       createdAtMs: input.syncTime,
@@ -130,10 +127,9 @@ export async function setSkillLatestSnapshot(
     snapshotId: string;
     syncTime?: number;
   },
-  database?: SnapshotDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  await db
+  await database
     .update(skillsTable)
     .set({
       latestCommitDate: input.latestCommitDate ?? null,
@@ -151,11 +147,10 @@ export async function deprecateSnapshotsBeyondLimit(
     keepLatest?: number;
     skillId: string;
   },
-  database?: SnapshotDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const keepLatest = Math.max(1, input.keepLatest ?? 3);
-  const rows = await db
+  const rows = await database
     .select({
       id: snapshotsTable.id,
     })
@@ -173,7 +168,7 @@ export async function deprecateSnapshotsBeyondLimit(
     return 0;
   }
 
-  await db
+  await database
     .update(snapshotsTable)
     .set({
       isDeprecated: true,
@@ -183,15 +178,59 @@ export async function deprecateSnapshotsBeyondLimit(
   return idsToDeprecate.length;
 }
 
+export async function upsertSnapshotFiles(
+  snapshotId: SnapshotId,
+  files: {
+    contentType?: string | null;
+    fileHash: string;
+    path: string;
+    r2Key?: string | null;
+    size: number;
+    sourceSha?: string | null;
+  }[],
+  database = db,
+) {
+  if (files.length === 0) {
+    return;
+  }
+
+  const BATCH_SIZE = 25;
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+    await database
+      .insert(snapshotFilesTable)
+      .values(
+        batch.map((file) => ({
+          contentType: file.contentType ?? null,
+          fileHash: file.fileHash,
+          path: file.path,
+          r2Key: file.r2Key ?? null,
+          size: file.size,
+          snapshotId,
+          sourceSha: file.sourceSha ?? null,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [snapshotFilesTable.snapshotId, snapshotFilesTable.path],
+        set: {
+          contentType: sql`excluded.content_type`,
+          fileHash: sql`excluded.file_hash`,
+          r2Key: sql`excluded.r2_key`,
+          size: sql`excluded.size`,
+          sourceSha: sql`excluded.source_sha`,
+        },
+      });
+  }
+}
+
 export async function setSnapshotArchiveR2Key(
   input: {
     archiveR2Key: string;
     snapshotId: string;
   },
-  database?: SnapshotDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  await db
+  await database
     .update(snapshotsTable)
     .set({
       archiveR2Key: input.archiveR2Key,
@@ -200,7 +239,6 @@ export async function setSnapshotArchiveR2Key(
 }
 
 export async function getSnapshotStorageContext(snapshotId: SnapshotId) {
-  const db = await getDb();
   const rows = await db
     .select({
       directoryPath: snapshotsTable.directoryPath,
@@ -215,7 +253,7 @@ export async function getSnapshotStorageContext(snapshotId: SnapshotId) {
     .where(eq(snapshotsTable.id, snapshotId))
     .limit(1);
 
-  const row = rows[0];
+  const [row] = rows;
   if (!row) {
     return null;
   }
@@ -233,7 +271,6 @@ export const getSnapshotBySkillAndVersion = async (input: {
   skillId: SkillId;
   version: string;
 }): Promise<SnapshotListItem | null> => {
-  const db = await getDb();
   const rows = await db
     .select(selectSnapshotFields)
     .from(snapshotsTable)
@@ -251,7 +288,6 @@ export const getSnapshotBySkillAndVersion = async (input: {
 };
 
 export const getSnapshotById = async (snapshotId: SnapshotId): Promise<SnapshotListItem | null> => {
-  const db = await getDb();
   const rows = await db
     .select(selectSnapshotFields)
     .from(snapshotsTable)
@@ -266,7 +302,6 @@ export const listSnapshotsPageBySkill = async (input: {
   limit?: number;
   cursor?: SnapshotPageCursor | null;
 }) => {
-  const db = await getDb();
   const limit = input.limit ?? 20;
   const cursor = input.cursor ?? null;
 
@@ -302,20 +337,17 @@ export const listSnapshotsPageBySkill = async (input: {
   };
 };
 
-export const listSnapshotFiles = async (snapshotId: SnapshotId): Promise<SnapshotFileRow[]> => {
-  const db = await getDb();
-  return await db
+export const listSnapshotFiles = async (snapshotId: SnapshotId): Promise<SnapshotFileRow[]> =>
+  await db
     .select(selectSnapshotFileFields)
     .from(snapshotFilesTable)
     .where(eq(snapshotFilesTable.snapshotId, snapshotId))
     .orderBy(snapshotFilesTable.path);
-};
 
 export const getSnapshotFileByPath = async (input: {
   snapshotId: SnapshotId;
   path: string;
 }): Promise<SnapshotFileRow | null> => {
-  const db = await getDb();
   const rows = await db
     .select(selectSnapshotFileFields)
     .from(snapshotFilesTable)

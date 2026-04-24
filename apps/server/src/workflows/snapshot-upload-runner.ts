@@ -18,34 +18,18 @@ export interface SnapshotUploadWorkflowDeps {
   }) => Promise<unknown>;
 }
 
-const defaultDeps: SnapshotUploadWorkflowDeps = {
-  runUploadSnapshotFiles: async () => {
-    throw new Error("Snapshot upload pipeline is unavailable.");
-  },
-};
-
-export const runSnapshotUploadWorkflow = async (
+export const runSnapshotUploadWorkflow = (
   event: Readonly<WorkflowEvent<SnapshotUploadWorkflowPayload>>,
   step: WorkflowStep,
-  deps: Partial<SnapshotUploadWorkflowDeps> = {},
-) => {
-  const activeDeps = {
-    ...defaultDeps,
-    ...deps,
-  };
+  deps: SnapshotUploadWorkflowDeps,
+) =>
+  step.do("upload-snapshot-files", workflowStepRetryPolicy.snapshotUpload, async () => {
+    const uploadPayload = await loadStagedSnapshotUploadPayload(event.payload);
+    await deps.runUploadSnapshotFiles(uploadPayload);
 
-  return await step.do(
-    "upload-snapshot-files",
-    workflowStepRetryPolicy.snapshotUpload,
-    async () => {
-      const uploadPayload = await loadStagedSnapshotUploadPayload(event.payload);
-      await activeDeps.runUploadSnapshotFiles(uploadPayload);
-
-      return {
-        filesCount: uploadPayload.files.length,
-        snapshotId: uploadPayload.snapshotId,
-        status: "uploaded",
-      } as const;
-    },
-  );
-};
+    return {
+      filesCount: uploadPayload.files.length,
+      snapshotId: uploadPayload.snapshotId,
+      status: "uploaded",
+    } as const;
+  });

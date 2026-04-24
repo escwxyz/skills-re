@@ -60,6 +60,7 @@ describe("snapshots archive helpers", () => {
               controller.enqueue(chunk);
             },
           }),
+        // oxlint-disable-next-line require-await
         packTar: async (entries) => {
           packCalls.push(entries);
           return new TextEncoder().encode("tar-bytes");

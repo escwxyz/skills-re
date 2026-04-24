@@ -3,11 +3,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { asReviewId } from "@skills-re/db/utils";
 import type { ReviewId, SkillId, UserId } from "@skills-re/db/utils";
 import { reviewsTable } from "@skills-re/db/schema/reviews";
-
 import { usersTable } from "@skills-re/db/schema/auth";
 
-// oxlint-disable-next-line typescript/consistent-type-imports
-type ReviewsDb = typeof import("../shared/db").db;
+import { db } from "../shared/db";
 
 export interface ReviewWithAuthor {
   authorAvatarUrl: string | null;
@@ -33,26 +31,16 @@ const selectWithAuthor = {
   userId: reviewsTable.userId,
 } as const;
 
-const getDb = async (database?: ReviewsDb) => {
-  if (database) {
-    return database;
-  }
-  const result = await import("../shared/db");
-
-  return result.db;
-};
-
 export async function listReviewsBySkillId(
   input: {
     limit?: number;
     skillId: SkillId;
   },
-  database?: ReviewsDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const limit = input.limit ?? 50;
 
-  return await db
+  return await database
     .select(selectWithAuthor)
     .from(reviewsTable)
     .innerJoin(usersTable, eq(usersTable.id, reviewsTable.userId))
@@ -66,10 +54,9 @@ export async function getReviewBySkillIdAndUserId(
     skillId: SkillId;
     userId: UserId;
   },
-  database?: ReviewsDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  const rows = await db
+  const rows = await database
     .select(selectWithAuthor)
     .from(reviewsTable)
     .innerJoin(usersTable, eq(usersTable.id, reviewsTable.userId))
@@ -86,11 +73,10 @@ export async function createReview(
     skillId: SkillId;
     userId: UserId;
   },
-  database?: ReviewsDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const now = new Date();
-  const rows = await db
+  const rows = await database
     .insert(reviewsTable)
     .values({
       content: input.content,

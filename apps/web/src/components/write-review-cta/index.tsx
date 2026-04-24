@@ -49,12 +49,11 @@ function WriteReviewForm({ onClose }: WriteReviewFormProps) {
 
   const canSubmit = stars > 0 && title.trim().length > 0 && body.trim().length > 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!canSubmit) {
       return;
     }
-    // TODO: wire to API
     setSubmitted(true);
   };
 

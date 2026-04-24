@@ -1,6 +1,5 @@
-import { relations } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import type { TagId } from "../utils";
 import { baseTableColumns } from "../utils";
@@ -25,5 +24,3 @@ export const tagsTable = sqliteTable(
     index("tags_status_count_slug_idx").on(table.status, table.count, table.slug),
   ],
 );
-
-export const tagsRelations = relations(tagsTable, () => ({}));

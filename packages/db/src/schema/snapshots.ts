@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { EvaluationId, SnapshotId, SkillId } from "../utils";
@@ -77,18 +76,3 @@ export const snapshotFilesTable = sqliteTable(
     }),
   ],
 );
-
-export const snapshotsRelations = relations(snapshotsTable, ({ many, one }) => ({
-  files: many(snapshotFilesTable),
-  skill: one(skillsTable, {
-    fields: [snapshotsTable.skillId],
-    references: [skillsTable.id],
-  }),
-}));
-
-export const snapshotFilesRelations = relations(snapshotFilesTable, ({ one }) => ({
-  snapshot: one(snapshotsTable, {
-    fields: [snapshotFilesTable.snapshotId],
-    references: [snapshotsTable.id],
-  }),
-}));
