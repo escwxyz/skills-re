@@ -72,7 +72,7 @@ async function createServerRuntime(
   const githubFetch = createGithubFetchRuntime(env, {
     logger: options.logger,
   });
-  const githubSubmit = createGithubSubmitRuntime(env);
+  const githubSubmit = createGithubSubmitRuntime(env, { logger: options.logger });
   const [{ createHistoricalSnapshot }, { listSkillsHistoryInfoByIds }] = await Promise.all([
     import("@skills-re/api/modules/snapshots/service"),
     import("@skills-re/api/modules/skills/repo"),
@@ -90,7 +90,7 @@ async function createServerRuntime(
       listSkillsHistoryInfoByIds,
     }),
     workflowSchedulers: {
-      repoStatsSync: getRepoStatsSyncWorkflowScheduler(env),
+      repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,
       snapshotUpload: getSnapshotUploadWorkflowScheduler(env) ?? undefined,
       skillsTagging: getSkillsTaggingWorkflowScheduler(env) ?? undefined,

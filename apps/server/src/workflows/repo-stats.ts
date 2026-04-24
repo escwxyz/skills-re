@@ -3,6 +3,8 @@ import { reposService } from "@skills-re/api/modules/repos/service";
 import { nanoid } from "nanoid";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
+import { createWorkerLogger } from "../worker-logger";
+import type { WorkerLogger } from "../worker-logger";
 
 export interface RepoStatsSyncWorkflowPayload {
   cursor?: string;
@@ -13,9 +15,12 @@ type RepoStatsSyncWorkflowEnv = Env & {
   REPO_STATS_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoStatsSyncWorkflowPayload>;
 };
 
-const createLocalScheduler = (): RepoStatsSyncScheduler => ({
+const createLocalScheduler = (logger?: WorkerLogger): RepoStatsSyncScheduler => ({
   enqueue(payload) {
     const workId = `local-${nanoid()}`;
+    const log = (logger ?? createWorkerLogger({ component: "repo-stats.local-scheduler" })).child({
+      workId,
+    });
 
     void (async () => {
       let { cursor } = payload;
@@ -35,9 +40,8 @@ const createLocalScheduler = (): RepoStatsSyncScheduler => ({
 
           cursor = result.continueCursor;
         } catch (error) {
-          console.error("local repo stats sync scheduler failed", {
-            message: error instanceof Error ? error.message : "unknown error",
-            workId,
+          log.error("repo-stats.local-scheduler.failed", {
+            error: error instanceof Error ? error : new Error(String(error)),
           });
           return;
         }
@@ -50,6 +54,7 @@ const createLocalScheduler = (): RepoStatsSyncScheduler => ({
 
 export const getRepoStatsSyncWorkflowScheduler = (
   env: RepoStatsSyncWorkflowEnv,
+  options: { logger?: WorkerLogger } = {},
 ): RepoStatsSyncScheduler => {
   const binding = env.REPO_STATS_SYNC_WORKFLOW;
 
@@ -57,5 +62,5 @@ export const getRepoStatsSyncWorkflowScheduler = (
     return makeWorkflowScheduler("repo-stats-sync", binding);
   }
 
-  return createLocalScheduler();
+  return createLocalScheduler(options.logger);
 };

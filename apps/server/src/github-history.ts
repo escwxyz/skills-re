@@ -15,6 +15,7 @@ const EXCLUDED_SEGMENTS = [
   ".DS_Store",
 ] as const;
 const EXCLUDED_SEGMENT_SET: ReadonlySet<string> = new Set(EXCLUDED_SEGMENTS);
+const BLOB_FETCH_CONCURRENCY = 4;
 
 interface CreateGithubSnapshotHistoryHelpersOptions {
   fetch?: typeof fetch;
@@ -53,6 +54,35 @@ const shouldExcludePath = (relativePath: string) => {
 };
 
 const isDefined = <T>(value: T | null | undefined): value is T => value !== null;
+
+const mapWithConcurrency = async <T, U>(
+  items: readonly T[],
+  limit: number,
+  mapper: (item: T, index: number) => Promise<U>,
+) => {
+  const results = Array.from({ length: items.length }, () => undefined as U);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      if (currentIndex >= items.length) {
+        return;
+      }
+
+      const currentItem = items[currentIndex];
+      if (currentItem === undefined) {
+        continue;
+      }
+
+      results[currentIndex] = await mapper(currentItem, currentIndex);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
+};
 
 const decodeBase64 = (value: string) => {
   if (typeof Buffer !== "undefined") {
@@ -144,49 +174,54 @@ export function createGithubSnapshotHistoryHelpers(
     async fetchSkillFilesForRoot({ owner, repo, skillRootPath, tree }) {
       const normalizedRootPath = normalizeSkillRootPath(skillRootPath);
       const rootPrefix = normalizedRootPath.length > 0 ? `${normalizedRootPath}/` : "";
-      const files: { content: string; path: string }[] = [];
 
-      for (const node of tree) {
+      const blobNodes = tree.flatMap((node) => {
         if (node.type !== "blob") {
-          continue;
+          return [];
         }
         if (rootPrefix.length > 0 && !node.path.startsWith(rootPrefix)) {
-          continue;
+          return [];
         }
-
         const relativePath = rootPrefix.length ? node.path.slice(rootPrefix.length) : node.path;
         if (relativePath.length === 0 || shouldExcludePath(relativePath)) {
-          continue;
+          return [];
         }
+        return [{ node, relativePath }];
+      });
 
-        const blob = await fetchGithubJson<{
-          content: string;
-          encoding: string;
-        }>(
-          fetchImpl,
-          `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`,
-          {
-            headers,
-          },
-          {
-            includeResponseMessage: true,
-            logger,
-            logContext: { operation: "repo-blob", owner, repo },
-          },
-        );
+      const results = await mapWithConcurrency(
+        blobNodes,
+        BLOB_FETCH_CONCURRENCY,
+        async ({ node, relativePath }) => {
+          const blob = await fetchGithubJson<{
+            content: string;
+            encoding: string;
+          }>(
+            fetchImpl,
+            `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`,
+            { headers },
+            {
+              includeResponseMessage: true,
+              logger,
+              logContext: { operation: "repo-blob", owner, repo },
+            },
+          );
 
-        if (blob.encoding !== "base64") {
-          continue;
-        }
+          if (blob.encoding !== "base64") {
+            return null;
+          }
 
-        files.push({
-          content: decodeBase64(blob.content.replaceAll("\n", "")),
-          path: normalizeRelativePath(relativePath),
-        });
-      }
+          return {
+            content: decodeBase64(blob.content.replaceAll("\n", "")),
+            path: normalizeRelativePath(relativePath),
+          };
+        },
+      );
 
       return {
-        files: files.filter((file) => file.path.length > 0),
+        files: results.filter(
+          (file): file is NonNullable<typeof file> => file !== null && file.path.length > 0,
+        ),
       };
     },
 

@@ -21,6 +21,7 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
 
     return runSkillsUploadWorkflow(event, step, {
       scheduleSkillsTagging: getSkillsTaggingWorkflowScheduler(this.env),
+      snapshotFilesBucket: this.env.SNAPSHOT_FILES,
       snapshotHistory,
       snapshotUploadScheduler: getSnapshotUploadWorkflowScheduler(this.env),
     });
