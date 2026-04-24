@@ -3,6 +3,7 @@ import type { WorkerLogger } from "./worker-logger";
 const GITHUB_API_ROOT = "https://api.github.com";
 const GITHUB_API_HEADERS = {
   accept: "application/vnd.github+json",
+  "user-agent": "skills-app",
   "x-github-api-version": "2022-11-28",
 } as const;
 const GITHUB_ERROR_BODY_LIMIT = 2000;
