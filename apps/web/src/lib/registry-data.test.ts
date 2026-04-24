@@ -176,4 +176,74 @@ describe("registry-data", () => {
     expect(getBrowseSortLabel(DEFAULT_BROWSE_SORT)).toBe("Installs");
     expect(getBrowseSortLabel("updated")).toBe("Updated");
   });
+
+  test("getBrowseSortLabel returns correct labels for all known sort values", () => {
+    expect(getBrowseSortLabel("downloads-trending")).toBe("Trending");
+    expect(getBrowseSortLabel("newest")).toBe("Newest");
+    expect(getBrowseSortLabel("stars")).toBe("Stars");
+    expect(getBrowseSortLabel("updated")).toBe("Updated");
+    expect(getBrowseSortLabel("views")).toBe("Views");
+  });
+
+  test("getBrowseSortLabel defaults to 'Installs' for unknown sort values", () => {
+    // The 'downloads-all-time' case was removed in this PR; it now falls to default
+    expect(getBrowseSortLabel("downloads-all-time" as never)).toBe("Installs");
+    expect(getBrowseSortLabel("unknown-sort" as never)).toBe("Installs");
+  });
+
+  test("sumDailyMetrics returns zeros for an empty array", () => {
+    expect(sumDailyMetrics([])).toEqual({
+      newSkills: 0,
+      newSnapshots: 0,
+    });
+  });
+
+  test("sumDailyMetrics handles a single point", () => {
+    expect(
+      sumDailyMetrics([
+        {
+          day: "2026-04-20",
+          newSkills: 10,
+          newSnapshots: 20,
+          updatedAtMs: 1,
+        },
+      ]),
+    ).toEqual({
+      newSkills: 10,
+      newSnapshots: 20,
+    });
+  });
+
+  test("toSkillCardItem returns undefined starsLabel when stargazerCount is undefined", () => {
+    const mapped = toSkillCardItem({
+      authorHandle: "hallie",
+      description: "No stars yet.",
+      downloadsAllTime: 0,
+      downloadsTrending: 0,
+      id: "skill_no_stars",
+      latestVersion: "1.0.0",
+      slug: "no-stars",
+      stargazerCount: undefined,
+      title: "no-stars",
+    });
+
+    expect(mapped.starsLabel).toBeUndefined();
+  });
+
+  test("toSkillCardItem formats starsLabel when stargazerCount is zero", () => {
+    const mapped = toSkillCardItem({
+      authorHandle: "hallie",
+      description: "Zero stars.",
+      downloadsAllTime: 0,
+      downloadsTrending: 0,
+      id: "skill_zero_stars",
+      latestVersion: "1.0.0",
+      slug: "zero-stars",
+      stargazerCount: 0,
+      title: "zero-stars",
+    });
+
+    // 0 is not undefined so it should be formatted
+    expect(mapped.starsLabel).toBe(formatCompactNumber(0));
+  });
 });

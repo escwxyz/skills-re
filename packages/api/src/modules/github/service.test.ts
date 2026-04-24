@@ -5,6 +5,22 @@ import { describe, expect, test } from "bun:test";
 import { fetchRepo } from "./service";
 
 describe("github service", () => {
+  test("throws when no runtime is provided", async () => {
+    await expect(
+      fetchRepo({ githubUrl: "https://github.com/acme/skills" }),
+    ).rejects.toThrow(
+      "GitHub fetch runtime is unavailable. Configure the server GitHub binding.",
+    );
+  });
+
+  test("throws when runtime is explicitly undefined", async () => {
+    await expect(
+      fetchRepo({ githubUrl: "https://github.com/acme/skills" }, undefined),
+    ).rejects.toThrow(
+      "GitHub fetch runtime is unavailable. Configure the server GitHub binding.",
+    );
+  });
+
   test("delegates repo fetches to the injected runtime", async () => {
     const calls: { githubUrl: string }[] = [];
     const result = await fetchRepo(
