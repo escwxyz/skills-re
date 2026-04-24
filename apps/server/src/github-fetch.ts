@@ -10,9 +10,11 @@ import type { GithubRepoOverview } from "./github-api";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import { SKILL_FILENAME, discoverSkillRoots, parseFrontmatter } from "./github-skill-utils";
 import { parseGithubRepoUrl } from "./github-url";
+import type { WorkerLogger } from "./worker-logger";
 
 interface CreateGithubFetchRuntimeOptions {
   fetch?: typeof fetch;
+  logger?: WorkerLogger;
 }
 
 interface GithubFetchResult {
@@ -93,6 +95,7 @@ const fetchRepoTree = async (
   owner: string,
   repo: string,
   commitSha: string,
+  logger?: WorkerLogger,
 ) => {
   const response = await fetchGithubJson<{
     truncated?: boolean;
@@ -103,7 +106,11 @@ const fetchRepoTree = async (
     {
       headers,
     },
-    { includeResponseMessage: true },
+    {
+      includeResponseMessage: true,
+      logger,
+      logContext: { operation: "repo-tree", owner, repo },
+    },
   );
 
   if (response.truncated) {
@@ -126,13 +133,27 @@ export function createGithubFetchRuntime(
 ): GithubFetchRuntime {
   const fetchImpl = options.fetch ?? fetch;
   const headers = createGithubHeaders(env);
+  const logger = options.logger?.child({
+    component: "github-fetch",
+    hasGithubToken: Boolean(env.GH_PAT),
+  });
 
   return {
     async fetchRepo(input) {
       const parsed = parseGithubRepoUrl(input.githubUrl);
       if (!parsed) {
+        logger?.error("github.fetch_repo.failed", {
+          githubUrl: input.githubUrl,
+          reason: "invalid_github_url",
+        });
         throw new Error("Invalid GitHub repository URL.");
       }
+
+      logger?.info("github.fetch_repo.started", {
+        owner: parsed.owner,
+        repo: parsed.repo,
+        requestedSkillPath: parsed.skillPath ?? null,
+      });
 
       const overview: GithubRepoOverview = await buildGithubRepoOverview(
         fetchImpl,
@@ -141,18 +162,32 @@ export function createGithubFetchRuntime(
         parsed.repo,
         {
           branch: parsed.branch,
+          logger,
         },
       );
 
       const snapshotHelpers = createGithubSnapshotHistoryHelpers(env, {
         fetch: fetchImpl,
+        logger,
       });
       const { headSha } = overview;
       if (!headSha) {
+        logger?.error("github.fetch_repo.failed", {
+          owner: parsed.owner,
+          repo: parsed.repo,
+          reason: "missing_head_sha",
+        });
         throw new Error("Unable to resolve repository HEAD commit.");
       }
 
-      const tree = await fetchRepoTree(fetchImpl, headers, parsed.owner, parsed.repo, headSha);
+      const tree = await fetchRepoTree(
+        fetchImpl,
+        headers,
+        parsed.owner,
+        parsed.repo,
+        headSha,
+        logger,
+      );
       const roots = discoverSkillRoots(tree, parsed.skillPath);
 
       const rootResults = await mapWithConcurrency(roots, 4, async (root) => {
@@ -214,10 +249,15 @@ export function createGithubFetchRuntime(
           continue;
         }
 
+        logger?.warn("github.fetch_repo.invalid_skill", {
+          message: result.invalidSkill.message,
+          skillMdPath: result.invalidSkill.skillMdPath,
+          skillRootPath: result.invalidSkill.skillRootPath,
+        });
         invalidSkills.push(result.invalidSkill);
       }
 
-      return {
+      const result = {
         branch: overview.defaultBranch,
         commitDate: overview.commits[0]?.committedDate ?? null,
         commitMessage: overview.commits[0]?.message ?? null,
@@ -240,6 +280,16 @@ export function createGithubFetchRuntime(
         stargazerCount: overview.repo.stargazerCount,
         tree,
       };
+
+      logger?.info("github.fetch_repo.completed", {
+        invalidSkillsCount: invalidSkills.length,
+        owner: parsed.owner,
+        repo: parsed.repo,
+        skillsCount: skills.length,
+        treeEntriesCount: tree.length,
+      });
+
+      return result;
     },
   };
 }

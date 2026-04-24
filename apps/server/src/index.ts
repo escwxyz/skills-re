@@ -12,9 +12,10 @@ import { createRuntimeAuth } from "@skills-re/auth/runtime";
 import { env } from "@skills-re/env/server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
+import { createWorkerLogger } from "./worker-logger";
+import type { WorkerLogger } from "./worker-logger";
 
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
@@ -28,7 +29,15 @@ export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-w
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
 
-const app = new Hono<{ Bindings: Env }>();
+const normalizeUnknownError = (error: unknown) =>
+  error instanceof Error ? error : new Error(String(error));
+
+const app = new Hono<{
+  Bindings: Env;
+  Variables: {
+    workerLogger?: WorkerLogger;
+  };
+}>();
 
 // Ref: https://honohub.dev/docs/hono-mcp
 // const mcpServer = new McpServer({
@@ -36,7 +45,30 @@ const app = new Hono<{ Bindings: Env }>();
 //   version: "1.0.0",
 // });
 
-app.use(logger());
+app.use("/*", async (c, next) => {
+  const startedAt = Date.now();
+  const requestUrl = new URL(c.req.url);
+  const logger = createWorkerLogger({
+    component: "http",
+    method: c.req.method,
+    path: requestUrl.pathname,
+    requestId: c.req.header("cf-ray") ?? crypto.randomUUID(),
+  });
+
+  c.set("workerLogger", logger);
+  logger.info("http.request.started", {
+    url: `${requestUrl.origin}${requestUrl.pathname}`,
+  });
+
+  try {
+    await next();
+  } finally {
+    logger.info("http.request.completed", {
+      durationMs: Date.now() - startedAt,
+      status: c.res.status,
+    });
+  }
+});
 app.use(
   "/*",
   cors({
@@ -81,7 +113,9 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
   ],
   interceptors: [
     onError((error) => {
-      console.error(error);
+      createWorkerLogger({ component: "openapi" }).error("orpc.error", {
+        error: normalizeUnknownError(error),
+      });
     }),
   ],
 });
@@ -89,7 +123,9 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 export const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
     onError((error) => {
-      console.error(error);
+      createWorkerLogger({ component: "rpc" }).error("orpc.error", {
+        error: normalizeUnknownError(error),
+      });
     }),
   ],
 });

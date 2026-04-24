@@ -1,8 +1,11 @@
+import type { WorkerLogger } from "./worker-logger";
+
 const GITHUB_API_ROOT = "https://api.github.com";
 const GITHUB_API_HEADERS = {
   accept: "application/vnd.github+json",
   "x-github-api-version": "2022-11-28",
 } as const;
+const GITHUB_ERROR_BODY_LIMIT = 2000;
 
 export type GithubTokenEnv = Partial<Pick<Env, "GH_PAT">>;
 
@@ -85,7 +88,59 @@ export const createGithubHeaders = (env: GithubTokenEnv) => {
 
 export interface FetchGithubJsonOptions {
   includeResponseMessage?: boolean;
+  logger?: WorkerLogger;
+  logContext?: {
+    operation?: string;
+    owner?: string;
+    repo?: string;
+  };
 }
+
+const readGithubErrorBody = async (response: Response) => {
+  const body = await response.text().catch(() => "");
+  if (!body) {
+    return {
+      body: "",
+      message: "",
+      metadata: {},
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(body) as {
+      documentation_url?: string;
+      message?: string;
+      status?: string;
+    };
+
+    return {
+      body,
+      message: parsed.message ?? "",
+      metadata: {
+        documentationUrl: parsed.documentation_url,
+        githubStatus: parsed.status,
+      },
+    };
+  } catch {
+    return {
+      body,
+      message: "",
+      metadata: {},
+    };
+  }
+};
+
+const getGithubFailureHeaders = (headers: Headers) => ({
+  acceptedGithubPermissions: headers.get("x-accepted-github-permissions"),
+  acceptedOauthScopes: headers.get("x-accepted-oauth-scopes"),
+  githubRequestId: headers.get("x-github-request-id"),
+  oauthScopes: headers.get("x-oauth-scopes"),
+  rateLimitLimit: headers.get("x-ratelimit-limit"),
+  rateLimitRemaining: headers.get("x-ratelimit-remaining"),
+  rateLimitReset: headers.get("x-ratelimit-reset"),
+  rateLimitResource: headers.get("x-ratelimit-resource"),
+  retryAfter: headers.get("retry-after"),
+});
 
 export const fetchGithubJson = async <T>(
   fetchImpl: typeof fetch,
@@ -95,17 +150,22 @@ export const fetchGithubJson = async <T>(
 ) => {
   const response = await fetchImpl(input, init);
   if (!response.ok) {
-    let reason = "";
-    if (options.includeResponseMessage) {
-      const body = await response.text().catch(() => "");
-      try {
-        const parsed = JSON.parse(body) as { message?: string };
-        if (parsed.message) {
-          reason = ` — ${parsed.message}`;
-        }
-      } catch {
-        // non-JSON body; ignore
-      }
+    const { body, message, metadata } = await readGithubErrorBody(response);
+    const reason = message ? ` — ${message}` : "";
+
+    options.logger?.warn("github.request.failed", {
+      ...options.logContext,
+      ...metadata,
+      body: body.slice(0, GITHUB_ERROR_BODY_LIMIT),
+      headers: getGithubFailureHeaders(response.headers),
+      method: init.method ?? "GET",
+      status: response.status,
+      statusText: response.statusText,
+      url: input,
+    });
+
+    if (!options.includeResponseMessage) {
+      throw new Error(`GitHub request failed with ${response.status} for ${input}`);
     }
 
     throw new Error(`GitHub request failed with ${response.status} for ${input}${reason}`);
@@ -161,12 +221,18 @@ export const buildGithubRepoOverview = async (
   options: {
     branch?: string;
     includeLifecycleFlags?: boolean;
+    logger?: WorkerLogger;
   } = {},
 ): Promise<GithubRepoOverview> => {
   const repoResponse = await fetchGithubJson<GithubRepoResponse>(
     fetchImpl,
     `${GITHUB_API_ROOT}/repos/${owner}/${repo}`,
     { headers },
+    {
+      includeResponseMessage: true,
+      logger: options.logger,
+      logContext: { operation: "repo-overview", owner, repo },
+    },
   );
   const commitsResponse = await fetchGithubJson<GithubCommitResponse[]>(
     fetchImpl,
@@ -174,6 +240,11 @@ export const buildGithubRepoOverview = async (
       options.branch ? `&sha=${encodeURIComponent(options.branch)}` : ""
     }`,
     { headers },
+    {
+      includeResponseMessage: true,
+      logger: options.logger,
+      logContext: { operation: "repo-commits", owner, repo },
+    },
   );
 
   const defaultBranch = options.branch ?? repoResponse.default_branch;

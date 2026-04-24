@@ -1,6 +1,7 @@
 import type { GithubSnapshotHistoryHelpers, GithubSnapshotTreeEntry } from "@skills-re/api/types";
 
 import { GITHUB_API_ROOT, createGithubHeaders, fetchGithubJson } from "./github-api";
+import type { WorkerLogger } from "./worker-logger";
 
 // const SKILL_ROOT_PREFIX = "skills/";
 const EXCLUDED_SEGMENTS = [
@@ -17,6 +18,7 @@ const EXCLUDED_SEGMENT_SET: ReadonlySet<string> = new Set(EXCLUDED_SEGMENTS);
 
 interface CreateGithubSnapshotHistoryHelpersOptions {
   fetch?: typeof fetch;
+  logger?: WorkerLogger;
 }
 
 const normalizeRelativePath = (value: string) => {
@@ -73,6 +75,10 @@ export function createGithubSnapshotHistoryHelpers(
 ): GithubSnapshotHistoryHelpers {
   const fetchImpl = options.fetch ?? fetch;
   const headers = createGithubHeaders(env);
+  const logger = options.logger?.child({
+    component: "github-history",
+    hasGithubToken: Boolean(env.GH_PAT),
+  });
 
   return {
     buildSkillTreeEntries(tree, skillRootPath) {
@@ -125,6 +131,11 @@ export function createGithubSnapshotHistoryHelpers(
         {
           headers,
         },
+        {
+          includeResponseMessage: true,
+          logger,
+          logContext: { operation: "commit-sha", owner, repo },
+        },
       );
 
       return response.sha;
@@ -151,9 +162,18 @@ export function createGithubSnapshotHistoryHelpers(
         const blob = await fetchGithubJson<{
           content: string;
           encoding: string;
-        }>(fetchImpl, `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`, {
-          headers,
-        });
+        }>(
+          fetchImpl,
+          `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`,
+          {
+            headers,
+          },
+          {
+            includeResponseMessage: true,
+            logger,
+            logContext: { operation: "repo-blob", owner, repo },
+          },
+        );
 
         if (blob.encoding !== "base64") {
           continue;
@@ -184,6 +204,11 @@ export function createGithubSnapshotHistoryHelpers(
         `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
         {
           headers,
+        },
+        {
+          includeResponseMessage: true,
+          logger,
+          logContext: { operation: "history-tree", owner, repo },
         },
       );
 
