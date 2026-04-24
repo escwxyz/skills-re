@@ -75,12 +75,12 @@ const normalizeFields = (fields: WorkerLogFields) => {
 
 const writeStructuredLog = (
   level: "debug" | "error" | "info" | "warn",
-  baseFields: WorkerLogFields,
+  normalizedBaseFields: Record<string, WorkerLogValue | undefined>,
   event: string,
   fields: WorkerLogFields = {},
 ) => {
   const payload = {
-    ...normalizeFields(baseFields),
+    ...normalizedBaseFields,
     ...normalizeFields(fields),
     event,
     level,
@@ -89,23 +89,27 @@ const writeStructuredLog = (
   console[level](payload);
 };
 
-export const createWorkerLogger = (baseFields: WorkerLogFields = {}): WorkerLogger => ({
-  child(fields) {
-    return createWorkerLogger({
-      ...baseFields,
-      ...fields,
-    });
-  },
-  debug(event, fields) {
-    writeStructuredLog("debug", baseFields, event, fields);
-  },
-  error(event, fields) {
-    writeStructuredLog("error", baseFields, event, fields);
-  },
-  info(event, fields) {
-    writeStructuredLog("info", baseFields, event, fields);
-  },
-  warn(event, fields) {
-    writeStructuredLog("warn", baseFields, event, fields);
-  },
-});
+export const createWorkerLogger = (baseFields: WorkerLogFields = {}): WorkerLogger => {
+  const normalizedBaseFields = normalizeFields(baseFields);
+
+  return {
+    child(fields) {
+      return createWorkerLogger({
+        ...baseFields,
+        ...fields,
+      });
+    },
+    debug(event, fields) {
+      writeStructuredLog("debug", normalizedBaseFields, event, fields);
+    },
+    error(event, fields) {
+      writeStructuredLog("error", normalizedBaseFields, event, fields);
+    },
+    info(event, fields) {
+      writeStructuredLog("info", normalizedBaseFields, event, fields);
+    },
+    warn(event, fields) {
+      writeStructuredLog("warn", normalizedBaseFields, event, fields);
+    },
+  };
+};
