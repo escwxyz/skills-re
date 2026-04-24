@@ -264,17 +264,19 @@ export const formatInteger = (value: number) => INTEGER_FORMATTER.format(value);
 
 export const formatCompactNumber = (value: number) => COMPACT_INTEGER_FORMATTER.format(value);
 
-export const sumDailyMetrics = (points: DailyMetricPoint[]) =>
-  points.reduce(
-    (totals, point) => ({
-      newSkills: totals.newSkills + point.newSkills,
-      newSnapshots: totals.newSnapshots + point.newSnapshots,
-    }),
-    {
-      newSkills: 0,
-      newSnapshots: 0,
-    },
-  );
+export const sumDailyMetrics = (points: DailyMetricPoint[]) => {
+  const totals = {
+    newSkills: 0,
+    newSnapshots: 0,
+  };
+
+  for (const point of points) {
+    totals.newSkills += point.newSkills;
+    totals.newSnapshots += point.newSnapshots;
+  }
+
+  return totals;
+};
 
 export const getBrowseSortLabel = (sort: BrowseSort) => {
   switch (sort) {
@@ -293,7 +295,6 @@ export const getBrowseSortLabel = (sort: BrowseSort) => {
     case "views": {
       return "Views";
     }
-    case "downloads-all-time":
     default: {
       return "Installs";
     }
@@ -337,7 +338,7 @@ export const toSkillCardItem = (skill: SearchSkillListItem): SkillCardItem => ({
   id: skill.id,
   slug: skill.slug,
   starsLabel:
-    skill.stargazerCount !== undefined ? formatCompactNumber(skill.stargazerCount) : undefined,
+    skill.stargazerCount === undefined ? undefined : formatCompactNumber(skill.stargazerCount),
   tags: skill.tags ?? [],
   title: skill.title,
 });
@@ -478,7 +479,7 @@ export const getSkillsBrowseData = async (
     client.categories.list({ all: true, limit: 100 }),
     client.metrics.dailySkillsSnapshots({ limit: 30 }),
     client.skills.search({
-      categories: activeClass !== "all" ? [activeClass] : undefined,
+      categories: activeClass === "all" ? undefined : [activeClass],
       cursor,
       limit: SKILLS_BROWSE_PAGE_SIZE,
       query: query || undefined,
@@ -490,7 +491,7 @@ export const getSkillsBrowseData = async (
   ]);
 
   const totals = sumDailyMetrics(dailyMetrics);
-  const activeFilterCount = (query ? 1 : 0) + (activeClass !== "all" ? 1 : 0) + tags.length;
+  const activeFilterCount = (query ? 1 : 0) + (activeClass === "all" ? 0 : 1) + tags.length;
   const rangeStart = searchResult.page.length > 0 ? (page - 1) * SKILLS_BROWSE_PAGE_SIZE + 1 : 0;
   const rangeEnd = searchResult.page.length > 0 ? rangeStart + searchResult.page.length - 1 : 0;
 

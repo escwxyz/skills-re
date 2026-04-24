@@ -1,3 +1,4 @@
+// oxlint-disable require-await
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";

@@ -1,3 +1,5 @@
+import { PUBLIC_SITE_URL } from "astro:env/server";
+
 export const SITE_NAME = "skills.re";
 export const SITE_TAGLINE = "The registry for AI agent skills.";
 export const SITE_DESCRIPTION =
@@ -11,8 +13,6 @@ export const SITE_KEYWORDS = [
   "skill registry",
   "ai tools",
 ];
-
-import { PUBLIC_SITE_URL } from "astro:env/server";
 
 export const SITE_URL = PUBLIC_SITE_URL;
 

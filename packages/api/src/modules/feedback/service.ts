@@ -1,8 +1,10 @@
 import { asFeedbackId, asUserId } from "@skills-re/db/utils";
 
-import type { FeedbackRow, FeedbackStatus, FeedbackType } from "./repo";
 import type {
   createFeedback,
+  FeedbackRow,
+  FeedbackStatus,
+  FeedbackType,
   getFeedbackById,
   getFeedbackByIdAndUser,
   listFeedback,
@@ -60,7 +62,8 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
       type?: FeedbackType;
       userId?: string | null;
     }) {
-      const createFeedbackFn = overrides.createFeedback ?? (await getDefaultDeps()).createFeedback;
+      const deps = await getDefaultDeps();
+      const createFeedbackFn = overrides.createFeedback ?? deps.createFeedback;
       const id = await createFeedbackFn({
         content: input.content,
         title: input.title,
@@ -71,15 +74,16 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     },
 
     async getById(id: string) {
-      const getFeedbackByIdFn =
-        overrides.getFeedbackById ?? (await getDefaultDeps()).getFeedbackById;
+      const deps = await getDefaultDeps();
+      const getFeedbackByIdFn = overrides.getFeedbackById ?? deps.getFeedbackById;
       const row = await getFeedbackByIdFn(asFeedbackId(id));
       return row ? toOutputItem(row) : null;
     },
 
     async getMineById(input: { id: string; userId: string }) {
+      const deps = await getDefaultDeps();
       const getFeedbackByIdAndUserFn =
-        overrides.getFeedbackByIdAndUser ?? (await getDefaultDeps()).getFeedbackByIdAndUser;
+        overrides.getFeedbackByIdAndUser ?? deps.getFeedbackByIdAndUser;
       const row = await getFeedbackByIdAndUserFn({
         id: asFeedbackId(input.id),
         userId: asUserId(input.userId),
@@ -88,14 +92,15 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     },
 
     async list(input?: { status?: FeedbackStatus; limit?: number }) {
-      const listFeedbackFn = overrides.listFeedback ?? (await getDefaultDeps()).listFeedback;
+      const deps = await getDefaultDeps();
+      const listFeedbackFn = overrides.listFeedback ?? deps.listFeedback;
       const rows = await listFeedbackFn(input);
       return rows.map((row) => toOutputItem(row));
     },
 
     async listMine(input: { userId: string; limit?: number }) {
-      const listFeedbackByUserFn =
-        overrides.listFeedbackByUser ?? (await getDefaultDeps()).listFeedbackByUser;
+      const deps = await getDefaultDeps();
+      const listFeedbackByUserFn = overrides.listFeedbackByUser ?? deps.listFeedbackByUser;
       const rows = await listFeedbackByUserFn({
         limit: input.limit,
         userId: asUserId(input.userId),
@@ -104,8 +109,9 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     },
 
     async updateResponse(input: { id: string; response?: string | null }) {
+      const deps = await getDefaultDeps();
       const updateFeedbackResponseFn =
-        overrides.updateFeedbackResponse ?? (await getDefaultDeps()).updateFeedbackResponse;
+        overrides.updateFeedbackResponse ?? deps.updateFeedbackResponse;
       await updateFeedbackResponseFn({
         id: asFeedbackId(input.id),
         response: input.response,
@@ -114,8 +120,8 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     },
 
     async updateStatus(input: { id: string; status: FeedbackStatus }) {
-      const updateFeedbackStatusFn =
-        overrides.updateFeedbackStatus ?? (await getDefaultDeps()).updateFeedbackStatus;
+      const deps = await getDefaultDeps();
+      const updateFeedbackStatusFn = overrides.updateFeedbackStatus ?? deps.updateFeedbackStatus;
       await updateFeedbackStatusFn({
         id: asFeedbackId(input.id),
         status: input.status,
