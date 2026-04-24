@@ -54,7 +54,6 @@ const {
       rel="stylesheet"
     />
     <script is:inline>
-// oxlint-disable no-nested-ternary
       const themeStorageKey = "theme"
       const root = document.documentElement
       let theme = "light"
@@ -62,6 +61,7 @@ const {
       try {
         const storedTheme = window.localStorage.getItem(themeStorageKey)
         theme =
+          // oxlint-disable-next-line no-nested-ternary
           storedTheme === "dark" || storedTheme === "light"
             ? storedTheme
             : (window.matchMedia("(prefers-color-scheme: dark)").matches

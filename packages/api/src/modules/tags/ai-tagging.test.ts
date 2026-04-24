@@ -27,6 +27,7 @@ describe("tagging ai helpers", () => {
         ],
       },
       {
+        // oxlint-disable-next-line require-await
         generateText: (async () => ({
           text: `\`\`\`json
           {"items":[{"confidence":0.91,"dimensions":{"domain":[{"tag":"automation","source":"new","matchScore":0.92}],"skillType":["best-practices"],"techStack":["AI Tools",{"tag":"ai","source":"existing","matchScore":0.88}]},"key":"skill-1","reason":"clear match"}]}

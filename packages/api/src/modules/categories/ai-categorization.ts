@@ -120,7 +120,7 @@ const extractFromChoices = (value: unknown): unknown => {
     return undefined;
   }
 
-  const firstChoice = choices[0];
+  const [firstChoice] = choices;
   if (!(firstChoice && typeof firstChoice === "object")) {
     return undefined;
   }
