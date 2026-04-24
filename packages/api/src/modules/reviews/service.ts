@@ -1,7 +1,11 @@
 import { asSkillId, asUserId } from "@skills-re/db/utils";
 
-import type { ReviewWithAuthor } from "./repo";
-import type { createReview, getReviewBySkillIdAndUserId, listReviewsBySkillId } from "./repo";
+import type {
+  ReviewWithAuthor,
+  createReview,
+  getReviewBySkillIdAndUserId,
+  listReviewsBySkillId,
+} from "./repo";
 
 const toOutputItem = (row: ReviewWithAuthor) => ({
   author: {
@@ -42,10 +46,10 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
 
   return {
     async create(input: { skillId: string; userId: string; rating: number; content: string }) {
-      const createReviewFn = overrides.createReview ?? (await getDefaultDeps()).createReview;
+      const deps = await getDefaultDeps();
+      const createReviewFn = overrides.createReview ?? deps.createReview;
       const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ??
-        (await getDefaultDeps()).getReviewBySkillIdAndUserId;
+        overrides.getReviewBySkillIdAndUserId ?? deps.getReviewBySkillIdAndUserId;
 
       const skillId = asSkillId(input.skillId);
       const userId = asUserId(input.userId);
@@ -77,9 +81,9 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     },
 
     async getMineBySkill(input: { skillId: string; userId: string }) {
+      const deps = await getDefaultDeps();
       const getReviewBySkillIdAndUserIdFn =
-        overrides.getReviewBySkillIdAndUserId ??
-        (await getDefaultDeps()).getReviewBySkillIdAndUserId;
+        overrides.getReviewBySkillIdAndUserId ?? deps.getReviewBySkillIdAndUserId;
       const row = await getReviewBySkillIdAndUserIdFn({
         skillId: asSkillId(input.skillId),
         userId: asUserId(input.userId),
@@ -89,8 +93,8 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
     },
 
     async listBySkill(input: { skillId: string; limit?: number }) {
-      const listReviewsBySkillIdFn =
-        overrides.listReviewsBySkillId ?? (await getDefaultDeps()).listReviewsBySkillId;
+      const deps = await getDefaultDeps();
+      const listReviewsBySkillIdFn = overrides.listReviewsBySkillId ?? deps.listReviewsBySkillId;
       const rows = await listReviewsBySkillIdFn({
         limit: input.limit,
         skillId: asSkillId(input.skillId),

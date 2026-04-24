@@ -29,16 +29,16 @@ export const createNewsletterService = (overrides: Partial<NewsletterServiceDeps
       email: string;
       ip?: string | null;
     }) {
-      const findNewsletterByEmailFn =
-        overrides.findNewsletterByEmail ?? (await getDefaultDeps()).findNewsletterByEmail;
+      const deps = await getDefaultDeps();
+
+      const findNewsletterByEmailFn = overrides.findNewsletterByEmail ?? deps.findNewsletterByEmail;
       const existing = await findNewsletterByEmailFn(input.email);
       if (existing) {
         return null;
       }
 
       const createNewsletterSubscriptionFn =
-        overrides.createNewsletterSubscription ??
-        (await getDefaultDeps()).createNewsletterSubscription;
+        overrides.createNewsletterSubscription ?? deps.createNewsletterSubscription;
       await createNewsletterSubscriptionFn(input);
       return null;
     },

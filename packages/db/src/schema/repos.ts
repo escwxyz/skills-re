@@ -1,9 +1,7 @@
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import type { RepoId } from "../utils";
 import { baseTableColumns, currentTimestampMs } from "../utils";
-import { skillsTable } from "./skills";
 
 export const reposTable = sqliteTable(
   "repos",
@@ -27,7 +25,3 @@ export const reposTable = sqliteTable(
     uniqueIndex("repos_nameWithOwner_unique").on(table.nameWithOwner),
   ],
 );
-
-export const reposRelations = relations(reposTable, ({ many }) => ({
-  skills: many(skillsTable),
-}));
