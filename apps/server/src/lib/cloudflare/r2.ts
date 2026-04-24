@@ -59,4 +59,12 @@ export const createSnapshotArchiveStorageRuntime = (env: SnapshotStorageEnv) => 
       httpMetadata: contentType ? { contentType } : undefined,
     });
   },
+  async putSnapshotFileObject(key: string, body: ArrayBuffer | Uint8Array, contentType?: string) {
+    await env.SNAPSHOT_FILES.put(key, body, {
+      httpMetadata: contentType ? { contentType } : undefined,
+    });
+  },
+  async deleteSnapshotFileObject(key: string) {
+    await env.SNAPSHOT_FILES.delete(key);
+  },
 });

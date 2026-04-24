@@ -1,5 +1,5 @@
 import { decodeCursor, encodeCursor } from "../shared/pagination";
-import type { SnapshotUploadScheduler } from "../../types";
+import type { SnapshotArchiveUploadScheduler, SnapshotUploadScheduler } from "../../types";
 import {
   buildSnapshotArchiveStagingKey,
   buildSnapshotArchiveTarEntries,
@@ -126,6 +126,24 @@ export interface SnapshotsServiceDeps {
   setSnapshotArchiveR2Key: (input: { archiveR2Key: string; snapshotId: string }) => Promise<void>;
   createSnapshotArchiveBuffer: (entries: SnapshotArchiveTarEntry[]) => Promise<Uint8Array>;
   snapshotUploadScheduler: SnapshotUploadScheduler | null;
+  snapshotArchiveUploadScheduler: SnapshotArchiveUploadScheduler | null;
+  upsertSnapshotFiles: (
+    snapshotId: SnapshotId,
+    files: {
+      contentType?: string | null;
+      fileHash: string;
+      path: string;
+      r2Key?: string | null;
+      size: number;
+      sourceSha?: string | null;
+    }[],
+  ) => Promise<void>;
+  putSnapshotFileObject: (
+    key: string,
+    body: ArrayBuffer | Uint8Array,
+    contentType?: string,
+  ) => Promise<void>;
+  deleteSnapshotFileObject: (key: string) => Promise<void>;
   uploadSnapshotFiles: (input: {
     files: { content: string; path: string }[];
     snapshotId: string;
@@ -208,6 +226,12 @@ const defaultDeps: SnapshotsServiceDeps = {
   },
   createSnapshotArchiveBuffer: (entries) => createSnapshotArchiveBuffer(entries),
   snapshotUploadScheduler: null,
+  snapshotArchiveUploadScheduler: null,
+  upsertSnapshotFiles: () => Promise.reject(new Error("Snapshot file storage is not configured.")),
+  putSnapshotFileObject: () =>
+    Promise.reject(new Error("Snapshot file storage is not configured.")),
+  deleteSnapshotFileObject: () =>
+    Promise.reject(new Error("Snapshot file storage is not configured.")),
   uploadSnapshotFiles: () =>
     Promise.reject(new Error("Snapshot upload workflow is not configured.")),
 };
@@ -392,6 +416,71 @@ const normalizeCommitSha = async (
     ref: input.sha,
     repo: input.repo,
   });
+};
+
+const hashText = async (value: string) => {
+  const encoded = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+const getSnapshotFileContentType = (path: string) => {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".md")) {
+    return "text/markdown; charset=utf-8";
+  }
+  if (lower.endsWith(".json")) {
+    return "application/json; charset=utf-8";
+  }
+  if (lower.endsWith(".ts")) {
+    return "application/typescript; charset=utf-8";
+  }
+  if (lower.endsWith(".tsx")) {
+    return "text/tsx; charset=utf-8";
+  }
+  if (lower.endsWith(".js")) {
+    return "text/javascript; charset=utf-8";
+  }
+  if (lower.endsWith(".yaml") || lower.endsWith(".yml")) {
+    return "application/yaml; charset=utf-8";
+  }
+  return "text/plain; charset=utf-8";
+};
+
+const toRelativeSnapshotPath = (directoryPath: string, normalizedPath: string) => {
+  const directoryPrefix = directoryPath.endsWith("/") ? directoryPath : `${directoryPath}/`;
+  if (!normalizedPath.startsWith(directoryPrefix)) {
+    return normalizedPath;
+  }
+  const stripped = normalizedPath.slice(directoryPrefix.length);
+  return stripped.length > 0 ? stripped : "SKILL.md";
+};
+
+const buildSnapshotFileR2Key = (
+  storageContext: {
+    directoryPath: string;
+    repoName: string | null;
+    repoOwner: string | null;
+    version: string;
+  } | null,
+  snapshotId: string,
+  normalizedPath: string,
+) => {
+  if (!(storageContext?.repoOwner && storageContext.repoName)) {
+    return `snapshots/${snapshotId}/${normalizedPath}`;
+  }
+
+  const relativePath = toRelativeSnapshotPath(storageContext.directoryPath, normalizedPath);
+
+  return [
+    storageContext.repoOwner,
+    storageContext.repoName,
+    storageContext.directoryPath.replaceAll(/\/+$/g, ""),
+    storageContext.version,
+    relativePath,
+  ]
+    .filter((segment) => segment.length > 0)
+    .join("/");
 };
 
 const hashSnapshotFiles = async (files: { content: string; path: string }[]) => {
@@ -811,6 +900,70 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       }
 
       return await activeScheduler.enqueue(input);
+    },
+
+    async runUploadSnapshotFilesPipeline(input: {
+      files: { content: string; path: string }[];
+      snapshotId: string;
+    }) {
+      const snapshot = await deps.getSnapshotById(asSnapshotId(input.snapshotId));
+      if (!snapshot) {
+        throw new Error("Snapshot not found.");
+      }
+
+      const storageContext = await deps.getSnapshotStorageContext(asSnapshotId(input.snapshotId));
+
+      const manifest: {
+        contentType: string;
+        fileHash: string;
+        path: string;
+        r2Key: string;
+        size: number;
+      }[] = [];
+
+      for (const file of input.files) {
+        const normalizedPath = normalizeSnapshotPath(file.path);
+        const fileHash = await hashText(file.content);
+        const r2Key = buildSnapshotFileR2Key(storageContext, input.snapshotId, normalizedPath);
+        const contentType = getSnapshotFileContentType(normalizedPath);
+        const bytes = new TextEncoder().encode(file.content);
+
+        await deps.putSnapshotFileObject(r2Key, bytes, contentType);
+        manifest.push({
+          contentType,
+          fileHash,
+          path: normalizedPath,
+          r2Key,
+          size: bytes.byteLength,
+        });
+      }
+
+      try {
+        await deps.upsertSnapshotFiles(asSnapshotId(input.snapshotId), manifest);
+      } catch (error) {
+        const existingFiles = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
+        const existingR2KeyByPath = new Map(
+          existingFiles
+            .filter((file): file is typeof file & { r2Key: string } => Boolean(file.r2Key))
+            .map((file) => [file.path, file.r2Key] as const),
+        );
+        const toDelete = manifest.filter(
+          (entry) => existingR2KeyByPath.get(entry.path) !== entry.r2Key,
+        );
+        await Promise.allSettled(
+          toDelete.map((entry) => deps.deleteSnapshotFileObject(entry.r2Key)),
+        );
+        throw error;
+      }
+
+      if (deps.snapshotArchiveUploadScheduler) {
+        await deps.snapshotArchiveUploadScheduler.enqueue({ snapshotId: input.snapshotId });
+      }
+
+      return {
+        filesCount: input.files.length,
+        snapshotId: input.snapshotId,
+      };
     },
   };
 };

@@ -178,6 +178,51 @@ export async function deprecateSnapshotsBeyondLimit(
   return idsToDeprecate.length;
 }
 
+export async function upsertSnapshotFiles(
+  snapshotId: SnapshotId,
+  files: {
+    contentType?: string | null;
+    fileHash: string;
+    path: string;
+    r2Key?: string | null;
+    size: number;
+    sourceSha?: string | null;
+  }[],
+  database = db,
+) {
+  if (files.length === 0) {
+    return;
+  }
+
+  const BATCH_SIZE = 25;
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+    await database
+      .insert(snapshotFilesTable)
+      .values(
+        batch.map((file) => ({
+          contentType: file.contentType ?? null,
+          fileHash: file.fileHash,
+          path: file.path,
+          r2Key: file.r2Key ?? null,
+          size: file.size,
+          snapshotId,
+          sourceSha: file.sourceSha ?? null,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [snapshotFilesTable.snapshotId, snapshotFilesTable.path],
+        set: {
+          contentType: sql`excluded.content_type`,
+          fileHash: sql`excluded.file_hash`,
+          r2Key: sql`excluded.r2_key`,
+          size: sql`excluded.size`,
+          sourceSha: sql`excluded.source_sha`,
+        },
+      });
+  }
+}
+
 export async function setSnapshotArchiveR2Key(
   input: {
     archiveR2Key: string;
