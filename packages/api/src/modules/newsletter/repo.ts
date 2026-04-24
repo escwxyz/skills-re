@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { newsletterTable } from "@skills-re/db/schema/newsletter";
 import { asNewsletterId } from "@skills-re/db/utils";
 
-type NewsletterDb = typeof import("../shared/db").db;
+import { db } from "../shared/db";
 
 export interface NewsletterRow {
   city: string | null;
@@ -15,11 +15,8 @@ export interface NewsletterRow {
   ip: string | null;
 }
 
-const getDb = async (database?: NewsletterDb) => database ?? (await import("../shared/db")).db;
-
-export async function findNewsletterByEmail(email: string, database?: NewsletterDb) {
-  const db = await getDb(database);
-  const rows = await db
+export async function findNewsletterByEmail(email: string, database = db) {
+  const rows = await database
     .select()
     .from(newsletterTable)
     .where(eq(newsletterTable.email, email))
@@ -35,10 +32,9 @@ export async function createNewsletterSubscription(
     city?: string | null;
     device?: "mobile" | "desktop" | null;
   },
-  database?: NewsletterDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  const rows = await db
+  const rows = await database
     .insert(newsletterTable)
     .values({
       city: input.city ?? null,

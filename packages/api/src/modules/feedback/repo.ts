@@ -3,9 +3,8 @@ import { and, desc, eq } from "drizzle-orm";
 import { feedbackTable } from "@skills-re/db/schema/feedback";
 import { asFeedbackId, asUserId } from "@skills-re/db/utils";
 import type { FeedbackId, UserId } from "@skills-re/db/utils";
-import type { db as sharedDb } from "../shared/db";
 
-type FeedbackDb = typeof sharedDb;
+import { db } from "../shared/db";
 
 export type FeedbackStatus = "pending" | "resolved" | "in_review";
 export type FeedbackType = "bug" | "request" | "general";
@@ -22,15 +21,6 @@ export interface FeedbackRow {
   userId: string | null;
 }
 
-const getDb = async (database?: FeedbackDb) => {
-  if (database) {
-    return database;
-  }
-
-  const { db } = await import("../shared/db");
-  return db;
-};
-
 export async function createFeedback(
   input: {
     content: string;
@@ -38,11 +28,10 @@ export async function createFeedback(
     type: FeedbackType;
     userId?: UserId | null;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const now = Date.now();
-  const rows = await db
+  const rows = await database
     .insert(feedbackTable)
     .values({
       content: input.content,
@@ -71,13 +60,12 @@ export async function listFeedback(
     status?: FeedbackStatus;
     limit?: number;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const limit = input?.limit ?? 100;
   const baseQuery = input?.status
-    ? db.select().from(feedbackTable).where(eq(feedbackTable.status, input.status))
-    : db.select().from(feedbackTable);
+    ? database.select().from(feedbackTable).where(eq(feedbackTable.status, input.status))
+    : database.select().from(feedbackTable);
 
   return await baseQuery.orderBy(desc(feedbackTable.createdAt)).limit(limit);
 }
@@ -87,12 +75,11 @@ export async function listFeedbackByUser(
     userId: UserId;
     limit?: number;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
   const limit = input.limit ?? 100;
 
-  return await db
+  return await database
     .select()
     .from(feedbackTable)
     .where(eq(feedbackTable.userId, input.userId))
@@ -100,9 +87,8 @@ export async function listFeedbackByUser(
     .limit(limit);
 }
 
-export async function getFeedbackById(id: FeedbackId, database?: FeedbackDb) {
-  const db = await getDb(database);
-  const rows = await db
+export async function getFeedbackById(id: FeedbackId, database = db) {
+  const rows = await database
     .select()
     .from(feedbackTable)
     .where(eq(feedbackTable.id, asFeedbackId(id)))
@@ -115,10 +101,9 @@ export async function getFeedbackByIdAndUser(
     id: FeedbackId;
     userId: UserId;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  const rows = await db
+  const rows = await database
     .select()
     .from(feedbackTable)
     .where(and(eq(feedbackTable.id, input.id), eq(feedbackTable.userId, asUserId(input.userId))))
@@ -131,10 +116,9 @@ export async function updateFeedbackStatus(
     id: FeedbackId;
     status: FeedbackStatus;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  await db
+  await database
     .update(feedbackTable)
     .set({
       status: input.status,
@@ -148,10 +132,9 @@ export async function updateFeedbackResponse(
     id: FeedbackId;
     response?: string | null;
   },
-  database?: FeedbackDb,
+  database = db,
 ) {
-  const db = await getDb(database);
-  await db
+  await database
     .update(feedbackTable)
     .set({
       response: input.response ?? null,
