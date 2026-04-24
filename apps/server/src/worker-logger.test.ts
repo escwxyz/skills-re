@@ -39,4 +39,43 @@ describe("createWorkerLogger", () => {
       level: "error",
     });
   });
+
+  test("guards against cyclic error causes", () => {
+    const originalConsoleError = console.error;
+    const logs: unknown[] = [];
+    console.error = (...args: unknown[]) => {
+      logs.push(args[0]);
+    };
+
+    try {
+      const logger = createWorkerLogger({ component: "test" });
+      const error = new Error("loop");
+      Object.defineProperty(error, "cause", {
+        configurable: true,
+        value: error,
+      });
+
+      logger.error("test.error", {
+        error,
+      });
+    } finally {
+      console.error = originalConsoleError;
+    }
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0]).toMatchObject({
+      component: "test",
+      error: {
+        cause: {
+          cause: "[cyclic cause]",
+          message: "loop",
+          name: "Error",
+        },
+        message: "loop",
+        name: "Error",
+      },
+      event: "test.error",
+      level: "error",
+    });
+  });
 });

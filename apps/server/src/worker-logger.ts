@@ -21,19 +21,53 @@ export interface WorkerLogger {
   warn(event: string, fields?: WorkerLogFields): void;
 }
 
-const normalizeError = (error: Error): WorkerErrorLog => ({
-  cause: error.cause instanceof Error ? normalizeError(error.cause) : error.cause,
-  message: error.message,
-  name: error.name,
-  stack: error.stack,
-});
+const CYCLIC_CAUSE_SENTINEL = "[cyclic cause]";
+
+const normalizeErrorCause = (
+  cause: unknown,
+  seen: Set<Error>,
+): WorkerLogValue | undefined => {
+  if (cause instanceof Error) {
+    return normalizeError(cause, seen);
+  }
+
+  if (cause === undefined) {
+    return undefined;
+  }
+
+  return cause as WorkerLogPrimitive | WorkerLogPrimitive[];
+};
+
+const normalizeError = (
+  error: Error,
+  seen: Set<Error> = new Set<Error>(),
+): WorkerErrorLog => {
+  if (seen.has(error)) {
+    return {
+      cause: CYCLIC_CAUSE_SENTINEL,
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    };
+  }
+
+  seen.add(error);
+
+  return {
+    cause: normalizeErrorCause(error.cause, seen),
+    message: error.message,
+    name: error.name,
+    stack: error.stack,
+  };
+};
 
 const normalizeFields = (fields: WorkerLogFields) => {
   const normalized: Record<string, WorkerLogValue | undefined> = {};
 
   for (const [key, value] of Object.entries(fields)) {
     const fieldValue = value as WorkerLogValue | Error | undefined;
-    normalized[key] = fieldValue instanceof Error ? normalizeError(fieldValue) : fieldValue;
+    normalized[key] =
+      fieldValue instanceof Error ? normalizeError(fieldValue) : fieldValue;
   }
 
   return normalized;
