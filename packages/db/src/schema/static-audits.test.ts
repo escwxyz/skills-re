@@ -2,7 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { staticAuditsRelations, staticAuditsTable } from "./static-audits";
+import { staticAuditsTable } from "./static-audits";
+import { staticAuditsRelations } from "./relations";
 
 describe("static audits schema", () => {
   test("exports the expected core columns", () => {

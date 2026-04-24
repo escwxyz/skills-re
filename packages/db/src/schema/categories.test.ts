@@ -2,7 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { categoriesRelations, categoriesTable } from "./categories";
+import { categoriesTable } from "./categories";
+import { categoriesRelations } from "./relations";
 
 const getExtraConfigNames = (table: object) => {
   const builderKey = Object.getOwnPropertySymbols(table).find((symbol) =>

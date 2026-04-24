@@ -2,7 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { reposRelations, reposTable } from "./repos";
+import { reposTable } from "./repos";
+import { reposRelations } from "./relations";
 
 describe("repo schema", () => {
   test("exports the defaultBranch column on the repos table", () => {

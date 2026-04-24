@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { SnapshotId, StaticAuditId } from "../utils";
@@ -64,10 +64,3 @@ export const staticAuditsTable = sqliteTable(
     index("static_audits_risk_level_sync_time_idx").on(table.riskLevel, table.syncTime),
   ],
 );
-
-export const staticAuditsRelations = relations(staticAuditsTable, ({ one }) => ({
-  snapshot: one(snapshotsTable, {
-    fields: [staticAuditsTable.snapshotId],
-    references: [snapshotsTable.id],
-  }),
-}));

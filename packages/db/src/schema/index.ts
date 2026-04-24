@@ -1,25 +1,25 @@
-export {
-  accountsRelations,
-  accountsTable,
-  authTables,
-  sessionsRelations,
-  sessionsTable,
-  usersRelations,
-  usersTable,
-  verificationsTable,
-} from "./auth";
-export { reposRelations, reposTable } from "./repos";
-export { skillsTagsRelations, skillsTagsTable, skillsRelations, skillsTable } from "./skills";
-export {
-  snapshotFilesRelations,
-  snapshotFilesTable,
-  snapshotsRelations,
-  snapshotsTable,
-} from "./snapshots";
-export { categoriesRelations, categoriesTable } from "./categories";
+export { accountsTable, authTables, sessionsTable, usersTable, verificationsTable } from "./auth";
+export { reposTable } from "./repos";
+export { skillsTagsTable, skillsTable } from "./skills";
+export { snapshotFilesTable, snapshotsTable } from "./snapshots";
+export { categoriesTable } from "./categories";
 export { feedbackTable } from "./feedback";
 export { dailyMetricsTable } from "./daily-metrics";
 export { newsletterTable } from "./newsletter";
-export { reviewsRelations, reviewsTable } from "./reviews";
-export { staticAuditsRelations, staticAuditsTable } from "./static-audits";
-export { tagsRelations, tagsTable } from "./tags";
+export { reviewsTable } from "./reviews";
+export { staticAuditsTable } from "./static-audits";
+export { tagsTable } from "./tags";
+export {
+  accountsRelations,
+  categoriesRelations,
+  reposRelations,
+  reviewsRelations,
+  sessionsRelations,
+  skillsRelations,
+  skillsTagsRelations,
+  snapshotFilesRelations,
+  snapshotsRelations,
+  staticAuditsRelations,
+  tagsRelations,
+  usersRelations,
+} from "./relations";

@@ -1,4 +1,4 @@
-import { sql, relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import type {
@@ -94,26 +94,3 @@ export const skillsTagsTable = sqliteTable(
   },
   (table) => [uniqueIndex("skills_tags_unique").on(table.skillId, table.tagId)],
 );
-
-export const reposRelations = relations(reposTable, ({ many }) => ({
-  skills: many(skillsTable),
-}));
-
-export const skillsRelations = relations(skillsTable, ({ one, many }) => ({
-  repo: one(reposTable, {
-    fields: [skillsTable.repoId],
-    references: [reposTable.id],
-  }),
-  skillsTags: many(skillsTagsTable),
-}));
-
-export const skillsTagsRelations = relations(skillsTagsTable, ({ one }) => ({
-  skill: one(skillsTable, {
-    fields: [skillsTagsTable.skillId],
-    references: [skillsTable.id],
-  }),
-  tag: one(tagsTable, {
-    fields: [skillsTagsTable.tagId],
-    references: [tagsTable.id],
-  }),
-}));

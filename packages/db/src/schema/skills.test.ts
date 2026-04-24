@@ -2,7 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { skillsRelations, skillsTable, skillsTagsRelations, skillsTagsTable } from "./skills";
+import { skillsTable, skillsTagsTable } from "./skills";
+import { skillsRelations, skillsTagsRelations } from "./relations";
 
 describe("skills schema", () => {
   test("exports the skills tables and relations", () => {

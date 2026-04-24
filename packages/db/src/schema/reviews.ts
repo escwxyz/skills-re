@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import type { ReviewId, SkillId, UserId } from "../utils";
@@ -28,14 +28,3 @@ export const reviewsTable = sqliteTable(
     uniqueIndex("reviews_skill_id_user_id_unique").on(table.skillId, table.userId),
   ],
 );
-
-export const reviewsRelations = relations(reviewsTable, ({ one }) => ({
-  skill: one(skillsTable, {
-    fields: [reviewsTable.skillId],
-    references: [skillsTable.id],
-  }),
-  user: one(usersTable, {
-    fields: [reviewsTable.userId],
-    references: [usersTable.id],
-  }),
-}));
