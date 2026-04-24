@@ -111,6 +111,7 @@ const buildPayloadFromOverview = async (input: {
   const log = input.logger?.child({ owner: input.owner, repo: input.repo });
   const snapshotHelpers = createGithubSnapshotHistoryHelpers(input.env, {
     fetch: input.fetchImpl,
+    logger: input.logger,
   });
   const overview: GithubRepoOverview = await buildGithubRepoOverview(
     input.fetchImpl,
