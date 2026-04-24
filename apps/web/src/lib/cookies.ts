@@ -1,51 +1,73 @@
-interface CookieOptions {
-  path?: string;
+// 7 days in seconds
+const DEFAULT_MAX_AGE = 60 * 60 * 24 * 7;
+
+export interface WriteCookieOptions {
   maxAge?: number;
-  sameSite?: "lax" | "strict" | "none";
 }
 
-const DEFAULT_COOKIE_PATH = "/";
-const DEFAULT_COOKIE_SAME_SITE: NonNullable<CookieOptions["sameSite"]> = "lax";
-
-const isBrowser = () => typeof document !== "undefined";
-
-export function readCookie(name: string): string | null {
-  if (!isBrowser()) {
-    return null;
+export async function readCookie(name: string): Promise<string | undefined> {
+  if (typeof window === "undefined") {
+    return undefined;
   }
 
-  const encodedName = encodeURIComponent(name);
-  const prefix = `${encodedName}=`;
-  const cookie = document.cookie
-    .split("; ")
-    .find((entry) => entry.startsWith(prefix))
-    ?.slice(prefix.length);
-
-  if (!cookie) {
-    return null;
+  if ("cookieStore" in window) {
+    try {
+      const cookie = await window.cookieStore.get(name);
+      return cookie?.value;
+    } catch {
+      // fallback below
+    }
   }
 
-  return decodeURIComponent(cookie);
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift();
+  }
 }
 
-export function writeCookie(name: string, value: string, options: CookieOptions = {}) {
-  if (!isBrowser()) {
+export async function writeCookie(
+  name: string,
+  value: string,
+  options: WriteCookieOptions = {},
+): Promise<void> {
+  if (typeof window === "undefined") {
     return;
   }
 
-  const parts = [
-    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
-    `path=${options.path ?? DEFAULT_COOKIE_PATH}`,
-    `samesite=${options.sameSite ?? DEFAULT_COOKIE_SAME_SITE}`,
-  ];
+  const maxAge = options.maxAge ?? DEFAULT_MAX_AGE;
 
-  if (typeof options.maxAge === "number") {
-    parts.push(`max-age=${options.maxAge}`);
+  if ("cookieStore" in window) {
+    try {
+      await window.cookieStore.set({
+        name,
+        value,
+        expires: Date.now() + maxAge * 1000,
+      });
+      return;
+    } catch {
+      // fallback below
+    }
   }
 
-  document.cookie = parts.join("; ");
+  // oxlint-disable-next-line unicorn/no-document-cookie fallback
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}`;
 }
 
-export function clearCookie(name: string, options: CookieOptions = {}) {
-  writeCookie(name, "", { ...options, maxAge: 0 });
+export async function clearCookie(name: string): Promise<void> {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if ("cookieStore" in window) {
+    try {
+      await window.cookieStore.delete(name);
+      return;
+    } catch {
+      // fallback below
+    }
+  }
+
+  // oxlint-disable-next-line unicorn/no-document-cookie fallback
+  document.cookie = `${name}=; path=/; max-age=0`;
 }
