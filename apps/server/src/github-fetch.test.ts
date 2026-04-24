@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { createGithubFetchRuntime } from "./github-fetch";
+import type { WorkerLogFields, WorkerLogger } from "./worker-logger";
 
 const encodeBase64 = (value: string) =>
   typeof btoa === "function" ? btoa(value) : Buffer.from(value, "utf-8").toString("base64");
@@ -18,6 +19,36 @@ const getRequestUrl = (input: string | URL | Request) => {
 
   return input.toString();
 };
+
+interface CapturedLog {
+  event: string;
+  fields?: WorkerLogFields;
+  level: "debug" | "error" | "info" | "warn";
+}
+
+const createCapturingLogger = (
+  logs: CapturedLog[],
+  baseFields: WorkerLogFields = {},
+): WorkerLogger => ({
+  child(fields) {
+    return createCapturingLogger(logs, {
+      ...baseFields,
+      ...fields,
+    });
+  },
+  debug(event, fields) {
+    logs.push({ event, fields: { ...baseFields, ...fields }, level: "debug" });
+  },
+  error(event, fields) {
+    logs.push({ event, fields: { ...baseFields, ...fields }, level: "error" });
+  },
+  info(event, fields) {
+    logs.push({ event, fields: { ...baseFields, ...fields }, level: "info" });
+  },
+  warn(event, fields) {
+    logs.push({ event, fields: { ...baseFields, ...fields }, level: "warn" });
+  },
+});
 
 describe("createGithubFetchRuntime", () => {
   test("fetches multiple skill roots concurrently while preserving order", async () => {
@@ -343,15 +374,200 @@ describe("createGithubFetchRuntime", () => {
     ).toBe(true);
   });
 
-  test("rejects invalid github urls", () => {
-    const runtime = createGithubFetchRuntime({
-      GH_PAT: "",
+  test("logs invalid skill roots when frontmatter is missing", async () => {
+    const logs: CapturedLog[] = [];
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  default_branch: "main",
+                  forks_count: 1,
+                  full_name: "acme/skills",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/skills/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "skills/example/skill.md",
+                      sha: "blob-1",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64("# No frontmatter here"),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+        logger: createCapturingLogger(logs),
+      },
+    );
+
+    await expect(
+      runtime.fetchRepo({
+        githubUrl: "https://github.com/acme/skills",
+      }),
+    ).resolves.toMatchObject({
+      invalidSkills: [
+        {
+          message: "Invalid skill frontmatter.",
+          skillMdPath: "skill.md",
+          skillRootPath: "skills/example",
+        },
+      ],
+      skills: [],
     });
 
     expect(
+      logs.some(
+        (entry) =>
+          entry.event === "github.fetch_repo.invalid_skill" &&
+          entry.level === "warn" &&
+          entry.fields?.skillRootPath === "skills/example",
+      ),
+    ).toBe(true);
+  });
+
+  test("logs a failure when repository head sha cannot be resolved", async () => {
+    const logs: CapturedLog[] = [];
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  default_branch: "main",
+                  forks_count: 1,
+                  full_name: "acme/skills",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
+            return await Promise.resolve(Response.json([], { status: 200 }));
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+        logger: createCapturingLogger(logs),
+      },
+    );
+
+    await expect(
+      runtime.fetchRepo({
+        githubUrl: "https://github.com/acme/skills",
+      }),
+    ).rejects.toThrow("Unable to resolve repository HEAD commit.");
+
+    expect(
+      logs.some(
+        (entry) =>
+          entry.event === "github.fetch_repo.failed" &&
+          entry.level === "error" &&
+          entry.fields?.reason === "missing_head_sha",
+      ),
+    ).toBe(true);
+  });
+
+  test("rejects invalid github urls", async () => {
+    const logs: CapturedLog[] = [];
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "",
+      },
+      {
+        logger: createCapturingLogger(logs),
+      },
+    );
+
+    await expect(
       runtime.fetchRepo({
         githubUrl: "https://example.com/acme/skills",
       }),
     ).rejects.toThrow("Invalid GitHub repository URL.");
+    expect(
+      logs.some(
+        (entry) =>
+          entry.event === "github.fetch_repo.failed" &&
+          entry.level === "error" &&
+          entry.fields?.reason === "invalid_github_url",
+      ),
+    ).toBe(true);
   });
 });

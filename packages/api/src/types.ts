@@ -113,6 +113,14 @@ export interface SkillsTaggingScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface WorkerLogger {
+  child(fields: Record<string, unknown>): WorkerLogger;
+  debug(event: string, fields?: Record<string, unknown>): void;
+  error(event: string, fields?: Record<string, unknown>): void;
+  info(event: string, fields?: Record<string, unknown>): void;
+  warn(event: string, fields?: Record<string, unknown>): void;
+}
+
 export interface GithubSubmitRuntime {
   buildPayload(input: { owner: string; repo: string; skillRootPath?: string }): Promise<{
     payload: SkillsUploadContentPayload | null;
@@ -235,6 +243,7 @@ export interface Context {
   githubFetch?: GithubFetchRuntime;
   githubSubmit?: GithubSubmitRuntime;
   snapshotHistory?: SnapshotHistoryRuntime;
+  workerLogger?: WorkerLogger;
   workflowSchedulers?: {
     snapshotArchiveUpload?: SnapshotArchiveUploadScheduler;
     snapshotUpload?: SnapshotUploadScheduler;

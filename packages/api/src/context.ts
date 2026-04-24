@@ -3,11 +3,18 @@ import type { Context as HonoContext } from "hono";
 
 type CloudflareBindings = Env;
 
-export interface CreateContextOptions {
-  context: HonoContext<{ Bindings: CloudflareBindings }>;
+export interface CreateContextOptions<
+  Variables extends Record<string, unknown> = Record<string, never>,
+> {
+  context: HonoContext<{
+    Bindings: CloudflareBindings;
+    Variables: Variables;
+  }>;
 }
 
-export async function createContext({ context }: CreateContextOptions) {
+export async function createContext<
+  Variables extends Record<string, unknown> = Record<string, never>,
+>({ context }: CreateContextOptions<Variables>) {
   const session = await createRuntimeAuth().api.getSession({
     headers: context.req.raw.headers,
   });

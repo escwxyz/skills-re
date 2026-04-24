@@ -11,8 +11,14 @@ import { getSnapshotUploadWorkflowScheduler } from "./workflows/snapshot-upload"
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./workflows/snapshots-archive-upload";
 import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-scheduler";
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
+import type { WorkerLogger } from "./worker-logger";
 
-type ServerHonoContext = HonoContext<{ Bindings: Env }>;
+type ServerHonoContext = HonoContext<{
+  Bindings: Env;
+  Variables: {
+    workerLogger?: WorkerLogger;
+  };
+}>;
 
 export interface CreateServerContextOptions {
   context: ServerHonoContext;
@@ -28,12 +34,17 @@ export interface CreateServerRuntimeDeps {
   workflowSchedulers?: ApiContext["workflowSchedulers"];
 }
 
+interface CreateServerRuntimeOptions {
+  logger?: WorkerLogger;
+}
+
 export function createServerContextFromBase(
   baseContext: {
     auth: null;
     session: ApiContext["session"];
   },
   runtimeDeps: CreateServerRuntimeDeps = {},
+  workerLogger?: ApiContext["workerLogger"],
 ): ApiContext {
   return {
     ...baseContext,
@@ -43,16 +54,24 @@ export function createServerContextFromBase(
     githubFetch: runtimeDeps.githubFetch,
     githubSubmit: runtimeDeps.githubSubmit,
     snapshotHistory: runtimeDeps.snapshotHistory,
+    workerLogger,
     workflowSchedulers: runtimeDeps.workflowSchedulers,
   };
 }
 
-async function createServerRuntime(env: Env): Promise<CreateServerRuntimeDeps> {
+async function createServerRuntime(
+  env: Env,
+  options: CreateServerRuntimeOptions = {},
+): Promise<CreateServerRuntimeDeps> {
   const { createAiTasksRuntime } = await import("./ai-tasks");
   const aiTasks = createAiTasksRuntime(env);
   const aiSearch = createAiSearchRuntime(env);
-  const githubHistory = createGithubSnapshotHistoryHelpers(env);
-  const githubFetch = createGithubFetchRuntime(env);
+  const githubHistory = createGithubSnapshotHistoryHelpers(env, {
+    logger: options.logger,
+  });
+  const githubFetch = createGithubFetchRuntime(env, {
+    logger: options.logger,
+  });
   const githubSubmit = createGithubSubmitRuntime(env);
   const [{ createHistoricalSnapshot }, { listSkillsHistoryInfoByIds }] = await Promise.all([
     import("@skills-re/api/modules/snapshots/service"),
@@ -82,7 +101,10 @@ async function createServerRuntime(env: Env): Promise<CreateServerRuntimeDeps> {
 
 export async function createServerContext({ context }: CreateServerContextOptions) {
   const { createContext: createApiContext } = await import("@skills-re/api/context");
-  const baseContext = await createApiContext({ context });
-  const runtimeDeps = await createServerRuntime(context.env);
-  return createServerContextFromBase(baseContext, runtimeDeps);
+  const baseContext = await createApiContext({
+    context,
+  });
+  const logger = context.get("workerLogger");
+  const runtimeDeps = await createServerRuntime(context.env, { logger });
+  return createServerContextFromBase(baseContext, runtimeDeps, logger);
 }
