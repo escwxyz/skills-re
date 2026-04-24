@@ -1,8 +1,4 @@
-import type {
-  GithubSnapshotTreeEntry,
-  GithubSubmitRuntime,
-  SkillsUploadContentPayload,
-} from "@skills-re/api/types";
+import type { GithubSnapshotTreeEntry, GithubSubmitRuntime } from "@skills-re/api/types";
 
 import { buildGithubRepoOverview, createGithubHeaders } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
@@ -13,6 +9,7 @@ import {
   normalizeSkillRootPath,
   parseFrontmatter,
 } from "./github-skill-utils";
+import type { WorkerLogger } from "./worker-logger";
 
 const isRepoIneligible = (overview: GithubRepoOverview) =>
   Boolean(
@@ -53,6 +50,7 @@ const buildSubmitSkill = async (
   tree: GithubSnapshotTreeEntry[],
   root: { skillMdPath: string; skillRootPath: string },
   snapshotHelpers: ReturnType<typeof createGithubSnapshotHistoryHelpers>,
+  logger?: WorkerLogger,
 ) => {
   const filesResponse = await snapshotHelpers.fetchSkillFilesForRoot({
     owner: input.owner,
@@ -64,11 +62,19 @@ const buildSubmitSkill = async (
     (file) => file.path.split("/").at(-1)?.toLowerCase() === SKILL_FILENAME,
   );
   if (!skillMd) {
+    logger?.debug("github.submit.skill.skipped", {
+      reason: "no-skill-md",
+      skillRootPath: root.skillRootPath,
+    });
     return null;
   }
 
   const frontmatter = parseFrontmatter(skillMd.content);
   if (!frontmatter) {
+    logger?.warn("github.submit.skill.skipped", {
+      reason: "invalid-frontmatter",
+      skillMdPath: root.skillMdPath,
+    });
     return null;
   }
 
@@ -97,10 +103,12 @@ const buildSubmitSkill = async (
 const buildPayloadFromOverview = async (input: {
   env: Partial<Pick<Env, "GH_PAT">>;
   fetchImpl: typeof fetch;
+  logger?: WorkerLogger;
   owner: string;
   repo: string;
   requestedSkillPath?: string;
 }) => {
+  const log = input.logger?.child({ owner: input.owner, repo: input.repo });
   const snapshotHelpers = createGithubSnapshotHistoryHelpers(input.env, {
     fetch: input.fetchImpl,
   });
@@ -114,6 +122,7 @@ const buildPayloadFromOverview = async (input: {
     },
   );
   if (isRepoIneligible(overview)) {
+    log?.warn("github.submit.rejected", { reason: "repo-ineligible" });
     return {
       payload: null,
       reason: "repo-ineligible",
@@ -122,6 +131,7 @@ const buildPayloadFromOverview = async (input: {
 
   const { headSha } = overview;
   if (!headSha) {
+    log?.warn("github.submit.rejected", { reason: "missing-head-sha" });
     return {
       payload: null,
       reason: "missing-head-sha",
@@ -135,21 +145,22 @@ const buildPayloadFromOverview = async (input: {
   });
   const roots = discoverSkillRoots(tree, input.requestedSkillPath);
   if (roots.length === 0) {
+    log?.warn("github.submit.rejected", { reason: "no-skills" });
     return {
       payload: null,
       reason: "no-skills",
     };
   }
 
-  const skills: SkillsUploadContentPayload["skills"] = [];
-  for (const root of roots) {
-    const skill = await buildSubmitSkill(input, overview, headSha, tree, root, snapshotHelpers);
-    if (skill) {
-      skills.push(skill);
-    }
-  }
+  const skillResults = await Promise.all(
+    roots.map((root) =>
+      buildSubmitSkill(input, overview, headSha, tree, root, snapshotHelpers, log),
+    ),
+  );
+  const skills = skillResults.filter((skill): skill is NonNullable<typeof skill> => skill !== null);
 
   if (skills.length === 0) {
+    log?.warn("github.submit.rejected", { reason: "no-valid-skills" });
     return {
       payload: null,
       reason: "no-valid-skills",
@@ -168,18 +179,19 @@ const buildPayloadFromOverview = async (input: {
 
 export const createGithubSubmitRuntime = (
   env: Partial<Pick<Env, "GH_PAT">>,
-  options: { fetch?: typeof fetch } = {},
+  options: { fetch?: typeof fetch; logger?: WorkerLogger } = {},
 ): GithubSubmitRuntime => {
   const fetchImpl = options.fetch ?? fetch;
 
   return {
     async buildPayload(input) {
       return await buildPayloadFromOverview({
+        env,
         fetchImpl,
+        logger: options.logger,
         owner: input.owner,
         repo: input.repo,
         requestedSkillPath: input.skillRootPath,
-        env,
       });
     },
   };

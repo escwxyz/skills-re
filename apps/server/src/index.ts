@@ -183,7 +183,8 @@ const server = {
   fetch: (request: Request, workerEnv: Env, executionContext: ExecutionContext) =>
     app.fetch(request, workerEnv, executionContext),
   async queue(batch: MessageBatch<unknown>, workerEnv: Env) {
-    await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv);
+    const logger = createWorkerLogger({ component: "workflow.queue" });
+    await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv, logger);
   },
 };
 

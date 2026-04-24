@@ -144,49 +144,52 @@ export function createGithubSnapshotHistoryHelpers(
     async fetchSkillFilesForRoot({ owner, repo, skillRootPath, tree }) {
       const normalizedRootPath = normalizeSkillRootPath(skillRootPath);
       const rootPrefix = normalizedRootPath.length > 0 ? `${normalizedRootPath}/` : "";
-      const files: { content: string; path: string }[] = [];
 
-      for (const node of tree) {
+      const blobNodes = tree.flatMap((node) => {
         if (node.type !== "blob") {
-          continue;
+          return [];
         }
         if (rootPrefix.length > 0 && !node.path.startsWith(rootPrefix)) {
-          continue;
+          return [];
         }
-
         const relativePath = rootPrefix.length ? node.path.slice(rootPrefix.length) : node.path;
         if (relativePath.length === 0 || shouldExcludePath(relativePath)) {
-          continue;
+          return [];
         }
+        return [{ node, relativePath }];
+      });
 
-        const blob = await fetchGithubJson<{
-          content: string;
-          encoding: string;
-        }>(
-          fetchImpl,
-          `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`,
-          {
-            headers,
-          },
-          {
-            includeResponseMessage: true,
-            logger,
-            logContext: { operation: "repo-blob", owner, repo },
-          },
-        );
+      const results = await Promise.all(
+        blobNodes.map(async ({ node, relativePath }) => {
+          const blob = await fetchGithubJson<{
+            content: string;
+            encoding: string;
+          }>(
+            fetchImpl,
+            `${GITHUB_API_ROOT}/repos/${owner}/${repo}/git/blobs/${node.sha}`,
+            { headers },
+            {
+              includeResponseMessage: true,
+              logger,
+              logContext: { operation: "repo-blob", owner, repo },
+            },
+          );
 
-        if (blob.encoding !== "base64") {
-          continue;
-        }
+          if (blob.encoding !== "base64") {
+            return null;
+          }
 
-        files.push({
-          content: decodeBase64(blob.content.replaceAll("\n", "")),
-          path: normalizeRelativePath(relativePath),
-        });
-      }
+          return {
+            content: decodeBase64(blob.content.replaceAll("\n", "")),
+            path: normalizeRelativePath(relativePath),
+          };
+        }),
+      );
 
       return {
-        files: files.filter((file) => file.path.length > 0),
+        files: results.filter(
+          (file): file is NonNullable<typeof file> => file !== null && file.path.length > 0,
+        ),
       };
     },
 

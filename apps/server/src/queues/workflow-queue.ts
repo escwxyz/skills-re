@@ -1,6 +1,8 @@
 import type { RepoStatsSyncWorkflowPayload } from "../workflows/repo-stats";
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
+import { createWorkerLogger } from "../worker-logger";
+import type { WorkerLogger } from "../worker-logger";
 
 export interface EvaluationWorkflowPayload {
   archiveR2Key?: string | null;
@@ -268,11 +270,14 @@ const startWorkflowFromQueueMessage = async (
 export const processWorkflowQueueBatch = async (
   batch: MessageBatch<unknown>,
   env: WorkflowQueueEnv,
+  logger?: WorkerLogger,
 ) => {
+  const log = logger ?? createWorkerLogger({ component: "workflow.queue" });
+
   for (const message of batch.messages) {
     if (!isWorkflowQueueMessage(message.body)) {
-      console.error("[workflow.queue] invalid message payload", {
-        body: message.body,
+      log.error("workflow.queue.invalid-message", {
+        body: JSON.stringify(message.body),
       });
       message.ack();
       continue;
@@ -283,7 +288,7 @@ export const processWorkflowQueueBatch = async (
       message.ack();
     } catch (error) {
       if (isWorkflowAlreadyCreatedError(error)) {
-        console.warn("[workflow.queue] duplicated workflow id ignored", {
+        log.warn("workflow.queue.duplicate-workflow", {
           kind: message.body.kind,
           workflowId: message.body.workflowId,
         });
@@ -291,8 +296,8 @@ export const processWorkflowQueueBatch = async (
         continue;
       }
 
-      console.error("[workflow.queue] failed to start workflow", {
-        error: error instanceof Error ? error.message : String(error),
+      log.error("workflow.queue.start-failed", {
+        error: error instanceof Error ? error : new Error(String(error)),
         kind: message.body.kind,
         workflowId: message.body.workflowId,
       });
