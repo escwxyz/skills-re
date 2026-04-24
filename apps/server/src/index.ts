@@ -128,8 +128,8 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
     }),
   ],
   interceptors: [
-    onError((error) => {
-      createWorkerLogger({ component: "openapi" }).error("orpc.error", {
+    onError((error, options) => {
+      options.context.workerLogger?.error("orpc.error", {
         error: normalizeUnknownError(error),
       });
     }),
@@ -138,8 +138,8 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 
 export const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
-    onError((error) => {
-      createWorkerLogger({ component: "rpc" }).error("orpc.error", {
+    onError((error, options) => {
+      options.context.workerLogger?.error("orpc.error", {
         error: normalizeUnknownError(error),
       });
     }),

@@ -44,6 +44,7 @@ export function createServerContextFromBase(
     session: ApiContext["session"];
   },
   runtimeDeps: CreateServerRuntimeDeps = {},
+  workerLogger?: ApiContext["workerLogger"],
 ): ApiContext {
   return {
     ...baseContext,
@@ -53,6 +54,7 @@ export function createServerContextFromBase(
     githubFetch: runtimeDeps.githubFetch,
     githubSubmit: runtimeDeps.githubSubmit,
     snapshotHistory: runtimeDeps.snapshotHistory,
+    workerLogger,
     workflowSchedulers: runtimeDeps.workflowSchedulers,
   };
 }
@@ -104,5 +106,5 @@ export async function createServerContext({ context }: CreateServerContextOption
   });
   const logger = context.get("workerLogger");
   const runtimeDeps = await createServerRuntime(context.env, { logger });
-  return createServerContextFromBase(baseContext, runtimeDeps);
+  return createServerContextFromBase(baseContext, runtimeDeps, logger);
 }
