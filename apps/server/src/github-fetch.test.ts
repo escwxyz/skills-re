@@ -545,7 +545,7 @@ describe("createGithubFetchRuntime", () => {
     ).toBe(true);
   });
 
-  test("rejects invalid github urls", () => {
+  test("rejects invalid github urls", async () => {
     const logs: CapturedLog[] = [];
     const runtime = createGithubFetchRuntime(
       {
@@ -556,7 +556,7 @@ describe("createGithubFetchRuntime", () => {
       },
     );
 
-    expect(
+    await expect(
       runtime.fetchRepo({
         githubUrl: "https://example.com/acme/skills",
       }),
