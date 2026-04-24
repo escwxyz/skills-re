@@ -23,10 +23,7 @@ export interface WorkerLogger {
 
 const CYCLIC_CAUSE_SENTINEL = "[cyclic cause]";
 
-const normalizeErrorCause = (
-  cause: unknown,
-  seen: Set<Error>,
-): WorkerLogValue | undefined => {
+const normalizeErrorCause = (cause: unknown, seen: Set<Error>): WorkerLogValue | undefined => {
   if (cause instanceof Error) {
     return normalizeError(cause, seen);
   }
@@ -38,10 +35,7 @@ const normalizeErrorCause = (
   return cause as WorkerLogPrimitive | WorkerLogPrimitive[];
 };
 
-const normalizeError = (
-  error: Error,
-  seen: Set<Error> = new Set<Error>(),
-): WorkerErrorLog => {
+const normalizeError = (error: Error, seen: Set<Error> = new Set<Error>()): WorkerErrorLog => {
   if (seen.has(error)) {
     return {
       cause: CYCLIC_CAUSE_SENTINEL,
