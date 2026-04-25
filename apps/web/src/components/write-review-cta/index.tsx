@@ -62,12 +62,18 @@ function WriteReviewForm({ onClose, skillId }: WriteReviewFormProps) {
     setSubmitting(true);
     setError(null);
     try {
-      const content = `**${title.trim()}**\n\n${body.trim()}`;
-      await orpc.reviews.create({ content, rating: stars, skillId });
+      await orpc.reviews.create({
+        content: body.trim(),
+        rating: stars,
+        skillId,
+        title: title.trim(),
+      });
       setSubmitted(true);
-    } catch (error) {
+    } catch (submitError) {
       setError(
-        error instanceof Error ? error.message : "Failed to submit review. Please try again.",
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to submit review. Please try again.",
       );
     } finally {
       setSubmitting(false);

@@ -27,8 +27,8 @@ export function ClaimAuthorButton({ slug }: Props) {
     try {
       const res = await orpc.skills.claimAsAuthor({ slug });
       setResult(res.alreadyClaimed ? "already" : "claimed");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to claim. Please try again.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to claim. Please try again.");
     } finally {
       setPending(false);
     }

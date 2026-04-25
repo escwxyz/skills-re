@@ -87,12 +87,7 @@ export async function listReviewsByUserId(
     .from(reviewsTable)
     .innerJoin(usersTable, eq(usersTable.id, reviewsTable.userId))
     .innerJoin(skillsTable, eq(skillsTable.id, reviewsTable.skillId))
-    .where(
-      and(
-        eq(reviewsTable.userId, input.userId),
-        eq(skillsTable.visibility, "public"),
-      ),
-    )
+    .where(and(eq(reviewsTable.userId, input.userId), eq(skillsTable.visibility, "public")))
     .orderBy(desc(reviewsTable.createdAt))
     .limit(limit);
 }

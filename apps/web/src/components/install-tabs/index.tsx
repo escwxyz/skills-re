@@ -57,7 +57,7 @@ export function InstallTabs({ slug }: Props) {
               i < 2 ? "border-r border-(--rule)" : "",
               cli === c
                 ? "bg-(--ink) text-(--paper)"
-                : "bg-transparent text-muted-foreground hover:bg-opacity-5",
+                : "bg-transparent text-muted-foreground hover:bg-(--ink)/5",
             )}
           >
             {c}
@@ -67,7 +67,7 @@ export function InstallTabs({ slug }: Props) {
 
       {/* Command + copy */}
       <div className="flex items-center gap-2 px-3 py-2.25 bg-(--paper-2)">
-        <span className="flex-1 text-xs tracking-tighter text-muted-foreground) overflow-hidden text-ellipsis whitespace-nowrap">
+        <span className="flex-1 text-xs tracking-tighter text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
           <span className="text-editorial-green">{CLI_COMMANDS[cli]}</span>{" "}
           <span className="text-(--ink)">{slug}</span>
         </span>
