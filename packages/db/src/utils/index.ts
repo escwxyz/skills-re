@@ -1,6 +1,7 @@
 export {
   asAccountId,
   asCategoryId,
+  asCollectionId,
   asApikeyId,
   asEvaluationId,
   asFeedbackId,
@@ -20,6 +21,7 @@ export {
   asVerificationId,
   type AccountId,
   type CategoryId,
+  type CollectionId,
   type ApikeyId,
   type EvaluationId,
   type FeedbackId,

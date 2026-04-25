@@ -1,4 +1,5 @@
 export { accountsTable, authTables, sessionsTable, usersTable, verificationsTable } from "./auth";
+export { collectionsTable, collectionsSkillsTable } from "./collections";
 export { reposTable } from "./repos";
 export { skillsTagsTable, skillsTable } from "./skills";
 export { snapshotFilesTable, snapshotsTable } from "./snapshots";
@@ -12,6 +13,8 @@ export { tagsTable } from "./tags";
 export {
   accountsRelations,
   categoriesRelations,
+  collectionsRelations,
+  collectionsSkillsRelations,
   reposRelations,
   reviewsRelations,
   sessionsRelations,

@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 
 import { accountsTable, sessionsTable, usersTable } from "./auth";
 import { categoriesTable } from "./categories";
+import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
 import { reviewsTable } from "./reviews";
 import { skillsTable, skillsTagsTable } from "./skills";
@@ -87,3 +88,22 @@ export const staticAuditsRelations = relations(staticAuditsTable, ({ one }) => (
 }));
 
 export const tagsRelations = relations(tagsTable, () => ({}));
+
+export const collectionsRelations = relations(collectionsTable, ({ many, one }) => ({
+  collectionsSkills: many(collectionsSkillsTable),
+  user: one(usersTable, {
+    fields: [collectionsTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const collectionsSkillsRelations = relations(collectionsSkillsTable, ({ one }) => ({
+  collection: one(collectionsTable, {
+    fields: [collectionsSkillsTable.collectionId],
+    references: [collectionsTable.id],
+  }),
+  skill: one(skillsTable, {
+    fields: [collectionsSkillsTable.skillId],
+    references: [skillsTable.id],
+  }),
+}));

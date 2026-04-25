@@ -8,13 +8,18 @@ import {
   enqueueRepoStatsSync,
   checkExistingSkill,
   aiSearch,
+  addSkillToCollection,
   countCategories,
+  countCollections,
+  createCollection,
   createFeedbackRecord,
   createReviewRecord,
   newsletterService,
+  deleteCollection,
   getFeedbackById,
   getMineFeedbackById,
   getMyReviewBySkill,
+  getCollectionBySlug,
   countSkills,
   countTags,
   claimAsAuthor,
@@ -31,6 +36,7 @@ import {
   listAuthors,
   listCategories,
   listCategoriesForAi,
+  listCollections,
   listFeedback,
   listMineFeedback,
   listIndexableTags,
@@ -44,8 +50,11 @@ import {
   dailySkillsSnapshots,
   refreshDailySkillsSnapshots,
   getStaticAuditReportBySnapshot,
+  removeSkillFromCollection,
   resolvePathBySlug,
+  setCollectionSkills,
   syncRepoStats,
+  updateCollection,
   updateRepoStats,
   updateFeedbackResponse,
   updateFeedbackStatus,
@@ -103,6 +112,84 @@ export const appRouter = {
     listForAi: publicProcedure.categories.listForAi.handler(({ input }) =>
       listCategoriesForAi(input as { limit?: number } | undefined),
     ),
+  },
+  collections: {
+    count: publicProcedure.collections.count.handler(() => countCollections()),
+    getBySlug: publicProcedure.collections.getBySlug.handler(({ input }) =>
+      getCollectionBySlug(input),
+    ),
+    list: publicProcedure.collections.list.handler(() => listCollections()),
+    create: protectedProcedure.collections.create.handler(({ input, context }) =>
+      createCollection(input, {
+        isAdmin: context.session.user.role === "admin",
+        userId: context.session.user.id,
+      }),
+    ),
+    update: protectedProcedure.collections.update.handler(async ({ input, context }) => {
+      try {
+        return await updateCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Update failed.";
+        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
+        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Update failed." });
+      }
+    }),
+    delete: protectedProcedure.collections.delete.handler(async ({ input, context }) => {
+      try {
+        return await deleteCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Delete failed.";
+        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
+        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Delete failed." });
+      }
+    }),
+    addSkill: protectedProcedure.collections.addSkill.handler(async ({ input, context }) => {
+      try {
+        return await addSkillToCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Add skill failed.";
+        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
+        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Add skill failed." });
+      }
+    }),
+    removeSkill: protectedProcedure.collections.removeSkill.handler(async ({ input, context }) => {
+      try {
+        return await removeSkillFromCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Remove skill failed.";
+        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
+        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Remove skill failed." });
+      }
+    }),
+    setSkills: protectedProcedure.collections.setSkills.handler(async ({ input, context }) => {
+      try {
+        return await setCollectionSkills(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Set skills failed.";
+        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
+        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Set skills failed." });
+      }
+    }),
   },
   feedback: {
     create: protectedProcedure.feedback.create.handler(({ input, context }) =>
