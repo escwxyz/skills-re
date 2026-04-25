@@ -119,12 +119,19 @@ export const appRouter = {
       getCollectionBySlug(input),
     ),
     list: publicProcedure.collections.list.handler(() => listCollections()),
-    create: protectedProcedure.collections.create.handler(({ input, context }) =>
-      createCollection(input, {
-        isAdmin: context.session.user.role === "admin",
-        userId: context.session.user.id,
-      }),
-    ),
+    create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
+      try {
+        return await createCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          throw new ORPCError("CONFLICT", { message: "Collection slug already exists" });
+        }
+        throw error;
+      }
+    }),
     update: protectedProcedure.collections.update.handler(async ({ input, context }) => {
       try {
         return await updateCollection(input, {
