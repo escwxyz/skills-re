@@ -16,6 +16,7 @@ export interface ReviewWithAuthor {
   id: ReviewId;
   rating: number;
   skillId: SkillId;
+  title: string | null;
   updatedAt: Date;
   userId: UserId;
 }
@@ -28,6 +29,7 @@ const selectWithAuthor = {
   id: reviewsTable.id,
   rating: reviewsTable.rating,
   skillId: reviewsTable.skillId,
+  title: reviewsTable.title,
   updatedAt: reviewsTable.updatedAt,
   userId: reviewsTable.userId,
 } as const;
@@ -95,6 +97,7 @@ export async function createReview(
     content: string;
     rating: number;
     skillId: SkillId;
+    title: string;
     userId: UserId;
   },
   database = db,
@@ -107,6 +110,7 @@ export async function createReview(
       createdAt: now,
       rating: input.rating,
       skillId: input.skillId,
+      title: input.title,
       updatedAt: now,
       userId: input.userId,
     })

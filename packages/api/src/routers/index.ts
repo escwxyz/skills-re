@@ -256,6 +256,7 @@ export const appRouter = {
           content: input.content,
           rating: input.rating,
           skillId: input.skillId,
+          title: input.title,
           userId: context.session.user.id,
         });
       } catch (error) {

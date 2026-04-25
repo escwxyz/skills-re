@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { buildFileTreeRows, parseSkillMarkdownDocument } from "./skill-detail-data";
+import {
+  buildFileTreeRows,
+  parseSkillMarkdownDocument,
+  splitLegacyReviewContent,
+} from "./skill-detail-data";
 
 describe("skill-detail-data", () => {
   test("parses frontmatter and strips the top-level title from skill markdown", () => {
@@ -102,5 +106,17 @@ Return at most three findings.
         type: "file",
       },
     ]);
+  });
+
+  test("splits legacy embedded review titles from markdown content", () => {
+    expect(splitLegacyReviewContent("**Strong fit**\n\nHelpful details")).toEqual({
+      body: "Helpful details",
+      title: "Strong fit",
+    });
+
+    expect(splitLegacyReviewContent("Helpful details", "Structured title")).toEqual({
+      body: "Helpful details",
+      title: "Structured title",
+    });
   });
 });

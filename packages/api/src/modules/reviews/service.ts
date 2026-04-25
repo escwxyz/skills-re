@@ -19,6 +19,7 @@ const toOutputItem = (row: ReviewWithAuthor) => ({
   id: String(row.id),
   rating: row.rating,
   skillId: String(row.skillId),
+  title: row.title ?? undefined,
   updatedAt: row.updatedAt instanceof Date ? row.updatedAt.getTime() : row.updatedAt,
   userId: String(row.userId),
 });
@@ -51,7 +52,13 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
   const getDep = createDepGetter(overrides, getDefaultDeps);
 
   return {
-    async create(input: { skillId: string; userId: string; rating: number; content: string }) {
+    async create(input: {
+      skillId: string;
+      userId: string;
+      rating: number;
+      content: string;
+      title: string;
+    }) {
       const createReviewFn = await getDep("createReview");
       const getReviewBySkillIdAndUserIdFn = await getDep("getReviewBySkillIdAndUserId");
 
@@ -70,6 +77,7 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
         content: input.content.trim(),
         rating: input.rating,
         skillId,
+        title: input.title.trim(),
         userId,
       });
 
@@ -127,6 +135,7 @@ export async function createReviewRecord(input: {
   userId: string;
   rating: number;
   content: string;
+  title: string;
 }) {
   return await reviewsService.create(input);
 }

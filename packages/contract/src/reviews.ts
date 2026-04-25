@@ -14,6 +14,7 @@ const reviewItemSchema = z.object({
   id: z.string().min(1),
   rating: z.number().int().min(1).max(5),
   skillId: z.string().min(1),
+  title: z.string().min(1).optional(),
   updatedAt: z.number().int().nonnegative(),
   userId: z.string().min(1),
 });
@@ -22,10 +23,11 @@ const reviewIdInputSchema = z.object({
   skillId: z.string().min(1),
 });
 
-const reviewCreateInputSchema = z.object({
+export const reviewCreateInputSchema = z.object({
   content: z.string().trim().min(1).max(2000),
   rating: z.number().int().min(1).max(5),
   skillId: z.string().min(1),
+  title: z.string().trim().min(1).max(120),
 });
 
 const reviewListInputSchema = z.object({

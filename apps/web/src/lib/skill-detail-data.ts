@@ -62,6 +62,7 @@ interface ReviewItem {
   id: string;
   rating: number;
   skillId: string;
+  title?: string;
   updatedAt: number;
   userId: string;
 }
@@ -161,6 +162,7 @@ export interface SkillReviewCardData {
   id: string;
   isLast?: boolean;
   stars: number;
+  title?: string;
   versionLabel?: string;
 }
 
@@ -211,6 +213,39 @@ export interface SkillFileTreePageData {
   layout: SkillLayoutData;
   rows: SkillFileTreeRow[];
 }
+
+export const splitLegacyReviewContent = (content: string, title?: string) => {
+  if (title?.trim()) {
+    return {
+      body: content,
+      title: title.trim(),
+    };
+  }
+
+  const match = content.match(/^\*\*(.+?)\*\*(?:\r?\n){2,}([\s\S]*)$/);
+  if (!match) {
+    return {
+      body: content,
+      title: undefined,
+    };
+  }
+
+  const [, legacyTitle, legacyBody] = match;
+  const normalizedTitle = legacyTitle.trim();
+  const normalizedBody = legacyBody.trim();
+
+  if (!normalizedTitle || !normalizedBody) {
+    return {
+      body: content,
+      title: undefined,
+    };
+  }
+
+  return {
+    body: normalizedBody,
+    title: normalizedTitle,
+  };
+};
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -742,15 +777,20 @@ export const getSkillReviewsPageData = async (
     ratingCounts: summary.ratingCounts,
     recommendPct: summary.recommendPct,
     reviews: await Promise.all(
-      reviews.map(async (review, index) => ({
-        authorName: review.author.name,
-        bodyHtml: await renderMarkdownAsync(review.content),
-        dateLabel: formatDateLabel(review.createdAt) ?? "Unknown date",
-        id: review.id,
-        isLast: index === reviews.length - 1,
-        stars: review.rating,
-        versionLabel: base.skill.latestVersion ? `v${base.skill.latestVersion}` : undefined,
-      })),
+      reviews.map(async (review, index) => {
+        const normalizedReview = splitLegacyReviewContent(review.content, review.title);
+
+        return {
+          authorName: review.author.name,
+          bodyHtml: await renderMarkdownAsync(normalizedReview.body),
+          dateLabel: formatDateLabel(review.createdAt) ?? "Unknown date",
+          id: review.id,
+          isLast: index === reviews.length - 1,
+          stars: review.rating,
+          title: normalizedReview.title,
+          versionLabel: base.skill.latestVersion ? `v${base.skill.latestVersion}` : undefined,
+        };
+      }),
     ),
     totalReviews: summary.totalReviews,
   };
