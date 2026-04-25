@@ -8,7 +8,7 @@ interface CollectionRow {
   description: string;
   id: string;
   slug: string;
-  status?: "active" | "archived";
+  status: "active" | "archived";
   title: string;
   userId: string;
 }
