@@ -348,6 +348,57 @@ export const parseSkillMarkdownDocument = (source: string) => {
   };
 };
 
+const buildMetaItems = (params: {
+  authorLabel: string;
+  categoryLabel: string;
+  latestVersion?: string;
+  license?: string;
+  publishedLabel?: string;
+  repoLabel?: string;
+  repoUrl?: string;
+  updatedLabel?: string;
+}): SkillMetaItem[] =>
+  (
+    [
+      {
+        label: "Version",
+        mono: true,
+        value: params.latestVersion ? `v${params.latestVersion}` : "latest",
+      },
+      { label: "Author", value: params.authorLabel },
+      params.license ? { label: "License", mono: true, value: params.license } : undefined,
+      { label: "Category", value: params.categoryLabel },
+      params.repoLabel
+        ? { href: params.repoUrl, label: "Repository", mono: true, value: params.repoLabel }
+        : undefined,
+      params.publishedLabel ? { label: "Published", value: params.publishedLabel } : undefined,
+      params.updatedLabel ? { label: "Updated", value: params.updatedLabel } : undefined,
+    ] as (SkillMetaItem | undefined)[]
+  ).filter((item): item is SkillMetaItem => item !== undefined);
+
+const buildMetricItems = (skill: SearchSkillListItem): SkillMetricItem[] => [
+  {
+    label: "Audit Score",
+    value:
+      typeof skill.staticAudit?.overallScore === "number"
+        ? `${skill.staticAudit.overallScore}/100`
+        : "—",
+  },
+  { label: "Installs", value: formatOptionalCompactNumber(skill.downloadsAllTime) },
+  { label: "Stars", value: formatOptionalCompactNumber(skill.stargazerCount) },
+  { label: "Latest Version", value: skill.latestVersion ? `v${skill.latestVersion}` : "latest" },
+  { label: "Views", value: formatOptionalCompactNumber(skill.viewsAllTime) },
+  { label: "Trending", value: formatOptionalCompactNumber(skill.downloadsTrending) },
+  { label: "Forks", value: formatOptionalCompactNumber(skill.forkCount) },
+];
+
+const buildVersionHistory = (snapshots: SnapshotItem[]): SkillVersionHistoryItem[] =>
+  snapshots.map((snapshot, index) => ({
+    date: formatDateLabel(snapshot.sourceCommitDate ?? snapshot.syncTime) ?? "Unknown date",
+    label: index === 0 ? "current" : undefined,
+    version: snapshot.version,
+  }));
+
 const buildSkillLayout = (input: {
   authorHandle: string;
   authorSkills: SkillSwitcherItem[];
@@ -378,92 +429,22 @@ const buildSkillLayout = (input: {
     description: input.skill.description,
     id: input.skill.id,
     isVerified: input.skill.isVerified ?? false,
-    metaItems: (
-      [
-        {
-          label: "Version",
-          mono: true,
-          value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
-        },
-        {
-          label: "Author",
-          value: authorLabel,
-        },
-        input.skill.license
-          ? {
-              label: "License",
-              mono: true,
-              value: input.skill.license,
-            }
-          : undefined,
-        {
-          label: "Category",
-          value: categoryLabel,
-        },
-        repoLabel
-          ? {
-              href: input.skill.repoUrl,
-              label: "Repository",
-              mono: true,
-              value: repoLabel,
-            }
-          : undefined,
-        publishedLabel
-          ? {
-              label: "Published",
-              value: publishedLabel,
-            }
-          : undefined,
-        updatedLabel
-          ? {
-              label: "Updated",
-              value: updatedLabel,
-            }
-          : undefined,
-      ] as (SkillMetaItem | undefined)[]
-    ).filter((item): item is SkillMetaItem => item !== undefined),
-    metricItems: [
-      {
-        label: "Audit Score",
-        value:
-          typeof input.skill.staticAudit?.overallScore === "number"
-            ? `${input.skill.staticAudit.overallScore}/100`
-            : "—",
-      },
-      {
-        label: "Installs",
-        value: formatOptionalCompactNumber(input.skill.downloadsAllTime),
-      },
-      {
-        label: "Stars",
-        value: formatOptionalCompactNumber(input.skill.stargazerCount),
-      },
-      {
-        label: "Latest Version",
-        value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
-      },
-      {
-        label: "Views",
-        value: formatOptionalCompactNumber(input.skill.viewsAllTime),
-      },
-      {
-        label: "Trending",
-        value: formatOptionalCompactNumber(input.skill.downloadsTrending),
-      },
-      {
-        label: "Forks",
-        value: formatOptionalCompactNumber(input.skill.forkCount),
-      },
-    ],
+    metaItems: buildMetaItems({
+      authorLabel,
+      categoryLabel,
+      latestVersion: input.skill.latestVersion,
+      license: input.skill.license,
+      publishedLabel,
+      repoLabel,
+      repoUrl: input.skill.repoUrl,
+      updatedLabel,
+    }),
+    metricItems: buildMetricItems(input.skill),
     reviewTabLabel: input.reviewTabLabel ?? "Reviews",
     slug: input.skill.slug,
     tags: input.skill.tags ?? [],
     title: input.skill.title,
-    versionHistory: input.snapshots.map((snapshot, index) => ({
-      date: formatDateLabel(snapshot.sourceCommitDate ?? snapshot.syncTime) ?? "Unknown date",
-      label: index === 0 ? "current" : undefined,
-      version: snapshot.version,
-    })),
+    versionHistory: buildVersionHistory(input.snapshots),
   } satisfies SkillLayoutData;
 };
 
@@ -532,13 +513,17 @@ const getFileKindLabel = (path: string) => {
 };
 
 export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 export const buildFileTreeRows = (
-  entries: Array<{ path: string; size?: number }>,
+  entries: { path: string; size?: number }[],
   activePath: string,
 ): SkillFileTreeRow[] => {
   interface TreeNode {
