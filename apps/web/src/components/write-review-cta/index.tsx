@@ -53,9 +53,11 @@ function WriteReviewForm({ onClose, skillId }: WriteReviewFormProps) {
 
   const canSubmit = stars > 0 && title.trim().length > 0 && body.trim().length > 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!canSubmit || submitting) return;
+    if (!canSubmit || submitting) {
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -63,8 +65,8 @@ function WriteReviewForm({ onClose, skillId }: WriteReviewFormProps) {
       const content = `**${title.trim()}**\n\n${body.trim()}`;
       await orpc.reviews.create({ content, rating: stars, skillId });
       setSubmitted(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit review. Please try again.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to submit review. Please try again.");
     } finally {
       setSubmitting(false);
     }
