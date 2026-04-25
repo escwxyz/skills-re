@@ -185,25 +185,30 @@ export async function deleteCollectionSkill(input: {
     );
 }
 
-export async function replaceCollectionSkills(input: {
-  collectionId: CollectionId;
-  skillIds: SkillId[];
-}) {
-  await db
-    .delete(collectionsSkillsTable)
-    .where(eq(collectionsSkillsTable.collectionId, input.collectionId));
+export async function replaceCollectionSkills(
+  input: {
+    collectionId: CollectionId;
+    skillIds: SkillId[];
+  },
+  database = db,
+) {
+  await database.transaction(async (tx) => {
+    await tx
+      .delete(collectionsSkillsTable)
+      .where(eq(collectionsSkillsTable.collectionId, input.collectionId));
 
-  if (input.skillIds.length === 0) {
-    return;
-  }
+    if (input.skillIds.length === 0) {
+      return;
+    }
 
-  await db.insert(collectionsSkillsTable).values(
-    input.skillIds.map((skillId, index) => ({
-      collectionId: input.collectionId,
-      skillId,
-      position: index,
-    })),
-  );
+    await tx.insert(collectionsSkillsTable).values(
+      input.skillIds.map((skillId, index) => ({
+        collectionId: input.collectionId,
+        skillId,
+        position: index,
+      })),
+    );
+  });
 }
 
 export { asCollectionId, asSkillId };
