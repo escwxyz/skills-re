@@ -74,3 +74,14 @@ export {
   listCategoriesForAiPublic as listCategoriesForAi,
   listCategoriesPublic as listCategories,
 } from "./categories/service";
+export {
+  addSkillToCollection,
+  countCollectionsPublic as countCollections,
+  createCollection,
+  deleteCollection,
+  getCollectionBySlug,
+  listCollectionsPublic as listCollections,
+  removeSkillFromCollection,
+  setCollectionSkills,
+  updateCollection,
+} from "./collections/service";

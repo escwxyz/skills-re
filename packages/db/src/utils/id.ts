@@ -5,6 +5,7 @@ type Brand<T, Name extends string> = T & { readonly __tableName: Name };
 
 export type AccountId = Brand<string, "accounts">;
 export type CategoryId = Brand<string, "categories">;
+export type CollectionId = Brand<string, "collections">;
 export type ApikeyId = Brand<string, "apikeys">;
 export type EvaluationId = Brand<string, "evaluations">;
 export type FeedbackId = Brand<string, "feedback">;
@@ -26,6 +27,7 @@ export const createId = () => nanoid();
 
 export const asAccountId = (value: string) => value as AccountId;
 export const asCategoryId = (value: string) => value as CategoryId;
+export const asCollectionId = (value: string) => value as CollectionId;
 export const asApikeyId = (value: string) => value as ApikeyId;
 export const asEvaluationId = (value: string) => value as EvaluationId;
 export const asFeedbackId = (value: string) => value as FeedbackId;

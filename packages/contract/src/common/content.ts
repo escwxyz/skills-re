@@ -120,6 +120,22 @@ export const categoryDetailSchema = z.object({
   topSkills: z.array(searchSkillListItemSchema),
 });
 
+export const collectionListItemSchema = z.object({
+  description: z.string(),
+  id: idSchema,
+  skillCount: z.number().int().nonnegative(),
+  slug: tagSlugSchema,
+  title: z.string(),
+});
+
+export const collectionDetailSchema = z.object({
+  description: z.string(),
+  id: idSchema,
+  skills: z.array(searchSkillListItemSchema),
+  slug: tagSlugSchema,
+  title: z.string(),
+});
+
 export const repoListItemSchema = z.object({
   nameWithOwner: z.string(),
   repoName: githubRepoSchema,
