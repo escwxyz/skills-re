@@ -1,4 +1,6 @@
 ---
+import { ClaimAuthorButton } from "./claim-author-button"
+
 interface Props {
   version: string
   slug: string
@@ -15,7 +17,6 @@ const { version, slug } = Astro.props
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 8px;">
-    <!-- TODO: call download link -->
     <a
       href={`/skills/${slug}/archive?v=${version}`}
       class="btn"
@@ -24,12 +25,6 @@ const { version, slug } = Astro.props
       Download Archive (v{version})
     </a>
 
-    <!-- TODO -->
-    <a
-      href="/login?next=/claim&skill={slug}"
-      style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 11px 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); transition: opacity .15s; cursor: pointer;"
-    >
-      Claim as Author
-    </a>
+    <ClaimAuthorButton slug={slug} client:load />
   </div>
 </div>
