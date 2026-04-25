@@ -76,6 +76,7 @@ export async function findCollectionBySlug(slug: string) {
       slug: collectionsTable.slug,
       status: collectionsTable.status,
       title: collectionsTable.title,
+      userId: collectionsTable.userId,
     })
     .from(collectionsTable)
     .where(eq(collectionsTable.slug, slug))
@@ -151,10 +152,7 @@ export async function patchCollection(input: {
     return;
   }
 
-  await db
-    .update(collectionsTable)
-    .set(fields)
-    .where(eq(collectionsTable.id, id));
+  await db.update(collectionsTable).set(fields).where(eq(collectionsTable.id, id));
 }
 
 export async function deleteCollection(id: CollectionId) {

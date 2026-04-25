@@ -133,8 +133,12 @@ export const appRouter = {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Update failed.";
-        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
-        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        if (message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Update failed." });
       }
     }),
@@ -146,8 +150,12 @@ export const appRouter = {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Delete failed.";
-        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
-        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        if (message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Delete failed." });
       }
     }),
@@ -159,8 +167,12 @@ export const appRouter = {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Add skill failed.";
-        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
-        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        if (message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Add skill failed." });
       }
     }),
@@ -172,8 +184,12 @@ export const appRouter = {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Remove skill failed.";
-        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
-        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        if (message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Remove skill failed." });
       }
     }),
@@ -185,8 +201,12 @@ export const appRouter = {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Set skills failed.";
-        if (message.includes("not found")) throw new ORPCError("NOT_FOUND", { message });
-        if (message.includes("Forbidden")) throw new ORPCError("FORBIDDEN", { message });
+        if (message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Set skills failed." });
       }
     }),

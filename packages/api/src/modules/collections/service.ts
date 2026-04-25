@@ -55,10 +55,7 @@ interface CollectionsServiceDeps {
     skillId: SkillId;
     position?: number;
   }) => Promise<void>;
-  deleteCollectionSkill: (input: {
-    collectionId: CollectionId;
-    skillId: SkillId;
-  }) => Promise<void>;
+  deleteCollectionSkill: (input: { collectionId: CollectionId; skillId: SkillId }) => Promise<void>;
   replaceCollectionSkills: (input: {
     collectionId: CollectionId;
     skillIds: SkillId[];
@@ -93,7 +90,9 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
   const getDep = createDepGetter(overrides, getDefaultDeps);
 
   const assertOwnership = async (collectionId: string, caller: CallerContext) => {
-    if (caller.isAdmin) return;
+    if (caller.isAdmin) {
+      return;
+    }
     const findCollectionById = await getDep("findCollectionById");
     const collection = await findCollectionById(collectionId as CollectionId);
     if (!collection) {
