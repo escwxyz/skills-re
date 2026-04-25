@@ -13,6 +13,17 @@ const collectionIdInputSchema = z.object({
   id: idSchema,
 });
 
+export const setCollectionSkillsInputSchema = z.object({
+  collectionId: idSchema,
+  skillIds: z
+    .array(idSchema)
+    .min(0)
+    .refine((skillIds) => new Set(skillIds).size === skillIds.length, {
+      message: "skillIds must be unique.",
+      path: ["skillIds"],
+    }),
+});
+
 const collectionsListContract = baseContract
   .route({
     description: "Returns the public collection index.",
@@ -141,12 +152,7 @@ const setCollectionSkillsContract = baseContract
     successDescription: "Collection skills updated",
     summary: "Set collection skills",
   })
-  .input(
-    z.object({
-      collectionId: idSchema,
-      skillIds: z.array(idSchema).min(0),
-    }),
-  )
+  .input(setCollectionSkillsInputSchema)
   .output(z.null());
 
 export const collectionsContract = {
