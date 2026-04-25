@@ -33,6 +33,15 @@ const reviewListInputSchema = z.object({
   skillId: z.string().min(1),
 });
 
+const reviewListMineInputSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
+const reviewListMineItemSchema = reviewItemSchema.extend({
+  skillSlug: z.string().min(1),
+  skillTitle: z.string().min(1),
+});
+
 export const reviewsContract = {
   create: baseContract
     .route({
@@ -67,4 +76,15 @@ export const reviewsContract = {
     })
     .input(reviewListInputSchema)
     .output(z.array(reviewItemSchema)),
+  listMine: baseContract
+    .route({
+      description: "Returns the authenticated user's reviews across all skills.",
+      method: "GET",
+      path: "/reviews/mine",
+      tags: ["Reviews"],
+      successDescription: "Review list",
+      summary: "List my reviews",
+    })
+    .input(reviewListMineInputSchema)
+    .output(z.array(reviewListMineItemSchema)),
 } as const;
