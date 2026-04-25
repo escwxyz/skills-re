@@ -60,7 +60,7 @@ const collectionBySlugContract = baseContract
 
 const createCollectionContract = baseContract
   .route({
-    description: "Creates a new collection. Admin only.",
+    description: "Creates a new collection owned by the authenticated user.",
     method: "POST",
     path: "/collections",
     tags: ["Collections"],
@@ -78,7 +78,7 @@ const createCollectionContract = baseContract
 
 const updateCollectionContract = baseContract
   .route({
-    description: "Updates a collection's metadata. Admin only.",
+    description: "Updates a collection's metadata. Requires ownership or admin role.",
     method: "PATCH",
     path: "/collections",
     tags: ["Collections"],
@@ -98,7 +98,7 @@ const updateCollectionContract = baseContract
 
 const deleteCollectionContract = baseContract
   .route({
-    description: "Deletes a collection. Admin only.",
+    description: "Deletes a collection. Requires ownership or admin role.",
     method: "DELETE",
     path: "/collections",
     tags: ["Collections"],
@@ -110,7 +110,7 @@ const deleteCollectionContract = baseContract
 
 const addSkillToCollectionContract = baseContract
   .route({
-    description: "Adds a skill to a collection. Admin only.",
+    description: "Adds a skill to a collection. Requires ownership or admin role.",
     method: "POST",
     path: "/collections/skills",
     tags: ["Collections"],
@@ -128,7 +128,7 @@ const addSkillToCollectionContract = baseContract
 
 const removeSkillFromCollectionContract = baseContract
   .route({
-    description: "Removes a skill from a collection. Admin only.",
+    description: "Removes a skill from a collection. Requires ownership or admin role.",
     method: "DELETE",
     path: "/collections/skills",
     tags: ["Collections"],
@@ -145,7 +145,8 @@ const removeSkillFromCollectionContract = baseContract
 
 const setCollectionSkillsContract = baseContract
   .route({
-    description: "Replaces all skills in a collection with the provided ordered list. Admin only.",
+    description:
+      "Replaces all skills in a collection with the provided ordered list. Requires ownership or admin role.",
     method: "PUT",
     path: "/collections/skills",
     tags: ["Collections"],
