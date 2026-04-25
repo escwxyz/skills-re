@@ -5,8 +5,19 @@ import { describe, expect, test } from "bun:test";
 import { asCollectionId, asSkillId } from "@skills-re/db/utils";
 
 import { replaceCollectionSkills } from "./repo";
+import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
 
 describe("collections repo", () => {
+  test("encodes and decodes collection cursors", () => {
+    const encoded = encodeCollectionCursor({ id: "collection-1", title: "Alpha" });
+
+    expect(decodeCollectionCursor(encoded)).toEqual({
+      id: "collection-1",
+      title: "Alpha",
+    });
+    expect(decodeCollectionCursor("not-a-cursor")).toBeNull();
+  });
+
   test("replaces collection skills in a single transaction", async () => {
     const operations: string[] = [];
     const tx = {

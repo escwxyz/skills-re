@@ -118,7 +118,7 @@ export const appRouter = {
     getBySlug: publicProcedure.collections.getBySlug.handler(({ input }) =>
       getCollectionBySlug(input),
     ),
-    list: publicProcedure.collections.list.handler(() => listCollections()),
+    list: publicProcedure.collections.list.handler(({ input }) => listCollections(input)),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
       try {
         return await createCollection(input, {

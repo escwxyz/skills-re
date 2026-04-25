@@ -13,6 +13,15 @@ const collectionIdInputSchema = z.object({
   id: idSchema,
 });
 
+const COLLECTIONS_LIST_LIMIT_MAX = 100;
+
+export const collectionsListInputSchema = z
+  .object({
+    cursor: z.string().optional(),
+    limit: z.number().int().positive().max(COLLECTIONS_LIST_LIMIT_MAX).optional(),
+  })
+  .optional();
+
 export const setCollectionSkillsInputSchema = z.object({
   collectionId: idSchema,
   skillIds: z
@@ -33,7 +42,14 @@ const collectionsListContract = baseContract
     successDescription: "Public collection list",
     summary: "List public collections",
   })
-  .output(z.array(collectionListItemSchema));
+  .input(collectionsListInputSchema)
+  .output(
+    z.object({
+      continueCursor: z.string(),
+      isDone: z.boolean(),
+      page: z.array(collectionListItemSchema),
+    }),
+  );
 
 const collectionsCountContract = baseContract
   .route({

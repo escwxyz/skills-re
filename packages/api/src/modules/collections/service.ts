@@ -32,7 +32,11 @@ interface CallerContext {
 
 interface CollectionsServiceDeps {
   countCollections: () => Promise<number>;
-  listCollections: () => Promise<CollectionListRow[]>;
+  listCollections: (input?: { cursor?: string; limit?: number }) => Promise<{
+    continueCursor: string;
+    isDone: boolean;
+    page: CollectionListRow[];
+  }>;
   findCollectionBySlug: (slug: string) => Promise<CollectionRow | null>;
   findCollectionById: (id: CollectionId) => Promise<CollectionRow | null>;
   getSkillsByCollectionId: (collectionId: CollectionId) => Promise<CollectionSkillRow[]>;
@@ -109,9 +113,9 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       return await fn();
     },
 
-    async listCollections() {
+    async listCollections(input?: { cursor?: string; limit?: number }) {
       const fn = await getDep("listCollections");
-      return await fn();
+      return await fn(input);
     },
 
     async getCollectionBySlug(input: { slug: string }) {
@@ -210,8 +214,8 @@ export async function countCollectionsPublic() {
   return await createCollectionsService().countCollections();
 }
 
-export async function listCollectionsPublic() {
-  return await createCollectionsService().listCollections();
+export async function listCollectionsPublic(input?: { cursor?: string; limit?: number }) {
+  return await createCollectionsService().listCollections(input);
 }
 
 export async function getCollectionBySlug(input: { slug: string }) {

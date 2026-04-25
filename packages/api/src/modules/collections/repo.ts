@@ -10,6 +10,10 @@ import type { CollectionId, SkillId, UserId } from "@skills-re/db/utils";
 import { asCollectionId, asSkillId, createId } from "@skills-re/db/utils";
 
 import { db } from "../shared/db";
+import { defaultLimit } from "../shared/pagination";
+import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
+
+const COLLECTIONS_LIST_LIMIT_MAX = 100;
 
 const toSkillRows = () => ({
   authorHandle: reposTable.ownerHandle,
@@ -42,7 +46,10 @@ export async function countCollections() {
   return rows[0]?.value ?? 0;
 }
 
-export async function listCollections() {
+export async function listCollections(input?: { cursor?: string; limit?: number }) {
+  const limit = Math.min(Math.max(1, input?.limit ?? defaultLimit), COLLECTIONS_LIST_LIMIT_MAX);
+  const cursor = decodeCollectionCursor(input?.cursor);
+
   const skillCounts = db
     .select({
       collectionId: collectionsSkillsTable.collectionId,
@@ -62,10 +69,32 @@ export async function listCollections() {
     })
     .from(collectionsTable)
     .leftJoin(skillCounts, eq(skillCounts.collectionId, collectionsTable.id))
-    .where(eq(collectionsTable.status, "active"))
-    .orderBy(asc(collectionsTable.title));
+    .where(
+      cursor
+        ? and(
+            eq(collectionsTable.status, "active"),
+            sql`(${collectionsTable.title}, ${collectionsTable.id}) > (${cursor.title}, ${cursor.id})`,
+          )
+        : eq(collectionsTable.status, "active"),
+    )
+    .orderBy(asc(collectionsTable.title))
+    .limit(limit + 1);
 
-  return rows;
+  const page = rows.slice(0, limit);
+  const next = page.at(-1) ?? null;
+
+  return {
+    continueCursor: encodeCollectionCursor(
+      rows.length > limit && next
+        ? {
+            id: next.id,
+            title: next.title,
+          }
+        : null,
+    ),
+    isDone: rows.length <= limit,
+    page,
+  };
 }
 
 export async function findCollectionBySlug(slug: string) {
