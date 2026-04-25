@@ -4,6 +4,7 @@ import { asReviewId } from "@skills-re/db/utils";
 import type { ReviewId, SkillId, UserId } from "@skills-re/db/utils";
 import { reviewsTable } from "@skills-re/db/schema/reviews";
 import { usersTable } from "@skills-re/db/schema/auth";
+import { skillsTable } from "@skills-re/db/schema/skills";
 
 import { db } from "../shared/db";
 
@@ -64,6 +65,29 @@ export async function getReviewBySkillIdAndUserId(
     .limit(1);
 
   return rows[0] ?? null;
+}
+
+export async function listReviewsByUserId(
+  input: {
+    limit?: number;
+    userId: UserId;
+  },
+  database = db,
+) {
+  const limit = input.limit ?? 50;
+
+  return await database
+    .select({
+      ...selectWithAuthor,
+      skillSlug: skillsTable.slug,
+      skillTitle: skillsTable.title,
+    })
+    .from(reviewsTable)
+    .innerJoin(usersTable, eq(usersTable.id, reviewsTable.userId))
+    .innerJoin(skillsTable, eq(skillsTable.id, reviewsTable.skillId))
+    .where(eq(reviewsTable.userId, input.userId))
+    .orderBy(desc(reviewsTable.createdAt))
+    .limit(limit);
 }
 
 export async function createReview(

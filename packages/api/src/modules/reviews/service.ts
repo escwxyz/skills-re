@@ -6,6 +6,7 @@ import type {
   createReview,
   getReviewBySkillIdAndUserId,
   listReviewsBySkillId,
+  listReviewsByUserId,
 } from "./repo";
 
 const toOutputItem = (row: ReviewWithAuthor) => ({
@@ -26,6 +27,7 @@ interface ReviewsServiceDeps {
   createReview: typeof createReview;
   getReviewBySkillIdAndUserId: typeof getReviewBySkillIdAndUserId;
   listReviewsBySkillId: typeof listReviewsBySkillId;
+  listReviewsByUserId: typeof listReviewsByUserId;
 }
 
 const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
@@ -34,6 +36,7 @@ const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
     createReview: repo.createReview,
     getReviewBySkillIdAndUserId: repo.getReviewBySkillIdAndUserId,
     listReviewsBySkillId: repo.listReviewsBySkillId,
+    listReviewsByUserId: repo.listReviewsByUserId,
   };
 };
 
@@ -100,6 +103,20 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
 
       return rows.map((row) => toOutputItem(row));
     },
+
+    async listMine(input: { userId: string; limit?: number }) {
+      const listReviewsByUserIdFn = await getDep("listReviewsByUserId");
+      const rows = await listReviewsByUserIdFn({
+        limit: input.limit,
+        userId: asUserId(input.userId),
+      });
+
+      return rows.map((row) => ({
+        ...toOutputItem(row),
+        skillSlug: row.skillSlug,
+        skillTitle: row.skillTitle,
+      }));
+    },
   };
 };
 
@@ -120,4 +137,8 @@ export async function getMyReviewBySkill(input: { skillId: string; userId: strin
 
 export async function listReviewsBySkill(input: { skillId: string; limit?: number }) {
   return await reviewsService.listBySkill(input);
+}
+
+export async function listMineReviews(input: { userId: string; limit?: number }) {
+  return await reviewsService.listMine(input);
 }

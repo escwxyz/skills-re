@@ -41,6 +41,7 @@ import {
   listMineFeedback,
   listIndexableTags,
   listReposPage,
+  listMineReviews,
   listReviewsBySkill,
   listSnapshotsBySkill,
   listSkills,
@@ -276,6 +277,9 @@ export const appRouter = {
     ),
     listBySkill: publicProcedure.reviews.listBySkill.handler(({ input }) =>
       listReviewsBySkill(input),
+    ),
+    listMine: protectedProcedure.reviews.listMine.handler(({ input, context }) =>
+      listMineReviews({ limit: input.limit, userId: context.session.user.id }),
     ),
   },
   newsletter: {
