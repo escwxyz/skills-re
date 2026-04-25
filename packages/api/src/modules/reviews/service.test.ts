@@ -29,6 +29,7 @@ describe("reviews service", () => {
           id: asReviewId("review-1"),
           rating: 5,
           skillId: asSkillId("skill-1"),
+          title: "Strong fit",
           updatedAt: new Date(123),
           userId: asUserId("user-1"),
         };
@@ -40,6 +41,7 @@ describe("reviews service", () => {
         content: "  Helpful  ",
         rating: 5,
         skillId: "skill-1",
+        title: "  Strong fit  ",
         userId: "user-1",
       }),
     ).resolves.toEqual({
@@ -52,6 +54,7 @@ describe("reviews service", () => {
       id: "review-1",
       rating: 5,
       skillId: "skill-1",
+      title: "Strong fit",
       updatedAt: 123,
       userId: "user-1",
     });
@@ -60,6 +63,7 @@ describe("reviews service", () => {
         content: "Helpful",
         rating: 5,
         skillId: "skill-1",
+        title: "Strong fit",
         userId: "user-1",
       },
     ]);
@@ -76,6 +80,7 @@ describe("reviews service", () => {
         id: asReviewId("review-1"),
         rating: 5,
         skillId: asSkillId("skill-1"),
+        title: "Strong fit",
         updatedAt: new Date(123),
         userId: asUserId("user-1"),
       }),
@@ -86,6 +91,7 @@ describe("reviews service", () => {
         content: "Helpful",
         rating: 5,
         skillId: "skill-1",
+        title: "Strong fit",
         userId: "user-1",
       }),
     ).rejects.toThrow("You have already reviewed this skill.");
@@ -102,6 +108,7 @@ describe("reviews service", () => {
           id: asReviewId("review-1"),
           rating: 5,
           skillId: asSkillId("skill-1"),
+          title: "Strong fit",
           updatedAt: new Date(123),
           userId: asUserId("user-1"),
         },
@@ -119,6 +126,7 @@ describe("reviews service", () => {
         id: "review-1",
         rating: 5,
         skillId: "skill-1",
+        title: "Strong fit",
         updatedAt: 123,
         userId: "user-1",
       },

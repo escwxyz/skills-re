@@ -1,0 +1,115 @@
+---
+import SkillLayout from "@/layouts/skill-detail.astro"
+import { createServerClient } from "@/lib/server-orpc"
+import {
+  formatFileSize,
+  getSkillFileTreePageData,
+} from "@/lib/skill-detail-data"
+
+const { slug } = Astro.params
+const path = Astro.url.searchParams.get("path")
+const client = createServerClient(Astro.request)
+const pageData = slug
+  ? await getSkillFileTreePageData(client, slug, path)
+  : null
+
+if (!pageData) {
+  return Astro.redirect("/skills")
+}
+---
+
+<SkillLayout
+  skill={pageData.layout}
+  activeTab="file-tree"
+  title={`File Tree · ${pageData.layout.title} — skills.re`}
+>
+  <div class="grid min-h-160 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <aside class="border-rule bg-paper-2 border-r">
+      <div class="border-rule border-b px-5 py-4">
+        <div class="eyebrow text-editorial-red mb-2">§ Snapshot Files</div>
+        <p class="text-ink-2 m-0 text-sm">
+          Browse the latest public snapshot for this skill.
+        </p>
+      </div>
+
+      {
+        pageData.rows.length > 0 ? (
+          <div class="py-3">
+            {pageData.rows.map((row) =>
+              row.type === "folder" ? (
+                <div
+                  class="text-muted-text px-4 py-1.5 font-mono text-[11px] tracking-[.06em] uppercase"
+                  style={`padding-left: ${16 + row.depth * 18}px;`}
+                >
+                  {row.name}
+                </div>
+              ) : (
+                <a
+                  href={`/skills/${pageData.layout.slug}/file-tree?path=${encodeURIComponent(row.path)}#skill-tabs`}
+                  class:list={[
+                    "flex items-baseline justify-between gap-3 px-4 py-2 font-mono text-[11px] no-underline transition-colors",
+                    row.isActive
+                      ? "bg-ink text-paper"
+                      : "text-ink-2 hover:bg-paper hover:no-underline",
+                  ]}
+                  style={`padding-left: ${16 + row.depth * 18}px;`}
+                >
+                  <span class="truncate">{row.name}</span>
+                  {row.size !== undefined && (
+                    <span
+                      class:list={[
+                        "shrink-0 tabular-nums",
+                        row.isActive ? "opacity-60" : "text-muted-text",
+                      ]}
+                    >
+                      {formatFileSize(row.size)}
+                    </span>
+                  )}
+                </a>
+              )
+            )}
+          </div>
+        ) : (
+          <div class="text-ink-2 px-5 py-6 text-sm">
+            No files are available for this snapshot yet.
+          </div>
+        )
+      }
+    </aside>
+
+    <div class="min-w-0">
+      {
+        pageData.activeFile ? (
+          <>
+            <div class="border-rule border-b px-5 py-4">
+              <div class="text-ink font-mono text-[12px]">
+                {pageData.activeFile.path}
+              </div>
+              <div class="eyebrow mt-1">{pageData.activeFile.metaLabel}</div>
+            </div>
+            {pageData.activeFile.isTruncated && (
+              <div class="border-rule bg-paper-2 text-ink-2 border-b px-5 py-3 text-sm">
+                Showing a truncated preview for this file.
+              </div>
+            )}
+            <div class="overflow-x-auto px-5 py-6">
+              <article
+                class="prose prose-neutral prose-pre:max-w-full prose-pre:overflow-x-auto max-w-none font-serif"
+                set:html={pageData.activeFile.html}
+              />
+            </div>
+          </>
+        ) : (
+          <div class="px-5 py-8">
+            <div class="border-rule bg-paper-2 border px-5 py-6">
+              <div class="eyebrow text-editorial-red mb-2">§ File Tree</div>
+              <p class="text-ink-2 m-0 max-w-110">
+                No readable file preview is available for this snapshot.
+              </p>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</SkillLayout>

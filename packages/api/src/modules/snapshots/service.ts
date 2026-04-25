@@ -826,6 +826,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       const files = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
       return files.map((file) => ({
         path: file.path,
+        size: file.size,
         type: "blob" as const,
       }));
     },

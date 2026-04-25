@@ -1,0 +1,247 @@
+---
+import Layout from "@/layouts/main.astro"
+import { SkillTag } from "@/components/skill-tag"
+import { InstallTabs } from "@/components/install-tabs"
+import { SkillTabsActions } from "@/components/skill-tabs-actions"
+import { VersionHistory } from "@/components/version-history"
+import { SkillActions } from "@/components/skill-actions"
+import type { SkillLayoutData } from "@/lib/skill-detail-data"
+import {
+  ChatsIcon,
+  ClockCounterClockwiseIcon,
+  FileTextIcon,
+  TreeViewIcon,
+} from "@phosphor-icons/react"
+import { SkillBreadcrumb } from "@/components/skill-breadcrumb"
+
+type TabId =
+  | "skill.md"
+  | "file-tree"
+  | "sandbox"
+  | "evals"
+  | "reviews"
+  | "changelog"
+
+interface Props {
+  skill: SkillLayoutData
+  activeTab: TabId
+  title: string
+}
+
+const { skill, activeTab, title } = Astro.props
+
+const tabs: {
+  id: TabId
+  label: string
+  href: string | null
+  icon: typeof FileTextIcon
+}[] = [
+  {
+    id: "skill.md",
+    label: "skill.md",
+    href: `/skills/${skill.slug}#skill-tabs`,
+    icon: FileTextIcon,
+  },
+  {
+    id: "file-tree",
+    label: "File Tree",
+    href: `/skills/${skill.slug}/file-tree#skill-tabs`,
+    icon: TreeViewIcon,
+  },
+  // { id: "sandbox", label: "Sandbox", href: null },
+  // { id: "evals", label: "Evals", href: null },
+  {
+    id: "reviews",
+    label: skill.reviewTabLabel,
+    href: `/skills/${skill.slug}/reviews#skill-tabs`,
+    icon: ChatsIcon,
+  },
+  {
+    id: "changelog",
+    label: "Changelog",
+    href: `/skills/${skill.slug}/changelog#skill-tabs`,
+    icon: ClockCounterClockwiseIcon,
+  },
+]
+---
+
+<Layout title={title} enableViewTransitions>
+  <!-- BREADCRUMB -->
+  <SkillBreadcrumb skill={skill} />
+
+  <!-- SKILL HEAD -->
+  <section
+    class="grid grid-cols-1 lg:grid-cols-[1fr_380px]"
+    style="border-bottom: 1px solid var(--rule);"
+  >
+    <!-- LEFT: identity + meta -->
+    <div
+      class="px-5 pt-8 pb-8 md:px-7 md:pt-10 lg:border-r"
+      style="border-color: var(--rule);"
+    >
+      <h1
+        style="font-family: var(--font-display); font-size: clamp(52px, 8vw, 96px); line-height: .95; font-weight: 400; margin: 14px 0 18px; letter-spacing: -.02em;"
+      >
+        {skill.title}
+        {
+          skill.isVerified && (
+            <span style="display: inline-flex; align-items: center; vertical-align: middle; margin-left: 12px; margin-bottom: 6px; padding: 3px 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 4px; opacity: .7;">
+              Verified
+            </span>
+          )
+        }
+      </h1>
+
+      <p
+        style="font-family: var(--font-serif); font-size: 18px; color: var(--ink-2); max-width: 680px; line-height: 1.6; margin: 0 0 28px;"
+      >
+        {skill.description}
+      </p>
+
+      <div
+        class="grid grid-cols-2 md:grid-cols-4"
+        style="gap: 20px 24px; border-top: 1px solid var(--rule); padding-top: 18px;"
+      >
+        {
+          skill.metaItems.map((item) => (
+            <div>
+              <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-text);">
+                {item.label}
+              </div>
+              <div
+                style={`margin-top: 4px; font-family: ${item.mono ? "var(--font-mono)" : "var(--font-serif)"}; font-size: ${item.mono ? "13px" : "15px"};`}
+              >
+                {item.href ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color: inherit; text-decoration: underline; text-underline-offset: 3px;"
+                  >
+                    {item.value}
+                  </a>
+                ) : (
+                  item.value
+                )}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT: install + actions + metrics + history + tags -->
+    <div class="border-t lg:border-t-0" style="border-color: var(--rule);">
+      <!-- Install tabs -->
+      <div style="padding: 18px 22px; border-bottom: 1px solid var(--rule);">
+        <InstallTabs slug={skill.slug} client:load transition:persist />
+      </div>
+
+      <!-- Snapshot actions -->
+      <div style="padding: 18px 22px; border-bottom: 1px solid var(--rule);">
+        <SkillActions
+          version={skill.versionHistory[0]?.version ?? "latest"}
+          slug={skill.slug}
+        />
+      </div>
+
+      <!-- TODO: replace Performance metrics -->
+      <div style="padding: 18px 22px; border-bottom: 1px solid var(--rule);">
+        <div
+          style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
+        >
+          Performance Metrics
+        </div>
+        <div
+          style={`display: grid; grid-template-columns: repeat(${Math.min(Math.max(skill.metricItems.length, 1), 2)}, 1fr); gap: 12px;`}
+        >
+          {
+            skill.metricItems.map((item) => (
+              <div style="padding: 8px 0 2px;">
+                <div style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-text);">
+                  {item.label}
+                </div>
+                <div style="font-family: var(--font-display); font-size: 28px; line-height: 1; margin-top: 6px;">
+                  {item.value}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Version history -->
+      <div style="padding: 18px 22px; border-bottom: 1px solid var(--rule);">
+        <VersionHistory versions={skill.versionHistory} />
+      </div>
+
+      <!-- Tags -->
+      <div style="padding: 18px 22px;">
+        <div
+          style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
+        >
+          Tags
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          {
+            skill.tags.length > 0 ? (
+              skill.tags.map((tag) => <SkillTag>{tag}</SkillTag>)
+            ) : (
+              <span class="text-muted-text font-mono text-[10px] tracking-[.12em] uppercase">
+                No tags
+              </span>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <div
+    id="skill-tabs"
+    style="display: flex; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; background: var(--paper); position: sticky; top: var(--header-height); z-index: 20;"
+    class="scroll-mt-(--header-height)"
+  >
+    {
+      tabs.map((tab) => {
+        const isActive = tab.id === activeTab
+        const isDisabled = tab.href === null
+        const style = `padding: 14px 20px; border-right: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; display: flex; align-items: center; gap: 8px; background: ${isActive ? "var(--ink)" : "transparent"}; color: ${isActive ? "var(--paper)" : "var(--muted-text)"}; ${isDisabled ? "cursor: default;" : ""}`
+        const Icon = tab.icon
+        return isDisabled ? (
+          <span style={style}>
+            <Icon aria-hidden className="size-4 shrink-0" />
+            <span class="hidden sm:inline">{tab.label}</span>
+          </span>
+        ) : (
+          <a
+            href={tab.href}
+            style={style}
+            aria-label={tab.label}
+            title={tab.label}
+          >
+            <Icon aria-hidden className="size-4 shrink-0" />
+            <span class="hidden sm:inline">{tab.label}</span>
+          </a>
+        )
+      })
+    }
+    <SkillTabsActions />
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div transition:animate="slide">
+    <slot />
+  </div>
+
+  <script>
+    if (window.location.hash === "#skill-tabs") {
+      requestAnimationFrame(() => {
+        document.querySelector("#skill-tabs")?.scrollIntoView({
+          block: "start",
+        })
+      })
+    }
+  </script>
+</Layout>

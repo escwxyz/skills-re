@@ -229,12 +229,27 @@ const rendererByTheme: Record<
   "github-light": null,
 };
 
+const DISALLOWED_BLOCK_ELEMENTS = /<(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi;
+const DISALLOWED_VOID_TAGS = /<(?:link|meta|base)[^>]*\/?>/gi;
+const EVENT_HANDLER_ATTRIBUTES = /\s+on[a-z]+=(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+)/gi;
+const SRCDOC_ATTRIBUTES = /\s+srcdoc=(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+)/gi;
+const UNSAFE_URL_ATTRIBUTES =
+  /\s+(href|src)=(?:"(?:javascript:|vbscript:|data:text\/html)[^"]*"|'(?:javascript:|vbscript:|data:text\/html)[^']*'|(?:javascript:|vbscript:|data:text\/html)[^\s"'=<>`]*)/gi;
+
+export const sanitizeRenderedHtml = (html: string) =>
+  html
+    .replace(DISALLOWED_BLOCK_ELEMENTS, "")
+    .replace(DISALLOWED_VOID_TAGS, "")
+    .replace(EVENT_HANDLER_ATTRIBUTES, "")
+    .replace(SRCDOC_ATTRIBUTES, "")
+    .replace(UNSAFE_URL_ATTRIBUTES, ' $1="#"');
+
 export const renderMarkdownAsync = async (content: string, theme?: ResolvedTheme | null) => {
   const shikiTheme = resolveShikiTheme(theme);
   if (!rendererByTheme[shikiTheme]) {
     rendererByTheme[shikiTheme] = createRenderer(shikiTheme);
   }
-  return await rendererByTheme[shikiTheme].renderAsync(content);
+  return sanitizeRenderedHtml(await rendererByTheme[shikiTheme].renderAsync(content));
 };
 
 const getLanguageFromPath = (path?: string | null) => {
@@ -255,10 +270,12 @@ const renderCodeAsync = async (
 ) => {
   const highlighter = await getHighlighter();
   const resolvedLanguage = await ensureLanguageLoaded(language);
-  return highlighter.codeToHtml(content, {
-    lang: resolvedLanguage,
-    theme: resolveShikiTheme(theme),
-  });
+  return sanitizeRenderedHtml(
+    highlighter.codeToHtml(content, {
+      lang: resolvedLanguage,
+      theme: resolveShikiTheme(theme),
+    }),
+  );
 };
 
 export const renderContentAsync = async ({

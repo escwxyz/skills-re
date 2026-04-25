@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useState } from "react";
 
 import { isAuthenticatedAtom, isLoginDialogOpenAtom } from "@/stores/app";
+import { orpc } from "@/lib/orpc";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,22 +40,44 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 interface WriteReviewFormProps {
   onClose: () => void;
+  skillId: string;
 }
 
-function WriteReviewForm({ onClose }: WriteReviewFormProps) {
+function WriteReviewForm({ onClose, skillId }: WriteReviewFormProps) {
   const [stars, setStars] = useState(0);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = stars > 0 && title.trim().length > 0 && body.trim().length > 0;
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!canSubmit) {
+    if (!canSubmit || submitting) {
       return;
     }
-    setSubmitted(true);
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await orpc.reviews.create({
+        content: body.trim(),
+        rating: stars,
+        skillId,
+        title: title.trim(),
+      });
+      setSubmitted(true);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to submit review. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -98,9 +121,13 @@ function WriteReviewForm({ onClose }: WriteReviewFormProps) {
         />
       </div>
 
+      {error && (
+        <p className="font-mono text-[11px] tracking-[.12em] text-editorial-red">{error}</p>
+      )}
+
       <div className="flex gap-3 pt-1">
-        <Button type="submit" disabled={!canSubmit} className="flex-1">
-          Submit Review
+        <Button type="submit" disabled={!canSubmit || submitting} className="flex-1">
+          {submitting ? "Submitting…" : "Submit Review"}
         </Button>
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
@@ -110,7 +137,11 @@ function WriteReviewForm({ onClose }: WriteReviewFormProps) {
   );
 }
 
-export function WriteReviewCta() {
+interface WriteReviewCtaProps {
+  skillId: string;
+}
+
+export function WriteReviewCta({ skillId }: WriteReviewCtaProps) {
   const isAuthenticated = useStore(isAuthenticatedAtom);
   const [open, setOpen] = useState(false);
 
@@ -147,7 +178,7 @@ export function WriteReviewCta() {
                 Your review is public and tied to your account.
               </p>
             </DialogHeader>
-            <WriteReviewForm onClose={() => setOpen(false)} />
+            <WriteReviewForm skillId={skillId} onClose={() => setOpen(false)} />
           </DialogContent>
         </Dialog>
       )}

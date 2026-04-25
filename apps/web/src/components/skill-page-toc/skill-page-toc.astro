@@ -1,0 +1,39 @@
+---
+interface Props {
+  items: string[]
+}
+
+const { items } = Astro.props
+---
+
+{
+  items.length > 0 && (
+    <aside
+      class="hidden self-start font-mono text-[11px] leading-8 tracking-[0.05em] lg:sticky lg:top-[70px] lg:block"
+    >
+      <h6
+        class="text-muted-text mb-2 font-mono text-[10.5px] tracking-[0.18em] uppercase"
+      >
+        Contents
+      </h6>
+      <ul class="space-y-0.5">
+        {
+          items.map((item, index) => (
+            <li>
+              <span
+                class:list={[
+                  "block",
+                  index === 0
+                    ? "border-ink text-ink -ml-3 border-l-2 pl-2.5"
+                    : "text-ink-2",
+                ]}
+              >
+                {`§ ${String(index + 1).padStart(2, "0")} ${item}`}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+  )
+}

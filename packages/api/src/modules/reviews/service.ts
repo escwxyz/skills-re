@@ -6,6 +6,7 @@ import type {
   createReview,
   getReviewBySkillIdAndUserId,
   listReviewsBySkillId,
+  listReviewsByUserId,
 } from "./repo";
 
 const toOutputItem = (row: ReviewWithAuthor) => ({
@@ -18,6 +19,7 @@ const toOutputItem = (row: ReviewWithAuthor) => ({
   id: String(row.id),
   rating: row.rating,
   skillId: String(row.skillId),
+  title: row.title ?? undefined,
   updatedAt: row.updatedAt instanceof Date ? row.updatedAt.getTime() : row.updatedAt,
   userId: String(row.userId),
 });
@@ -26,6 +28,7 @@ interface ReviewsServiceDeps {
   createReview: typeof createReview;
   getReviewBySkillIdAndUserId: typeof getReviewBySkillIdAndUserId;
   listReviewsBySkillId: typeof listReviewsBySkillId;
+  listReviewsByUserId: typeof listReviewsByUserId;
 }
 
 const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
@@ -34,6 +37,7 @@ const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
     createReview: repo.createReview,
     getReviewBySkillIdAndUserId: repo.getReviewBySkillIdAndUserId,
     listReviewsBySkillId: repo.listReviewsBySkillId,
+    listReviewsByUserId: repo.listReviewsByUserId,
   };
 };
 
@@ -48,7 +52,13 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
   const getDep = createDepGetter(overrides, getDefaultDeps);
 
   return {
-    async create(input: { skillId: string; userId: string; rating: number; content: string }) {
+    async create(input: {
+      skillId: string;
+      userId: string;
+      rating: number;
+      content: string;
+      title: string;
+    }) {
       const createReviewFn = await getDep("createReview");
       const getReviewBySkillIdAndUserIdFn = await getDep("getReviewBySkillIdAndUserId");
 
@@ -67,6 +77,7 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
         content: input.content.trim(),
         rating: input.rating,
         skillId,
+        title: input.title.trim(),
         userId,
       });
 
@@ -100,6 +111,20 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
 
       return rows.map((row) => toOutputItem(row));
     },
+
+    async listMine(input: { userId: string; limit?: number }) {
+      const listReviewsByUserIdFn = await getDep("listReviewsByUserId");
+      const rows = await listReviewsByUserIdFn({
+        limit: input.limit,
+        userId: asUserId(input.userId),
+      });
+
+      return rows.map((row) => ({
+        ...toOutputItem(row),
+        skillSlug: row.skillSlug,
+        skillTitle: row.skillTitle,
+      }));
+    },
   };
 };
 
@@ -110,6 +135,7 @@ export async function createReviewRecord(input: {
   userId: string;
   rating: number;
   content: string;
+  title: string;
 }) {
   return await reviewsService.create(input);
 }
@@ -120,4 +146,8 @@ export async function getMyReviewBySkill(input: { skillId: string; userId: strin
 
 export async function listReviewsBySkill(input: { skillId: string; limit?: number }) {
   return await reviewsService.listBySkill(input);
+}
+
+export async function listMineReviews(input: { userId: string; limit?: number }) {
+  return await reviewsService.listMine(input);
 }

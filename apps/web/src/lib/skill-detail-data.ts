@@ -20,11 +20,15 @@ interface SearchSkillListItem {
   createdAt?: number;
   description: string;
   downloadsAllTime?: number;
+  downloadsTrending?: number;
+  forkCount?: number;
   id: string;
+  isVerified?: boolean;
   latestVersion?: string;
   license?: string;
   primaryCategory?: string;
   repoName?: string;
+  repoUrl?: string;
   slug: string;
   stargazerCount?: number;
   staticAudit?: {
@@ -34,6 +38,7 @@ interface SearchSkillListItem {
   tags?: string[];
   title: string;
   updatedAt?: number;
+  viewsAllTime?: number;
 }
 
 interface SnapshotItem {
@@ -57,12 +62,14 @@ interface ReviewItem {
   id: string;
   rating: number;
   skillId: string;
+  title?: string;
   updatedAt: number;
   userId: string;
 }
 
 interface SnapshotTreeEntry {
   path: string;
+  size?: number;
   type: "blob";
 }
 
@@ -83,6 +90,7 @@ interface SkillBaseRecord {
 }
 
 export interface SkillMetaItem {
+  href?: string;
   label: string;
   mono?: boolean;
   value: string;
@@ -111,6 +119,7 @@ export interface SkillLayoutData {
   categoryLabel: string;
   description: string;
   id: string;
+  isVerified: boolean;
   metaItems: SkillMetaItem[];
   metricItems: SkillMetricItem[];
   reviewTabLabel: string;
@@ -153,6 +162,7 @@ export interface SkillReviewCardData {
   id: string;
   isLast?: boolean;
   stars: number;
+  title?: string;
   versionLabel?: string;
 }
 
@@ -187,6 +197,7 @@ export interface SkillFileTreeRow {
   isActive: boolean;
   name: string;
   path: string;
+  size?: number;
   type: "file" | "folder";
 }
 
@@ -202,6 +213,39 @@ export interface SkillFileTreePageData {
   layout: SkillLayoutData;
   rows: SkillFileTreeRow[];
 }
+
+export const splitLegacyReviewContent = (content: string, title?: string) => {
+  if (title?.trim()) {
+    return {
+      body: content,
+      title: title.trim(),
+    };
+  }
+
+  const match = content.match(/^\*\*(.+?)\*\*(?:\r?\n){2,}([\s\S]*)$/);
+  if (!match) {
+    return {
+      body: content,
+      title: undefined,
+    };
+  }
+
+  const [, legacyTitle, legacyBody] = match;
+  const normalizedTitle = legacyTitle.trim();
+  const normalizedBody = legacyBody.trim();
+
+  if (!normalizedTitle || !normalizedBody) {
+    return {
+      body: content,
+      title: undefined,
+    };
+  }
+
+  return {
+    body: normalizedBody,
+    title: normalizedTitle,
+  };
+};
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -339,6 +383,57 @@ export const parseSkillMarkdownDocument = (source: string) => {
   };
 };
 
+const buildMetaItems = (params: {
+  authorLabel: string;
+  categoryLabel: string;
+  latestVersion?: string;
+  license?: string;
+  publishedLabel?: string;
+  repoLabel?: string;
+  repoUrl?: string;
+  updatedLabel?: string;
+}): SkillMetaItem[] =>
+  (
+    [
+      {
+        label: "Version",
+        mono: true,
+        value: params.latestVersion ? `v${params.latestVersion}` : "latest",
+      },
+      { label: "Author", value: params.authorLabel },
+      params.license ? { label: "License", mono: true, value: params.license } : undefined,
+      { label: "Category", value: params.categoryLabel },
+      params.repoLabel
+        ? { href: params.repoUrl, label: "Repository", mono: true, value: params.repoLabel }
+        : undefined,
+      params.publishedLabel ? { label: "Published", value: params.publishedLabel } : undefined,
+      params.updatedLabel ? { label: "Updated", value: params.updatedLabel } : undefined,
+    ] as (SkillMetaItem | undefined)[]
+  ).filter((item): item is SkillMetaItem => item !== undefined);
+
+const buildMetricItems = (skill: SearchSkillListItem): SkillMetricItem[] => [
+  {
+    label: "Audit Score",
+    value:
+      typeof skill.staticAudit?.overallScore === "number"
+        ? `${skill.staticAudit.overallScore}/100`
+        : "—",
+  },
+  { label: "Installs", value: formatOptionalCompactNumber(skill.downloadsAllTime) },
+  { label: "Stars", value: formatOptionalCompactNumber(skill.stargazerCount) },
+  { label: "Latest Version", value: skill.latestVersion ? `v${skill.latestVersion}` : "latest" },
+  { label: "Views", value: formatOptionalCompactNumber(skill.viewsAllTime) },
+  { label: "Trending", value: formatOptionalCompactNumber(skill.downloadsTrending) },
+  { label: "Forks", value: formatOptionalCompactNumber(skill.forkCount) },
+];
+
+const buildVersionHistory = (snapshots: SnapshotItem[]): SkillVersionHistoryItem[] =>
+  snapshots.map((snapshot, index) => ({
+    date: formatDateLabel(snapshot.sourceCommitDate ?? snapshot.syncTime) ?? "Unknown date",
+    label: index === 0 ? "current" : undefined,
+    version: snapshot.version,
+  }));
+
 const buildSkillLayout = (input: {
   authorHandle: string;
   authorSkills: SkillSwitcherItem[];
@@ -368,77 +463,23 @@ const buildSkillLayout = (input: {
     categoryLabel,
     description: input.skill.description,
     id: input.skill.id,
-    metaItems: [
-      {
-        label: "Version",
-        mono: true,
-        value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
-      },
-      {
-        label: "Author",
-        value: authorLabel,
-      },
-      input.skill.license
-        ? {
-            label: "License",
-            mono: true,
-            value: input.skill.license,
-          }
-        : undefined,
-      {
-        label: "Category",
-        value: categoryLabel,
-      },
-      repoLabel
-        ? {
-            label: "Repository",
-            mono: true,
-            value: repoLabel,
-          }
-        : undefined,
-      publishedLabel
-        ? {
-            label: "Published",
-            value: publishedLabel,
-          }
-        : undefined,
-      updatedLabel
-        ? {
-            label: "Updated",
-            value: updatedLabel,
-          }
-        : undefined,
-    ].filter((item): item is SkillMetaItem => item !== undefined),
-    metricItems: [
-      {
-        label: "Audit Score",
-        value:
-          typeof input.skill.staticAudit?.overallScore === "number"
-            ? `${input.skill.staticAudit.overallScore}/100`
-            : "—",
-      },
-      {
-        label: "Installs",
-        value: formatOptionalCompactNumber(input.skill.downloadsAllTime),
-      },
-      {
-        label: "Stars",
-        value: formatOptionalCompactNumber(input.skill.stargazerCount),
-      },
-      {
-        label: "Latest Version",
-        value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
-      },
-    ],
+    isVerified: input.skill.isVerified ?? false,
+    metaItems: buildMetaItems({
+      authorLabel,
+      categoryLabel,
+      latestVersion: input.skill.latestVersion,
+      license: input.skill.license,
+      publishedLabel,
+      repoLabel,
+      repoUrl: input.skill.repoUrl,
+      updatedLabel,
+    }),
+    metricItems: buildMetricItems(input.skill),
     reviewTabLabel: input.reviewTabLabel ?? "Reviews",
     slug: input.skill.slug,
     tags: input.skill.tags ?? [],
     title: input.skill.title,
-    versionHistory: input.snapshots.map((snapshot, index) => ({
-      date: formatDateLabel(snapshot.sourceCommitDate ?? snapshot.syncTime) ?? "Unknown date",
-      label: index === 0 ? "current" : undefined,
-      version: snapshot.version,
-    })),
+    versionHistory: buildVersionHistory(input.snapshots),
   } satisfies SkillLayoutData;
 };
 
@@ -506,11 +547,25 @@ const getFileKindLabel = (path: string) => {
   return "Text";
 };
 
-export const buildFileTreeRows = (paths: string[], activePath: string): SkillFileTreeRow[] => {
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const buildFileTreeRows = (
+  entries: { path: string; size?: number }[],
+  activePath: string,
+): SkillFileTreeRow[] => {
   interface TreeNode {
     children: Map<string, TreeNode>;
     name: string;
     path: string;
+    size?: number;
     type: "file" | "folder";
   }
 
@@ -521,8 +576,8 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     type: "folder",
   };
 
-  for (const path of [...paths].toSorted((left, right) => left.localeCompare(right))) {
-    const segments = path.split("/").filter(Boolean);
+  for (const entry of [...entries].toSorted((a, b) => a.path.localeCompare(b.path))) {
+    const segments = entry.path.split("/").filter(Boolean);
     let currentNode = root;
     let currentPath = "";
 
@@ -540,6 +595,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
         children: new Map(),
         name: segment,
         path: currentPath,
+        size: type === "file" ? entry.size : undefined,
         type,
       };
       currentNode.children.set(segment, nextNode);
@@ -580,6 +636,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
         isActive: file.path === activePath,
         name: file.name,
         path: file.path,
+        size: file.size,
         type: "file",
       });
     }
@@ -720,15 +777,20 @@ export const getSkillReviewsPageData = async (
     ratingCounts: summary.ratingCounts,
     recommendPct: summary.recommendPct,
     reviews: await Promise.all(
-      reviews.map(async (review, index) => ({
-        authorName: review.author.name,
-        bodyHtml: await renderMarkdownAsync(review.content),
-        dateLabel: formatDateLabel(review.createdAt) ?? "Unknown date",
-        id: review.id,
-        isLast: index === reviews.length - 1,
-        stars: review.rating,
-        versionLabel: base.skill.latestVersion ? `v${base.skill.latestVersion}` : undefined,
-      })),
+      reviews.map(async (review, index) => {
+        const normalizedReview = splitLegacyReviewContent(review.content, review.title);
+
+        return {
+          authorName: review.author.name,
+          bodyHtml: await renderMarkdownAsync(normalizedReview.body),
+          dateLabel: formatDateLabel(review.createdAt) ?? "Unknown date",
+          id: review.id,
+          isLast: index === reviews.length - 1,
+          stars: review.rating,
+          title: normalizedReview.title,
+          versionLabel: base.skill.latestVersion ? `v${base.skill.latestVersion}` : undefined,
+        };
+      }),
     ),
     totalReviews: summary.totalReviews,
   };
@@ -818,7 +880,7 @@ export const getSkillFileTreePageData = async (
       path: activePath,
     },
     layout: base.layout,
-    rows: buildFileTreeRows(filePaths, activePath),
+    rows: buildFileTreeRows(treeEntries, activePath),
   };
 };
 

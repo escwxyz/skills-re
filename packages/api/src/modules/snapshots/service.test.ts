@@ -467,6 +467,7 @@ describe("snapshots service", () => {
     await expect(service.getSnapshotTreeEntries({ snapshotId: "snapshot-1" })).resolves.toEqual([
       {
         path: "skills/acme/widget/README.md",
+        size: 12,
         type: "blob",
       },
     ]);

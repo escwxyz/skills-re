@@ -16,6 +16,7 @@ export const reviewsTable = sqliteTable(
       .$type<SkillId>()
       .notNull()
       .references(() => skillsTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    title: text("title"),
     userId: text("user_id")
       .$type<UserId>()
       .notNull()

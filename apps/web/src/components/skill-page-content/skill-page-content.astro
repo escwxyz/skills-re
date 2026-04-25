@@ -1,0 +1,20 @@
+---
+interface Props {
+  contentHtml: string
+  entryMetaLabel: string
+}
+
+const { contentHtml, entryMetaLabel } = Astro.props
+---
+
+<div class="mx-auto max-w-180 min-w-0">
+  <div
+    class="text-muted-text font-mono text-[10.5px] tracking-[0.14em] uppercase mb-4"
+  >
+    {entryMetaLabel}
+  </div>
+  <article
+    class="prose prose-neutral max-w-none font-serif text-[clamp(15px,3.8vw,16.5px)] leading-[1.65] prose-headings:font-display prose-headings:font-normal prose-headings:tracking-[-0.02em] prose-code:border prose-code:border-rule prose-code:bg-paper-2 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-[13px] prose-code:before:content-none prose-code:after:content-none"
+    set:html={contentHtml}
+  />
+</div>

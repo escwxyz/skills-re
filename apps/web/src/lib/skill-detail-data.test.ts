@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { buildFileTreeRows, parseSkillMarkdownDocument } from "./skill-detail-data";
+import {
+  buildFileTreeRows,
+  parseSkillMarkdownDocument,
+  splitLegacyReviewContent,
+} from "./skill-detail-data";
 
 describe("skill-detail-data", () => {
   test("parses frontmatter and strips the top-level title from skill markdown", () => {
@@ -46,7 +50,12 @@ Return at most three findings.
   test("builds a stable tree row order for snapshot file navigation", () => {
     expect(
       buildFileTreeRows(
-        ["README.md", "prompts/system.md", "prompts/triage.md", "examples/ci.yml"],
+        [
+          { path: "README.md", size: 1024 },
+          { path: "prompts/system.md", size: 512 },
+          { path: "prompts/triage.md", size: 256 },
+          { path: "examples/ci.yml", size: 128 },
+        ],
         "prompts/system.md",
       ),
     ).toEqual([
@@ -62,6 +71,7 @@ Return at most three findings.
         isActive: false,
         name: "ci.yml",
         path: "examples/ci.yml",
+        size: 128,
         type: "file",
       },
       {
@@ -76,6 +86,7 @@ Return at most three findings.
         isActive: true,
         name: "system.md",
         path: "prompts/system.md",
+        size: 512,
         type: "file",
       },
       {
@@ -83,6 +94,7 @@ Return at most three findings.
         isActive: false,
         name: "triage.md",
         path: "prompts/triage.md",
+        size: 256,
         type: "file",
       },
       {
@@ -90,8 +102,21 @@ Return at most three findings.
         isActive: false,
         name: "README.md",
         path: "README.md",
+        size: 1024,
         type: "file",
       },
     ]);
+  });
+
+  test("splits legacy embedded review titles from markdown content", () => {
+    expect(splitLegacyReviewContent("**Strong fit**\n\nHelpful details")).toEqual({
+      body: "Helpful details",
+      title: "Strong fit",
+    });
+
+    expect(splitLegacyReviewContent("Helpful details", "Structured title")).toEqual({
+      body: "Helpful details",
+      title: "Structured title",
+    });
   });
 });
