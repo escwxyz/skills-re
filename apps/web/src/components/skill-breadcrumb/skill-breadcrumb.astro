@@ -1,0 +1,44 @@
+---
+import { SkillSlugSwitcher } from "./skill-slug-switcher"
+import type { SkillLayoutData } from "@/lib/skill-detail-data"
+
+interface Props {
+  skill: SkillLayoutData
+}
+
+const { skill } = Astro.props
+---
+
+<div
+  class="border-rule text-muted-text flex items-center gap-1.5 border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase"
+>
+  <!-- Left: breadcrumb path -->
+  <a href="/skills" class="text-muted-text hover:text-ink transition-colors">skills</a>
+  <span>/</span>
+  <a
+    href={`/authors/${skill.authorHandle}`}
+    class="text-muted-text hover:text-ink transition-colors"
+  >
+    {skill.authorHandle}
+  </a>
+  <span>/</span>
+  <SkillSlugSwitcher
+    currentSlug={skill.slug}
+    publisherHandle={skill.authorHandle}
+    skills={skill.authorSkills}
+    client:load
+  />
+
+  <!-- Right: id + tags -->
+  <div class="ml-auto flex items-center gap-3">
+    <span class="text-ink font-medium">{skill.id}</span>
+    <!-- tags: hidden on mobile, visible on sm+ -->
+    <span class="text-muted-text hidden sm:inline">
+      {skill.tags.length > 0 ? skill.tags.join(" · ") : skill.categoryLabel}
+    </span>
+    <!-- category: visible on mobile only -->
+    <span class="text-muted-text sm:hidden">
+      {skill.categoryLabel}
+    </span>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+---
+import SkillLayout from "@/layouts/skill-detail.astro"
+import { SkillFrontmatter } from "@/components/skill-frontmatter"
+import { SkillPageContent } from "@/components/skill-page-content"
+import { SkillPageToc } from "@/components/skill-page-toc"
+// import { SkillRelatedSkills } from "@/components/skill-related-skills"
+import { createServerClient } from "@/lib/server-orpc"
+import { getSkillDocumentPageData } from "@/lib/skill-detail-data"
+
+const { slug } = Astro.params
+const client = createServerClient(Astro.request)
+const pageData = slug ? await getSkillDocumentPageData(client, slug) : null
+
+if (!pageData) {
+  return Astro.redirect("/skills")
+}
+---
+
+<SkillLayout
+  skill={pageData.layout}
+  activeTab="skill.md"
+  title={`${pageData.layout.title} — skills.re`}
+>
+  <section class="px-4 py-8 sm:px-6 sm:py-10">
+    <div
+      class="mx-auto grid max-w-350 gap-8 lg:grid-cols-[220px_minmax(0,1fr)_220px]"
+    >
+      <SkillPageToc items={pageData.tocItems} />
+      <SkillPageContent
+        contentHtml={pageData.contentHtml}
+        entryMetaLabel={pageData.entryMetaLabel}
+      />
+      {pageData.frontmatter && <SkillFrontmatter {...pageData.frontmatter} />}
+    </div>
+  </section>
+
+  <!-- {
+    pageData.relatedSkills.length > 0 && (
+      <SkillRelatedSkills related={pageData.relatedSkills} />
+    )
+  } -->
+</SkillLayout>

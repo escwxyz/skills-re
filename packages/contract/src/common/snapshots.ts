@@ -73,6 +73,7 @@ export const snapshotFileSignedUrlSchema = z.object({
 
 export const snapshotTreeEntrySchema = z.object({
   path: z.string().min(1),
+  size: z.number().int().nonnegative().optional(),
   type: z.literal("blob"),
 });
 

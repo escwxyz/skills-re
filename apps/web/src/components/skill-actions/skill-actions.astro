@@ -1,0 +1,35 @@
+---
+interface Props {
+  version: string
+  slug: string
+}
+
+const { version, slug } = Astro.props
+---
+
+<div>
+  <div
+    style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
+  >
+    Snapshot Actions
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <!-- TODO: call download link -->
+    <a
+      href={`/skills/${slug}/archive?v=${version}`}
+      class="btn"
+      style="width: 100%; justify-content: center; letter-spacing: .12em;"
+    >
+      Download Archive (v{version})
+    </a>
+
+    <!-- TODO -->
+    <a
+      href="/login?next=/claim&skill={slug}"
+      style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 11px 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); transition: opacity .15s; cursor: pointer;"
+    >
+      Claim as Author
+    </a>
+  </div>
+</div>

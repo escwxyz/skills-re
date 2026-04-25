@@ -20,11 +20,15 @@ interface SearchSkillListItem {
   createdAt?: number;
   description: string;
   downloadsAllTime?: number;
+  downloadsTrending?: number;
+  forkCount?: number;
   id: string;
+  isVerified?: boolean;
   latestVersion?: string;
   license?: string;
   primaryCategory?: string;
   repoName?: string;
+  repoUrl?: string;
   slug: string;
   stargazerCount?: number;
   staticAudit?: {
@@ -34,6 +38,7 @@ interface SearchSkillListItem {
   tags?: string[];
   title: string;
   updatedAt?: number;
+  viewsAllTime?: number;
 }
 
 interface SnapshotItem {
@@ -63,6 +68,7 @@ interface ReviewItem {
 
 interface SnapshotTreeEntry {
   path: string;
+  size?: number;
   type: "blob";
 }
 
@@ -83,6 +89,7 @@ interface SkillBaseRecord {
 }
 
 export interface SkillMetaItem {
+  href?: string;
   label: string;
   mono?: boolean;
   value: string;
@@ -111,6 +118,7 @@ export interface SkillLayoutData {
   categoryLabel: string;
   description: string;
   id: string;
+  isVerified: boolean;
   metaItems: SkillMetaItem[];
   metricItems: SkillMetricItem[];
   reviewTabLabel: string;
@@ -187,6 +195,7 @@ export interface SkillFileTreeRow {
   isActive: boolean;
   name: string;
   path: string;
+  size?: number;
   type: "file" | "folder";
 }
 
@@ -368,47 +377,51 @@ const buildSkillLayout = (input: {
     categoryLabel,
     description: input.skill.description,
     id: input.skill.id,
-    metaItems: [
-      {
-        label: "Version",
-        mono: true,
-        value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
-      },
-      {
-        label: "Author",
-        value: authorLabel,
-      },
-      input.skill.license
-        ? {
-            label: "License",
-            mono: true,
-            value: input.skill.license,
-          }
-        : undefined,
-      {
-        label: "Category",
-        value: categoryLabel,
-      },
-      repoLabel
-        ? {
-            label: "Repository",
-            mono: true,
-            value: repoLabel,
-          }
-        : undefined,
-      publishedLabel
-        ? {
-            label: "Published",
-            value: publishedLabel,
-          }
-        : undefined,
-      updatedLabel
-        ? {
-            label: "Updated",
-            value: updatedLabel,
-          }
-        : undefined,
-    ].filter((item): item is SkillMetaItem => item !== undefined),
+    isVerified: input.skill.isVerified ?? false,
+    metaItems: (
+      [
+        {
+          label: "Version",
+          mono: true,
+          value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
+        },
+        {
+          label: "Author",
+          value: authorLabel,
+        },
+        input.skill.license
+          ? {
+              label: "License",
+              mono: true,
+              value: input.skill.license,
+            }
+          : undefined,
+        {
+          label: "Category",
+          value: categoryLabel,
+        },
+        repoLabel
+          ? {
+              href: input.skill.repoUrl,
+              label: "Repository",
+              mono: true,
+              value: repoLabel,
+            }
+          : undefined,
+        publishedLabel
+          ? {
+              label: "Published",
+              value: publishedLabel,
+            }
+          : undefined,
+        updatedLabel
+          ? {
+              label: "Updated",
+              value: updatedLabel,
+            }
+          : undefined,
+      ] as (SkillMetaItem | undefined)[]
+    ).filter((item): item is SkillMetaItem => item !== undefined),
     metricItems: [
       {
         label: "Audit Score",
@@ -428,6 +441,18 @@ const buildSkillLayout = (input: {
       {
         label: "Latest Version",
         value: input.skill.latestVersion ? `v${input.skill.latestVersion}` : "latest",
+      },
+      {
+        label: "Views",
+        value: formatOptionalCompactNumber(input.skill.viewsAllTime),
+      },
+      {
+        label: "Trending",
+        value: formatOptionalCompactNumber(input.skill.downloadsTrending),
+      },
+      {
+        label: "Forks",
+        value: formatOptionalCompactNumber(input.skill.forkCount),
       },
     ],
     reviewTabLabel: input.reviewTabLabel ?? "Reviews",
@@ -506,11 +531,21 @@ const getFileKindLabel = (path: string) => {
   return "Text";
 };
 
-export const buildFileTreeRows = (paths: string[], activePath: string): SkillFileTreeRow[] => {
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const buildFileTreeRows = (
+  entries: Array<{ path: string; size?: number }>,
+  activePath: string,
+): SkillFileTreeRow[] => {
   interface TreeNode {
     children: Map<string, TreeNode>;
     name: string;
     path: string;
+    size?: number;
     type: "file" | "folder";
   }
 
@@ -521,8 +556,8 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
     type: "folder",
   };
 
-  for (const path of [...paths].toSorted((left, right) => left.localeCompare(right))) {
-    const segments = path.split("/").filter(Boolean);
+  for (const entry of [...entries].toSorted((a, b) => a.path.localeCompare(b.path))) {
+    const segments = entry.path.split("/").filter(Boolean);
     let currentNode = root;
     let currentPath = "";
 
@@ -540,6 +575,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
         children: new Map(),
         name: segment,
         path: currentPath,
+        size: type === "file" ? entry.size : undefined,
         type,
       };
       currentNode.children.set(segment, nextNode);
@@ -580,6 +616,7 @@ export const buildFileTreeRows = (paths: string[], activePath: string): SkillFil
         isActive: file.path === activePath,
         name: file.name,
         path: file.path,
+        size: file.size,
         type: "file",
       });
     }
@@ -818,7 +855,7 @@ export const getSkillFileTreePageData = async (
       path: activePath,
     },
     layout: base.layout,
-    rows: buildFileTreeRows(filePaths, activePath),
+    rows: buildFileTreeRows(treeEntries, activePath),
   };
 };
 

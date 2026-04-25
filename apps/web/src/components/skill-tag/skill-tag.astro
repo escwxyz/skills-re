@@ -1,0 +1,16 @@
+---
+interface Props {
+  variant?: "default" | "solid" | "accent";
+  class?: string;
+}
+
+const { variant = "default", class: className } = Astro.props;
+
+const variantClass = {
+  default: "tag",
+  solid: "tag solid",
+  accent: "tag tag-accent",
+}[variant];
+---
+
+<span class={[variantClass, className].filter(Boolean).join(" ")}><slot /></span>
