@@ -25,6 +25,7 @@ const toSkillRows = () => ({
   id: skillsTable.id,
   isVerified: skillsTable.isVerified,
   latestVersion: skillsTable.latestVersion,
+  latestSnapshotId: skillsTable.latestSnapshotId,
   license: reposTable.license,
   primaryCategory: skillsTable.primaryCategory,
   repoName: reposTable.name,

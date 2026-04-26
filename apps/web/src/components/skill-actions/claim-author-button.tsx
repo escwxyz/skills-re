@@ -15,6 +15,15 @@ export function ClaimAuthorButton({ slug }: Props) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<"claimed" | "already" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  let buttonLabel = "Sign in to Claim";
+
+  if (isAuthenticated) {
+    buttonLabel = "Claim as Author";
+  }
+
+  if (pending) {
+    buttonLabel = "Claiming…";
+  }
 
   const handleClick = async () => {
     if (!isAuthenticated) {
@@ -27,8 +36,10 @@ export function ClaimAuthorButton({ slug }: Props) {
     try {
       const res = await orpc.skills.claimAsAuthor({ slug });
       setResult(res.alreadyClaimed ? "already" : "claimed");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to claim. Please try again.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : "Failed to claim. Please try again.",
+      );
     } finally {
       setPending(false);
     }
@@ -96,7 +107,7 @@ export function ClaimAuthorButton({ slug }: Props) {
           opacity: pending ? 0.6 : 1,
         }}
       >
-        {pending ? "Claiming…" : isAuthenticated ? "Claim as Author" : "Sign in to Claim"}
+        {buttonLabel}
       </button>
       {error && (
         <p

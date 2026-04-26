@@ -60,6 +60,7 @@ export const searchSkillListItemSchema = z.object({
   id: idSchema,
   isVerified: z.boolean().optional(),
   latestVersion: z.string().optional(),
+  latestSnapshotTotalBytes: z.number().int().nonnegative().optional(),
   license: z.string().optional(),
   primaryCategory: z.string().optional(),
   repoName: githubRepoSchema.optional(),
