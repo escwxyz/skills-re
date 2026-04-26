@@ -41,7 +41,11 @@ const version = pageData.latestSnapshot?.version ?? undefined
           version={version}
           client:load
         />
-      ) : null
+      ) : (
+        <p class="text-ink-2 font-mono text-[11px] tracking-[.14em] uppercase">
+          No snapshot available yet for this skill.
+        </p>
+      )
     }
   </div>
 </SkillLayout>
