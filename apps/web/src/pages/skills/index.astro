@@ -1,0 +1,287 @@
+---
+import Layout from "@/layouts/main.astro"
+import { PageHero } from "@/components/page-hero"
+import { SkillsBrowseControls } from "@/components/skills-browse-controls"
+import SkillCardBrowse from "@/components/skill-card/skill-card-browse.astro"
+import { createServerClient } from "@/lib/server-orpc"
+import {
+  buildBrowseUrl,
+  getBrowseSortLabel,
+  getNextBrowseSort,
+  getSkillsBrowseData,
+} from "@/lib/registry-data"
+
+const client = createServerClient(Astro.request)
+const browseData = await getSkillsBrowseData(client, Astro.url.searchParams)
+
+const { filters, categories, tags } = browseData
+const sortLabel = getBrowseSortLabel(filters.sort)
+const nextSortHref = buildBrowseUrl({
+  ...filters,
+  sort: getNextBrowseSort(filters.sort),
+  page: 1,
+})
+const prevHref =
+  filters.page > 1
+    ? buildBrowseUrl({ ...filters, page: filters.page - 1 })
+    : null
+const nextHref = browseData.hasNextPage
+  ? buildBrowseUrl({ ...filters, page: filters.page + 1 })
+  : null
+const activeFilterCount =
+  (filters.query ? 1 : 0) +
+  (filters.activeClass === "all" ? 0 : 1) +
+  filters.tags.length
+
+// Read sidebar state from cookie for correct initial SSR render
+const sidebarOpen = Astro.cookies.get("sidebar_state")?.value === "true"
+
+const allCategoryItems = [
+  { id: "all", num: "00 / all", title: "The Index", countLabel: "" },
+  ...categories,
+]
+---
+
+<Layout title="Browse Skills — skills.re">
+  <PageHero
+    eyebrow="§ The Registry · Skills Index"
+    description="Every skill on the registry, browsable and filterable. Each one is versioned, evaluated, and signed by its author. Find the one that fits your workflow."
+    descriptionItalic
+    stats={browseData.stats}
+  >
+    The skills <em class="text-editorial-blue">index.</em>
+  </PageHero>
+
+  <!-- Categories Bar -->
+  <nav
+    class="border-rule hidden border-b md:grid"
+    style={`grid-template-columns: repeat(${allCategoryItems.length}, minmax(0, 1fr))`}
+  >
+    {
+      allCategoryItems.map((cat) => {
+        const isActive = filters.activeClass === cat.id
+        const href = buildBrowseUrl({
+          ...filters,
+          activeClass: cat.id,
+          page: 1,
+        })
+        return (
+          <a
+            href={href}
+            class:list={[
+              "border-rule border-r p-3.5 text-left font-mono text-[10.5px] tracking-[.14em] uppercase no-underline",
+              isActive ? "bg-ink text-paper" : "text-muted-text bg-transparent",
+            ]}
+          >
+            <span class="block">{cat.num}</span>
+            <b
+              class:list={[
+                "font-display mt-1 block text-[22px] font-normal tracking-[0] normal-case",
+                isActive ? "text-paper" : "text-ink",
+              ]}
+            >
+              {cat.title}
+            </b>
+          </a>
+        )
+      })
+    }
+  </nav>
+
+  <!-- Main layout wrapper: sidebar state driven by data attribute -->
+  <div
+    id="browse-wrapper"
+    class="flex items-start"
+    data-sidebar-open={sidebarOpen ? "true" : "false"}
+  >
+    <!-- Sidebar: visibility controlled via CSS + data attribute -->
+    <aside
+      id="skills-sidebar"
+      class="border-rule bg-paper sticky top-(--header-height) h-[calc(100svh-var(--header-height))] w-65 shrink-0 overflow-y-auto border-r"
+    >
+      <div>
+        <div
+          class="border-rule text-muted-text border-b px-5 py-4.5 font-mono text-[10.5px] tracking-[.18em] uppercase"
+        >
+          Categories
+        </div>
+        <div class="border-rule border-b px-5 py-4.5">
+          {
+            categories.map((item) => {
+              const isActive = filters.activeClass === item.id
+              const nextClass = isActive ? "all" : item.id
+              return (
+                <a
+                  href={buildBrowseUrl({
+                    ...filters,
+                    activeClass: nextClass,
+                    page: 1,
+                  })}
+                  class:list={[
+                    "flex justify-between py-1 font-mono text-[11.5px] tracking-normal normal-case no-underline",
+                    isActive ? "text-ink" : "text-ink-2",
+                  ]}
+                >
+                  <span>{item.title}</span>
+                  <span class="text-muted-text">{item.countLabel}</span>
+                </a>
+              )
+            })
+          }
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div>
+        <div
+          class="border-rule text-muted-text border-b px-5 py-4.5 font-mono text-[10.5px] tracking-[.18em] uppercase"
+        >
+          Tags
+        </div>
+        <div class="border-rule border-b px-5 py-4.5">
+          <div class="flex flex-wrap gap-1.25">
+            {
+              tags.map((tag) => {
+                const isActive = filters.tags.includes(tag.slug)
+                const nextTags = isActive
+                  ? filters.tags.filter((t) => t !== tag.slug)
+                  : [...filters.tags, tag.slug].sort()
+                return (
+                  <a
+                    href={buildBrowseUrl({
+                      ...filters,
+                      tags: nextTags,
+                      page: 1,
+                    })}
+                    class:list={[
+                      "border-rule border px-1.75 py-0.75 font-mono text-[10px] tracking-[.08em] uppercase no-underline",
+                      isActive
+                        ? "bg-ink text-paper"
+                        : "text-ink bg-transparent",
+                    ]}
+                  >
+                    {tag.slug}
+                  </a>
+                )
+              })
+            }
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div class="min-w-0 flex-1">
+      <!-- Interactive controls: search + sidebar toggle + mobile filters + sort link -->
+      <SkillsBrowseControls
+        query={filters.query}
+        filters={filters}
+        categories={categories}
+        tags={tags}
+        activeFilterCount={activeFilterCount}
+        sortLabel={sortLabel}
+        nextSortHref={nextSortHref}
+        client:load
+      />
+
+      <!-- Stats row -->
+      <div
+        class="border-rule text-muted-text flex items-center border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase"
+      >
+        {
+          browseData.rangeStart > 0 &&
+          browseData.rangeEnd >= browseData.rangeStart ? (
+            <span>
+              Showing {browseData.rangeStart}–{browseData.rangeEnd}
+              {browseData.hasNextPage ? "+" : ""} of{" "}
+              <b class="text-ink">{browseData.totalSkillsLabel}</b> skills —
+              sorted by {sortLabel}
+            </span>
+          ) : (
+            <span>
+              Showing <b class="text-ink">0</b> skills — sorted by {sortLabel}
+            </span>
+          )
+        }
+      </div>
+
+      <!-- Skills grid: pure SSR, no hydration -->
+      {
+        browseData.items.length > 0 ? (
+          <div
+            id="skills-grid"
+            class="border-rule grid grid-cols-1 border-t border-l md:grid-cols-2 xl:grid-cols-3"
+          >
+            {browseData.items.map((skill) => (
+              <div class="min-w-0">
+                <SkillCardBrowse skill={skill} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="border-rule text-muted-text border-b px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase">
+            No skills match your filters.{" "}
+            <a href="/skills" class="text-ink underline underline-offset-3">
+              Clear all
+            </a>
+          </div>
+        )
+      }
+
+      <!-- Pagination -->
+      <div
+        class="border-rule flex justify-center gap-2 border-b py-7.5 font-mono text-[11px] tracking-[.14em] uppercase"
+      >
+        {
+          prevHref ? (
+            <a
+              href={prevHref}
+              class="border-rule text-ink hover:bg-paper-2 border px-2.5 py-1.5"
+            >
+              ← Prev
+            </a>
+          ) : (
+            <span class="border-rule text-muted-text cursor-default border px-2.5 py-1.5">
+              ← Prev
+            </span>
+          )
+        }
+        <span class="border-rule bg-ink text-paper border px-2.5 py-1.5">
+          {String(filters.page).padStart(2, "0")}
+        </span>
+        {
+          nextHref ? (
+            <a
+              href={nextHref}
+              class="border-rule text-ink hover:bg-paper-2 border px-2.5 py-1.5"
+            >
+              Next →
+            </a>
+          ) : (
+            <span class="border-rule text-muted-text cursor-default border px-2.5 py-1.5">
+              Next →
+            </span>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* Sidebar is hidden by default; visible on desktop when wrapper says open */
+  #skills-sidebar {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    #browse-wrapper[data-sidebar-open="true"] #skills-sidebar {
+      display: block;
+    }
+
+    /* More columns when sidebar is closed */
+    #browse-wrapper[data-sidebar-open="false"] #skills-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>
