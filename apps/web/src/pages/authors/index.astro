@@ -2,10 +2,48 @@
 import Layout from "@/layouts/main.astro"
 import { PageHero } from "@/components/page-hero"
 import { createServerClient } from "@/lib/server-orpc"
-import { getAuthorsIndexData } from "@/lib/author-data"
+import {
+  getAuthorDisplayName,
+  sortAuthors,
+  toAuthorIndexCard,
+} from "@/lib/author-data"
+import type { DailyMetricPoint } from "@/lib/registry-data"
+import { formatInteger, sumDailyMetrics } from "@/lib/registry-data"
 
 const client = createServerClient(Astro.request)
-const pageData = await getAuthorsIndexData(client)
+
+const authors = await client.skills.listAuthors()
+
+let dailyMetrics: DailyMetricPoint[] = []
+try {
+  dailyMetrics = await client.metrics.dailySkillsSnapshots({ limit: 7 })
+} catch {
+  dailyMetrics = []
+}
+
+const skillsCount = await client.skills.count()
+const totals = sumDailyMetrics(dailyMetrics)
+const verifiedCount = authors.filter((author) => author.isVerified).length
+const sortedAuthors = sortAuthors(authors)
+
+const pageData = {
+  alphabeticalAuthors: [...sortedAuthors]
+    .toSorted((left, right) =>
+      getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right))
+    )
+    .map(toAuthorIndexCard),
+  stats: [
+    { label: "Authors", value: formatInteger(authors.length) },
+    {
+      label: "Verified",
+      value: `▣ ${formatInteger(verifiedCount)}`,
+      accent: "green" as const,
+    },
+    { label: "New this week", value: `+ ${formatInteger(totals.newSkills)}` },
+    { label: "Skills published", value: formatInteger(skillsCount) },
+  ],
+  topAuthors: sortedAuthors.slice(0, 3).map(toAuthorIndexCard),
+}
 ---
 
 <Layout title="Authors — skills.re">

@@ -6,15 +6,93 @@ import SkillCardBrowse from "@/components/skill-card/skill-card-browse.astro"
 import { createServerClient } from "@/lib/server-orpc"
 import {
   buildBrowseUrl,
+  encodeSearchOffsetCursor,
   getBrowseSortLabel,
   getNextBrowseSort,
-  getSkillsBrowseData,
+  getBrowseSort,
+  parsePageNumber,
+  toBrowseCategoryItem,
+  toBrowseSkillItem,
+  toBrowseTagItem,
+  formatInteger,
+  sumDailyMetrics,
+  SKILLS_BROWSE_PAGE_SIZE,
 } from "@/lib/registry-data"
+import type { DailyMetricPoint } from "@/lib/registry-data"
 
 const client = createServerClient(Astro.request)
-const browseData = await getSkillsBrowseData(client, Astro.url.searchParams)
 
-const { filters, categories, tags } = browseData
+const query = Astro.url.searchParams.get("q")?.trim() ?? ""
+const activeClass = Astro.url.searchParams.get("category")?.trim() || "all"
+const tags = [
+  ...new Set(
+    Astro.url.searchParams
+      .getAll("tag")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+  ),
+]
+const sort = getBrowseSort(Astro.url.searchParams.get("sort"))
+const page = parsePageNumber(Astro.url.searchParams.get("page"))
+const cursor =
+  page > 1
+    ? encodeSearchOffsetCursor((page - 1) * SKILLS_BROWSE_PAGE_SIZE)
+    : undefined
+
+const categoryRecords = await client.categories.list({ all: true, limit: 100 })
+
+let dailyMetrics: DailyMetricPoint[] = []
+try {
+  dailyMetrics = await client.metrics.dailySkillsSnapshots({ limit: 30 })
+} catch {
+  dailyMetrics = []
+}
+
+const searchResult = await client.skills.search({
+  categories: activeClass === "all" ? undefined : [activeClass],
+  cursor,
+  limit: SKILLS_BROWSE_PAGE_SIZE,
+  query: query || undefined,
+  sort,
+  tags: tags.length > 0 ? tags : undefined,
+})
+const skillsCount = await client.skills.count()
+const tagList = await client.tags.listIndexable({ limit: 40 })
+
+const totals = sumDailyMetrics(dailyMetrics)
+const activeFilterCount =
+  (query ? 1 : 0) + (activeClass === "all" ? 0 : 1) + tags.length
+const rangeStart =
+  searchResult.page.length > 0 ? (page - 1) * SKILLS_BROWSE_PAGE_SIZE + 1 : 0
+const rangeEnd =
+  searchResult.page.length > 0 ? rangeStart + searchResult.page.length - 1 : 0
+const browseData = {
+  categories: categoryRecords.map((category, index) =>
+    toBrowseCategoryItem(category, index)
+  ),
+  filters: {
+    activeClass,
+    page,
+    query,
+    sort,
+    tags,
+  },
+  hasNextPage: !searchResult.isDone,
+  hasPreviousPage: page > 1,
+  items: searchResult.page.map(toBrowseSkillItem),
+  rangeEnd,
+  rangeStart,
+  stats: [
+    { label: "Skills", value: formatInteger(skillsCount) },
+    { label: "Categories", value: formatInteger(categoryRecords.length) },
+    { label: "New Skills / 30d", value: formatInteger(totals.newSkills) },
+    { label: "Active Filters", value: formatInteger(activeFilterCount) },
+  ],
+  tags: tagList.map(toBrowseTagItem),
+  totalSkillsLabel: formatInteger(skillsCount),
+}
+
+const { filters, categories: browseCategories, tags: browseTags } = browseData
 const sortLabel = getBrowseSortLabel(filters.sort)
 const nextSortHref = buildBrowseUrl({
   ...filters,
@@ -28,17 +106,12 @@ const prevHref =
 const nextHref = browseData.hasNextPage
   ? buildBrowseUrl({ ...filters, page: filters.page + 1 })
   : null
-const activeFilterCount =
-  (filters.query ? 1 : 0) +
-  (filters.activeClass === "all" ? 0 : 1) +
-  filters.tags.length
-
 // Read sidebar state from cookie for correct initial SSR render
 const sidebarOpen = Astro.cookies.get("sidebar_state")?.value === "true"
 
 const allCategoryItems = [
   { id: "all", num: "00 / all", title: "The Index", countLabel: "" },
-  ...categories,
+  ...browseCategories,
 ]
 ---
 
@@ -107,7 +180,7 @@ const allCategoryItems = [
         </div>
         <div class="border-rule border-b px-5 py-4.5">
           {
-            categories.map((item) => {
+            browseCategories.map((item) => {
               const isActive = filters.activeClass === item.id
               const nextClass = isActive ? "all" : item.id
               return (
@@ -141,7 +214,7 @@ const allCategoryItems = [
         <div class="border-rule border-b px-5 py-4.5">
           <div class="flex flex-wrap gap-1.25">
             {
-              tags.map((tag) => {
+              browseTags.map((tag) => {
                 const isActive = filters.tags.includes(tag.slug)
                 const nextTags = isActive
                   ? filters.tags.filter((t) => t !== tag.slug)
@@ -176,8 +249,8 @@ const allCategoryItems = [
       <SkillsBrowseControls
         query={filters.query}
         filters={filters}
-        categories={categories}
-        tags={tags}
+        categories={browseCategories}
+        tags={browseTags}
         activeFilterCount={activeFilterCount}
         sortLabel={sortLabel}
         nextSortHref={nextSortHref}

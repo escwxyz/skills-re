@@ -5,44 +5,73 @@ import { AuthorStats } from "@/components/author/stats"
 import { AuthorSkillList } from "@/components/author/skill-list"
 import { AuthorActivity } from "@/components/author/activity"
 import { createServerClient } from "@/lib/server-orpc"
-import { getAuthorDetailData } from "@/lib/author-data"
+import {
+  buildAuthorActivity,
+  buildAuthorStats,
+  getAuthorDisplayName,
+  getAvatarLabel,
+  toAuthorSkillRowData,
+} from "@/lib/author-data"
 
 const { handle } = Astro.params
 const client = createServerClient(Astro.request)
-const author = handle ? await getAuthorDetailData(client, handle) : null
 
-if (!author || !handle) {
+if (!handle) {
   throw Astro.redirect("/authors")
+}
+
+const author = await client.skills.getAuthorByHandle({ handle })
+if (!author) {
+  throw Astro.redirect("/authors")
+}
+
+const skillsResult = await client.skills.search({
+  authorHandle: handle,
+  limit: 50,
+  sort: "downloads-all-time",
+})
+const skills = skillsResult.page
+
+const pageData = {
+  activity: buildAuthorActivity(skills),
+  avatarLabel: getAvatarLabel(author),
+  githubUrl: author.githubUrl,
+  handle: author.handle,
+  isVerified: Boolean(author.isVerified),
+  name: getAuthorDisplayName(author),
+  skillCount: author.skillCount ?? skills.length,
+  skills: skills.map(toAuthorSkillRowData),
+  stats: buildAuthorStats(author, skills),
 }
 ---
 
-<Layout title={`${author.name} — skills.re`}>
+<Layout title={`${pageData.name} — skills.re`}>
   <PageHero
     eyebrow="Author · Public profile"
-    description={`Public author profile for @${author.handle}. Additional bio, tags, and social actions still require backend contract work.`}
+    description={`Public author profile for @${pageData.handle}. Additional bio, tags, and social actions still require backend contract work.`}
   >
-    {author.name}
+    {pageData.name}
 
     <div slot="media" class="flex flex-col items-center justify-center px-2">
       <div
         class="border-background bg-foreground font-display text-background flex h-60 w-60 items-center justify-center rounded-full border-[6px] border-double text-[120px] italic [outline:1px_solid_var(--foreground)]"
       >
-        {author.avatarLabel}
+        {pageData.avatarLabel}
       </div>
       <div
         class="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.14em] uppercase"
       >
-        @{handle}
+        @{pageData.handle}
         {
-          author.isVerified && (
+          pageData.isVerified && (
             <span class="text-editorial-green"> · ● verified author</span>
           )
         }
       </div>
       {
-        author.githubUrl && (
+        pageData.githubUrl && (
           <div class="mt-6 flex flex-wrap justify-center gap-2.5">
-            <a href={author.githubUrl} class="btn">
+            <a href={pageData.githubUrl} class="btn">
               GitHub Profile <span>→</span>
             </a>
           </div>
@@ -51,12 +80,15 @@ if (!author || !handle) {
     </div>
   </PageHero>
 
-  <AuthorStats stats={author.stats} />
+  <AuthorStats stats={pageData.stats} />
 
   <div class="border-border grid grid-cols-1 border-b lg:grid-cols-[2.3fr_1fr]">
     <div class="border-border border-b lg:border-r lg:border-b-0">
-      <AuthorSkillList skills={author.skills} skillCount={author.skillCount} />
+      <AuthorSkillList
+        skills={pageData.skills}
+        skillCount={pageData.skillCount}
+      />
     </div>
-    <AuthorActivity items={author.activity} />
+    <AuthorActivity items={pageData.activity} />
   </div>
 </Layout>
