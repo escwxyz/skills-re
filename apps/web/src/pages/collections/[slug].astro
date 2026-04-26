@@ -1,6 +1,10 @@
 ---
 import Layout from "@/layouts/main.astro"
 import { CollectionItem } from "@/components/collection-item"
+import {
+  formatCollectionPassRate,
+  formatCollectionSkillPassRate,
+} from "@/lib/collection-data"
 import { createServerClient } from "@/lib/server-orpc"
 import { formatCompactNumber } from "@/lib/registry-data"
 
@@ -21,20 +25,21 @@ const skills = collection.skills.map((s) => ({
     typeof s.downloadsAllTime === "number"
       ? formatCompactNumber(s.downloadsAllTime)
       : "—",
-  passRate:
-    s.staticAudit?.status === "pass" ? `${s.staticAudit.overallScore}%` : "—",
+  passRate: formatCollectionSkillPassRate(s),
   publisherName: s.author?.name ?? s.authorHandle ?? "—",
   slug: s.slug,
   title: s.title,
   version: s.latestVersion ?? "—",
 }))
 
+const passingSkills = formatCollectionPassRate(collection.skills)
+
 const metaItems = [
   { lbl: "Skills", val: String(collection.skills.length) },
   { lbl: "Total Installs", val: "2.4M" },
   { lbl: "License Mix", val: "MIT · Apache" },
   { lbl: "Median Size", val: "4.8 kb" },
-  { lbl: "Passing", val: "99.1%", accent: true },
+  { lbl: "Passing", val: passingSkills, accent: true },
 ]
 ---
 

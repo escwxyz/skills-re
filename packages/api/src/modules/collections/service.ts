@@ -22,8 +22,44 @@ interface CollectionListRow {
 }
 
 interface CollectionSkillRow extends SearchSkillRow {
+  latestSnapshotId: string | null;
   position: number;
 }
+
+interface LatestStaticAuditRow {
+  isBlocked: boolean;
+  overallScore: number;
+  riskLevel: "safe" | "low" | "medium" | "high" | "critical";
+  safeToPublish: boolean;
+  status: "pass" | "fail";
+  summary: string;
+  syncTime: number;
+}
+
+interface CollectionStaticAudit {
+  isBlocked: boolean;
+  overallScore: number;
+  riskLevel: "safe" | "low" | "medium" | "high" | "critical";
+  safeToPublish: boolean;
+  status: "pass" | "fail";
+  summary: string;
+  syncTime: number;
+}
+
+const toCollectionStaticAudit = (
+  row: LatestStaticAuditRow | null,
+): CollectionStaticAudit | undefined =>
+  row
+    ? {
+        isBlocked: row.isBlocked,
+        overallScore: row.overallScore,
+        riskLevel: row.riskLevel,
+        safeToPublish: row.safeToPublish,
+        status: row.status,
+        summary: row.summary,
+        syncTime: row.syncTime,
+      }
+    : undefined;
 
 interface CallerContext {
   isAdmin: boolean;
@@ -39,6 +75,7 @@ interface CollectionsServiceDeps {
   }>;
   findCollectionBySlug: (slug: string) => Promise<CollectionRow | null>;
   findCollectionById: (id: CollectionId) => Promise<CollectionRow | null>;
+  getLatestStaticAuditBySnapshot: (snapshotId: string) => Promise<LatestStaticAuditRow | null>;
   getSkillsByCollectionId: (collectionId: CollectionId) => Promise<CollectionSkillRow[]>;
   insertCollection: (input: {
     description: string;
@@ -73,6 +110,10 @@ const createDefaultCollectionsDeps = async (): Promise<CollectionsServiceDeps> =
     listCollections: repo.listCollections,
     findCollectionBySlug: repo.findCollectionBySlug,
     findCollectionById: repo.findCollectionById,
+    getLatestStaticAuditBySnapshot: async (snapshotId) => {
+      const { getLatestStaticAuditBySnapshot } = await import("../static-audits/repo");
+      return await getLatestStaticAuditBySnapshot(snapshotId);
+    },
     getSkillsByCollectionId: repo.getSkillsByCollectionId,
     insertCollection: repo.insertCollection,
     patchCollection: repo.patchCollection,
@@ -126,12 +167,27 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       }
 
       const getSkillsByCollectionId = await getDep("getSkillsByCollectionId");
+      const getLatestStaticAuditBySnapshot = await getDep("getLatestStaticAuditBySnapshot");
       const skills = await getSkillsByCollectionId(row.id as CollectionId);
+      const skillsWithStaticAudits = await Promise.all(
+        skills.map(async (skill) => {
+          const staticAudit = skill.latestSnapshotId
+            ? toCollectionStaticAudit(await getLatestStaticAuditBySnapshot(skill.latestSnapshotId))
+            : undefined;
+
+          return staticAudit
+            ? {
+                ...toSearchSkillItem(skill),
+                staticAudit,
+              }
+            : toSearchSkillItem(skill);
+        }),
+      );
 
       return {
         description: row.description,
         id: row.id,
-        skills: skills.map(toSearchSkillItem),
+        skills: skillsWithStaticAudits,
         slug: row.slug,
         title: row.title,
       };
