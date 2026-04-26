@@ -288,7 +288,7 @@ export const server = await Worker("server", {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
-    BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
+    PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
     GH_PAT: alchemy.secret.env.GH_PAT!,
     GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,

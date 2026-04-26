@@ -3,7 +3,6 @@ import { createContext } from "./context";
 export {
   aiSearch,
   dailySkillsSnapshots,
-  getChangelogById,
   fetchGithubRepo,
   getBySkillAndVersion,
   getStaticAuditReportBySnapshot,
@@ -16,20 +15,16 @@ export {
   getSkillsHistoryInfo,
   getMineFeedbackById,
   getMyReviewBySkill,
-  listAllChangelogs,
   listFeedback,
   listMineFeedback,
   listReviewsBySkill,
   newsletterService,
-  listPublishedChangelogs,
-  removeChangelog,
   refreshDailySkillsSnapshots,
   searchSkills,
   runUploadSkillsPipeline,
   updateFeedbackResponse,
   updateFeedbackStatus,
   reviewsService,
-  upsertChangelog,
 } from "./modules";
 
 export { createContext };

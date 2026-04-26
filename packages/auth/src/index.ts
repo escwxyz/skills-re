@@ -15,7 +15,7 @@ import type { createDb } from "@skills-re/db/runtime";
 export interface AuthEnv {
   ADMIN: string;
   BETTER_AUTH_SECRET: string;
-  BETTER_AUTH_URL: string;
+  PUBLIC_SERVER_URL: string;
   CORS_ORIGIN: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
@@ -57,7 +57,7 @@ export function createAuth({ db, env }: CreateAuthOptions) {
       },
     },
     basePath: "/auth",
-    baseURL: env.BETTER_AUTH_URL,
+    baseURL: env.PUBLIC_SERVER_URL,
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema: authTables,
@@ -168,6 +168,9 @@ export function createAuth({ db, env }: CreateAuthOptions) {
     telemetry: {
       enabled: false,
     },
-    trustedOrigins: [env.CORS_ORIGIN, env.BETTER_AUTH_URL],
+    trustedOrigins: [env.CORS_ORIGIN, env.PUBLIC_SERVER_URL],
+    user: {
+      additionalFields: {},
+    },
   });
 }
