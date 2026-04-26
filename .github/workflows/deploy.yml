@@ -83,7 +83,7 @@ jobs:
           CLOUDFLARE_GATEWAY: ${{ vars.CLOUDFLARE_GATEWAY }}
           ADMIN: ${{ vars.ADMIN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          SERVER_URL: ${{ vars.SERVER_URL }}
+          PUBLIC_SERVER_URL: ${{ vars.PUBLIC_SERVER_URL }}
           CORS_ORIGIN: ${{ vars.CORS_ORIGIN }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GH_CLIENT_ID: ${{ vars.GH_CLIENT_ID }}

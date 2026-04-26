@@ -9,7 +9,7 @@ const auth = createAuth({
   env: {
     ADMIN: process.env.ADMIN ?? "",
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "local-dev-secret-local-dev-secret",
-    SERVER_URL: process.env.SERVER_URL ?? "http://localhost:3000",
+    PUBLIC_SERVER_URL: process.env.PUBLIC_SERVER_URL ?? "http://localhost:3000",
     CORS_ORIGIN: process.env.CORS_ORIGIN ?? "http://localhost:4321",
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ?? "",
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET ?? "",
