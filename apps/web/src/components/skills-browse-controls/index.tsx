@@ -26,8 +26,10 @@ interface Props {
 }
 
 function updateSidebarDom(open: boolean) {
-  const wrapper = document.getElementById("browse-wrapper");
-  if (wrapper) wrapper.dataset.sidebarOpen = String(open);
+  const wrapper: HTMLDivElement | null = document.querySelector("#browse-wrapper");
+  if (wrapper) {
+    wrapper.dataset.sidebarOpen = String(open);
+  }
 }
 
 export function SkillsBrowseControls({
@@ -60,7 +62,9 @@ export function SkillsBrowseControls({
 
   // Keep DOM + cookie in sync when sidebar state changes
   useEffect(() => {
-    if (!sidebarHydrated) return;
+    if (!sidebarHydrated) {
+      return;
+    }
     updateSidebarDom(isSidebarOpen);
     writeCookie(SIDEBAR_COOKIE, String(isSidebarOpen), { maxAge: SIDEBAR_MAX_AGE });
   }, [isSidebarOpen, sidebarHydrated]);
@@ -73,7 +77,9 @@ export function SkillsBrowseControls({
   // Debounced search navigation
   useEffect(() => {
     const normalized = search.trim();
-    if (normalized === filters.query) return;
+    if (normalized === filters.query) {
+      return;
+    }
     const id = window.setTimeout(() => {
       window.location.assign(buildBrowseUrl({ ...filters, page: 1, query: normalized }));
     }, 300);
@@ -127,7 +133,7 @@ export function SkillsBrowseControls({
               ...filters,
               activeClass,
               page: 1,
-              tags: [...activeTags].sort(),
+              tags: [...activeTags].toSorted(),
             }),
           );
         }}

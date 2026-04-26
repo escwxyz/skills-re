@@ -116,11 +116,21 @@ const SORT_SEQUENCE: BrowseSort[] = [
 
 export const buildBrowseUrl = (filters: SkillsBrowseFilters): string => {
   const params = new URLSearchParams();
-  if (filters.query.trim()) params.set("q", filters.query.trim());
-  if (filters.activeClass !== "all") params.set("category", filters.activeClass);
-  for (const tag of filters.tags) params.append("tag", tag);
-  if (filters.sort !== DEFAULT_BROWSE_SORT) params.set("sort", filters.sort);
-  if (filters.page > 1) params.set("page", String(filters.page));
+  if (filters.query.trim()) {
+    params.set("q", filters.query.trim());
+  }
+  if (filters.activeClass !== "all") {
+    params.set("category", filters.activeClass);
+  }
+  for (const tag of filters.tags) {
+    params.append("tag", tag);
+  }
+  if (filters.sort !== DEFAULT_BROWSE_SORT) {
+    params.set("sort", filters.sort);
+  }
+  if (filters.page > 1) {
+    params.set("page", String(filters.page));
+  }
   const qs = params.toString();
   return qs ? `/skills?${qs}` : "/skills";
 };
