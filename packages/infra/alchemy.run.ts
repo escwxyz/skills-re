@@ -322,7 +322,7 @@ export const web = await Astro("web", {
   compatibility: "node",
   compatibilityDate: "2026-03-10",
   bindings: {
-    PUBLIC_SERVER_URL: server.url!,
+    SERVER_URL: server.url!,
   },
 });
 

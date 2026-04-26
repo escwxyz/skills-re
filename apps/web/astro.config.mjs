@@ -13,6 +13,11 @@ export default defineConfig({
 
   env: {
     schema: {
+      SERVER_URL: envField.string({
+        access: "public",
+        context: "server",
+        default: "http://localhost:3000",
+      }),
       PUBLIC_SERVER_URL: envField.string({
         access: "public",
         context: "client",
