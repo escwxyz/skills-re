@@ -10,6 +10,7 @@ import {
   ChatsIcon,
   ClockCounterClockwiseIcon,
   FileTextIcon,
+  ShieldCheckIcon,
   TreeViewIcon,
 } from "@phosphor-icons/react"
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb"
@@ -18,6 +19,7 @@ type TabId =
   | "skill.md"
   | "file-tree"
   | "sandbox"
+  | "audit"
   | "evals"
   | "reviews"
   | "changelog"
@@ -49,6 +51,12 @@ const tabs: {
     icon: TreeViewIcon,
   },
   // { id: "sandbox", label: "Sandbox", href: null },
+  {
+    id: "audit",
+    label: "Static Audit",
+    href: `/skills/${skill.slug}/audit#skill-tabs`,
+    icon: ShieldCheckIcon,
+  },
   // { id: "evals", label: "Evals", href: null },
   {
     id: "reviews",
