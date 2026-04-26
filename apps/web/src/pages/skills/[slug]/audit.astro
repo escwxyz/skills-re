@@ -1,0 +1,51 @@
+---
+import SkillLayout from "@/layouts/skill-detail.astro"
+import { SkillAuditReport } from "@/components/skill-audit-report"
+import { createServerClient } from "@/lib/server-orpc"
+import { getSkillBasePageData } from "@/lib/skill-detail-data"
+
+const { slug } = Astro.params
+const client = createServerClient(Astro.request)
+const pageData = slug ? await getSkillBasePageData(client, slug) : null
+
+if (!pageData) {
+  return Astro.redirect("/skills")
+}
+
+const snapshotId = pageData.latestSnapshot?.id ?? null
+const version = pageData.latestSnapshot?.version ?? undefined
+---
+
+<SkillLayout
+  skill={pageData.layout}
+  activeTab="audit"
+  title={`Static Audit · ${pageData.layout.title} — skills.re`}
+>
+  <div class="mx-auto max-w-4xl px-4 py-8 md:px-10 md:py-12">
+    <div
+      class="border-rule mb-8 flex items-start justify-between gap-6 border-b pb-6"
+    >
+      <div>
+        <div class="eyebrow text-editorial-red mb-3">§ Security Scanner</div>
+        <h2
+          class="font-display text-[clamp(36px,5vw,52px)] leading-none font-normal tracking-tight"
+        >
+          Static Audit
+        </h2>
+      </div>
+    </div>
+    {
+      snapshotId ? (
+        <SkillAuditReport
+          snapshotId={snapshotId}
+          version={version}
+          client:load
+        />
+      ) : (
+        <p class="text-ink-2 font-mono text-[11px] tracking-[.14em] uppercase">
+          No snapshot available yet for this skill.
+        </p>
+      )
+    }
+  </div>
+</SkillLayout>
