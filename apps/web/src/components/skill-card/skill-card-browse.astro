@@ -1,0 +1,68 @@
+---
+import type { BrowseSkillItem } from "@/lib/registry-data"
+
+interface Props {
+  skill: BrowseSkillItem
+}
+
+const { skill } = Astro.props
+const initial = (skill.authorLabel ?? "?").charAt(0).toUpperCase()
+---
+
+<a
+  href={`/skills/${skill.slug}`}
+  class="flex h-full flex-col border-b border-r border-rule p-5 hover:bg-paper-2 transition-colors no-underline"
+>
+  <!-- Top meta -->
+  <div class="flex items-center justify-between mb-3 font-mono text-[10px] tracking-[.14em] uppercase">
+    <span class="text-muted-text">{skill.categoryLabel}</span>
+    {skill.badgeLabel && <span class="text-muted-text">{skill.badgeLabel}</span>}
+  </div>
+
+  <!-- Title -->
+  <h4 class="font-display text-[22px] leading-[1.1] font-normal mb-2">{skill.title}</h4>
+
+  <!-- Description -->
+  <p class="font-serif text-[13px] leading-normal text-ink-2 mb-4 line-clamp-3">
+    {skill.description}
+  </p>
+
+  <!-- Tags -->
+  <div class="flex flex-wrap gap-1 mb-4 mt-auto">
+    {
+      skill.tags.slice(0, 4).map((tag) => (
+        <span class="font-mono text-[9px] tracking-[.08em] uppercase px-1.5 py-0.5 border border-rule text-muted-text">
+          {tag}
+        </span>
+      ))
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-between border-t border-rule pt-3">
+    <div class="flex items-center gap-2">
+      <div class="flex size-5 shrink-0 items-center justify-center bg-ink font-mono text-[9px] text-paper">
+        {initial}
+      </div>
+      <span class="font-mono text-[10px] text-muted-text truncate max-w-30">
+        {skill.authorLabel}
+      </span>
+    </div>
+    <div class="flex items-center gap-3 font-mono text-[10px] tracking-widest uppercase shrink-0">
+      {
+        skill.starsLabel && (
+          <span class="text-muted-text">
+            ★ <b class="text-ink font-medium">{skill.starsLabel}</b>
+          </span>
+        )
+      }
+      {
+        typeof skill.auditScore === "number" && (
+          <span class="text-muted-text">
+            Audit <b class="text-ink font-medium">{skill.auditScore}</b>
+          </span>
+        )
+      }
+    </div>
+  </div>
+</a>

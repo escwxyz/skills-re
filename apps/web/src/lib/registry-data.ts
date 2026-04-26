@@ -105,6 +105,31 @@ export type BrowseSort =
 export const DEFAULT_BROWSE_SORT: BrowseSort = "downloads-all-time";
 export const SKILLS_BROWSE_PAGE_SIZE = 24;
 
+const SORT_SEQUENCE: BrowseSort[] = [
+  "downloads-all-time",
+  "downloads-trending",
+  "newest",
+  "updated",
+  "stars",
+  "views",
+];
+
+export const buildBrowseUrl = (filters: SkillsBrowseFilters): string => {
+  const params = new URLSearchParams();
+  if (filters.query.trim()) params.set("q", filters.query.trim());
+  if (filters.activeClass !== "all") params.set("category", filters.activeClass);
+  for (const tag of filters.tags) params.append("tag", tag);
+  if (filters.sort !== DEFAULT_BROWSE_SORT) params.set("sort", filters.sort);
+  if (filters.page > 1) params.set("page", String(filters.page));
+  const qs = params.toString();
+  return qs ? `/skills?${qs}` : "/skills";
+};
+
+export const getNextBrowseSort = (current: BrowseSort): BrowseSort => {
+  const idx = SORT_SEQUENCE.indexOf(current);
+  return idx === -1 ? DEFAULT_BROWSE_SORT : SORT_SEQUENCE[(idx + 1) % SORT_SEQUENCE.length];
+};
+
 export interface BrowseCategoryItem {
   count: number;
   countLabel: string;
