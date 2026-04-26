@@ -28,7 +28,7 @@ const { collections } = Astro.props
             featured
               ? "min-h-110 bg-(--ink) text-(--paper) hover:opacity-95 sm:row-span-2 sm:border-b-0"
               : "min-h-55 hover:bg-(--paper-2)",
-            (i === 2 || i === 4) && "sm:border-r-0",
+            (i === 2 || (i >= 4 && (i - 4) % 3 === 0)) && "sm:border-r-0",
           ]}
         >
           <div>

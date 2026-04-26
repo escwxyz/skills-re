@@ -265,6 +265,19 @@ export async function listSkillTagLinks(skillId: SkillId) {
     .where(eq(skillsTagsTable.skillId, skillId));
 }
 
+export async function listSkillTags(skillId: SkillId) {
+  const rows = await db
+    .select({
+      slug: tagsTable.slug,
+    })
+    .from(skillsTagsTable)
+    .innerJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
+    .where(eq(skillsTagsTable.skillId, skillId))
+    .orderBy(tagsTable.slug);
+
+  return rows.map((row) => row.slug);
+}
+
 export async function addSkillTagLinks(input: { skillId: SkillId; tagIds: TagId[] }) {
   if (input.tagIds.length === 0) {
     return;

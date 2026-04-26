@@ -5,6 +5,7 @@ interface CollectionSkillItem {
   installs: string
   passRate: string
   publisherName: string
+  tags: string[]
   slug: string
   title: string
   version: string
@@ -13,10 +14,9 @@ interface CollectionSkillItem {
 interface Props {
   skill: CollectionSkillItem
   index: number
-  mondayNote?: string
 }
 
-const { skill, index, mondayNote } = Astro.props
+const { skill, index } = Astro.props
 
 const isItalic = index % 2 === 0
 const isAccent = (index + 1) % 3 === 0
@@ -60,16 +60,23 @@ const getTitleColor = () => {
     <p class="text-ink-2 m-0 mb-3 font-serif text-[15px] leading-relaxed">
       {skill.description}
     </p>
-    {
-      mondayNote && (
-        <div class="text-ink-2 mt-1.5 border-l-2 border-(--editorial-red) py-1 pl-3.5 font-serif text-[13px] italic">
-          <b class="mb-1 block font-mono text-[10.5px] font-normal tracking-widest text-(--editorial-red) uppercase">
-            Monday problem
-          </b>
-          {mondayNote}
-        </div>
-      )
-    }
+    <div class="mt-3 flex flex-wrap gap-2 md:gap-2.5">
+      {
+        skill.tags.length > 0 ? (
+          skill.tags.map((tag) => (
+            <span
+              class="max-w-full rounded-full border border-(--rule) px-2.5 py-1 font-mono text-[10px] leading-none tracking-[.14em] text-(--muted-text) uppercase"
+            >
+              {tag}
+            </span>
+          ))
+        ) : (
+          <span class="font-mono text-[10px] tracking-[.14em] text-(--muted-text) uppercase">
+            No tags
+          </span>
+        )
+      }
+    </div>
 
     <!-- Stats: visible on mobile, hidden on md+ (shown in aside column) -->
     <div

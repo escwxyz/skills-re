@@ -30,6 +30,7 @@ const skills = collection.skills.map((s) => ({
       : "—",
   passRate: formatCollectionSkillPassRate(s),
   publisherName: s.author?.name ?? s.authorHandle ?? "—",
+  tags: s.tags ?? [],
   slug: s.slug,
   title: s.title,
   version: s.latestVersion ?? "—",

@@ -2,6 +2,8 @@
 
 import { describe, expect, test } from "bun:test";
 
+import { asSnapshotId } from "@skills-re/db/utils";
+
 import { createCollectionsService } from "./service";
 
 describe("collections service", () => {
@@ -25,7 +27,7 @@ describe("collections service", () => {
       getLatestStaticAuditBySnapshot: (snapshotId) => {
         auditCalls.push(snapshotId);
 
-        if (snapshotId === "snapshot-1") {
+        if (snapshotId === asSnapshotId("snapshot-1")) {
           return Promise.resolve({
             isBlocked: false,
             overallScore: 94,
@@ -50,7 +52,7 @@ describe("collections service", () => {
             forkCount: 8,
             id: "skill-1",
             isVerified: true,
-            latestSnapshotId: "snapshot-1",
+            latestSnapshotId: asSnapshotId("snapshot-1"),
             latestVersion: "1.2.3",
             license: "MIT",
             primaryCategory: "ops",
@@ -88,10 +90,17 @@ describe("collections service", () => {
             viewsAllTime: 900,
           },
         ]),
+      listSkillTags: (skillId) => {
+        if (skillId === "skill-1") {
+          return Promise.resolve(["diff", "automation"]);
+        }
+
+        return Promise.resolve(["review"]);
+      },
       listSnapshotFiles: (snapshotId) => {
         fileCalls.push(snapshotId);
 
-        if (snapshotId === "snapshot-1") {
+        if (snapshotId === asSnapshotId("snapshot-1")) {
           return Promise.resolve([
             {
               contentType: null,
@@ -154,6 +163,7 @@ describe("collections service", () => {
           title: "First Skill",
           updatedAt: 1_700_000_000_000,
           viewsAllTime: 4500,
+          tags: ["diff", "automation"],
         },
         {
           author: {
@@ -179,6 +189,7 @@ describe("collections service", () => {
           title: "Second Skill",
           updatedAt: 1_700_000_000_001,
           viewsAllTime: 900,
+          tags: ["review"],
         },
       ],
       slug: "editorial",
