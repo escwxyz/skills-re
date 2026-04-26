@@ -3,15 +3,58 @@ import Layout from "@/layouts/main.astro"
 import { PageHero } from "@/components/page-hero"
 import { SkillCard } from "@/components/skill-card"
 import { getLocale } from "@/paraglide/runtime"
-import { getCategoryDetailData } from "@/lib/registry-data"
+import {
+  getCategoryPresentation,
+  toCategoryCardItem,
+  toSkillCardItem,
+} from "@/lib/registry-data"
 import { createServerClient } from "@/lib/server-orpc"
 
 const { slug } = Astro.params
 const client = createServerClient(Astro.request)
-const categoryPage = slug ? await getCategoryDetailData(client, slug) : null
-if (!categoryPage) {
+
+if (!slug) {
   // oxlint-disable-next-line unicorn/prefer-module
   return Astro.redirect("/categories")
+}
+
+const categoryDetail = await client.categories.getBySlug({ slug })
+if (!categoryDetail) {
+  // oxlint-disable-next-line unicorn/prefer-module
+  return Astro.redirect("/categories")
+}
+
+const categories = await client.categories.list({ all: true, limit: 100 })
+const categoryCards = categories.map((category, index) =>
+  toCategoryCardItem(category, index)
+)
+const categoryPresentation = getCategoryPresentation(
+  categoryDetail.slug,
+  categoryCards.length
+)
+const currentCategory =
+  categoryCards.find((category) => category.id === categoryDetail.slug) ??
+  ({
+    description: categoryDetail.description,
+    id: categoryDetail.slug,
+    num: categoryPresentation.num,
+    skillCount: categoryDetail.count,
+    title: categoryDetail.name,
+    variant: categoryPresentation.variant,
+  } as const)
+
+const categoryPage = {
+  category: {
+    ...currentCategory,
+    description: categoryDetail.description,
+    skillCount: categoryDetail.count,
+    title: categoryDetail.name,
+  },
+  otherCategories: categoryCards.filter(
+    (category) => category.id !== categoryDetail.slug
+  ),
+  relatedTags: categoryDetail.relatedTags,
+  topSkills: categoryDetail.topSkills.map(toSkillCardItem),
 }
 
 const locale = getLocale()

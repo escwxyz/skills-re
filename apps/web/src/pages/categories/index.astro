@@ -2,20 +2,48 @@
 import Layout from "@/layouts/main.astro"
 import { PageHero } from "@/components/page-hero"
 import { CategoryCard } from "@/components/category-card"
-import { getCategoriesIndexData } from "@/lib/registry-data"
+import { getLiveStats, toCategoryCardItem } from "@/lib/registry-data"
+import type { DailyMetricPoint } from "@/lib/registry-data"
 import { createServerClient } from "@/lib/server-orpc"
 
 const client = createServerClient(Astro.request)
-const categoriesPage = await getCategoriesIndexData(client)
+
+const authors = await client.skills.listAuthors()
+const categories = await client.categories.list({ all: true, limit: 100 })
+const categoryCount = await client.categories.count()
+
+let dailyMetrics: DailyMetricPoint[] = []
+try {
+  dailyMetrics = await client.metrics.dailySkillsSnapshots({ limit: 30 })
+} catch {
+  dailyMetrics = []
+}
+
+const skillsCount = await client.skills.count()
+const liveStats = getLiveStats({
+  authors,
+  categoryCount,
+  dailyMetrics,
+  skillsCount,
+})
+const categoriesPage = {
+  categories: categories.map((category, index) =>
+    toCategoryCardItem(category, index)
+  ),
+  stats: [
+    { label: "Disciplines", value: liveStats.categoriesCountLabel },
+    { label: "Skills Indexed", value: liveStats.skillsCountLabel },
+    { label: "Listed Authors", value: liveStats.authorsCountLabel },
+    { label: "New Skills (30d)", value: liveStats.newSkills30dLabel },
+  ],
+}
 const totalSkills = categoriesPage.categories.reduce(
   (sum, category) => sum + category.skillCount,
   0
 )
 ---
 
-<Layout
-  title="The Classifications — skills.re"
->
+<Layout title="The Classifications — skills.re">
   <PageHero
     eyebrow="The Registry — Classifications"
     description="Fourteen disciplines that organize the registry. Every skill belongs to exactly one classification — each one a distinct thread of practice, a coherent body of work."
@@ -70,7 +98,7 @@ const totalSkills = categoriesPage.categories.reduce(
 
   <!-- COLOPHON NOTE -->
   <div
-    class="border-border text-muted-foreground border-b py-6 font-mono text-[10.5px] tracking-widest uppercase"
+    class="border-border text-muted-foreground border-b p-6 text-center font-mono text-[10.5px] tracking-widest uppercase"
   >
     <b class="text-foreground font-medium">§ Note —</b> Classifications are assigned
     by the Registry Desk on submission and may be contested via pull request. The

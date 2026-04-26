@@ -1,6 +1,4 @@
-import type { AppRouterClient } from "@skills-re/api/routers/index";
-
-import { formatCompactNumber, formatInteger, getDailyMetricsSafely } from "./registry-data";
+import { formatCompactNumber, formatInteger } from "./registry-data";
 
 interface AuthorItem {
   avatarUrl?: string | null;
@@ -32,19 +30,6 @@ interface SearchSkillListItem {
   updatedAt?: number;
 }
 
-interface DailyMetricPoint {
-  day: string;
-  newSkills: number;
-  newSnapshots: number;
-  updatedAtMs: number;
-}
-
-export interface AuthorIndexStat {
-  accent?: "green" | "blue" | "red";
-  label: string;
-  value: string;
-}
-
 export interface AuthorIndexCard {
   avatarLabel: string;
   githubUrl?: string;
@@ -54,12 +39,6 @@ export interface AuthorIndexCard {
   repoCountLabel: string;
   skillCount: number;
   skillCountLabel: string;
-}
-
-export interface AuthorsIndexData {
-  alphabeticalAuthors: AuthorIndexCard[];
-  stats: AuthorIndexStat[];
-  topAuthors: AuthorIndexCard[];
 }
 
 export interface AuthorSkillRowData {
@@ -88,43 +67,18 @@ export interface AuthorStatsData {
   }[];
 }
 
-export interface AuthorDetailData {
-  activity: AuthorActivityItem[];
-  avatarLabel: string;
-  githubUrl?: string;
-  handle: string;
-  isVerified: boolean;
-  name: string;
-  skillCount: number;
-  skills: AuthorSkillRowData[];
-  stats: AuthorStatsData;
-}
-
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "2-digit",
   month: "2-digit",
   year: "2-digit",
 });
 
-const getAuthorDisplayName = (author: AuthorItem) => author.name ?? `@${author.handle}`;
+export const getAuthorDisplayName = (author: AuthorItem) => author.name ?? `@${author.handle}`;
 
-const getAvatarLabel = (author: Pick<AuthorItem, "handle" | "name">) =>
+export const getAvatarLabel = (author: Pick<AuthorItem, "handle" | "name">) =>
   (author.name ?? author.handle).trim().charAt(0).toUpperCase();
 
-const sumDailyMetrics = (points: DailyMetricPoint[]) => {
-  let total = { newSkills: 0, newSnapshots: 0 };
-
-  for (const point of points) {
-    total = {
-      newSkills: total.newSkills + point.newSkills,
-      newSnapshots: total.newSnapshots + point.newSnapshots,
-    };
-  }
-
-  return total;
-};
-
-const sortAuthors = (authors: AuthorItem[]) =>
+export const sortAuthors = (authors: AuthorItem[]) =>
   [...authors].toSorted((left, right) => {
     const bySkills = (right.skillCount ?? 0) - (left.skillCount ?? 0);
     if (bySkills !== 0) {
@@ -163,7 +117,7 @@ export const toAuthorSkillRowData = (
   title: skill.title,
 });
 
-const buildAuthorActivity = (skills: SearchSkillListItem[]): AuthorActivityItem[] =>
+export const buildAuthorActivity = (skills: SearchSkillListItem[]): AuthorActivityItem[] =>
   [...skills]
     .toSorted((left, right) => (right.updatedAt ?? 0) - (left.updatedAt ?? 0))
     .slice(0, 5)
@@ -173,7 +127,10 @@ const buildAuthorActivity = (skills: SearchSkillListItem[]): AuthorActivityItem[
       text: skill.updatedAt ? "Updated" : "Published",
     }));
 
-const buildAuthorStats = (author: AuthorItem, skills: SearchSkillListItem[]): AuthorStatsData => {
+export const buildAuthorStats = (
+  author: AuthorItem,
+  skills: SearchSkillListItem[],
+): AuthorStatsData => {
   const totalDownloads = skills.reduce((total, skill) => total + (skill.downloadsAllTime ?? 0), 0);
   const averageAudit =
     skills.length > 0
@@ -207,68 +164,5 @@ const buildAuthorStats = (author: AuthorItem, skills: SearchSkillListItem[]): Au
         value: skills.length > 0 ? `${averageAudit}/100` : "—",
       },
     ],
-  };
-};
-
-export const getAuthorsIndexData = async (client: AppRouterClient): Promise<AuthorsIndexData> => {
-  const [authors, dailyMetrics, skillsCount] = await Promise.all([
-    client.skills.listAuthors(),
-    getDailyMetricsSafely(client, 7),
-    client.skills.count(),
-  ]);
-
-  const totals = sumDailyMetrics(dailyMetrics as DailyMetricPoint[]);
-  const verifiedCount = authors.filter((author) => author.isVerified).length;
-  const sortedAuthors = sortAuthors(authors as AuthorItem[]);
-
-  return {
-    alphabeticalAuthors: [...sortedAuthors]
-      .toSorted((left, right) =>
-        getAuthorDisplayName(left).localeCompare(getAuthorDisplayName(right)),
-      )
-      .map(toAuthorIndexCard),
-    stats: [
-      { label: "Authors", value: formatInteger(authors.length) },
-      {
-        label: "Verified",
-        value: `▣ ${formatInteger(verifiedCount)}`,
-        accent: "green",
-      },
-      { label: "New this week", value: `+ ${formatInteger(totals.newSkills)}` },
-      { label: "Skills published", value: formatInteger(skillsCount) },
-    ],
-    topAuthors: sortedAuthors.slice(0, 3).map(toAuthorIndexCard),
-  };
-};
-
-export const getAuthorDetailData = async (
-  client: AppRouterClient,
-  handle: string,
-): Promise<AuthorDetailData | null> => {
-  const [author, skillsResult] = await Promise.all([
-    client.skills.getAuthorByHandle({ handle }),
-    client.skills.search({
-      authorHandle: handle,
-      limit: 50,
-      sort: "downloads-all-time",
-    }),
-  ]);
-
-  if (!author) {
-    return null;
-  }
-
-  const skills = skillsResult.page as SearchSkillListItem[];
-
-  return {
-    activity: buildAuthorActivity(skills),
-    avatarLabel: getAvatarLabel(author as AuthorItem),
-    githubUrl: author.githubUrl,
-    handle: author.handle,
-    isVerified: Boolean(author.isVerified),
-    name: getAuthorDisplayName(author as AuthorItem),
-    skillCount: author.skillCount ?? skills.length,
-    skills: skills.map(toAuthorSkillRowData),
-    stats: buildAuthorStats(author as AuthorItem, skills),
   };
 };

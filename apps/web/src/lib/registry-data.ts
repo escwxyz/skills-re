@@ -1,5 +1,3 @@
-import type { AppRouterClient } from "@skills-re/api/routers/index";
-
 interface SearchSkillListItem {
   author?: {
     githubUrl?: string;
@@ -36,18 +34,6 @@ interface CategoryListItem {
   slug: string;
 }
 
-interface CategoryDetail {
-  count: number;
-  description: string;
-  name: string;
-  relatedTags: {
-    count: number;
-    slug: string;
-  }[];
-  slug: string;
-  topSkills: SearchSkillListItem[];
-}
-
 interface AuthorListItem {
   avatarUrl?: string | null;
   githubUrl: string;
@@ -58,7 +44,7 @@ interface AuthorListItem {
   skillCount: number;
 }
 
-interface DailyMetricPoint {
+export interface DailyMetricPoint {
   day: string;
   newSkills: number;
   newSnapshots: number;
@@ -176,39 +162,6 @@ export interface FeaturedPickItem {
   versionLabel: string;
 }
 
-export interface RegistryHomeData {
-  categories: CategoryCardItem[];
-  featuredPicks: FeaturedPickItem[];
-  metaStripItems: StatStripItem[];
-  numbersStripItems: StatStripItem[];
-  totalSkillsLabel: string;
-}
-
-export interface CategoriesIndexData {
-  categories: CategoryCardItem[];
-  stats: StatStripItem[];
-}
-
-export interface CategoryDetailData {
-  category: CategoryCardItem;
-  otherCategories: CategoryCardItem[];
-  relatedTags: CategoryDetail["relatedTags"];
-  topSkills: SkillCardItem[];
-}
-
-export interface SkillsBrowseData {
-  categories: BrowseCategoryItem[];
-  filters: SkillsBrowseFilters;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-  items: BrowseSkillItem[];
-  rangeEnd: number;
-  rangeStart: number;
-  stats: StatStripItem[];
-  tags: BrowseTagItem[];
-  totalSkillsLabel: string;
-}
-
 const CATEGORY_PRESENTATION: Record<string, Pick<CategoryCardItem, "num" | "variant">> = {
   browsing: { num: "05", variant: "italic" },
   "code-craft": { num: "01", variant: "default" },
@@ -234,7 +187,7 @@ const VALID_BROWSE_SORTS = new Set<BrowseSort>([
   "views",
 ]);
 
-const getCategoryPresentation = (slug: string, index: number) =>
+export const getCategoryPresentation = (slug: string, index: number) =>
   CATEGORY_PRESENTATION[slug] ?? {
     num: String(index + 1).padStart(2, "0"),
     variant: "default" as const,
@@ -243,23 +196,12 @@ const getCategoryPresentation = (slug: string, index: number) =>
 const getAuthorLabel = (skill: SearchSkillListItem) =>
   skill.author?.name ?? skill.authorHandle ?? skill.author?.handle ?? "Unknown author";
 
-const getBrowseSort = (value: string | null): BrowseSort =>
+export const getBrowseSort = (value: string | null): BrowseSort =>
   value && VALID_BROWSE_SORTS.has(value as BrowseSort)
     ? (value as BrowseSort)
     : DEFAULT_BROWSE_SORT;
 
-export const getDailyMetricsSafely = async (
-  client: AppRouterClient,
-  limit: number,
-): Promise<DailyMetricPoint[]> => {
-  try {
-    return await client.metrics.dailySkillsSnapshots({ limit });
-  } catch {
-    return [];
-  }
-};
-
-const parsePageNumber = (value: string | null) => {
+export const parsePageNumber = (value: string | null) => {
   if (!value) {
     return 1;
   }
@@ -268,10 +210,10 @@ const parsePageNumber = (value: string | null) => {
   return Number.isFinite(page) && page > 0 ? page : 1;
 };
 
-const encodeSearchOffsetCursor = (offset: number) =>
+export const encodeSearchOffsetCursor = (offset: number) =>
   btoa(JSON.stringify({ offset })).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 
-const getLiveStats = (input: {
+export const getLiveStats = (input: {
   authors: AuthorListItem[];
   categoryCount: number;
   dailyMetrics: DailyMetricPoint[];
@@ -409,159 +351,3 @@ export const toFeaturedPickItem = (skill: SearchSkillListItem): FeaturedPickItem
   title: skill.title,
   versionLabel: skill.latestVersion ? `v${skill.latestVersion}` : "latest",
 });
-
-export const getRegistryHomeData = async (client: AppRouterClient): Promise<RegistryHomeData> => {
-  const [authors, categories, categoryCount, dailyMetrics, featuredSkills, skillsCount] =
-    await Promise.all([
-      client.skills.listAuthors(),
-      client.categories.list({ limit: 8 }),
-      client.categories.count(),
-      getDailyMetricsSafely(client, 30),
-      client.skills.search({ limit: 5, sort: "downloads-all-time" }),
-      client.skills.count(),
-    ]);
-
-  const liveStats = getLiveStats({
-    authors,
-    categoryCount,
-    dailyMetrics,
-    skillsCount,
-  });
-
-  return {
-    categories: categories.map((category, index) => toCategoryCardItem(category, index)),
-    featuredPicks: featuredSkills.page.map(toFeaturedPickItem),
-    metaStripItems: liveStats.metaStripItems,
-    numbersStripItems: liveStats.numbersStripItems,
-    totalSkillsLabel: liveStats.skillsCountLabel,
-  };
-};
-
-export const getCategoriesIndexData = async (
-  client: AppRouterClient,
-): Promise<CategoriesIndexData> => {
-  const [authors, categories, categoryCount, dailyMetrics, skillsCount] = await Promise.all([
-    client.skills.listAuthors(),
-    client.categories.list({ all: true, limit: 100 }),
-    client.categories.count(),
-    getDailyMetricsSafely(client, 30),
-    client.skills.count(),
-  ]);
-
-  const liveStats = getLiveStats({
-    authors,
-    categoryCount,
-    dailyMetrics,
-    skillsCount,
-  });
-
-  return {
-    categories: categories.map((category, index) => toCategoryCardItem(category, index)),
-    stats: [
-      { label: "Disciplines", value: liveStats.categoriesCountLabel },
-      { label: "Skills Indexed", value: liveStats.skillsCountLabel },
-      { label: "Listed Authors", value: liveStats.authorsCountLabel },
-      { label: "New Skills (30d)", value: liveStats.newSkills30dLabel },
-    ],
-  };
-};
-
-export const getCategoryDetailData = async (
-  client: AppRouterClient,
-  slug: string,
-): Promise<CategoryDetailData | null> => {
-  const [categoryDetail, categories] = await Promise.all([
-    client.categories.getBySlug({ slug }),
-    client.categories.list({ all: true, limit: 100 }),
-  ]);
-
-  if (!categoryDetail) {
-    return null;
-  }
-
-  const categoryCards = categories.map((category, index) => toCategoryCardItem(category, index));
-  const currentCategory = categoryCards.find((category) => category.id === categoryDetail.slug) ?? {
-    description: categoryDetail.description,
-    id: categoryDetail.slug,
-    num: getCategoryPresentation(categoryDetail.slug, categoryCards.length).num,
-    skillCount: categoryDetail.count,
-    title: categoryDetail.name,
-    variant: getCategoryPresentation(categoryDetail.slug, categoryCards.length).variant,
-  };
-
-  return {
-    category: {
-      ...currentCategory,
-      description: categoryDetail.description,
-      skillCount: categoryDetail.count,
-      title: categoryDetail.name,
-    },
-    otherCategories: categoryCards.filter((category) => category.id !== categoryDetail.slug),
-    relatedTags: categoryDetail.relatedTags,
-    topSkills: categoryDetail.topSkills.map(toSkillCardItem),
-  };
-};
-
-export const getSkillsBrowseData = async (
-  client: AppRouterClient,
-  searchParams: URLSearchParams,
-): Promise<SkillsBrowseData> => {
-  const query = searchParams.get("q")?.trim() ?? "";
-  const activeClass = searchParams.get("category")?.trim() || "all";
-  const tags = [
-    ...new Set(
-      searchParams
-        .getAll("tag")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    ),
-  ];
-  const sort = getBrowseSort(searchParams.get("sort"));
-  const page = parsePageNumber(searchParams.get("page"));
-  const cursor =
-    page > 1 ? encodeSearchOffsetCursor((page - 1) * SKILLS_BROWSE_PAGE_SIZE) : undefined;
-
-  const [categories, dailyMetrics, searchResult, skillsCount, tagList] = await Promise.all([
-    client.categories.list({ all: true, limit: 100 }),
-    getDailyMetricsSafely(client, 30),
-    client.skills.search({
-      categories: activeClass === "all" ? undefined : [activeClass],
-      cursor,
-      limit: SKILLS_BROWSE_PAGE_SIZE,
-      query: query || undefined,
-      sort,
-      tags: tags.length > 0 ? tags : undefined,
-    }),
-    client.skills.count(),
-    client.tags.listIndexable({ limit: 40 }),
-  ]);
-
-  const totals = sumDailyMetrics(dailyMetrics);
-  const activeFilterCount = (query ? 1 : 0) + (activeClass === "all" ? 0 : 1) + tags.length;
-  const rangeStart = searchResult.page.length > 0 ? (page - 1) * SKILLS_BROWSE_PAGE_SIZE + 1 : 0;
-  const rangeEnd = searchResult.page.length > 0 ? rangeStart + searchResult.page.length - 1 : 0;
-
-  return {
-    categories: categories.map((category, index) => toBrowseCategoryItem(category, index)),
-    filters: {
-      activeClass,
-      page,
-      query,
-      sort,
-      tags,
-    },
-    hasNextPage: !searchResult.isDone,
-    hasPreviousPage: page > 1,
-    items: searchResult.page.map(toBrowseSkillItem),
-    rangeEnd,
-    rangeStart,
-    stats: [
-      { label: "Skills", value: formatInteger(skillsCount) },
-      { label: "Categories", value: formatInteger(categories.length) },
-      { label: "New Skills / 30d", value: formatInteger(totals.newSkills) },
-      { label: "Active Filters", value: formatInteger(activeFilterCount) },
-    ],
-    tags: tagList.map(toBrowseTagItem),
-    totalSkillsLabel: formatInteger(skillsCount),
-  };
-};
