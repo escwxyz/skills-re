@@ -279,17 +279,6 @@ const workflowQueueBindings = {
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3: snapshotUploadWorkflowQueue3,
 } as const;
 
-export const web = await Astro("web", {
-  cwd: "../../apps/web",
-  entrypoint: "dist/server/entry.mjs",
-  assets: "dist/client",
-  compatibility: "node",
-  compatibilityDate: "2026-03-10",
-  bindings: {
-    PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
-  },
-});
-
 export const server = await Worker("server", {
   cwd: "../../apps/server",
   entrypoint: "src/index.ts",
@@ -323,6 +312,17 @@ export const server = await Worker("server", {
   eventSources: workflowQueueEventSources,
   dev: {
     port: 3000,
+  },
+});
+
+export const web = await Astro("web", {
+  cwd: "../../apps/web",
+  entrypoint: "dist/server/entry.mjs",
+  assets: "dist/client",
+  compatibility: "node",
+  compatibilityDate: "2026-03-10",
+  bindings: {
+    PUBLIC_SERVER_URL: server.url!,
   },
 });
 
