@@ -5,9 +5,18 @@ import type { AppRouterClient } from "@skills-re/api/routers/index";
 const DEFAULT_SERVER_URL = "http://localhost:3000";
 
 const resolveServerUrl = (request?: Request) => {
-  const configuredUrl = import.meta.env.PUBLIC_SERVER_URL;
-  if (typeof configuredUrl === "string" && configuredUrl.length > 0) {
-    return configuredUrl;
+  const runtimeUrl = process.env.PUBLIC_SERVER_URL;
+  if (typeof runtimeUrl === "string" && runtimeUrl.length > 0) {
+    return runtimeUrl;
+  }
+
+  const buildTimeUrl = import.meta.env.PUBLIC_SERVER_URL;
+  if (
+    typeof buildTimeUrl === "string" &&
+    buildTimeUrl.length > 0 &&
+    buildTimeUrl !== DEFAULT_SERVER_URL
+  ) {
+    return buildTimeUrl;
   }
 
   if (request) {
