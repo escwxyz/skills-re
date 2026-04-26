@@ -4,10 +4,14 @@ import type { AppRouterClient } from "@skills-re/api/routers/index";
 
 const DEFAULT_SERVER_URL = "http://localhost:3000";
 
-const resolveServerUrl = () => {
+const resolveServerUrl = (request?: Request) => {
   const configuredUrl = import.meta.env.PUBLIC_SERVER_URL;
   if (typeof configuredUrl === "string" && configuredUrl.length > 0) {
     return configuredUrl;
+  }
+
+  if (request) {
+    return new URL(request.url).origin;
   }
 
   return DEFAULT_SERVER_URL;
@@ -16,7 +20,7 @@ const resolveServerUrl = () => {
 export const createServerClient = (request?: Request): AppRouterClient => {
   const cookie = request?.headers.get("cookie") ?? "";
   const link = new RPCLink({
-    url: new URL("/rpc", resolveServerUrl()).toString(),
+    url: new URL("/rpc", resolveServerUrl(request)).toString(),
     fetch(url, options) {
       const requestOptions = (options ?? {}) as RequestInit;
       const headers = new Headers(requestOptions.headers);

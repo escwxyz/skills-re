@@ -6,6 +6,7 @@ import {
   DEFAULT_BROWSE_SORT,
   formatCompactNumber,
   getBrowseSortLabel,
+  getSkillsBrowseData,
   sumDailyMetrics,
   toBrowseCategoryItem,
   toBrowseSkillItem,
@@ -175,5 +176,65 @@ describe("registry-data", () => {
   test("returns stable browse sort labels", () => {
     expect(getBrowseSortLabel(DEFAULT_BROWSE_SORT)).toBe("Installs");
     expect(getBrowseSortLabel("updated")).toBe("Updated");
+  });
+
+  test("keeps browse data available when daily metrics fail", async () => {
+    const client = {
+      categories: {
+        count: () => Promise.resolve(1),
+        list: () =>
+          Promise.resolve([
+            {
+              count: 1,
+              description: "Tooling helpers.",
+              id: "cat_tools",
+              name: "Tools",
+              slug: "tools",
+            },
+          ]),
+      },
+      metrics: {
+        dailySkillsSnapshots: () => Promise.reject(new Error("Not Found")),
+      },
+      skills: {
+        count: () => Promise.resolve(1),
+        search: () =>
+          Promise.resolve({
+            isDone: true,
+            page: [
+              {
+                description: "Reads a diff carefully.",
+                downloadsAllTime: 1234,
+                id: "skill_123",
+                latestVersion: "1.0.0",
+                slug: "code-review",
+                tags: [],
+                title: "code-review",
+              },
+            ],
+          }),
+      },
+      tags: {
+        listIndexable: () => Promise.resolve([]),
+      },
+    };
+
+    await expect(getSkillsBrowseData(client as never, new URLSearchParams())).resolves.toEqual(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            downloadsLabel: "1.2K",
+            latestVersionLabel: "v1.0.0",
+          }),
+        ],
+        stats: expect.arrayContaining([
+          expect.objectContaining({
+            label: "New Skills / 30d",
+            value: "0",
+          }),
+        ]),
+        totalSkillsLabel: "1",
+      }),
+    );
   });
 });

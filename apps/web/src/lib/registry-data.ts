@@ -248,6 +248,17 @@ const getBrowseSort = (value: string | null): BrowseSort =>
     ? (value as BrowseSort)
     : DEFAULT_BROWSE_SORT;
 
+export const getDailyMetricsSafely = async (
+  client: AppRouterClient,
+  limit: number,
+): Promise<DailyMetricPoint[]> => {
+  try {
+    return await client.metrics.dailySkillsSnapshots({ limit });
+  } catch {
+    return [];
+  }
+};
+
 const parsePageNumber = (value: string | null) => {
   if (!value) {
     return 1;
@@ -405,7 +416,7 @@ export const getRegistryHomeData = async (client: AppRouterClient): Promise<Regi
       client.skills.listAuthors(),
       client.categories.list({ limit: 8 }),
       client.categories.count(),
-      client.metrics.dailySkillsSnapshots({ limit: 30 }),
+      getDailyMetricsSafely(client, 30),
       client.skills.search({ limit: 5, sort: "downloads-all-time" }),
       client.skills.count(),
     ]);
@@ -433,7 +444,7 @@ export const getCategoriesIndexData = async (
     client.skills.listAuthors(),
     client.categories.list({ all: true, limit: 100 }),
     client.categories.count(),
-    client.metrics.dailySkillsSnapshots({ limit: 30 }),
+    getDailyMetricsSafely(client, 30),
     client.skills.count(),
   ]);
 
@@ -512,7 +523,7 @@ export const getSkillsBrowseData = async (
 
   const [categories, dailyMetrics, searchResult, skillsCount, tagList] = await Promise.all([
     client.categories.list({ all: true, limit: 100 }),
-    client.metrics.dailySkillsSnapshots({ limit: 30 }),
+    getDailyMetricsSafely(client, 30),
     client.skills.search({
       categories: activeClass === "all" ? undefined : [activeClass],
       cursor,

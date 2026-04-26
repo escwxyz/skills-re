@@ -1,6 +1,6 @@
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
-import { formatCompactNumber, formatInteger } from "./registry-data";
+import { formatCompactNumber, formatInteger, getDailyMetricsSafely } from "./registry-data";
 
 interface AuthorItem {
   avatarUrl?: string | null;
@@ -213,7 +213,7 @@ const buildAuthorStats = (author: AuthorItem, skills: SearchSkillListItem[]): Au
 export const getAuthorsIndexData = async (client: AppRouterClient): Promise<AuthorsIndexData> => {
   const [authors, dailyMetrics, skillsCount] = await Promise.all([
     client.skills.listAuthors(),
-    client.metrics.dailySkillsSnapshots({ limit: 7 }),
+    getDailyMetricsSafely(client, 7),
     client.skills.count(),
   ]);
 
