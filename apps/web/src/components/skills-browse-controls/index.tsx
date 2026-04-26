@@ -84,7 +84,7 @@ export function SkillsBrowseControls({
       window.location.assign(buildBrowseUrl({ ...filters, page: 1, query: normalized }));
     }, 300);
     return () => window.clearTimeout(id);
-  }, [filters, search]);
+  }, [filters.query, search]);
 
   return (
     <>

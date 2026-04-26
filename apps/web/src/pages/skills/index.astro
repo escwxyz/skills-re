@@ -29,7 +29,9 @@ const nextHref = browseData.hasNextPage
   ? buildBrowseUrl({ ...filters, page: filters.page + 1 })
   : null
 const activeFilterCount =
-  (filters.activeClass === "all" ? 0 : 1) + filters.tags.length
+  (filters.query ? 1 : 0) +
+  (filters.activeClass === "all" ? 0 : 1) +
+  filters.tags.length
 
 // Read sidebar state from cookie for correct initial SSR render
 const sidebarOpen = Astro.cookies.get("sidebar_state")?.value === "true"
