@@ -288,7 +288,7 @@ export const server = await Worker("server", {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
-    BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
+    SERVER_URL: alchemy.env.SERVER_URL!,
     CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
     GH_PAT: alchemy.secret.env.GH_PAT!,
     GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,
@@ -322,7 +322,7 @@ export const web = await Astro("web", {
   compatibility: "node",
   compatibilityDate: "2026-03-10",
   bindings: {
-    PUBLIC_SERVER_URL: server.url!,
+    SERVER_URL: server.url!,
   },
 });
 
