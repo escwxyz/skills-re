@@ -54,7 +54,7 @@ interface StaticAuditReport {
 }
 
 interface Props {
-  snapshotId: string | null;
+  snapshotId: string;
   version?: string;
 }
 
@@ -105,7 +105,9 @@ const getCategoryCounts = (findings: StaticAuditFinding[]) => {
     StaticAuditCategory,
     number
   >;
-  for (const f of findings) counts[f.category] += 1;
+  for (const f of findings) {
+    counts[f.category] += 1;
+  }
   return counts;
 };
 
@@ -116,7 +118,9 @@ const getSeverityCounts = (findings: StaticAuditFinding[]) => {
     low: 0,
     medium: 0,
   };
-  for (const f of findings) counts[f.severity] += 1;
+  for (const f of findings) {
+    counts[f.severity] += 1;
+  }
   return counts;
 };
 
@@ -126,22 +130,25 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    const loadReport = async () => {
+      try {
+        const data = await orpc.staticAudits.getReportBySnapshot({ snapshotId });
+        setReport(data as StaticAuditReport | null);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (!snapshotId) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     setError(false);
-    orpc.staticAudits
-      .getReportBySnapshot({ snapshotId })
-      .then((data) => {
-        setReport(data as StaticAuditReport | null);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
+    loadReport();
   }, [snapshotId]);
 
   return (

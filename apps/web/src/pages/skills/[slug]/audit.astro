@@ -22,7 +22,9 @@ const version = pageData.latestSnapshot?.version ?? undefined
   title={`Static Audit · ${pageData.layout.title} — skills.re`}
 >
   <div class="mx-auto max-w-4xl px-4 py-8 md:px-10 md:py-12">
-    <div class="border-rule mb-8 flex items-start justify-between gap-6 border-b pb-6">
+    <div
+      class="border-rule mb-8 flex items-start justify-between gap-6 border-b pb-6"
+    >
       <div>
         <div class="eyebrow text-editorial-red mb-3">§ Security Scanner</div>
         <h2
@@ -32,11 +34,14 @@ const version = pageData.latestSnapshot?.version ?? undefined
         </h2>
       </div>
     </div>
-
-    <SkillAuditReport
-      snapshotId={snapshotId}
-      version={version}
-      client:load
-    />
+    {
+      snapshotId ? (
+        <SkillAuditReport
+          snapshotId={snapshotId}
+          version={version}
+          client:load
+        />
+      ) : null
+    }
   </div>
 </SkillLayout>
