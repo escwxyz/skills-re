@@ -1,0 +1,107 @@
+---
+interface CollectionSkillItem {
+  description: string
+  id: string
+  installs: string
+  passRate: string
+  publisherName: string
+  slug: string
+  title: string
+  version: string
+}
+
+interface Props {
+  skill: CollectionSkillItem
+  index: number
+  mondayNote?: string
+}
+
+const { skill, index, mondayNote } = Astro.props
+
+const isItalic = index % 2 === 0
+const isAccent = (index + 1) % 3 === 0
+const isBlue = (index + 1) % 5 === 0
+const titleColor = isAccent
+  ? "var(--editorial-red)"
+  : isBlue
+    ? "var(--editorial-blue)"
+    : "var(--ink)"
+---
+
+<a
+  href={`/skills/${skill.slug}`}
+  class="grid grid-cols-[56px_1fr] items-start gap-x-5 gap-y-3 border-b border-(--rule) px-4 py-7 text-inherit no-underline transition-colors hover:bg-(--paper-2) md:grid-cols-[72px_1fr_auto] md:gap-x-8 md:px-6 md:py-9"
+>
+  <!-- Index number -->
+  <div
+    class="text-muted-text-2 pt-1 text-[clamp(2.5rem,6vw,5rem)] leading-none font-(--font-display) italic"
+  >
+    {String(index + 1).padStart(2, "0")}.
+  </div>
+
+  <!-- Main content -->
+  <div class="min-w-0">
+    <div
+      class="mb-2 truncate font-mono text-[10.5px] tracking-widest text-(--muted-text) uppercase"
+    >
+      {skill.id} · v.{skill.version} · {skill.publisherName}
+    </div>
+    <h3
+      class={`font-display text-[clamp(1.8rem,4vw,3rem)] leading-[.95] font-normal tracking-tight mb-3 m-0 ${
+        isItalic && !isAccent && !isBlue ? "italic" : ""
+      }`}
+      style={`color: ${titleColor};`}
+    >
+      {skill.title}
+    </h3>
+    <p class="text-ink-2 m-0 mb-3 font-serif text-[15px] leading-relaxed">
+      {skill.description}
+    </p>
+    {
+      mondayNote && (
+        <div class="text-ink-2 mt-1.5 border-l-2 border-(--editorial-red) py-1 pl-3.5 font-serif text-[13px] italic">
+          <b class="mb-1 block font-mono text-[10.5px] font-normal tracking-widest text-(--editorial-red) uppercase">
+            Monday problem
+          </b>
+          {mondayNote}
+        </div>
+      )
+    }
+
+    <!-- Stats: visible on mobile, hidden on md+ (shown in aside column) -->
+    <div
+      class="mt-4 flex gap-5 font-mono text-[10.5px] tracking-widest text-(--muted-text) uppercase md:hidden"
+    >
+      <div>
+        Pass <b
+          class="font-display ml-1 text-[13px] font-normal tracking-normal text-(--ink) normal-case"
+          >{skill.passRate}</b
+        >
+      </div>
+      <div>
+        Installs <b
+          class="font-display ml-1 text-[13px] font-normal tracking-normal text-(--ink) normal-case"
+          >{skill.installs}</b
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats aside: hidden on mobile, visible on md+ -->
+  <div
+    class="hidden shrink-0 pt-1 font-mono text-[10.5px] leading-loose tracking-widest text-(--muted-text) uppercase md:block"
+  >
+    <div>
+      PASS
+      <b class="font-display block text-[14px] font-normal text-(--ink)">
+        {skill.passRate}
+      </b>
+    </div>
+    <div>
+      INSTALLS
+      <b class="font-display block text-[14px] font-normal text-(--ink)">
+        {skill.installs}
+      </b>
+    </div>
+  </div>
+</a>
