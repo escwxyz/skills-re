@@ -7,6 +7,7 @@ import { createCollectionsService } from "./service";
 describe("collections service", () => {
   test("enriches collection skills with the latest static audit data", async () => {
     const auditCalls: string[] = [];
+    const fileCalls: string[] = [];
     const service = createCollectionsService({
       findCollectionBySlug: (slug) =>
         Promise.resolve(
@@ -87,6 +88,32 @@ describe("collections service", () => {
             viewsAllTime: 900,
           },
         ]),
+      listSnapshotFiles: (snapshotId) => {
+        fileCalls.push(snapshotId);
+
+        if (snapshotId === "snapshot-1") {
+          return Promise.resolve([
+            {
+              contentType: null,
+              fileHash: "hash-1",
+              path: "skill.md",
+              r2Key: null,
+              size: 1024,
+              sourceSha: null,
+            },
+            {
+              contentType: null,
+              fileHash: "hash-2",
+              path: "README.md",
+              r2Key: null,
+              size: 512,
+              sourceSha: null,
+            },
+          ]);
+        }
+
+        return Promise.resolve([]);
+      },
     });
 
     await expect(service.getCollectionBySlug({ slug: "editorial" })).resolves.toEqual({
@@ -107,6 +134,7 @@ describe("collections service", () => {
           id: "skill-1",
           isVerified: true,
           latestVersion: "1.2.3",
+          latestSnapshotTotalBytes: 1536,
           license: "MIT",
           primaryCategory: "ops",
           repoName: "skills",
@@ -158,5 +186,6 @@ describe("collections service", () => {
     });
 
     expect(auditCalls).toEqual(["snapshot-1"]);
+    expect(fileCalls).toEqual(["snapshot-1"]);
   });
 });

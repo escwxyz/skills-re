@@ -2,7 +2,13 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { formatCollectionPassRate, formatCollectionSkillPassRate } from "./collection-data";
+import {
+  formatCollectionLicenseMix,
+  formatCollectionPassRate,
+  formatCollectionSkillPassRate,
+  formatCollectionTotalDownloads,
+  formatCollectionTotalFileSize,
+} from "./collection-data";
 
 describe("collection-data", () => {
   test("formats skill and collection pass rates from audit data", () => {
@@ -42,5 +48,24 @@ describe("collection-data", () => {
     ).toBe("50%");
 
     expect(formatCollectionPassRate([])).toBe("—");
+
+    expect(
+      formatCollectionTotalDownloads([{ downloadsAllTime: 1200 }, { downloadsAllTime: 800 }]),
+    ).toBe("2K");
+
+    expect(
+      formatCollectionTotalFileSize([
+        { latestSnapshotTotalBytes: 1536 },
+        { latestSnapshotTotalBytes: 512 },
+      ]),
+    ).toBe("2.0 KB");
+
+    expect(
+      formatCollectionLicenseMix([
+        { license: "MIT" },
+        { license: "Apache-2.0" },
+        { license: "MIT" },
+      ]),
+    ).toBe("MIT · Apache-2.0");
   });
 });

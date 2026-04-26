@@ -3,6 +3,7 @@ import type { CollectionId, SkillId, UserId } from "@skills-re/db/utils";
 import { toSearchSkillItem } from "../shared/search-skill";
 import type { SearchSkillRow } from "../shared/search-skill";
 import { createDepGetter } from "../shared/deps";
+import type { SnapshotFileRow } from "../snapshots/repo";
 
 interface CollectionRow {
   description: string;
@@ -77,6 +78,7 @@ interface CollectionsServiceDeps {
   findCollectionById: (id: CollectionId) => Promise<CollectionRow | null>;
   getLatestStaticAuditBySnapshot: (snapshotId: string) => Promise<LatestStaticAuditRow | null>;
   getSkillsByCollectionId: (collectionId: CollectionId) => Promise<CollectionSkillRow[]>;
+  listSnapshotFiles: (snapshotId: string) => Promise<SnapshotFileRow[]>;
   insertCollection: (input: {
     description: string;
     slug: string;
@@ -115,6 +117,10 @@ const createDefaultCollectionsDeps = async (): Promise<CollectionsServiceDeps> =
       return await getLatestStaticAuditBySnapshot(snapshotId);
     },
     getSkillsByCollectionId: repo.getSkillsByCollectionId,
+    listSnapshotFiles: async (snapshotId) => {
+      const { listSnapshotFiles } = await import("../snapshots/repo");
+      return await listSnapshotFiles(snapshotId);
+    },
     insertCollection: repo.insertCollection,
     patchCollection: repo.patchCollection,
     deleteCollection: repo.deleteCollection,
@@ -133,6 +139,37 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
   };
 
   const getDep = createDepGetter(overrides, getDefaultDeps);
+
+  const getCollectionSkillStats = async (skill: CollectionSkillRow) => {
+    if (!skill.latestSnapshotId) {
+      return {};
+    }
+
+    const [getLatestStaticAuditBySnapshot, listSnapshotFiles] = await Promise.all([
+      getDep("getLatestStaticAuditBySnapshot"),
+      getDep("listSnapshotFiles"),
+    ]);
+    const [staticAudit, files] = await Promise.all([
+      getLatestStaticAuditBySnapshot(skill.latestSnapshotId),
+      listSnapshotFiles(skill.latestSnapshotId),
+    ]);
+
+    const stats: {
+      latestSnapshotTotalBytes?: number;
+      staticAudit?: CollectionStaticAudit;
+    } = {};
+
+    if (files.length > 0) {
+      stats.latestSnapshotTotalBytes = files.reduce((total, file) => total + file.size, 0);
+    }
+
+    const collectionStaticAudit = toCollectionStaticAudit(staticAudit);
+    if (collectionStaticAudit) {
+      stats.staticAudit = collectionStaticAudit;
+    }
+
+    return stats;
+  };
 
   const assertOwnership = async (collectionId: string, caller: CallerContext) => {
     if (caller.isAdmin) {
@@ -167,27 +204,21 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       }
 
       const getSkillsByCollectionId = await getDep("getSkillsByCollectionId");
-      const getLatestStaticAuditBySnapshot = await getDep("getLatestStaticAuditBySnapshot");
       const skills = await getSkillsByCollectionId(row.id as CollectionId);
-      const skillsWithStaticAudits = await Promise.all(
+      const skillsWithCollectionStats = await Promise.all(
         skills.map(async (skill) => {
-          const staticAudit = skill.latestSnapshotId
-            ? toCollectionStaticAudit(await getLatestStaticAuditBySnapshot(skill.latestSnapshotId))
-            : undefined;
-
-          return staticAudit
-            ? {
-                ...toSearchSkillItem(skill),
-                staticAudit,
-              }
-            : toSearchSkillItem(skill);
+          const stats = await getCollectionSkillStats(skill);
+          return {
+            ...toSearchSkillItem(skill),
+            ...stats,
+          };
         }),
       );
 
       return {
         description: row.description,
         id: row.id,
-        skills: skillsWithStaticAudits,
+        skills: skillsWithCollectionStats,
         slug: row.slug,
         title: row.title,
       };

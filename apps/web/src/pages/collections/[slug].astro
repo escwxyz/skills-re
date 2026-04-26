@@ -2,8 +2,11 @@
 import Layout from "@/layouts/main.astro"
 import { CollectionItem } from "@/components/collection-item"
 import {
+  formatCollectionLicenseMix,
   formatCollectionPassRate,
   formatCollectionSkillPassRate,
+  formatCollectionTotalDownloads,
+  formatCollectionTotalFileSize,
 } from "@/lib/collection-data"
 import { createServerClient } from "@/lib/server-orpc"
 import { formatCompactNumber } from "@/lib/registry-data"
@@ -33,12 +36,15 @@ const skills = collection.skills.map((s) => ({
 }))
 
 const passingSkills = formatCollectionPassRate(collection.skills)
+const totalDownloads = formatCollectionTotalDownloads(collection.skills)
+const totalFileSize = formatCollectionTotalFileSize(collection.skills)
+const licenseMix = formatCollectionLicenseMix(collection.skills)
 
 const metaItems = [
   { lbl: "Skills", val: String(collection.skills.length) },
-  { lbl: "Total Installs", val: "2.4M" },
-  { lbl: "License Mix", val: "MIT · Apache" },
-  { lbl: "Median Size", val: "4.8 kb" },
+  { lbl: "Total Downloads", val: totalDownloads },
+  { lbl: "License Mix", val: licenseMix },
+  { lbl: "Total File Size", val: totalFileSize },
   { lbl: "Passing", val: passingSkills, accent: true },
 ]
 ---
