@@ -21,11 +21,14 @@ const { skill, index, mondayNote } = Astro.props
 const isItalic = index % 2 === 0
 const isAccent = (index + 1) % 3 === 0
 const isBlue = (index + 1) % 5 === 0
-const titleColor = isAccent
-  ? "var(--editorial-red)"
-  : isBlue
-    ? "var(--editorial-blue)"
-    : "var(--ink)"
+const getTitleColor = () => {
+  if (isAccent) {
+    return "var(--editorial-red)"
+  } else if (isBlue) {
+    return "var(--editorial-blue)"
+  }
+  return "var(--ink)"
+}
 ---
 
 <a
@@ -50,7 +53,7 @@ const titleColor = isAccent
       class={`font-display text-[clamp(1.8rem,4vw,3rem)] leading-[.95] font-normal tracking-tight mb-3 m-0 ${
         isItalic && !isAccent && !isBlue ? "italic" : ""
       }`}
-      style={`color: ${titleColor};`}
+      style={`color: ${getTitleColor()};`}
     >
       {skill.title}
     </h3>

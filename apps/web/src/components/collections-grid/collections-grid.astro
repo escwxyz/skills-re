@@ -13,11 +13,6 @@ interface Props {
 const { collections } = Astro.props
 ---
 
-<!--
-  Layout: 1 col mobile → [2fr 1fr 1fr] desktop
-  Featured card (first) spans 2 rows on sm+ and gets the ink/paper treatment.
-  border-l + border-t on container, border-r + border-b on each cell.
--->
 <div
   class="grid grid-cols-1 border-t border-l border-(--rule) sm:grid-cols-[2fr_1fr_1fr]"
 >
