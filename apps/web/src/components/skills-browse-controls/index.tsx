@@ -106,6 +106,8 @@ export function SkillsBrowseControls({
         <button
           type="button"
           onClick={() => skillsFiltersSidebarOpenAtom.set(!isSidebarOpen)}
+          aria-expanded={isSidebarOpen}
+          aria-controls="skills-sidebar"
           className="hidden lg:flex items-center gap-2 border-l border-rule px-6 h-full font-mono text-[11px] tracking-[.14em] uppercase cursor-pointer bg-transparent"
         >
           <FadersHorizontalIcon />
