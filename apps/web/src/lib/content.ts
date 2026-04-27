@@ -16,7 +16,7 @@ export type DocSlug =
  * default locale ("en") if a translation hasn't been authored yet.
  */
 export async function getPage(slug: PageSlug, pathOrLocale?: string) {
-  const locale = pathOrLocale ? getLocaleFromPath(pathOrLocale) ?? defaultLocale : defaultLocale;
+  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
   return (
     (await getEntry("pages", `${locale}/${slug}`)) ??
     (await getEntry("pages", `${defaultLocale}/${slug}`))
@@ -28,7 +28,7 @@ export async function getPage(slug: PageSlug, pathOrLocale?: string) {
  * Results are sorted by the `order` frontmatter field.
  */
 export async function getDocs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? getLocaleFromPath(pathOrLocale) ?? defaultLocale : defaultLocale;
+  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
   const all = await getCollection("docs");
   const locale_docs = all.filter((e) => e.id.startsWith(`${locale}/`));
   const entries =
@@ -40,7 +40,7 @@ export async function getDocs(pathOrLocale?: string) {
  * Fetches a single doc entry for the given locale, falling back to "en".
  */
 export async function getDoc(slug: string, pathOrLocale?: string) {
-  const locale = pathOrLocale ? getLocaleFromPath(pathOrLocale) ?? defaultLocale : defaultLocale;
+  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
   return (
     (await getEntry("docs", `${locale}/${slug}`)) ??
     (await getEntry("docs", `${defaultLocale}/${slug}`))
@@ -52,7 +52,7 @@ export async function getDoc(slug: string, pathOrLocale?: string) {
  * Results are sorted by the `order` frontmatter field.
  */
 export async function getFaqs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? getLocaleFromPath(pathOrLocale) ?? defaultLocale : defaultLocale;
+  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
   const all = await getCollection("faqs");
   const locale_faqs = all.filter((e) => e.id.startsWith(`${locale}/`));
   const entries =
@@ -65,7 +65,7 @@ export async function getFaqs(pathOrLocale?: string) {
  * back to "en". Results are sorted by semantic version, newest first.
  */
 export async function getChangelogs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? getLocaleFromPath(pathOrLocale) ?? defaultLocale : defaultLocale;
+  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
   const all = await getCollection("changelogs");
   const locale_changelogs = all.filter((e) => e.id.startsWith(`${locale}/`));
   const entries =

@@ -1,40 +1,20 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [
-    ".astro/types.d.ts",
-    "**/*",
-    ".intlayer/**/*.ts"
-  ],
-  "exclude": [
-    "dist"
-  ],
+  "include": [".astro/types.d.ts", "**/*", ".intlayer/**/*.ts"],
+  "exclude": ["dist"],
   "compilerOptions": {
     "strictNullChecks": true,
     "allowJs": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@intlayer/dictionaries-entry": [
-        "./.intlayer/main/dictionaries.mjs"
-      ],
-      "@intlayer/unmerged-dictionaries-entry": [
-        "./.intlayer/main/unmerged_dictionaries.mjs"
-      ],
-      "@intlayer/remote-dictionaries-entry": [
-        "./.intlayer/main/remote_dictionaries.mjs"
-      ],
-      "@intlayer/dynamic-dictionaries-entry": [
-        "./.intlayer/main/dynamic_dictionaries.mjs"
-      ],
-      "@intlayer/fetch-dictionaries-entry": [
-        "./.intlayer/main/fetch_dictionaries.mjs"
-      ],
-      "@intlayer/config/built": [
-        "./.intlayer/config/configuration.mjs"
-      ]
+      "@/*": ["./src/*"],
+      "@intlayer/dictionaries-entry": ["./.intlayer/main/dictionaries.mjs"],
+      "@intlayer/unmerged-dictionaries-entry": ["./.intlayer/main/unmerged_dictionaries.mjs"],
+      "@intlayer/remote-dictionaries-entry": ["./.intlayer/main/remote_dictionaries.mjs"],
+      "@intlayer/dynamic-dictionaries-entry": ["./.intlayer/main/dynamic_dictionaries.mjs"],
+      "@intlayer/fetch-dictionaries-entry": ["./.intlayer/main/fetch_dictionaries.mjs"],
+      "@intlayer/config/built": ["./.intlayer/config/configuration.mjs"]
     }
   }
 }
