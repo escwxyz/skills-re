@@ -1,5 +1,7 @@
 ---
 import { CookieConsent } from "@/components/cookie-consent"
+import { defaultLocale, getLocaleFromPath } from "intlayer"
+import type { LocalesValues } from "intlayer"
 
 interface Props {
   statusText?: string
@@ -9,6 +11,9 @@ interface Props {
 const { statusText = "all agents aligned", skillCount = "14,208" } = Astro.props
 
 const year = new Date().getFullYear()
+
+const locale = (getLocaleFromPath(Astro.url.pathname) ??
+  defaultLocale) as LocalesValues
 ---
 
 <div
@@ -16,7 +21,7 @@ const year = new Date().getFullYear()
 >
   <span>System status: {statusText} — [{skillCount} skills indexed]</span>
   <div class="flex items-center gap-2">
-    <CookieConsent client:load />
+    <CookieConsent locale={locale} client:only="react" />
     <span>© {year} skills.re</span>
   </div>
 </div>

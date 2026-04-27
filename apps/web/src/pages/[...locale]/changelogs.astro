@@ -3,7 +3,7 @@ import Layout from "@/layouts/main.astro";
 import { render } from "astro:content";
 import { getChangelogs } from "@/lib/content";
 
-const changelogs = await getChangelogs();
+const changelogs = await getChangelogs(Astro.url.pathname);
 const rendered = await Promise.all(
   changelogs.map(async (entry) => {
     const { Content } = await render(entry);

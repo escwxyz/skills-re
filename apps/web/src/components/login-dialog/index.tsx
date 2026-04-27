@@ -4,10 +4,10 @@
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
+import { IntlayerProvider, useIntlayer } from "react-intlayer";
 
 import { isLoginDialogOpenAtom, loginDialogOnlyGithubAtom } from "@/stores/app";
 import { authClient } from "@/lib/auth-client";
-import { m } from "@/paraglide/messages";
 
 import { EmailOtpForm } from "@/components/email-otp-form";
 import { SocialAuthButtons } from "@/components/social-auth-buttons";
@@ -19,35 +19,45 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
+} from "@/components/ui/dialog";
+import type { LocalesValues } from "intlayer";
 
 interface LoginDialogFooterProps {
   onLinkClick: () => void;
 }
 
-const LoginDialogFooter = ({ onLinkClick }: LoginDialogFooterProps) => (
-  <div className="border-border/50 mt-6 border-t pt-4 text-center">
-    <p className="text-muted-foreground text-[11px]">
-      {m.ui_by_signing_in_you_agree_to_our()}{" "}
-      <a className="underline" onClick={onLinkClick} href="/terms">
-        {m.ui_terms()}
-      </a>{" "}
-      {m.ui_and()}{" "}
-      <a className="underline" onClick={onLinkClick} href="/privacy">
-        {m.ui_privacy_policy()}
-      </a>
-      .
-    </p>
-  </div>
-);
+const LoginDialogFooter = ({ onLinkClick }: LoginDialogFooterProps) => {
+  const content = useIntlayer("login-dialog");
+  return (
+    <div className="border-border/50 mt-6 border-t pt-4 text-center">
+      <p className="text-muted-foreground text-[11px]">
+        {content.bySigningInYouAgreeToOur}{" "}
+        <a className="underline" onClick={onLinkClick} href="/terms">
+          {content.terms}
+        </a>{" "}
+        {content.and}{" "}
+        <a className="underline" onClick={onLinkClick} href="/privacy">
+          {content.privacyPolicy}
+        </a>
+        .
+      </p>
+    </div>
+  );
+};
 
 interface LoginDialogProps {
   onOpenChange?: (open: boolean) => void;
   callbackUrl?: string;
   onlyGitHub?: boolean;
+  locale: LocalesValues;
 }
 
-export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
+const LoginDialogContent = ({
+  onOpenChange,
+  callbackUrl,
+  onlyGitHub,
+}: Omit<LoginDialogProps, "locale">) => {
+  const content = useIntlayer("login-dialog");
   const isOpen = useStore(isLoginDialogOpenAtom);
   const isGithubOnlyMode = useStore(loginDialogOnlyGithubAtom);
   const [view, setView] = useState<"options" | "email">("options");
@@ -89,19 +99,17 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
         render={
           <Button className="text-primary-foreground hover:bg-primary flex cursor-pointer items-center gap-2">
             <SignInIcon />
-            <span className="hidden md:block">{m.ui_sign_in()}</span>
+            <span className="hidden md:block">{content.signIn}</span>
           </Button>
         }
       />
       <DialogContent className="p-6 sm:max-w-md">
         <DialogHeader className="mb-6">
           <DialogTitle className="text-foreground text-center text-base font-semibold">
-            {m.ui_sign_in_to_continue()}
+            {content.signInToContinue}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-center">
-            {resolvedOnlyGitHub
-              ? m.ui_continue_with_github_to_verify_your_identity()
-              : m.ui_choose_a_provider_or_get_a_one_time_code_by_email()}
+            {resolvedOnlyGitHub ? content.continueWithGithubToVerify : content.chooseAProvider}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,10 +120,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
             onSocial={handleLogin}
           />
         ) : (
-          <EmailOtpForm
-            // callbackUrl={resolvedCallbackUrl}
-            onBack={resetEmailFlow}
-          />
+          <EmailOtpForm onBack={resetEmailFlow} />
         )}
 
         <LoginDialogFooter onLinkClick={closeDialog} />
@@ -123,3 +128,9 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     </Dialog>
   );
 };
+
+export const LoginDialog = ({ locale, ...props }: LoginDialogProps) => (
+  <IntlayerProvider locale={locale}>
+    <LoginDialogContent {...props} />
+  </IntlayerProvider>
+);

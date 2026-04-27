@@ -4,8 +4,6 @@
  *
  * Renders title, description, OG/Twitter cards, canonical link, favicons,
  * and optional JSON-LD structured-data blocks.
- *
- * TODO: add hreflang alternate links once the i18n library is finalised.
  */
 import { Schema } from "astro-seo-schema"
 import type { Thing, WebSite, WithContext } from "schema-dts"
@@ -16,6 +14,13 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/constants"
+import {
+  localeMap,
+  defaultLocale,
+  getLocalizedUrl,
+  getPathWithoutLocale,
+} from "intlayer"
+import type { LocalesValues } from "intlayer"
 
 interface Props {
   /** Page title — site name suffix is appended automatically. */
@@ -30,6 +35,7 @@ interface Props {
   noIndex?: boolean
   /** Additional JSON-LD objects rendered as <script type="application/ld+json">. */
   structuredData?: (WithContext<Thing> | Thing)[]
+  locale?: LocalesValues
 }
 
 const {
@@ -39,6 +45,7 @@ const {
   canonicalPath,
   noIndex = false,
   structuredData = [],
+  locale = defaultLocale,
 } = Astro.props
 
 const resolvedTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME
@@ -66,6 +73,8 @@ const websiteSchema: WithContext<WebSite> = {
     queryInput: "required name=search_term_string",
   },
 }
+
+const pathWithoutLocale = getPathWithoutLocale(Astro.url.pathname)
 ---
 
 <!-- Primary -->
@@ -90,14 +99,26 @@ const websiteSchema: WithContext<WebSite> = {
 <meta name="twitter:url" content={canonicalUrl} />
 <meta name="twitter:image" content={ogImage} />
 
-<!-- Canonical -->
-{canonicalPath && <link rel="canonical" href={canonicalUrl} />}
+<link
+  rel="canonical"
+  href={new URL(getLocalizedUrl(pathWithoutLocale, locale), SITE_URL)}
+/>
 
-<!--
-  TODO: hreflang alternate links — skipped until the i18n library is finalised.
-  When ready, emit one <link rel="alternate" hreflang={locale} href={...} />
-  per supported locale, plus hreflang="x-default" pointing to the base locale URL.
--->
+{
+  localeMap(({ locale: mapLocale }) => (
+    <link
+      rel="alternate"
+      hreflang={mapLocale}
+      href={new URL(getLocalizedUrl(pathWithoutLocale, mapLocale), SITE_URL)}
+    />
+  ))
+}
+
+<link
+  rel="alternate"
+  hreflang="x-default"
+  href={new URL(getLocalizedUrl(pathWithoutLocale, defaultLocale), SITE_URL)}
+/>
 
 <!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

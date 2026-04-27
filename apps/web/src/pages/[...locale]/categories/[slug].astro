@@ -2,7 +2,7 @@
 import Layout from "@/layouts/main.astro"
 import { PageHero } from "@/components/page-hero"
 import { SkillCard } from "@/components/skill-card"
-import { getLocale } from "@/paraglide/runtime"
+import { getLocaleFromPath, defaultLocale } from "intlayer"
 import {
   getCategoryPresentation,
   toCategoryCardItem,
@@ -57,7 +57,7 @@ const categoryPage = {
   topSkills: categoryDetail.topSkills.map(toSkillCardItem),
 }
 
-const locale = getLocale()
+const locale = getLocaleFromPath(Astro.url.pathname) ?? defaultLocale
 
 const titleVariantClass = {
   default: "",

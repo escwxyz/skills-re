@@ -2,14 +2,18 @@
 import Layout from "@/layouts/main.astro"
 import { render } from "astro:content"
 import { getFaqs } from "@/lib/content"
+import { defaultLocale, getLocaleFromPath, getLocalizedUrl } from "intlayer"
 
-const faqs = await getFaqs()
+const locale = getLocaleFromPath(Astro.url.pathname) ?? defaultLocale
+const faqs = await getFaqs(Astro.url.pathname)
 const rendered = await Promise.all(
   faqs.map(async (faq) => {
     const { Content } = await render(faq)
     return { faq, Content }
   })
 )
+
+const docsHref = getLocalizedUrl("/docs", locale)
 ---
 
 <Layout
@@ -29,7 +33,9 @@ const rendered = await Promise.all(
       </h1>
       <p class="text-ink-2 mt-4 font-serif text-lg leading-relaxed">
         Can't find what you're looking for?
-        <a href="/docs" class="underline underline-offset-4">Browse the docs</a> or
+        <a href={docsHref} class="underline underline-offset-4"
+          >Browse the docs</a
+        > or
         <a href="mailto:support@skills.re" class="underline underline-offset-4"
           >contact support</a
         >.
@@ -67,7 +73,7 @@ const rendered = await Promise.all(
       </p>
       <div class="mt-4 flex flex-wrap gap-4">
         <a
-          href="/docs"
+          href={docsHref}
           class="border-rule hover:bg-paper-2 border px-4 py-2 font-mono text-xs tracking-[.06em] transition-colors"
         >
           Read the docs →

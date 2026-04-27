@@ -4,23 +4,16 @@
 
 import { useEffect, useState } from "react";
 import { z } from "zod/v4";
+import { useIntlayer } from "react-intlayer";
 
 import { useAppForm } from "@/hooks/form-hook";
 import { authClient } from "@/lib/auth-client";
-import { m } from "@/paraglide/messages";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-
-const formSchema = z.object({
-  email: z.email(m.ui_please_enter_a_valid_email()),
-  otp: z.string(),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
 
 const formatCountdown = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -29,12 +22,20 @@ const formatCountdown = (seconds: number) => {
 };
 
 export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: string }) => {
+  const content = useIntlayer("email-otp-form");
   const [didSend, setDidSend] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+
+  const formSchema = z.object({
+    email: z.email(String(content.pleaseEnterAValidEmail)),
+    otp: z.string(),
+  });
+
+  type FormSchema = z.infer<typeof formSchema>;
 
   const form = useAppForm({
     defaultValues: {
@@ -43,12 +44,12 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
     } as FormSchema,
     onSubmit: async ({ value }) => {
       if (!didSend) {
-        setErrorMessage(m.ui_send_a_verification_code_first());
+        setErrorMessage(String(content.sendAVerificationCodeFirst));
         return;
       }
 
       if (!value.otp || value.otp.length < 6) {
-        setErrorMessage(m.ui_enter_the_6_digit_verification_code());
+        setErrorMessage(String(content.enterThe6DigitCode));
         return;
       }
 
@@ -67,7 +68,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
           otp: value.otp,
         });
       } catch {
-        setErrorMessage(m.ui_invalid_or_expired_code_please_try_again());
+        setErrorMessage(String(content.invalidOrExpiredCode));
       } finally {
         setIsVerifying(false);
       }
@@ -93,7 +94,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
   const handleSendOtp = async () => {
     const emailValue = form.state.values.email?.trim();
     if (!(emailValue && z.email().safeParse(emailValue).success)) {
-      setErrorMessage(m.ui_please_enter_a_valid_email());
+      setErrorMessage(String(content.pleaseEnterAValidEmail));
       return;
     }
 
@@ -108,9 +109,9 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
       });
       setDidSend(true);
       setSecondsLeft(300);
-      setStatusMessage(m.ui_verification_code_sent_check_your_inbox());
+      setStatusMessage(String(content.verificationCodeSent));
     } catch {
-      setErrorMessage(m.ui_could_not_send_code_please_try_again());
+      setErrorMessage(String(content.couldNotSendCode));
     } finally {
       setIsSending(false);
     }
@@ -139,12 +140,11 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
         <form.AppField name="email">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel>{m.ui_email_address()}</FieldLabel>
+              <FieldLabel>{content.emailAddress}</FieldLabel>
               <Input
                 autoComplete="email"
                 className="h-10 text-sm"
                 onChange={(event) => field.handleChange(event.target.value)}
-                placeholder={m.ui_you_company_com()}
                 type="email"
                 value={field.state.value}
               />
@@ -158,7 +158,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
             {(field) => (
               <Field className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <FieldLabel>{m.ui_verification_code()}</FieldLabel>
+                  <FieldLabel>{content.verificationCode}</FieldLabel>
                   {secondsLeft !== null && secondsLeft > 0 && (
                     <span className="text-muted-foreground text-xs">
                       {formatCountdown(secondsLeft)}
@@ -206,10 +206,10 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
                 variant="secondary"
               >
                 {isSending
-                  ? m.ui_sending()
+                  ? content.sending
                   : didSend
-                    ? m.ui_resend_verification_code()
-                    : m.ui_send_verification_code()}
+                    ? content.resendVerificationCode
+                    : content.sendVerificationCode}
               </Button>
             )}
           </form.Subscribe>
@@ -225,18 +225,18 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
                 }
                 type="submit"
               >
-                {isVerifying || isSubmitting ? m.ui_verifying() : m.ui_verify_and_continue()}
+                {isVerifying || isSubmitting ? content.verifying : content.verifyAndContinue}
               </Button>
             )}
           </form.Subscribe>
 
           <div className="text-muted-foreground flex items-center justify-between text-xs">
             <button
-              className="hover:text-foreground underline underline-offset-4"
+              className="hover:text-foreground underline underline-offset-4 cursor-pointer"
               onClick={handleBack}
               type="button"
             >
-              {m.ui_back_to_sign_in_options()}
+              {content.backToSignInOptions}
             </button>
             {didSend && (
               <button
@@ -244,7 +244,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: str
                 onClick={handleSendOtp}
                 type="button"
               >
-                {m.ui_resend_code()}
+                {content.resendCode}
               </button>
             )}
           </div>

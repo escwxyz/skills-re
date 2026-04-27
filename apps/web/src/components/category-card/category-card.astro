@@ -1,6 +1,6 @@
 ---
 import type { CategoryCardItem } from "@/lib/registry-data"
-import { getLocale } from "@/paraglide/runtime"
+import { getLocaleFromPath } from "intlayer"
 
 interface Props {
   category: CategoryCardItem
@@ -17,7 +17,7 @@ const titleVariantClass = {
   italic: "italic",
 }[category.variant ?? "default"]
 
-const locale = getLocale()
+const locale = getLocaleFromPath(Astro.url.pathname)
 ---
 
 <a
