@@ -3,24 +3,33 @@
 import Layout from "@/layouts/main.astro"
 import { render } from "astro:content"
 import { getDoc, getDocs } from "@/lib/content"
+import { defaultLocale, getLocaleFromPath, getLocalizedUrl } from "intlayer"
 
 const { slug } = Astro.params
+const locale = getLocaleFromPath(Astro.url.pathname) ?? defaultLocale
 
 if (!slug) {
   return Astro.redirect("/404")
 }
 
-const entry = await getDoc(slug)
+const entry = await getDoc(slug, Astro.url.pathname)
 if (!entry) {
   return Astro.redirect("/404")
 }
 
-const docs = await getDocs()
+const docs = await getDocs(Astro.url.pathname)
 const { Content } = await render(entry)
 const { title, description, category, updatedAt } = entry.data
+
+const localizedDocHref = (docSlug: string) =>
+  getLocalizedUrl(`/docs/${docSlug}`, locale)
 ---
 
-<Layout title={title} description={description} canonicalPath={`/docs/${slug}`}>
+<Layout
+  title={title}
+  description={description}
+  canonicalPath={getLocalizedUrl(`/docs/${slug}`, locale)}
+>
   <div class="mx-auto max-w-6xl px-6 py-16">
     <div class="flex gap-12">
       <!-- Sidebar nav -->
@@ -39,7 +48,7 @@ const { title, description, category, updatedAt } = entry.data
                 return (
                   <li>
                     <a
-                      href={`/docs/${docSlug}`}
+                      href={localizedDocHref(docSlug)}
                       class:list={[
                         "block border-l-2 py-1.5 pl-3 font-mono text-[11px] tracking-[.04em] transition-colors",
                         isCurrent
@@ -79,7 +88,7 @@ const { title, description, category, updatedAt } = entry.data
             updatedAt && (
               <p class="text-muted-foreground mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase">
                 Last updated{" "}
-                {updatedAt.toLocaleDateString("en", { dateStyle: "long" })}
+                {updatedAt.toLocaleDateString(locale, { dateStyle: "long" })}
               </p>
             )
           }
@@ -105,7 +114,7 @@ const { title, description, category, updatedAt } = entry.data
                 <>
                   {prev ? (
                     <a
-                      href={`/docs/${prev.id.split("/")[1]}`}
+                      href={localizedDocHref(prev.id.split("/")[1])}
                       class="text-muted-foreground hover:text-ink font-mono text-[11px] tracking-[.04em]"
                     >
                       ← {prev.data.title}
@@ -115,7 +124,7 @@ const { title, description, category, updatedAt } = entry.data
                   )}
                   {next && (
                     <a
-                      href={`/docs/${next.id.split("/")[1]}`}
+                      href={localizedDocHref(next.id.split("/")[1])}
                       class="text-muted-foreground hover:text-ink font-mono text-[11px] tracking-[.04em]"
                     >
                       {next.data.title} →

@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { baseLocale } from "@/paraglide/runtime";
+import { defaultLocale } from "intlayer";
 import { renderUrlEntry, resolveUrl, wrapUrlSet, XML_RESPONSE_HEADERS } from "@/lib/sitemap";
 
 const STATIC_URLS = [
@@ -24,7 +24,7 @@ export const GET: APIRoute = async () => {
   // Derive /docs/[slug] URLs from the English content collection entries.
   const allDocs = await getCollection("docs");
   const docEntries = allDocs
-    .filter((e) => e.id.startsWith(`${baseLocale}/`))
+    .filter((e) => e.id.startsWith(`${defaultLocale}/`))
     .toSorted((a, b) => a.data.order - b.data.order)
     .map((e) => ({
       path: `/docs/${e.id.split("/")[1]}`,

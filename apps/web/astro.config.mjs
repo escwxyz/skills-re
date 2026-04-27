@@ -3,14 +3,14 @@
 import tailwindcss from "@tailwindcss/vite";
 import alchemy from "alchemy/cloudflare/astro";
 import { defineConfig, envField } from "astro/config";
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import react from "@astrojs/react";
+import { intlayer } from "astro-intlayer";
 
 // https://astro.build/config
 export default defineConfig({
   output: "server",
   adapter: alchemy(),
-
+  site: "https://skills.re",
   env: {
     schema: {
       SERVER_URL: envField.string({
@@ -32,37 +32,7 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [
-      tailwindcss({ optimize: true }),
-      paraglideVitePlugin({
-        disableAsyncLocalStorage: true,
-        project: "./project.inlang",
-        outdir: "./src/paraglide",
-        cookieName: "locale",
-        strategy: ["url", "cookie", "preferredLanguage", "baseLocale"],
-        urlPatterns: [
-          // Localized home route
-          {
-            localized: [
-              ["de", "/de"],
-              ["zh-hans", "/zh-hans"],
-              ["en", "/"],
-            ],
-            pattern: "/",
-          },
-          // Other routes - locale-aware
-          {
-            localized: [
-              ["de", "/de/:path(.*)?"],
-              ["zh-hans", "/zh-hans/:path(.*)?"],
-              ["en", "/:path(.*)?"],
-            ],
-            pattern: "/:path(.*)?",
-          },
-        ],
-      }),
-    ],
+    plugins: [tailwindcss({ optimize: true })],
   },
-
-  integrations: [react()],
+  integrations: [react(), intlayer()],
 });

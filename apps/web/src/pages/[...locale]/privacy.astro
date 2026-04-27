@@ -3,8 +3,7 @@ import Layout from "@/layouts/main.astro"
 import { render } from "astro:content"
 import { getPage } from "@/lib/content"
 
-const entry = await getPage("cookies")
-
+const entry = await getPage("privacy", Astro.url.pathname)
 if (!entry) {
   return Astro.redirect("/404")
 }
@@ -13,7 +12,7 @@ const { Content } = await render(entry)
 const { title, description, updatedAt } = entry.data
 ---
 
-<Layout title={title} description={description} canonicalPath="/cookies">
+<Layout title={title} description={description} canonicalPath="/privacy">
   <div class="mx-auto max-w-3xl px-6 py-16">
     <div class="border-rule mb-10 border-b pb-8">
       <p

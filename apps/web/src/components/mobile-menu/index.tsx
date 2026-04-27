@@ -11,22 +11,38 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { isMobileMenuOpenAtom } from "@/stores/app";
-import { ThemeToggle } from "../theme-toggle";
-import { LanguageSwitcher } from "../language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import type { LocalesValues } from "intlayer";
+import { IntlayerProvider } from "react-intlayer";
 
-const NAV_LINKS = [
-  { label: "Skills", href: "/skills" },
-  { label: "Collections", href: "/collections" },
-  { label: "Authors", href: "/authors" },
-  { label: "Search", href: "/search" },
-];
-
-interface Props {
-  currentPathname: string;
+export interface MobileMenuContent {
+  title: string;
+  close: string;
+  description: string;
+  links: {
+    skills: string;
+    collections: string;
+    authors: string;
+    search: string;
+  };
 }
 
-export function MobileMenu({ currentPathname }: Props) {
+interface Props {
+  locale: LocalesValues;
+  currentPathname: string;
+  content: MobileMenuContent;
+}
+
+function MobileMenuInner({ locale, currentPathname, content }: Props) {
   const isOpen = useStore(isMobileMenuOpenAtom);
+
+  const NAV_LINKS = [
+    { label: content.links.skills, href: "/skills" },
+    { label: content.links.collections, href: "/collections" },
+    { label: content.links.authors, href: "/authors" },
+    { label: content.links.search, href: "/search" },
+  ];
 
   return (
     <Drawer direction="top" open={isOpen} onOpenChange={(v) => isMobileMenuOpenAtom.set(v)}>
@@ -56,20 +72,18 @@ export function MobileMenu({ currentPathname }: Props) {
         <DrawerHeader className="border-b border-rule px-6 py-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
-              Menu
+              {content.title}
             </DrawerTitle>
             <DrawerClose asChild>
               <button
                 type="button"
                 className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-foreground"
               >
-                Close
+                {content.close}
               </button>
             </DrawerClose>
           </div>
-          <DrawerDescription className="sr-only">
-            Navigate to key sections of the site
-          </DrawerDescription>
+          <DrawerDescription className="sr-only">{content.description}</DrawerDescription>
         </DrawerHeader>
 
         <nav className="flex-1 overflow-y-auto px-6 py-6">
@@ -93,10 +107,20 @@ export function MobileMenu({ currentPathname }: Props) {
         <DrawerFooter>
           <div className="flex items-center justify-between">
             <ThemeToggle />
-            <LanguageSwitcher />
+            <LanguageSwitcher
+              locale={locale}
+              withProvider={false}
+              // onLocalChange={() => isMobileMenuOpenAtom.set(false)}
+            />
           </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
 }
+
+export const MobileMenu = ({ locale, ...rest }: Props) => (
+  <IntlayerProvider locale={locale}>
+    <MobileMenuInner locale={locale} {...rest} />
+  </IntlayerProvider>
+);

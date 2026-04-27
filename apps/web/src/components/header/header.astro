@@ -1,38 +1,43 @@
 ---
 import { ThemeToggle } from "@/components/theme-toggle"
-import { LoginButton } from "@/components/login-button"
+import { LoginDialog } from "@/components/login-dialog"
 import { MobileMenu } from "@/components/mobile-menu"
-import { LanguageSwitcher } from "@/components/language-switcher"
 import { buttonVariants } from "@/components/ui/button"
 import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
+import { defaultLocale, getIntlayer, getLocaleFromPath } from "intlayer"
+import type { LocalesValues } from "intlayer"
+import { isLoginDialogOpenAtom } from "@/stores/app"
+import { LanguageSwitcher } from "@/components/language-switcher"
 
 const { user: currentUser } = Astro.locals
 
 const isActive = (href: string) => Astro.url.pathname.includes(href)
 const { pathname } = Astro.url
 
+const locale = (getLocaleFromPath(Astro.url.pathname) ??
+  defaultLocale) as LocalesValues
+const { menus, submit } = getIntlayer("header", locale)
+const mobileMenuContent = getIntlayer("mobile-menu", locale)
+
 const MENUS = [
-  {
-    label: "Skills",
-    path: "skills",
-  },
-  {
-    label: "Categories",
-    path: "categories",
-  },
-  {
-    label: "Collections",
-    path: "collections",
-  },
-  {
-    label: "Authors",
-    path: "authors",
-  },
-  {
-    label: "Docs",
-    path: "docs",
-  },
+  { label: menus.skills, path: "skills" },
+  { label: menus.categories, path: "categories" },
+  { label: menus.collections, path: "collections" },
+  { label: menus.authors, path: "authors" },
+  { label: menus.docs, path: "docs" },
 ]
+
+const mobileContent = {
+  title: String(mobileMenuContent.title),
+  close: String(mobileMenuContent.close),
+  description: String(mobileMenuContent.description),
+  links: {
+    skills: String(mobileMenuContent.links.skills),
+    collections: String(mobileMenuContent.links.collections),
+    authors: String(mobileMenuContent.links.authors),
+    search: String(mobileMenuContent.links.search),
+  },
+}
 ---
 
 <header
@@ -55,7 +60,12 @@ const MENUS = [
       }
     </div>
     <div class="flex items-center md:hidden">
-      <MobileMenu client:load currentPathname={pathname} />
+      <MobileMenu
+        client:load
+        currentPathname={pathname}
+        locale={locale}
+        content={mobileContent}
+      />
     </div>
 
     <a
@@ -69,18 +79,28 @@ const MENUS = [
         class={`hidden md:inline ${isActive("/search") ? "underline" : "text-muted-foreground"}`}
         ><MagnifyingGlassIcon size={20} /></a
       >
-
-      <LanguageSwitcher className="hidden md:flex" client:load />
       <ThemeToggle className="hidden md:block" client:load />
-      <a href="/submit" class={buttonVariants({ variant: "secondary" })}>
+      <LanguageSwitcher
+        className="hidden md:flex"
+        locale={locale}
+        client:load
+      />
+      <a
+        href="/submit"
+        class:list={["no-underline", buttonVariants({ variant: "secondary" })]}
+      >
         <CloudArrowUpIcon />
-        <span class="hidden md:inline">Submit</span>
+        <span class="hidden md:inline">{submit}</span>
       </a>
       {
         currentUser ? (
           <a href="/account">{currentUser.name}</a>
         ) : (
-          <LoginButton client:load />
+          <LoginDialog
+            onOpenChange={(open) => !open && isLoginDialogOpenAtom.set(false)}
+            client:load
+            locale={locale}
+          />
         )
       }
     </div>

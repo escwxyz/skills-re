@@ -12,10 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib/cookie-consent";
 import type { CookieConsentChoice } from "@/lib/cookie-consent";
+import { IntlayerProvider, useIntlayer } from "react-intlayer";
+import type { LocalesValues } from "intlayer";
 
-export function CookieConsent() {
+function CookieConsentInner() {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<CookieConsentChoice>("essential");
+
+  const content = useIntlayer("cookie-consent");
 
   useEffect(() => {
     const run = async () => {
@@ -46,19 +50,16 @@ export function CookieConsent() {
         size="xs"
         variant="outline"
       >
-        Cookie
+        {content.cookie}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-muted-foreground font-mono text-[10px] tracking-[0.18em] uppercase">
-              Cookie preferences
+              {content.preferences}
             </DialogTitle>
-            <DialogDescription>
-              We use a session cookie for sign-in and first-party preference cookies for locale and
-              theme. There are no third-party analytics or ad cookies on this site.
-            </DialogDescription>
+            <DialogDescription>{content.description}</DialogDescription>
           </DialogHeader>
 
           <div className="text-ink-2 space-y-3 text-xs leading-relaxed">
@@ -110,3 +111,9 @@ export function CookieConsent() {
     </>
   );
 }
+
+export const CookieConsent = ({ locale }: { locale: LocalesValues }) => (
+  <IntlayerProvider locale={locale}>
+    <CookieConsentInner />
+  </IntlayerProvider>
+);

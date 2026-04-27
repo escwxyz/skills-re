@@ -1,5 +1,4 @@
 import { defineMiddleware, sequence } from "astro:middleware";
-import { paraglideMiddleware } from "@/paraglide/server";
 import { authClient } from "@/lib/auth-client";
 
 const authMiddleware = defineMiddleware(async (context, next) => {
@@ -17,8 +16,4 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   return next();
 });
 
-const i18nMiddleware = defineMiddleware((context, next) =>
-  paraglideMiddleware(context.request, ({ request }) => next(request)),
-);
-
-export const onRequest = sequence(authMiddleware, i18nMiddleware);
+export const onRequest = sequence(authMiddleware);

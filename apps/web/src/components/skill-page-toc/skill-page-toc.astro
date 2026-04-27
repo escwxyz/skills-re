@@ -1,20 +1,27 @@
 ---
+import { getIntlayer, getLocaleFromPath, type LocalesValues } from 'intlayer';
+
 interface Props {
   items: string[]
 }
 
 const { items } = Astro.props
+
+const locale = getLocaleFromPath(Astro.url.pathname) as LocalesValues;
+
+const { header } = getIntlayer("skill-page-toc", locale);
+
 ---
 
 {
   items.length > 0 && (
     <aside
-      class="hidden self-start font-mono text-[11px] leading-8 tracking-[0.05em] lg:sticky lg:top-[70px] lg:block"
+      class="hidden self-start font-mono text-[11px] leading-8 tracking-[0.05em] lg:sticky lg:top-17.5 lg:block"
     >
       <h6
         class="text-muted-text mb-2 font-mono text-[10.5px] tracking-[0.18em] uppercase"
       >
-        Contents
+        {header}
       </h6>
       <ul class="space-y-0.5">
         {
