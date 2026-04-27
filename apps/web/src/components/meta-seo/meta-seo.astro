@@ -14,7 +14,12 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/constants"
-import { localeMap, defaultLocale, getLocalizedUrl } from "intlayer"
+import {
+  localeMap,
+  defaultLocale,
+  getLocalizedUrl,
+  getPathWithoutLocale,
+} from "intlayer"
 import type { LocalesValues } from "intlayer"
 
 interface Props {
@@ -68,6 +73,8 @@ const websiteSchema: WithContext<WebSite> = {
     queryInput: "required name=search_term_string",
   },
 }
+
+const pathWithoutLocale = getPathWithoutLocale(Astro.url.pathname)
 ---
 
 <!-- Primary -->
@@ -94,7 +101,7 @@ const websiteSchema: WithContext<WebSite> = {
 
 <link
   rel="canonical"
-  href={new URL(getLocalizedUrl(Astro.url.pathname, locale), SITE_URL)}
+  href={new URL(getLocalizedUrl(pathWithoutLocale, locale), SITE_URL)}
 />
 
 {
@@ -102,7 +109,7 @@ const websiteSchema: WithContext<WebSite> = {
     <link
       rel="alternate"
       hreflang={mapLocale}
-      href={new URL(getLocalizedUrl(Astro.url.pathname, mapLocale), SITE_URL)}
+      href={new URL(getLocalizedUrl(pathWithoutLocale, mapLocale), SITE_URL)}
     />
   ))
 }
@@ -110,7 +117,7 @@ const websiteSchema: WithContext<WebSite> = {
 <link
   rel="alternate"
   hreflang="x-default"
-  href={new URL(getLocalizedUrl(Astro.url.pathname, defaultLocale), Astro.site)}
+  href={new URL(getLocalizedUrl(pathWithoutLocale, defaultLocale), SITE_URL)}
 />
 
 <!-- Favicons -->
