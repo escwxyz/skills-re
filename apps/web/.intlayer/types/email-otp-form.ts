@@ -1,0 +1,66 @@
+/* eslint-disable */
+export default {
+  "key": "email-otp-form",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "pleaseEnterAValidEmail": "Please enter a valid email.",
+        "sendAVerificationCodeFirst": "Send a verification code first.",
+        "enterThe6DigitCode": "Enter the 6-digit verification code.",
+        "invalidOrExpiredCode": "Invalid or expired code. Please try again.",
+        "couldNotSendCode": "Could not send code. Please try again.",
+        "verificationCodeSent": "Verification code sent. Check your inbox.",
+        "emailAddress": "Email address",
+        "emailPlaceholder": "you@company.com",
+        "verificationCode": "Verification code",
+        "sendVerificationCode": "Send verification code",
+        "resendVerificationCode": "Resend verification code",
+        "resendCode": "Resend code",
+        "sending": "Sending...",
+        "verifyAndContinue": "Verify and continue",
+        "verifying": "Verifying...",
+        "backToSignInOptions": "Back to sign in options"
+      },
+      "de": {
+        "pleaseEnterAValidEmail": "Bitte geben Sie eine gültige E-Mail ein.",
+        "sendAVerificationCodeFirst": "Senden Sie zuerst einen Bestätigungscode.",
+        "enterThe6DigitCode": "Geben Sie den 6-stelligen Bestätigungscode ein.",
+        "invalidOrExpiredCode": "Ungültiger oder abgelaufener Code. Bitte versuchen Sie es erneut.",
+        "couldNotSendCode": "Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+        "verificationCodeSent": "Bestätigungscode gesendet. Prüfen Sie Ihren Posteingang.",
+        "emailAddress": "E-Mail-Adresse",
+        "emailPlaceholder": "you@company.com",
+        "verificationCode": "Bestätigungscode",
+        "sendVerificationCode": "Bestätigungscode senden",
+        "resendVerificationCode": "Bestätigungscode erneut senden",
+        "resendCode": "Code erneut senden",
+        "sending": "Wird gesendet...",
+        "verifyAndContinue": "Verifizieren und fortfahren",
+        "verifying": "Wird geprüft...",
+        "backToSignInOptions": "Zurück zu den Anmeldeoptionen"
+      },
+      "zh-Hans": {
+        "pleaseEnterAValidEmail": "请输入有效的电子邮件地址。",
+        "sendAVerificationCodeFirst": "请先发送验证码。",
+        "enterThe6DigitCode": "请输入6位数的验证码。",
+        "invalidOrExpiredCode": "验证码无效或已过期，请重试。",
+        "couldNotSendCode": "验证码发送失败，请重试。",
+        "verificationCodeSent": "验证码已发送，请查收。",
+        "emailAddress": "电子邮件",
+        "emailPlaceholder": "you@company.com",
+        "verificationCode": "验证码",
+        "sendVerificationCode": "发送验证码",
+        "resendVerificationCode": "重新发送验证码",
+        "resendCode": "重新发送代码",
+        "sending": "正在发送...",
+        "verifyAndContinue": "验证并继续",
+        "verifying": "验证中...",
+        "backToSignInOptions": "返回登录选项"
+      }
+    }
+  },
+  "localIds": [
+    "email-otp-form::local::src/components/email-otp-form/email-otp-form.content.ts"
+  ]
+} as const;

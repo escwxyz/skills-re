@@ -1,6 +1,7 @@
 ---
 import type { CategoryCardItem } from "@/lib/registry-data"
-import { getLocaleFromPath } from "intlayer"
+import { defaultLocale, getLocaleFromPath } from "intlayer"
+import type { LocalesValues } from "intlayer"
 
 interface Props {
   category: CategoryCardItem
@@ -17,14 +18,17 @@ const titleVariantClass = {
   italic: "italic",
 }[category.variant ?? "default"]
 
-const locale = getLocaleFromPath(Astro.url.pathname)
+const locale = (getLocaleFromPath(Astro.url.pathname) ??
+  defaultLocale) as LocalesValues
 ---
 
 <a
   href={href}
-  class="flex min-h-80 flex-col bg-background p-[22px_18px_20px] no-underline hover:bg-secondary hover:no-underline"
+  class="bg-background hover:bg-secondary flex min-h-80 flex-col p-[22px_18px_20px] no-underline hover:no-underline"
 >
-  <div class="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+  <div
+    class="text-muted-foreground mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase"
+  >
     {category.num}
   </div>
   <h4
@@ -35,21 +39,23 @@ const locale = getLocaleFromPath(Astro.url.pathname)
   >
     {category.title}
   </h4>
-  <p class="mb-auto font-serif text-sm leading-normal text-ink-2">
+  <p class="text-ink-2 mb-auto font-serif text-sm leading-normal">
     {category.description}
   </p>
   <div
-    class="mt-4.5 flex gap-4.5 font-mono text-[10.5px] tracking-widest uppercase text-muted-foreground"
+    class="text-muted-foreground mt-4.5 flex gap-4.5 font-mono text-[10.5px] tracking-widest uppercase"
   >
     <div>
       SKILLS
-      <b class="block font-medium text-foreground">{category.skillCount.toLocaleString(locale)}</b>
+      <b class="text-foreground block font-medium"
+        >{category.skillCount.toLocaleString(locale)}</b
+      >
     </div>
     {
       category.passRate && (
         <div>
           PASS RATE
-          <b class="block font-medium text-foreground">{category.passRate}</b>
+          <b class="text-foreground block font-medium">{category.passRate}</b>
         </div>
       )
     }

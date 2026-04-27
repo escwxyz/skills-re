@@ -1,0 +1,34 @@
+[
+  {
+    "key": "language-switcher",
+    "content": {
+      "languages": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Languages",
+          "de": "Sprachen",
+          "zh-Hans": "语言"
+        }
+      },
+      "longLabel": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "English",
+          "de": "Deutsch",
+          "zh-Hans": "简体中文"
+        }
+      },
+      "shortLabel": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "EN",
+          "de": "DE",
+          "zh-Hans": "简"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "language-switcher::local::src/components/language-switcher/language-switcher.content.ts",
+    "filePath": "src/components/language-switcher/language-switcher.content.ts"
+  }
+]

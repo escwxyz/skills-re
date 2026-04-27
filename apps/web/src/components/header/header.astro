@@ -4,12 +4,10 @@ import { LoginDialog } from "@/components/login-dialog"
 import { MobileMenu } from "@/components/mobile-menu"
 import { buttonVariants } from "@/components/ui/button"
 import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
-import { defaultLocale, getDictionary, getLocaleFromPath } from "intlayer"
+import { defaultLocale, getLocaleFromPath, getIntlayer } from "intlayer"
 import type { LocalesValues } from "intlayer"
 import { isLoginDialogOpenAtom } from "@/stores/app"
 import { LanguageSwitcher } from "@/components/language-switcher"
-import headerDict from "./header.content"
-import mobileMenuDict from "../mobile-menu/mobile-menu.content"
 
 const { user: currentUser } = Astro.locals
 
@@ -18,8 +16,8 @@ const { pathname } = Astro.url
 
 const locale = (getLocaleFromPath(Astro.url.pathname) ??
   defaultLocale) as LocalesValues
-const { menus, submit } = getDictionary(headerDict, locale)
-const mobileMenuContent = getDictionary(mobileMenuDict, locale)
+const { menus, submit } = getIntlayer("header", locale)
+const mobileMenuContent = getIntlayer("mobile-menu", locale)
 
 const MENUS = [
   { label: menus.skills, path: "skills" },

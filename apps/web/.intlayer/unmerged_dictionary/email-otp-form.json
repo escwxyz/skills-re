@@ -1,0 +1,138 @@
+[
+  {
+    "key": "email-otp-form",
+    "content": {
+      "pleaseEnterAValidEmail": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Please enter a valid email.",
+          "de": "Bitte geben Sie eine gültige E-Mail ein.",
+          "zh-Hans": "请输入有效的电子邮件地址。"
+        }
+      },
+      "sendAVerificationCodeFirst": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Send a verification code first.",
+          "de": "Senden Sie zuerst einen Bestätigungscode.",
+          "zh-Hans": "请先发送验证码。"
+        }
+      },
+      "enterThe6DigitCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Enter the 6-digit verification code.",
+          "de": "Geben Sie den 6-stelligen Bestätigungscode ein.",
+          "zh-Hans": "请输入6位数的验证码。"
+        }
+      },
+      "invalidOrExpiredCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Invalid or expired code. Please try again.",
+          "de": "Ungültiger oder abgelaufener Code. Bitte versuchen Sie es erneut.",
+          "zh-Hans": "验证码无效或已过期，请重试。"
+        }
+      },
+      "couldNotSendCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Could not send code. Please try again.",
+          "de": "Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+          "zh-Hans": "验证码发送失败，请重试。"
+        }
+      },
+      "verificationCodeSent": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Verification code sent. Check your inbox.",
+          "de": "Bestätigungscode gesendet. Prüfen Sie Ihren Posteingang.",
+          "zh-Hans": "验证码已发送，请查收。"
+        }
+      },
+      "emailAddress": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Email address",
+          "de": "E-Mail-Adresse",
+          "zh-Hans": "电子邮件"
+        }
+      },
+      "emailPlaceholder": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "you@company.com",
+          "de": "you@company.com",
+          "zh-Hans": "you@company.com"
+        }
+      },
+      "verificationCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Verification code",
+          "de": "Bestätigungscode",
+          "zh-Hans": "验证码"
+        }
+      },
+      "sendVerificationCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Send verification code",
+          "de": "Bestätigungscode senden",
+          "zh-Hans": "发送验证码"
+        }
+      },
+      "resendVerificationCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Resend verification code",
+          "de": "Bestätigungscode erneut senden",
+          "zh-Hans": "重新发送验证码"
+        }
+      },
+      "resendCode": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Resend code",
+          "de": "Code erneut senden",
+          "zh-Hans": "重新发送代码"
+        }
+      },
+      "sending": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sending...",
+          "de": "Wird gesendet...",
+          "zh-Hans": "正在发送..."
+        }
+      },
+      "verifyAndContinue": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Verify and continue",
+          "de": "Verifizieren und fortfahren",
+          "zh-Hans": "验证并继续"
+        }
+      },
+      "verifying": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Verifying...",
+          "de": "Wird geprüft...",
+          "zh-Hans": "验证中..."
+        }
+      },
+      "backToSignInOptions": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Back to sign in options",
+          "de": "Zurück zu den Anmeldeoptionen",
+          "zh-Hans": "返回登录选项"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "email-otp-form::local::src/components/email-otp-form/email-otp-form.content.ts",
+    "filePath": "src/components/email-otp-form/email-otp-form.content.ts"
+  }
+]

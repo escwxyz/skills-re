@@ -1,0 +1,58 @@
+[
+  {
+    "key": "login-form",
+    "content": {
+      "invalidEmail": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Invalid email",
+          "de": "Ungültige E-Mail",
+          "zh-Hans": "无效的电子邮件"
+        }
+      },
+      "email": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Email",
+          "de": "E-Mail",
+          "zh-Hans": "电子邮件"
+        }
+      },
+      "yourEmail": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "YOUR EMAIL",
+          "de": "IHRE E-MAIL-ADRESSE",
+          "zh-Hans": "您的电子邮件"
+        }
+      },
+      "password": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Password",
+          "de": "Passwort",
+          "zh-Hans": "密码"
+        }
+      },
+      "signIn": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sign In",
+          "de": "Anmelden",
+          "zh-Hans": "登录"
+        }
+      },
+      "signingIn": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Signing in...",
+          "de": "Anmeldung läuft...",
+          "zh-Hans": "正在登录……"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "login-form::local::src/components/login-form/login-form.content.ts",
+    "filePath": "src/components/login-form/login-form.content.ts"
+  }
+]

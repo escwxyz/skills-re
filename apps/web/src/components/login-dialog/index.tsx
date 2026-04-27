@@ -4,8 +4,7 @@
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
-import { getDictionary, useIntlayerContext, IntlayerProvider } from "react-intlayer";
-import loginDialogContent from "./login-dialog.content";
+import { useIntlayer, IntlayerProvider } from "react-intlayer";
 
 import { isLoginDialogOpenAtom, loginDialogOnlyGithubAtom } from "@/stores/app";
 import { authClient } from "@/lib/auth-client";
@@ -28,8 +27,7 @@ interface LoginDialogFooterProps {
 }
 
 const LoginDialogFooter = ({ onLinkClick }: LoginDialogFooterProps) => {
-  const { locale } = useIntlayerContext() ?? {};
-  const content = getDictionary(loginDialogContent, locale);
+  const content = useIntlayer("login-dialog");
   return (
     <div className="border-border/50 mt-6 border-t pt-4 text-center">
       <p className="text-muted-foreground text-[11px]">
@@ -59,8 +57,7 @@ const LoginDialogContent = ({
   callbackUrl,
   onlyGitHub,
 }: Omit<LoginDialogProps, "locale">) => {
-  const { locale } = useIntlayerContext() ?? {};
-  const content = getDictionary(loginDialogContent, locale);
+  const content = useIntlayer("login-dialog");
   const isOpen = useStore(isLoginDialogOpenAtom);
   const isGithubOnlyMode = useStore(loginDialogOnlyGithubAtom);
   const [view, setView] = useState<"options" | "email">("options");

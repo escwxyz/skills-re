@@ -4,8 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { z } from "zod/v4";
-import { getDictionary, useIntlayerContext } from "react-intlayer";
-import emailOtpFormContent from "./email-otp-form.content";
+import { useIntlayer } from "react-intlayer";
 
 import { useAppForm } from "@/hooks/form-hook";
 import { authClient } from "@/lib/auth-client";
@@ -23,8 +22,7 @@ const formatCountdown = (seconds: number) => {
 };
 
 export const EmailOtpForm = ({ onBack }: { onBack: () => void; callbackUrl?: string }) => {
-  const { locale } = useIntlayerContext() ?? {};
-  const content = getDictionary(emailOtpFormContent, locale);
+  const content = useIntlayer("email-otp-form");
   const [didSend, setDidSend] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);

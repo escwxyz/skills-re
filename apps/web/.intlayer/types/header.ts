@@ -1,0 +1,42 @@
+/* eslint-disable */
+export default {
+  "key": "header",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "menus": {
+          "skills": "Skills",
+          "categories": "Categories",
+          "collections": "Collections",
+          "authors": "Authors",
+          "docs": "Docs"
+        },
+        "submit": "Submit"
+      },
+      "de": {
+        "menus": {
+          "skills": "Skills",
+          "categories": "Kategorien",
+          "collections": "Sammlungen",
+          "authors": "Autoren",
+          "docs": "Dokumentation"
+        },
+        "submit": "Einreichen"
+      },
+      "zh-Hans": {
+        "menus": {
+          "skills": "Skills",
+          "categories": "类别",
+          "collections": "合集",
+          "authors": "作者",
+          "docs": "文档"
+        },
+        "submit": "提交"
+      }
+    }
+  },
+  "localIds": [
+    "header::local::src/components/header/header.content.ts"
+  ]
+} as const;

@@ -1,0 +1,146 @@
+[
+  {
+    "key": "footer",
+    "content": {
+      "description": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "An agent-agnostic registry for distributing procedural knowledge to AI agents. Find, test, equip AI skills, tools and more.",
+          "zh-Hans": "一个与代理无关的注册表，用于向 AI 代理分发程序性知识。查找、测试、装备 AI 技能、工具等。",
+          "de": "Eine agentenunabhängige Registry zur Verteilung von Verfahrenswissen an KI-Agenten. KI-Fähigkeiten, Tools und mehr finden, testen und ausrüsten."
+        }
+      },
+      "menus": {
+        "platform": {
+          "title": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "The Platform",
+              "de": "Die Plattform",
+              "zh-Hans": "平台"
+            }
+          },
+          "index": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Index",
+              "de": "Index",
+              "zh-Hans": "索引"
+            }
+          },
+          "collections": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Collections",
+              "de": "Sammlungen",
+              "zh-Hans": "合集"
+            }
+          },
+          "authors": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Authors",
+              "de": "Autoren",
+              "zh-Hans": "作者"
+            }
+          },
+          "search": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Search",
+              "de": "Suche",
+              "zh-Hans": "搜索"
+            }
+          }
+        },
+        "publish": {
+          "title": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Publish",
+              "de": "Veröffentlichen",
+              "zh-Hans": "发布"
+            }
+          },
+          "submit": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Submit a skill",
+              "de": "Skill einreichen",
+              "zh-Hans": "提交技能"
+            }
+          },
+          "changelog": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Changelog / diffs",
+              "de": "Changelog / Diffs",
+              "zh-Hans": "更新日志 / 差异"
+            }
+          },
+          "docs": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Docs — skill.md",
+              "de": "Docs — skill.md",
+              "zh-Hans": "文档 — skill.md"
+            }
+          },
+          "signing": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Signing guide",
+              "de": "Signierungsanleitung",
+              "zh-Hans": "签名指南"
+            }
+          }
+        },
+        "legal": {
+          "title": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Legal",
+              "de": "Rechtliches",
+              "zh-Hans": "法律"
+            }
+          },
+          "imprint": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Imprint",
+              "de": "Impressum",
+              "zh-Hans": "版权信息"
+            }
+          },
+          "terms": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Terms of Service",
+              "de": "Nutzungsbedingungen",
+              "zh-Hans": "服务条款"
+            }
+          },
+          "privacy": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Privacy Policy",
+              "de": "Datenschutzrichtlinie",
+              "zh-Hans": "隐私政策"
+            }
+          },
+          "cookies": {
+            "nodeType": "translation",
+            "translation": {
+              "en": "Cookies Policy",
+              "de": "Cookie-Richtlinie",
+              "zh-Hans": "Cookie 政策"
+            }
+          }
+        }
+      }
+    },
+    "location": "local",
+    "localId": "footer::local::src/components/footer/footer.content.ts",
+    "filePath": "src/components/footer/footer.content.ts"
+  }
+]

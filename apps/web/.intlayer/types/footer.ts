@@ -1,0 +1,90 @@
+/* eslint-disable */
+export default {
+  "key": "footer",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "description": "An agent-agnostic registry for distributing procedural knowledge to AI agents. Find, test, equip AI skills, tools and more.",
+        "menus": {
+          "platform": {
+            "title": "The Platform",
+            "index": "Index",
+            "collections": "Collections",
+            "authors": "Authors",
+            "search": "Search"
+          },
+          "publish": {
+            "title": "Publish",
+            "submit": "Submit a skill",
+            "changelog": "Changelog / diffs",
+            "docs": "Docs — skill.md",
+            "signing": "Signing guide"
+          },
+          "legal": {
+            "title": "Legal",
+            "imprint": "Imprint",
+            "terms": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "cookies": "Cookies Policy"
+          }
+        }
+      },
+      "de": {
+        "description": "Eine agentenunabhängige Registry zur Verteilung von Verfahrenswissen an KI-Agenten. KI-Fähigkeiten, Tools und mehr finden, testen und ausrüsten.",
+        "menus": {
+          "platform": {
+            "title": "Die Plattform",
+            "index": "Index",
+            "collections": "Sammlungen",
+            "authors": "Autoren",
+            "search": "Suche"
+          },
+          "publish": {
+            "title": "Veröffentlichen",
+            "submit": "Skill einreichen",
+            "changelog": "Changelog / Diffs",
+            "docs": "Docs — skill.md",
+            "signing": "Signierungsanleitung"
+          },
+          "legal": {
+            "title": "Rechtliches",
+            "imprint": "Impressum",
+            "terms": "Nutzungsbedingungen",
+            "privacy": "Datenschutzrichtlinie",
+            "cookies": "Cookie-Richtlinie"
+          }
+        }
+      },
+      "zh-Hans": {
+        "description": "一个与代理无关的注册表，用于向 AI 代理分发程序性知识。查找、测试、装备 AI 技能、工具等。",
+        "menus": {
+          "platform": {
+            "title": "平台",
+            "index": "索引",
+            "collections": "合集",
+            "authors": "作者",
+            "search": "搜索"
+          },
+          "publish": {
+            "title": "发布",
+            "submit": "提交技能",
+            "changelog": "更新日志 / 差异",
+            "docs": "文档 — skill.md",
+            "signing": "签名指南"
+          },
+          "legal": {
+            "title": "法律",
+            "imprint": "版权信息",
+            "terms": "服务条款",
+            "privacy": "隐私政策",
+            "cookies": "Cookie 政策"
+          }
+        }
+      }
+    }
+  },
+  "localIds": [
+    "footer::local::src/components/footer/footer.content.ts"
+  ]
+} as const;

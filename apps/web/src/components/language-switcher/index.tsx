@@ -11,8 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getDictionary, IntlayerProvider, useLocale } from "react-intlayer";
-import languageSwitcherContent from "./language-switcher.content";
+import { IntlayerProvider, useIntlayer, useLocale } from "react-intlayer";
 
 function LanguageSwitcherInner({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -24,7 +23,7 @@ function LanguageSwitcherInner({ className }: { className?: string }) {
     },
   });
 
-  const content = getDictionary(languageSwitcherContent, locale);
+  const content = useIntlayer("language-switcher");
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

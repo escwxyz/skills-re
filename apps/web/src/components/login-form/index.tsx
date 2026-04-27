@@ -1,8 +1,7 @@
 "use client";
 
 import { z } from "zod/v4";
-import { getDictionary, useIntlayerContext } from "react-intlayer";
-import loginFormContent from "./login-form.content";
+import { useIntlayer } from "react-intlayer";
 import { useAppForm } from "@/hooks/form-hook";
 
 import { Button } from "../ui/button";
@@ -11,8 +10,7 @@ import { Field, FieldError, Form } from "../ui/form";
 import { Input } from "../ui/input";
 
 export const LoginForm = () => {
-  const { locale } = useIntlayerContext() ?? {};
-  const content = getDictionary(loginFormContent, locale);
+  const content = useIntlayer("login-form");
 
   const schema = z.object({
     email: z.email(String(content.invalidEmail)),

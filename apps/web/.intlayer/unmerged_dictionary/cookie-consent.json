@@ -1,0 +1,34 @@
+[
+  {
+    "key": "cookie-consent",
+    "content": {
+      "cookie": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Cookie",
+          "de": "Cookie",
+          "zh-Hans": "Cookie"
+        }
+      },
+      "preferences": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Cookie preferences",
+          "de": "Cookie preferences",
+          "zh-Hans": "Cookie 偏好配置"
+        }
+      },
+      "description": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "We use a session cookie for sign-in and first-party preference cookies for locale and theme. There are no third-party analytics or ad cookies on this site.",
+          "de": "TODO",
+          "zh-Hans": "TODO"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "cookie-consent::local::src/components/cookie-consent/cookie-consent.content.ts",
+    "filePath": "src/components/cookie-consent/cookie-consent.content.ts"
+  }
+]

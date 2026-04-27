@@ -1,0 +1,58 @@
+[
+  {
+    "key": "social-auth-buttons",
+    "content": {
+      "continueWithGithub": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Continue with GitHub",
+          "de": "Weiter mit GitHub",
+          "zh-Hans": "继续使用 GitHub"
+        }
+      },
+      "continueWithGoogle": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Continue with Google",
+          "de": "Mit Google fortfahren",
+          "zh-Hans": "继续使用 Google"
+        }
+      },
+      "continueWithEmail": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Continue with Email",
+          "de": "Weiter mit E-Mail",
+          "zh-Hans": "继续通过电子邮件"
+        }
+      },
+      "or": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "or",
+          "de": "oder",
+          "zh-Hans": "或者"
+        }
+      },
+      "google": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Google",
+          "de": "Google",
+          "zh-Hans": "谷歌"
+        }
+      },
+      "github": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "GitHub",
+          "de": "GitHub",
+          "zh-Hans": "GitHub"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "social-auth-buttons::local::src/components/social-auth-buttons/social-auth-buttons.content.ts",
+    "filePath": "src/components/social-auth-buttons/social-auth-buttons.content.ts"
+  }
+]

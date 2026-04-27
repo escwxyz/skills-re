@@ -123,14 +123,13 @@ const config: IntlayerConfig = {
      * instead of an iterator, throwing "Result of the Symbol.iterator method is
      * not an object" in production (Cloudflare Workers SSR).
      */
-    minify: false,
-    purge: false,
+    minify: true,
+    purge: true,
 
     /**
      * Indicates if the build should check TypeScript types
      */
     checkTypes: false,
-    traversePattern: ["/*.{js,ts,mjs,cjs,jsx,tsx,astro}", "!/node_modules/**"],
   },
 };
 
