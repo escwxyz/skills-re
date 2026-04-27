@@ -1,6 +1,7 @@
 ---
-import { defaultLocale, getIntlayer, getLocaleFromPath } from "intlayer"
+import { defaultLocale, getDictionary, getLocaleFromPath } from "intlayer"
 import type { LocalesValues } from "intlayer"
+import footerDict from "./footer.content"
 
 interface Props {
   className?: string
@@ -11,7 +12,7 @@ const { className = "" } = Astro.props
 const locale = (getLocaleFromPath(Astro.url.pathname) ??
   defaultLocale) as LocalesValues
 
-const { description, menus } = getIntlayer("footer", locale)
+const { description, menus } = getDictionary(footerDict, locale)
 ---
 
 <footer

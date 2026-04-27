@@ -1,7 +1,8 @@
 "use client";
 
 import { AtIcon } from "@phosphor-icons/react";
-import { useIntlayer } from "react-intlayer";
+import { getDictionary, useIntlayerContext } from "react-intlayer";
+import socialAuthButtonsContent from "./social-auth-buttons.content";
 
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +15,8 @@ export const SocialAuthButtons = ({
   onSocial: (provider: "github" | "google") => void;
   onlyGitHub?: boolean;
 }) => {
-  const content = useIntlayer("social-auth-buttons");
+  const { locale } = useIntlayerContext() ?? {};
+  const content = getDictionary(socialAuthButtonsContent, locale);
 
   return (
     <div className="space-y-4">

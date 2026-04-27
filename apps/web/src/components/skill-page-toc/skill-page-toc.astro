@@ -1,6 +1,7 @@
 ---
-import { getIntlayer, getLocaleFromPath } from "intlayer"
+import { getDictionary, getLocaleFromPath } from "intlayer"
 import type { LocalesValues } from "intlayer"
+import skillPageTocDict from "./skill-page-toc.content"
 
 interface Props {
   items: string[]
@@ -10,7 +11,7 @@ const { items } = Astro.props
 
 const locale = getLocaleFromPath(Astro.url.pathname) as LocalesValues
 
-const { header } = getIntlayer("skill-page-toc", locale)
+const { header } = getDictionary(skillPageTocDict, locale)
 ---
 
 {

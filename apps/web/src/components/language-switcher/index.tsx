@@ -11,12 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { IntlayerProvider, useIntlayer, useLocale } from "react-intlayer";
+import { getDictionary, IntlayerProvider, useLocale } from "react-intlayer";
+import languageSwitcherContent from "./language-switcher.content";
 
 function LanguageSwitcherInner({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
-
-  const content = useIntlayer("language-switcher");
 
   const { locale, availableLocales, setLocale } = useLocale({
     onLocaleChange: (newLocale: LocalesValues) => {
@@ -24,6 +23,8 @@ function LanguageSwitcherInner({ className }: { className?: string }) {
       window.location.href = getLocalizedUrl(currentUrl, newLocale);
     },
   });
+
+  const content = getDictionary(languageSwitcherContent, locale);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

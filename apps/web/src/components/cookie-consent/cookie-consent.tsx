@@ -12,14 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib/cookie-consent";
 import type { CookieConsentChoice } from "@/lib/cookie-consent";
-import { IntlayerProvider, useIntlayer } from "react-intlayer";
+import { getDictionary, useIntlayerContext, IntlayerProvider } from "react-intlayer";
+import cookieConsentContent from "./cookie-consent.content";
 import type { LocalesValues } from "intlayer";
 
 function CookieConsentInner() {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<CookieConsentChoice>("essential");
 
-  const content = useIntlayer("cookie-consent");
+  const { locale } = useIntlayerContext() ?? {};
+  const content = getDictionary(cookieConsentContent, locale);
 
   useEffect(() => {
     const run = async () => {
