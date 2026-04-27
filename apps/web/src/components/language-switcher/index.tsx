@@ -20,8 +20,8 @@ function LanguageSwitcherInner({ className }: { className?: string }) {
 
   const { locale, availableLocales, setLocale } = useLocale({
     onLocaleChange: (newLocale: LocalesValues) => {
-      // Navigate to the localized URL on locale change
-      window.location.href = getLocalizedUrl(window.location.pathname, newLocale);
+      const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.href = getLocalizedUrl(currentUrl, newLocale);
     },
   });
 
