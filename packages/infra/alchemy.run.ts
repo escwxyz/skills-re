@@ -320,6 +320,7 @@ export const web = await Astro("web", {
   entrypoint: "dist/server/entry.mjs",
   assets: "dist/client",
   compatibility: "node",
+  compatibilityFlags: ["global_fetch_strictly_public"],
   compatibilityDate: "2026-03-10",
   bindings: {
     SERVER_URL: server.url!,
