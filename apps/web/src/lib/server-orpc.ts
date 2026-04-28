@@ -21,19 +21,37 @@ export const createServerClient = (request?: Request): AppRouterClient => {
 
   const link = new RPCLink({
     url: rpcUrl,
-    fetch(url, options) {
+    async fetch(url, options) {
       const requestOptions = (options ?? {}) as RequestInit;
       const headers = new Headers(requestOptions.headers);
+      const method = requestOptions.method ?? "GET";
 
       if (cookie) {
         headers.set("cookie", cookie);
       }
 
-      return fetch(url, {
+      const response = await fetch(url, {
         ...requestOptions,
         credentials: "include",
         headers,
       });
+
+      if (!response.ok) {
+        const responseText = await response
+          .clone()
+          .text()
+          .catch(() => "");
+        console.error("[server-orpc] rpc request failed", {
+          method,
+          requestUrl: request?.url ?? null,
+          responseStatus: response.status,
+          responseStatusText: response.statusText,
+          responseText: responseText.slice(0, 500),
+          rpcUrl: String(url),
+        });
+      }
+
+      return response;
     },
   });
 
