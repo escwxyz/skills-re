@@ -111,25 +111,14 @@ const config: IntlayerConfig = {
     importMode: "static",
   },
   build: {
-    /**
-     * (Experimental feature) — disabled: the purge/minify analysis only
-     * covers .ts/.tsx files via the default traversePattern, so it misses
-     * usages of getIntlayer() in .astro files (header.astro, etc.).
-     * When purge runs with incomplete usage data it removes dictionary fields
-     * that ARE used, which causes getIntlayer() to return the createSafeFallback
-     * Proxy at runtime. That Proxy passes Astro's isHTMLString / isSlotString
-     * checks (any Symbol access returns a truthy proxy), so stringifyChunk tries
-     * to iterate chunk.instructions — the Proxy's apply trap returns a string
-     * instead of an iterator, throwing "Result of the Symbol.iterator method is
-     * not an object" in production (Cloudflare Workers SSR).
-     */
     minify: true,
-    purge: true,
+    purge: false,
 
     /**
      * Indicates if the build should check TypeScript types
      */
     checkTypes: false,
+    traversePattern: ["/*.{js,ts,mjs,cjs,jsx,tsx,astro}", "!/node_modules/**"],
   },
 };
 

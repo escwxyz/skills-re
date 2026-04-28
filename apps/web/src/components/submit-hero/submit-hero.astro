@@ -1,0 +1,15 @@
+---
+import { PageHero } from "@/components/page-hero"
+import { defaultLocale, getLocaleFromPath } from "intlayer"
+import type { LocalesValues } from "intlayer"
+import { getSubmitHeroContent } from "./submit-hero.data"
+
+const locale = (getLocaleFromPath(Astro.url.pathname) ??
+  defaultLocale) as LocalesValues
+// getIntlayer is not working
+const { eyebrow, title, description } = getSubmitHeroContent(locale)
+---
+
+<PageHero eyebrow={eyebrow} description={description} descriptionItalic>
+  {title}
+</PageHero>

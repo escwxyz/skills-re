@@ -20,12 +20,10 @@ export interface MobileMenuContent {
   title: string;
   close: string;
   description: string;
-  links: {
-    skills: string;
-    collections: string;
-    authors: string;
-    search: string;
-  };
+  skills: string;
+  collections: string;
+  authors: string;
+  search: string;
 }
 
 interface Props {
@@ -38,10 +36,10 @@ function MobileMenuInner({ locale, currentPathname, content }: Props) {
   const isOpen = useStore(isMobileMenuOpenAtom);
 
   const NAV_LINKS = [
-    { label: content.links.skills, href: "/skills" },
-    { label: content.links.collections, href: "/collections" },
-    { label: content.links.authors, href: "/authors" },
-    { label: content.links.search, href: "/search" },
+    { label: content.skills, href: "/skills" },
+    { label: content.collections, href: "/collections" },
+    { label: content.authors, href: "/authors" },
+    { label: content.search, href: "/search" },
   ];
 
   return (

@@ -39,7 +39,7 @@ const SELECT_FIELDS = [
   { label: "Runtime", options: ["Claude / any", "python", "node"] },
 ];
 
-export default function ManualSubmitForm() {
+export const ManualSubmitForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [skillName, setSkillName] = useState("code-review");
   const [version, setVersion] = useState("2.4.1");
@@ -383,4 +383,4 @@ export default function ManualSubmitForm() {
       </div>
     </div>
   );
-}
+};

@@ -16,27 +16,28 @@ const { pathname } = Astro.url
 
 const locale = (getLocaleFromPath(Astro.url.pathname) ??
   defaultLocale) as LocalesValues
-const { menus, submit } = getIntlayer("header", locale)
+const { authors, categories, collections, docs, skills, submit } = getIntlayer(
+  "header",
+  locale
+)
 const mobileMenuContent = getIntlayer("mobile-menu", locale)
 
 const MENUS = [
-  { label: menus.skills, path: "skills" },
-  { label: menus.categories, path: "categories" },
-  { label: menus.collections, path: "collections" },
-  { label: menus.authors, path: "authors" },
-  { label: menus.docs, path: "docs" },
+  { label: skills, path: "skills" },
+  { label: categories, path: "categories" },
+  { label: collections, path: "collections" },
+  { label: authors, path: "authors" },
+  { label: docs, path: "docs" },
 ]
 
 const mobileContent = {
-  title: String(mobileMenuContent.title),
-  close: String(mobileMenuContent.close),
-  description: String(mobileMenuContent.description),
-  links: {
-    skills: String(mobileMenuContent.links.skills),
-    collections: String(mobileMenuContent.links.collections),
-    authors: String(mobileMenuContent.links.authors),
-    search: String(mobileMenuContent.links.search),
-  },
+  title: mobileMenuContent.title,
+  close: mobileMenuContent.close,
+  description: mobileMenuContent.description,
+  skills: mobileMenuContent.skills,
+  collections: mobileMenuContent.collections,
+  authors: mobileMenuContent.authors,
+  search: mobileMenuContent.search,
 }
 ---
 

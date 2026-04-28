@@ -26,38 +26,36 @@
           "zh-Hans": "导航到网站的主要部分"
         }
       },
-      "links": {
-        "skills": {
-          "nodeType": "translation",
-          "translation": {
-            "en": "Skills",
-            "de": "Skills",
-            "zh-Hans": "Skills"
-          }
-        },
-        "collections": {
-          "nodeType": "translation",
-          "translation": {
-            "en": "Collections",
-            "de": "Sammlungen",
-            "zh-Hans": "合集"
-          }
-        },
-        "authors": {
-          "nodeType": "translation",
-          "translation": {
-            "en": "Authors",
-            "de": "Autoren",
-            "zh-Hans": "作者"
-          }
-        },
-        "search": {
-          "nodeType": "translation",
-          "translation": {
-            "en": "Search",
-            "de": "Suche",
-            "zh-Hans": "搜索"
-          }
+      "skills": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Skills",
+          "de": "Skills",
+          "zh-Hans": "Skills"
+        }
+      },
+      "collections": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Collections",
+          "de": "Sammlungen",
+          "zh-Hans": "合集"
+        }
+      },
+      "authors": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Authors",
+          "de": "Autoren",
+          "zh-Hans": "作者"
+        }
+      },
+      "search": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Search",
+          "de": "Suche",
+          "zh-Hans": "搜索"
         }
       }
     },

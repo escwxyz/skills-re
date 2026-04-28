@@ -11,12 +11,10 @@ const mobileMenuContent = {
       de: "Zu den wichtigsten Abschnitten der Website navigieren",
       "zh-Hans": "导航到网站的主要部分",
     }),
-    links: {
-      skills: t({ en: "Skills", de: "Skills", "zh-Hans": "Skills" }),
-      collections: t({ en: "Collections", de: "Sammlungen", "zh-Hans": "合集" }),
-      authors: t({ en: "Authors", de: "Autoren", "zh-Hans": "作者" }),
-      search: t({ en: "Search", de: "Suche", "zh-Hans": "搜索" }),
-    },
+    skills: t({ en: "Skills", de: "Skills", "zh-Hans": "Skills" }),
+    collections: t({ en: "Collections", de: "Sammlungen", "zh-Hans": "合集" }),
+    authors: t({ en: "Authors", de: "Autoren", "zh-Hans": "作者" }),
+    search: t({ en: "Search", de: "Suche", "zh-Hans": "搜索" }),
   },
 } satisfies Dictionary;
 

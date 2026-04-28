@@ -11,7 +11,24 @@ const { className = "" } = Astro.props
 const locale = (getLocaleFromPath(Astro.url.pathname) ??
   defaultLocale) as LocalesValues
 
-const { description, menus } = getIntlayer("footer", locale)
+const {
+  description,
+  legalCookies,
+  legalImprint,
+  legalPrivacy,
+  legalTerms,
+  legalTitle,
+  platformAuthors,
+  platformCollections,
+  platformIndex,
+  platformSearch,
+  platformTitle,
+  publishChangelog,
+  publishDocs,
+  publishSigning,
+  publishSubmit,
+  publishTitle,
+} = getIntlayer("footer", locale)
 ---
 
 <footer
@@ -28,43 +45,43 @@ const { description, menus } = getIntlayer("footer", locale)
       {description}
     </p>
   </div>
-  <div>
-    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
-      {menus.platform.title}
+    <div>
+      <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      {platformTitle}
     </h6>
     <ul
       class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
     >
-      <li><a href="/registry">{menus.platform.index}</a></li>
-      <li><a href="/collections">{menus.platform.collections}</a></li>
-      <li><a href="/authors">{menus.platform.authors}</a></li>
-      <li><a href="/search">{menus.platform.search}</a></li>
+      <li><a href="/registry">{platformIndex}</a></li>
+      <li><a href="/collections">{platformCollections}</a></li>
+      <li><a href="/authors">{platformAuthors}</a></li>
+      <li><a href="/search">{platformSearch}</a></li>
     </ul>
   </div>
   <div>
     <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
-      {menus.publish.title}
+      {publishTitle}
     </h6>
     <ul
       class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
     >
-      <li><a href="/submit">{menus.publish.submit}</a></li>
-      <li><a href="/changelog">{menus.publish.changelog}</a></li>
-      <li><a href="#">{menus.publish.docs}</a></li>
-      <li><a href="#">{menus.publish.signing}</a></li>
+      <li><a href="/submit">{publishSubmit}</a></li>
+      <li><a href="/changelog">{publishChangelog}</a></li>
+      <li><a href="#">{publishDocs}</a></li>
+      <li><a href="#">{publishSigning}</a></li>
     </ul>
   </div>
   <div>
     <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
-      {menus.legal.title}
+      {legalTitle}
     </h6>
     <ul
       class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
     >
-      <li><a href="/imprint">{menus.legal.imprint}</a></li>
-      <li><a href="/terms">{menus.legal.terms}</a></li>
-      <li><a href="/privacy">{menus.legal.privacy}</a></li>
-      <li><a href="/cookies">{menus.legal.cookies}</a></li>
+      <li><a href="/imprint">{legalImprint}</a></li>
+      <li><a href="/terms">{legalTerms}</a></li>
+      <li><a href="/privacy">{legalPrivacy}</a></li>
+      <li><a href="/cookies">{legalCookies}</a></li>
     </ul>
   </div>
 </footer>

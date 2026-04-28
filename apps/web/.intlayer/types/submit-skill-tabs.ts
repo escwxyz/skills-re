@@ -1,0 +1,30 @@
+/* eslint-disable */
+export default {
+  "key": "submit-skill-tabs",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "githubTitle": "GitHub Import",
+        "githubSubtitle": "Via repository URL",
+        "manualTitle": "Manual Submit",
+        "manualSubtitle": "Coming soon"
+      },
+      "de": {
+        "githubTitle": "GitHub-Import",
+        "githubSubtitle": "Über Repository-URL",
+        "manualTitle": "Manuelle Einreichung",
+        "manualSubtitle": "Demnächst verfügbar"
+      },
+      "zh-Hans": {
+        "githubTitle": "GitHub 导入",
+        "githubSubtitle": "通过仓库地址",
+        "manualTitle": "手动提交",
+        "manualSubtitle": "即将推出"
+      }
+    }
+  },
+  "localIds": [
+    "submit-skill-tabs::local::src/components/submit-skill-tabs/submit-skill-tabs.content.ts"
+  ]
+} as const;

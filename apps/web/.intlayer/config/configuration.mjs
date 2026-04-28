@@ -100,26 +100,10 @@ const dictionary = {
 const build = {
   "mode": "auto",
   "minify": true,
-  "purge": true,
+  "purge": false,
   "traversePattern": [
-    "**/*.{tsx,ts,js,mjs,cjs,jsx,vue,svelte,svte,astro}",
-    "!**/node_modules/**",
-    "!**/dist/**",
-    "!**/build/**",
-    "!**/.intlayer/**",
-    "!**/.next/**",
-    "!**/.nuxt/**",
-    "!**/.expo/**",
-    "!**/.vercel/**",
-    "!**/.turbo/**",
-    "!**/.tanstack/**",
-    "!**/*.config.*",
-    "!**/*.test.*",
-    "!**/*.spec.*",
-    "!**/*.stories.*",
-    "!**/*.d.ts",
-    "!**/*.d.ts.map",
-    "!**/*.map"
+    "/*.{js,ts,mjs,cjs,jsx,tsx,astro}",
+    "!/node_modules/**"
   ],
   "outputFormat": [
     "esm",
