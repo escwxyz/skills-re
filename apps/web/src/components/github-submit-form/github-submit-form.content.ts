@@ -28,8 +28,7 @@ const githubSubmitFormContent = {
     inputHelp: t({
       en: "Supports github.com/org/repo and github.com/org/repo/tree/branch/path URLs.",
       de: "Unterstützt github.com/org/repo- und github.com/org/repo/tree/branch/path-URLs.",
-      "zh-Hans":
-        "支持 github.com/org/repo 以及 github.com/org/repo/tree/branch/path 形式的地址。",
+      "zh-Hans": "支持 github.com/org/repo 以及 github.com/org/repo/tree/branch/path 形式的地址。",
     }),
     inputFetch: t({
       en: "Fetch →",

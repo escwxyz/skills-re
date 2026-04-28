@@ -62,5 +62,8 @@
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit"
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }
