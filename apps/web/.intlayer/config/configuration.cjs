@@ -102,7 +102,7 @@ const build = {
   "minify": true,
   "purge": true,
   "traversePattern": [
-    "**/*.{tsx,ts,js,mjs,cjs,jsx,vue,svelte,svte}",
+    "**/*.{tsx,ts,js,mjs,cjs,jsx,vue,svelte,svte,astro}",
     "!**/node_modules/**",
     "!**/dist/**",
     "!**/build/**",
