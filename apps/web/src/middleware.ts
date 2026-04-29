@@ -1,4 +1,5 @@
 import { defineMiddleware, sequence } from "astro:middleware";
+import { paraglideMiddleware } from "@/paraglide/server";
 import { authClient } from "@/lib/auth-client";
 
 const authMiddleware = defineMiddleware(async (context, next) => {
@@ -16,4 +17,13 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   return next();
 });
 
-export const onRequest = sequence(authMiddleware);
+const i18nMiddleware = defineMiddleware((context, next) => {
+  // Avoid consuming bodies for non-GET/HEAD requests
+  // https://github.com/opral/paraglide-js/issues/564
+  if (context.request.method !== "GET" && context.request.method !== "HEAD") {
+    return next(context.request);
+  }
+  return paraglideMiddleware(context.request, ({ request }) => next(request));
+});
+
+export const onRequest = sequence(authMiddleware, i18nMiddleware);
