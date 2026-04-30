@@ -1,18 +1,9 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
-import type {
-  EvaluationId,
-  RepoId,
-  SkillId,
-  SnapshotId,
-  TagId,
-  CategoryId,
-  UserId,
-} from "../utils";
+import type { EvaluationId, RepoId, SkillId, SnapshotId, TagId, UserId } from "../utils";
 
 import { baseTableColumns, currentTimestampMs } from "../utils";
-import { categoriesTable } from "./categories";
 import { reposTable } from "./repos";
 import { usersTable } from "./auth";
 import { tagsTable } from "./tags";
@@ -28,12 +19,6 @@ export const skillsTable = sqliteTable(
     isVerified: integer("is_verified", { mode: "boolean" }).default(false).notNull(),
     latestVersion: text("latest_version"),
     primaryCategory: text("primary_category"),
-    categoryId: text("category_id")
-      .$type<CategoryId | null>()
-      .references(() => categoriesTable.id, {
-        onDelete: "set null",
-        onUpdate: "cascade",
-      }),
     repoId: text("repo_id")
       .$type<RepoId>()
       .notNull()
@@ -65,7 +50,6 @@ export const skillsTable = sqliteTable(
       sql`${table.createdAt} is null or ${table.createdAt} >= 0`,
     ),
     check("skills_sync_time_non_negative", sql`${table.syncTime} >= 0`),
-    index("skills_categoryId_idx").on(table.categoryId),
     index("skills_createdAt_id_idx").on(table.createdAt, table.id),
     index("skills_repoId_idx").on(table.repoId),
     index("skills_userId_idx").on(table.userId),

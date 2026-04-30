@@ -1,7 +1,6 @@
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import {
-  categoriesTable,
   reposTable,
   snapshotsTable,
   skillsTagsTable,
@@ -12,6 +11,7 @@ import type { SkillId, TagId } from "@skills-re/db/utils";
 
 import { db } from "../shared/db";
 import { defaultLimit } from "../shared/pagination";
+import { CATEGORY_DEFINITION_BY_SLUG } from "../categories/taxonomy";
 
 const toTopSkillRows = () => ({
   authorHandle: reposTable.ownerHandle,
@@ -97,11 +97,9 @@ export async function getRelatedCategoriesByTagSlug(slug: string) {
   const rows = await db
     .select({
       count: sql<number>`count(distinct ${skillsTable.id})`,
-      name: categoriesTable.name,
-      slug: categoriesTable.slug,
+      slug: skillsTable.primaryCategory,
     })
     .from(skillsTable)
-    .innerJoin(categoriesTable, eq(categoriesTable.slug, skillsTable.primaryCategory))
     .where(
       and(
         inArray(skillsTable.id, taggedSkillIds),
@@ -109,9 +107,23 @@ export async function getRelatedCategoriesByTagSlug(slug: string) {
         sql`${skillsTable.primaryCategory} is not null`,
       ),
     )
-    .groupBy(categoriesTable.slug, categoriesTable.name);
+    .groupBy(skillsTable.primaryCategory);
 
-  return rows;
+  return rows.flatMap((row) => {
+    const definition =
+      CATEGORY_DEFINITION_BY_SLUG[row.slug as keyof typeof CATEGORY_DEFINITION_BY_SLUG];
+    if (!definition) {
+      return [];
+    }
+
+    return [
+      {
+        count: row.count,
+        name: definition.name,
+        slug: definition.slug,
+      },
+    ];
+  });
 }
 
 export async function getRelatedTagsByTagSlug(slug: string) {

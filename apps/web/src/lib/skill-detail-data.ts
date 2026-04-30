@@ -3,6 +3,7 @@ import type { AppRouterClient } from "@skills-re/api/routers/index";
 
 import { renderContentAsync, renderMarkdownAsync } from "./markdown";
 import { formatCompactNumber, formatInteger } from "./registry-data";
+import { getCategoryLabel } from "./category-taxonomy";
 
 interface SkillPathRecord {
   authorHandle?: string;
@@ -443,7 +444,9 @@ const buildSkillLayout = (input: {
 }) => {
   const latestSnapshot = input.snapshots[0] ?? null;
   const authorLabel = getAuthorLabel(input.skill, input.authorHandle);
-  const categoryLabel = input.skill.primaryCategory ?? "Uncategorized";
+  const categoryLabel = input.skill.primaryCategory
+    ? getCategoryLabel(input.skill.primaryCategory)
+    : getCategoryLabel("other");
   const publishedLabel = formatDateLabel(
     input.skill.createdAt ?? latestSnapshot?.sourceCommitDate ?? latestSnapshot?.syncTime,
   );

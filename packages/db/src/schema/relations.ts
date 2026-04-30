@@ -1,7 +1,6 @@
 import { relations } from "drizzle-orm";
 
 import { accountsTable, sessionsTable, usersTable } from "./auth";
-import { categoriesTable } from "./categories";
 import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
 import { reviewsTable } from "./reviews";
@@ -28,8 +27,6 @@ export const accountsRelations = relations(accountsTable, ({ one }) => ({
     references: [usersTable.id],
   }),
 }));
-
-export const categoriesRelations = relations(categoriesTable, () => ({}));
 
 export const reposRelations = relations(reposTable, ({ many }) => ({
   skills: many(skillsTable),

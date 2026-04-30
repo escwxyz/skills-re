@@ -19,7 +19,6 @@ describe("skills schema", () => {
     expect(skillsTable.slug.name).toBe("slug");
     expect(skillsTable.description.name).toBe("description");
     expect(skillsTable.visibility.name).toBe("visibility");
-    expect(skillsTable.categoryId.name).toBe("category_id");
     expect(skillsTable.repoId.name).toBe("repo_id");
     expect(skillsTable.userId.name).toBe("user_id");
     expect(skillsTable.latestEvaluationId.name).toBe("latest_evaluation_id");

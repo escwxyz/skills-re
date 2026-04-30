@@ -175,7 +175,6 @@ export interface SkillsServiceDeps {
   }) => Promise<SkillPathRow | null>;
   claimSkillById: (input: { skillId: string; userId: string }) => Promise<void>;
   createSkill: (input: {
-    categoryId?: string | null;
     description: string;
     repoId: string;
     slug: string;
@@ -616,7 +615,6 @@ const uploadSingleSkill = async (
   });
 
   const skillId = await deps.createSkill({
-    categoryId: null,
     description: skill.description,
     repoId,
     slug,

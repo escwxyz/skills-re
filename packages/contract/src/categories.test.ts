@@ -10,14 +10,12 @@ describe("categories contract", () => {
     expect(
       categoryListItemSchema.parse({
         count: 3,
-        description: "Tools and platforms",
         id: "category-1",
         name: "Tools & Platforms",
         slug: "tools-platforms",
       }),
     ).toEqual({
       count: 3,
-      description: "Tools and platforms",
       id: "category-1",
       name: "Tools & Platforms",
       slug: "tools-platforms",
@@ -28,7 +26,6 @@ describe("categories contract", () => {
     expect(
       categoryDetailSchema.parse({
         count: 5,
-        description: "Tools and platforms",
         id: "category-1",
         name: "Tools & Platforms",
         relatedTags: [
@@ -50,7 +47,6 @@ describe("categories contract", () => {
       }),
     ).toEqual({
       count: 5,
-      description: "Tools and platforms",
       id: "category-1",
       name: "Tools & Platforms",
       relatedTags: [

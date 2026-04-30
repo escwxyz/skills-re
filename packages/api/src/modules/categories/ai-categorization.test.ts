@@ -12,9 +12,11 @@ describe("categorization ai helpers", () => {
       {
         categories: [
           {
-            description: "Builds and ships code",
+            descriptionKey: "categories.code_frameworks.description",
             keywords: ["framework", "sdk"],
             name: "Code Frameworks",
+            nameKey: "categories.code_frameworks.name",
+            parentSlug: null,
             slug: skillCategorySlugSchema.enum["code-frameworks"],
           },
         ],

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { idSchema } from "./ids";
+import { categorySlugSchema } from "../categories-taxonomy";
 import { githubOwnerSchema, githubRepoSchema, skillSlugSchema, tagSlugSchema } from "./slugs";
 
 export const relatedTagSchema = z.object({
@@ -105,19 +106,17 @@ export const tagDetailSchema = z.object({
 
 export const categoryListItemSchema = z.object({
   count: z.number().int().nonnegative(),
-  description: z.string(),
   id: idSchema,
   name: z.string(),
-  slug: tagSlugSchema,
+  slug: categorySlugSchema,
 });
 
 export const categoryDetailSchema = z.object({
   count: z.number().int().nonnegative(),
-  description: z.string(),
   id: idSchema,
   name: z.string(),
   relatedTags: z.array(relatedTagSchema),
-  slug: tagSlugSchema,
+  slug: categorySlugSchema,
   topSkills: z.array(searchSkillListItemSchema),
 });
 

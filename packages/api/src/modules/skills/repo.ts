@@ -4,7 +4,7 @@ import { reposTable } from "@skills-re/db/schema/repos";
 import { skillsTable } from "@skills-re/db/schema/skills";
 import { snapshotsTable } from "@skills-re/db/schema/snapshots";
 import { skillsTagsTable, tagsTable } from "@skills-re/db/schema";
-import { asCategoryId, asRepoId, asSkillId, asUserId, createId } from "@skills-re/db/utils";
+import { asRepoId, asSkillId, asUserId, createId } from "@skills-re/db/utils";
 import type { RepoId, SkillId, SnapshotId } from "@skills-re/db/utils";
 
 import { db } from "../shared/db";
@@ -72,7 +72,6 @@ export async function listSkillsPageBySyncTime(input?: { cursor?: string; limit?
 }
 
 export async function createSkill(input: {
-  categoryId?: string | null;
   description: string;
   repoId: string;
   slug: string;
@@ -109,15 +108,6 @@ export async function createSkill(input: {
     throw new Error("Failed to create skill record");
   }
 
-  if (input.categoryId) {
-    await db
-      .update(skillsTable)
-      .set({
-        categoryId: asCategoryId(input.categoryId),
-      })
-      .where(eq(skillsTable.id, created.id));
-  }
-
   return created.id;
 }
 
@@ -128,7 +118,7 @@ export async function listSkillCategorizationTargetsByIds(skillIds: SkillId[]) {
 
   const rows = await db
     .select({
-      categoryId: skillsTable.categoryId,
+      categoryId: skillsTable.primaryCategory,
       description: skillsTable.description,
       id: skillsTable.id,
       tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
@@ -154,7 +144,7 @@ export async function updateSkillCategory(input: { categoryId: string | null; sk
   await db
     .update(skillsTable)
     .set({
-      categoryId: input.categoryId ? asCategoryId(input.categoryId) : null,
+      primaryCategory: input.categoryId,
     })
     .where(eq(skillsTable.id, asSkillId(input.skillId)));
 }
