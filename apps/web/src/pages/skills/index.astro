@@ -112,7 +112,7 @@ const nextHref = browseData.hasNextPage
 const sidebarOpen = Astro.cookies.get("sidebar_state")?.value === "true"
 
 const allCategoryItems = [
-  { id: "all", num: "00 / all", title: m.skills_browse_all_title(), countLabel: "" },
+  { id: "all", num: m.skills_browse_all_num(), title: m.skills_browse_all_title(), countLabel: "" },
   ...browseCategories,
 ]
 ---

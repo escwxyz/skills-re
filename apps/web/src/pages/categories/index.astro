@@ -2,6 +2,8 @@
 import Layout from "@/layouts/main.astro"
 import PageHero from "@/components/page-hero.astro"
 import CategoryCard from "@/components/category-card.astro"
+import { m } from "@/paraglide/messages"
+import { getLocale } from "@/paraglide/runtime"
 import { getLiveStats, toCategoryCardItem } from "@/lib/registry-data"
 import type { DailyMetricPoint } from "@/lib/registry-data"
 import { createServerClient } from "@/lib/server-orpc"
@@ -31,34 +33,37 @@ const categoriesPage = {
     toCategoryCardItem(category, index)
   ),
   stats: [
-    { label: "Disciplines", value: liveStats.categoriesCountLabel },
-    { label: "Skills Indexed", value: liveStats.skillsCountLabel },
-    { label: "Listed Authors", value: liveStats.authorsCountLabel },
-    { label: "New Skills (30d)", value: liveStats.newSkills30dLabel },
+    { label: m.categories_index_stat_disciplines(), value: liveStats.categoriesCountLabel },
+    { label: m.categories_index_stat_skills_indexed(), value: liveStats.skillsCountLabel },
+    { label: m.categories_index_stat_listed_authors(), value: liveStats.authorsCountLabel },
+    { label: m.categories_index_stat_new_skills(), value: liveStats.newSkills30dLabel },
   ],
 }
 const totalSkills = categoriesPage.categories.reduce(
   (sum, category) => sum + category.skillCount,
   0
 )
+const locale = getLocale()
 ---
 
-<Layout title="The Classifications — skills.re">
+<Layout title={`${m.categories_index_title()} — skills.re`}>
   <PageHero
-    eyebrow="The Registry — Classifications"
-    description={`A fixed set of ${categoryCount} disciplines organizes the registry. Every skill belongs to exactly one classification — each one a distinct thread of practice, a coherent body of work.`}
+    eyebrow={m.categories_index_eyebrow()}
+    description={m.categories_index_description({
+      count: categoryCount.toLocaleString(locale),
+    })}
   >
-    The <em>Classifications</em>
+    <em>{m.categories_index_title()}</em>
     <aside
       slot="aside"
       class="border-border text-muted-foreground mt-8 self-end border-t pt-6 font-mono text-[11px] leading-[1.7] md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-8"
     >
       <span class="text-foreground mb-2 block tracking-[.16em] uppercase">
-        § How to read this page
+        {m.categories_index_reading_heading()}
       </span>
-      Each card is a classification — a named discipline with a distinct number, a
-      body of {totalSkills.toLocaleString()} skills divided among them. The counts
-      are pulled from the live registry catalog. Click any card to browse its index.
+      {m.categories_index_reading_body({
+        total: totalSkills.toLocaleString(locale),
+      })}
     </aside>
   </PageHero>
 
@@ -98,8 +103,7 @@ const totalSkills = categoriesPage.categories.reduce(
   <div
     class="border-border text-muted-foreground border-b p-6 text-center font-mono text-[10.5px] tracking-widest uppercase"
   >
-    <b class="text-foreground font-medium">§ Note —</b> Classifications are assigned
-    by the Registry Desk on submission and may be contested via pull request. The
-    counts on this page reflect the current public registry catalog.
+    <b class="text-foreground font-medium">{m.categories_index_note_lead()}</b>{" "}
+    {m.categories_index_note_body()}
   </div>
 </Layout>
