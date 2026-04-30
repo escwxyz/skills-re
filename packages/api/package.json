@@ -15,7 +15,9 @@
       "default": "./src/routers/index.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "check-types": "tsc -b"
+  },
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/groq": "^3.0.35",

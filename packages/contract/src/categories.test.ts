@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
+import {
+  categoryDetailSchema,
+  categoryListItemSchema,
+  relatedCategorySchema,
+} from "./common/content";
 import { categoriesContract } from "./categories";
 
 describe("categories contract", () => {
@@ -10,14 +14,12 @@ describe("categories contract", () => {
     expect(
       categoryListItemSchema.parse({
         count: 3,
-        description: "Tools and platforms",
         id: "category-1",
         name: "Tools & Platforms",
         slug: "tools-platforms",
       }),
     ).toEqual({
       count: 3,
-      description: "Tools and platforms",
       id: "category-1",
       name: "Tools & Platforms",
       slug: "tools-platforms",
@@ -28,7 +30,6 @@ describe("categories contract", () => {
     expect(
       categoryDetailSchema.parse({
         count: 5,
-        description: "Tools and platforms",
         id: "category-1",
         name: "Tools & Platforms",
         relatedTags: [
@@ -50,7 +51,6 @@ describe("categories contract", () => {
       }),
     ).toEqual({
       count: 5,
-      description: "Tools and platforms",
       id: "category-1",
       name: "Tools & Platforms",
       relatedTags: [
@@ -69,6 +69,20 @@ describe("categories contract", () => {
           title: "Widget",
         },
       ],
+    });
+  });
+
+  test("accepts a related category payload", () => {
+    expect(
+      relatedCategorySchema.parse({
+        count: 2,
+        name: "Tools & Platforms",
+        slug: "tools-platforms",
+      }),
+    ).toEqual({
+      count: 2,
+      name: "Tools & Platforms",
+      slug: "tools-platforms",
     });
   });
 

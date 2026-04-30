@@ -4,6 +4,7 @@ import PageHero from "@/components/page-hero.astro"
 import { SkillCard } from "@/components/skill-card"
 import { m } from "@/paraglide/messages"
 import { getLocale, localizeHref, localizeUrl } from "@/paraglide/runtime"
+import { getCategoryDescription, getCategoryLabel } from "@/lib/category-taxonomy"
 import {
   getCategoryPresentation,
   toCategoryCardItem,
@@ -33,23 +34,25 @@ const categoryPresentation = getCategoryPresentation(
   categoryDetail.slug,
   categoryCards.length
 )
+const categoryTitle = getCategoryLabel(categoryDetail.slug)
+const categoryDescription = getCategoryDescription(categoryDetail.slug)
 const currentCategory =
   categoryCards.find((category) => category.id === categoryDetail.slug) ??
   ({
-    description: categoryDetail.description,
+    description: categoryDescription,
     id: categoryDetail.slug,
     num: categoryPresentation.num,
     skillCount: categoryDetail.count,
-    title: categoryDetail.name,
+    title: categoryTitle,
     variant: categoryPresentation.variant,
   } as const)
 
 const categoryPage = {
   category: {
     ...currentCategory,
-    description: categoryDetail.description,
+    description: categoryDescription,
     skillCount: categoryDetail.count,
-    title: categoryDetail.name,
+    title: categoryTitle,
   },
   otherCategories: categoryCards.filter(
     (category) => category.id !== categoryDetail.slug

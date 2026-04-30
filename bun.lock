@@ -71,6 +71,7 @@
         "@shikijs/themes": "^4.0.2",
         "@skills-re/api": "workspace:*",
         "@skills-re/auth": "workspace:*",
+        "@skills-re/contract": "workspace:*",
         "@skills-re/env": "workspace:*",
         "@takumi-rs/image-response": "^1.0.14",
         "@takumi-rs/wasm": "^1.0.14",

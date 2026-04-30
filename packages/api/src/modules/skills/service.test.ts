@@ -600,7 +600,6 @@ describe("skills service", () => {
       },
       {
         createSkill: {
-          categoryId: null,
           description: "Widget skill",
           repoId: "repo-1",
           slug: "widget",

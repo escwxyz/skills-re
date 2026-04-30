@@ -42,20 +42,20 @@ describe("registry-data", () => {
       toCategoryCardItem(
         {
           count: 42,
-          description: "Voice-consistent drafting and editing.",
-          id: "cat_writing",
-          name: "Writing & Editing",
-          slug: "writing",
+          id: "cat_code_frameworks",
+          name: "Code Frameworks",
+          slug: "code-frameworks",
         },
         0,
       ),
     ).toEqual({
-      description: "Voice-consistent drafting and editing.",
-      id: "writing",
-      num: "04",
+      description:
+        "Reusable libraries, SDKs, boilerplates, and scaffolds for building software faster.",
+      id: "code-frameworks",
+      num: "01",
       skillCount: 42,
-      title: "Writing & Editing",
-      variant: "blue",
+      title: "Code Frameworks",
+      variant: "default",
     });
   });
 
@@ -71,7 +71,7 @@ describe("registry-data", () => {
       downloadsTrending: 320,
       id: "skill_123",
       latestVersion: "2.4.1",
-      primaryCategory: "Code & Craft",
+      primaryCategory: "code-frameworks",
       slug: "code-review",
       stargazerCount: 5231,
       staticAudit: {
@@ -90,7 +90,7 @@ describe("registry-data", () => {
       auditScore: 97,
       authorLabel: "core-systems",
       badgeLabel: "v2.4.1",
-      categoryLabel: "Code & Craft",
+      categoryLabel: "Code Frameworks",
       description: "Reads a diff carefully.",
       id: "skill_123",
       slug: "code-review",
@@ -105,19 +105,18 @@ describe("registry-data", () => {
       toBrowseCategoryItem(
         {
           count: 1420,
-          description: "Diffs, code, refactors.",
           id: "cat_code",
-          name: "Code & Craft",
-          slug: "code-craft",
+          name: "Code Frameworks",
+          slug: "code-frameworks",
         },
         0,
       ),
     ).toEqual({
       count: 1420,
       countLabel: "1,420",
-      id: "code-craft",
+      id: "code-frameworks",
       num: "01",
-      title: "Code & Craft",
+      title: "Code Frameworks",
     });
   });
 
@@ -130,7 +129,7 @@ describe("registry-data", () => {
         downloadsTrending: 1200,
         id: "skill_456",
         latestVersion: "2.4.1",
-        primaryCategory: "Code & Craft",
+        primaryCategory: "code-frameworks",
         slug: "code-review",
         title: "code-review",
       }),
@@ -138,7 +137,7 @@ describe("registry-data", () => {
       auditScore: undefined,
       authorLabel: "hallie",
       badgeLabel: "v2.4.1",
-      categoryLabel: "Code & Craft",
+      categoryLabel: "Code Frameworks",
       description: "Anchored PR review.",
       downloadsLabel: formatCompactNumber(412_000),
       id: "skill_456",

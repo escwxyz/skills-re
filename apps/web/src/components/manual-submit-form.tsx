@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 
+import { CATEGORY_SLUGS, getCategoryLabel, getCategoryPresentation } from "@/lib/category-taxonomy";
 import { cn } from "@/lib/utils";
 import { localizeHref } from "@/paraglide/runtime";
 
@@ -34,8 +35,7 @@ const STAGE_OPTIONS: { value: Stage; label: string }[] = [
   { value: "stable", label: "Stable" },
 ];
 
-const SELECT_FIELDS = [
-  { label: "Classification", options: ["01 Code & Craft", "02 Research", "03 Data", "04 Writing"] },
+const OTHER_SELECT_FIELDS = [
   { label: "License", options: ["MIT", "Apache-2.0", "CC-BY-SA"] },
   { label: "Runtime", options: ["Claude / any", "python", "node"] },
 ];
@@ -52,6 +52,10 @@ export const ManualSubmitForm = () => {
     `The LX-44 reviewer is a high-fidelity diagnostic tool designed for pull requests. Unlike standard linters, it bypasses whitespace entirely, focusing on the behavioral delta of the change — intent drift, test gaps, and small naming opportunities.\n\nShips with structured output for CI, a better story for monorepos, and a tuned silence budget so it doesn't nitpick.`,
   );
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set(["review", "diff", "ci"]));
+  const classificationOptions = CATEGORY_SLUGS.map((slug, index) => ({
+    label: `${getCategoryPresentation(slug, index).num} ${getCategoryLabel(slug)}`,
+    value: slug,
+  }));
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => {
@@ -230,7 +234,27 @@ export const ManualSubmitForm = () => {
 
           {/* Classification / License / Runtime */}
           <div className={cn(fieldClass, "grid grid-cols-1 gap-3 sm:grid-cols-3")}>
-            {SELECT_FIELDS.map((field) => (
+            <div>
+              <label className={labelClass}>Classification</label>
+              <div className="relative">
+                <select
+                  className={cn(inputClass, "cursor-pointer appearance-none pr-7")}
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2314120e'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 10px center",
+                  }}
+                >
+                  {classificationOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {OTHER_SELECT_FIELDS.map((field) => (
               <div key={field.label}>
                 <label className={labelClass}>{field.label}</label>
                 <div className="relative">

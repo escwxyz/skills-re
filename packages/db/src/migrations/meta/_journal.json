@@ -57,6 +57,13 @@
       "when": 1777142383282,
       "tag": "0007_tricky_landau",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1777550189345,
+      "tag": "0008_strong_vision",
+      "breakpoints": true
     }
   ]
 }

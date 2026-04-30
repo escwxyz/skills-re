@@ -1,3 +1,9 @@
+import {
+  getCategoryDescription,
+  getCategoryLabel,
+  getCategoryPresentation,
+} from "./category-taxonomy";
+
 interface SearchSkillListItem {
   author?: {
     githubUrl?: string;
@@ -28,7 +34,6 @@ interface SearchSkillListItem {
 
 interface CategoryListItem {
   count: number;
-  description: string;
   id: string;
   name: string;
   slug: string;
@@ -162,17 +167,6 @@ export interface FeaturedPickItem {
   versionLabel: string;
 }
 
-const CATEGORY_PRESENTATION: Record<string, Pick<CategoryCardItem, "num" | "variant">> = {
-  browsing: { num: "05", variant: "italic" },
-  "code-craft": { num: "01", variant: "default" },
-  data: { num: "03", variant: "default" },
-  design: { num: "07", variant: "default" },
-  ops: { num: "06", variant: "green" },
-  research: { num: "02", variant: "accent" },
-  safety: { num: "08", variant: "accent" },
-  writing: { num: "04", variant: "blue" },
-};
-
 const INTEGER_FORMATTER = new Intl.NumberFormat("en-US");
 const COMPACT_INTEGER_FORMATTER = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
@@ -186,12 +180,6 @@ const VALID_BROWSE_SORTS = new Set<BrowseSort>([
   "updated",
   "views",
 ]);
-
-export const getCategoryPresentation = (slug: string, index: number) =>
-  CATEGORY_PRESENTATION[slug] ?? {
-    num: String(index + 1).padStart(2, "0"),
-    variant: "default" as const,
-  };
 
 const getAuthorLabel = (skill: SearchSkillListItem) =>
   skill.author?.name ?? skill.authorHandle ?? skill.author?.handle ?? "Unknown author";
@@ -252,6 +240,8 @@ export const formatInteger = (value: number) => INTEGER_FORMATTER.format(value);
 
 export const formatCompactNumber = (value: number) => COMPACT_INTEGER_FORMATTER.format(value);
 
+export { getCategoryPresentation };
+
 export const sumDailyMetrics = (points: DailyMetricPoint[]) => {
   const totals = {
     newSkills: 0,
@@ -293,11 +283,11 @@ export const toCategoryCardItem = (category: CategoryListItem, index: number): C
   const presentation = getCategoryPresentation(category.slug, index);
 
   return {
-    description: category.description,
+    description: getCategoryDescription(category.slug),
     id: category.slug,
     num: presentation.num,
     skillCount: category.count,
-    title: category.name,
+    title: getCategoryLabel(category.slug),
     variant: presentation.variant,
   };
 };
@@ -313,7 +303,7 @@ export const toBrowseCategoryItem = (
     countLabel: formatInteger(category.count),
     id: category.slug,
     num: presentation.num,
-    title: category.name,
+    title: getCategoryLabel(category.slug),
   };
 };
 
@@ -321,7 +311,9 @@ export const toSkillCardItem = (skill: SearchSkillListItem): SkillCardItem => ({
   auditScore: skill.staticAudit?.overallScore,
   authorLabel: getAuthorLabel(skill),
   badgeLabel: skill.latestVersion ? `v${skill.latestVersion}` : undefined,
-  categoryLabel: skill.primaryCategory ?? "Uncategorized",
+  categoryLabel: skill.primaryCategory
+    ? getCategoryLabel(skill.primaryCategory)
+    : getCategoryLabel("other"),
   description: skill.description,
   id: skill.id,
   slug: skill.slug,

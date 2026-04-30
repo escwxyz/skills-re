@@ -2,8 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { categoriesTable } from "./categories";
-import { categoriesRelations } from "./relations";
+import { categoryCountsTable } from "./category-counts";
 
 const getExtraConfigNames = (table: object) => {
   const builderKey = Object.getOwnPropertySymbols(table).find((symbol) =>
@@ -21,23 +20,20 @@ const getExtraConfigNames = (table: object) => {
     .filter((name): name is string => typeof name === "string");
 };
 
-describe("categories schema", () => {
-  test("exports the categories table and relations", () => {
-    expect(categoriesTable).toBeDefined();
-    expect(categoriesRelations).toBeDefined();
+describe("category counts schema", () => {
+  test("exports the category counts table", () => {
+    expect(categoryCountsTable).toBeDefined();
   });
 
   test("exposes the expected core columns", () => {
-    expect(categoriesTable.id.name).toBe("id");
-    expect(categoriesTable.count.name).toBe("count");
-    expect(categoriesTable.description.name).toBe("description");
-    expect(categoriesTable.keywords.name).toBe("keywords");
-    expect(categoriesTable.name.name).toBe("name");
-    expect(categoriesTable.slug.name).toBe("slug");
-    expect(categoriesTable.status.name).toBe("status");
+    expect(categoryCountsTable.count.name).toBe("count");
+    expect(categoryCountsTable.slug.name).toBe("slug");
+    expect(categoryCountsTable.updatedAt.name).toBe("updated_at");
   });
 
-  test("retains the legacy count check constraint", () => {
-    expect(getExtraConfigNames(categoriesTable)).toContain("categories_count_non_negative");
+  test("retains the non-negative count check constraint", () => {
+    expect(getExtraConfigNames(categoryCountsTable)).toContain(
+      "category_counts_count_non_negative",
+    );
   });
 });

@@ -19,7 +19,7 @@ describe("search-data", () => {
                 downloadsAllTime: 412_000,
                 id: "skill_123",
                 latestVersion: "2.4.1",
-                primaryCategory: "Code & Craft",
+                primaryCategory: "code-frameworks",
                 slug: "code-review",
                 title: "code-review",
               },

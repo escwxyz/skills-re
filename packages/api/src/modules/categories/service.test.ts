@@ -4,6 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import { asCategoryId } from "@skills-re/db/utils";
 import { createCategoriesService } from "./service";
+import { CATEGORY_DEFINITIONS } from "./taxonomy";
 
 describe("categories service", () => {
   test("maps category list rows directly", async () => {
@@ -14,11 +15,9 @@ describe("categories service", () => {
         return [
           {
             count: 3,
-            description: "Tools and platforms",
             id: "category-1",
             name: "Tools & Platforms",
             slug: "tools-platforms",
-            status: "active",
           },
         ];
       },
@@ -27,55 +26,60 @@ describe("categories service", () => {
     await expect(service.listCategories({ limit: 10 })).resolves.toEqual([
       {
         count: 3,
-        description: "Tools and platforms",
         id: "category-1",
         name: "Tools & Platforms",
         slug: "tools-platforms",
-        status: "active",
       },
     ]);
     expect(calls).toEqual([{ limit: 10 }]);
   });
 
-  test("drops deprecated categories from public reads", async () => {
+  test("returns public categories directly", async () => {
     const service = createCategoriesService({
+      getRelatedTagsByCategorySlug: () => [],
+      getTopSkillsByCategorySlug: () => [],
       findCategoryBySlug: () => ({
         count: 3,
-        description: "Old",
         id: "category-1",
         name: "Old",
-        slug: "old",
-        status: "deprecated",
+        slug: "tools-platforms",
       }),
       listCategories: () => [
         {
           count: 3,
-          description: "Old",
           id: "category-1",
           name: "Old",
-          slug: "old",
-          status: "deprecated",
+          slug: "tools-platforms",
         },
         {
           count: 5,
-          description: "Tools and platforms",
           id: "category-2",
           name: "Tools & Platforms",
           slug: "tools-platforms",
-          status: "active",
         },
       ],
     });
 
-    await expect(service.getCategoryBySlug({ slug: "old" })).resolves.toBeNull();
+    await expect(service.getCategoryBySlug({ slug: "tools-platforms" })).resolves.toEqual({
+      count: 3,
+      id: "category-1",
+      name: "Old",
+      relatedTags: [],
+      slug: "tools-platforms",
+      topSkills: [],
+    });
     await expect(service.listCategories()).resolves.toEqual([
       {
+        count: 3,
+        id: "category-1",
+        name: "Old",
+        slug: "tools-platforms",
+      },
+      {
         count: 5,
-        description: "Tools and platforms",
         id: "category-2",
         name: "Tools & Platforms",
         slug: "tools-platforms",
-        status: "active",
       },
     ]);
   });
@@ -86,11 +90,9 @@ describe("categories service", () => {
         slug === "tools-platforms"
           ? {
               count: 5,
-              description: "Tools and platforms",
               id: "category-1",
               name: "Tools & Platforms",
-              slug,
-              status: "active",
+              slug: "tools-platforms",
             }
           : null,
       getRelatedTagsByCategorySlug: (slug) => [
@@ -126,7 +128,6 @@ describe("categories service", () => {
 
     await expect(service.getCategoryBySlug({ slug: "tools-platforms" })).resolves.toEqual({
       count: 5,
-      description: "Tools and platforms",
       id: "category-1",
       name: "Tools & Platforms",
       relatedTags: [
@@ -223,11 +224,9 @@ describe("categories service", () => {
         slug === "code-frameworks"
           ? {
               count: 5,
-              description: "Code frameworks",
               id: asCategoryId("category-1"),
               name: "Code Frameworks",
               slug,
-              status: "active",
             }
           : null,
       generateSkillCategoriesBatch: (input) => {
@@ -263,14 +262,7 @@ describe("categories service", () => {
         };
       },
       computeSkillCountForCategory: () => 5,
-      listDefinitionsForAi: () => [
-        {
-          description: "Code frameworks",
-          keywords: ["framework", "sdk"],
-          name: "Code Frameworks",
-          slug: "code-frameworks",
-        },
-      ],
+      listDefinitionsForAi: () => CATEGORY_DEFINITIONS.slice(0, 1),
       listSkillCategorizationTargetsByIds: () => [
         {
           categoryId: null,

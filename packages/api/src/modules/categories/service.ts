@@ -6,25 +6,27 @@ import {
   skillCategorySlugSchema,
 } from "./ai-categorization";
 import type { SkillCategoryDefinition } from "./ai-categorization";
+import { CATEGORY_DEFINITIONS } from "./taxonomy";
+import type { CategorySlug } from "./taxonomy";
 import type { AiTaskRuntime } from "../ai/runtime";
 import { asCategoryId, asSkillId } from "@skills-re/db/utils";
 import type { CategoryId } from "@skills-re/db/utils";
 
 interface CategoryListRow {
   count: number;
-  description: string;
   id: string;
   name: string;
-  slug: string;
-  status?: "active" | "deprecated";
+  slug: CategorySlug;
 }
 
+type MaybePromise<T> = T | Promise<T>;
+
 interface CategoriesServiceDeps {
-  countCategories: () => Promise<number>;
-  computeSkillCountForCategory: (categoryId: CategoryId) => Promise<number>;
-  findCategoryBySlug: (slug: string) => Promise<CategoryListRow | null>;
-  getRelatedTagsByCategorySlug: (slug: string) => Promise<{ count: number; slug: string }[]>;
-  getTopSkillsByCategorySlug: (slug: string) => Promise<SearchSkillRow[]>;
+  countCategories: () => MaybePromise<number>;
+  computeSkillCountForCategory: (categoryId: CategoryId) => MaybePromise<number>;
+  findCategoryBySlug: (slug: string) => MaybePromise<CategoryListRow | null>;
+  getRelatedTagsByCategorySlug: (slug: string) => MaybePromise<{ count: number; slug: string }[]>;
+  getTopSkillsByCategorySlug: (slug: string) => MaybePromise<SearchSkillRow[]>;
   generateSkillCategoriesBatch: (
     input: {
       categories: SkillCategoryDefinition[];
@@ -36,7 +38,7 @@ interface CategoriesServiceDeps {
       }[];
     },
     aiTasks?: AiTaskRuntime,
-  ) => Promise<{
+  ) => MaybePromise<{
     items: {
       confidence: number;
       key: string;
@@ -45,7 +47,7 @@ interface CategoriesServiceDeps {
       scores: Record<string, number>;
     }[];
   }>;
-  listSkillCategorizationTargetsByIds: (skillIds: string[]) => Promise<
+  listSkillCategorizationTargetsByIds: (skillIds: string[]) => MaybePromise<
     {
       categoryId: string | null;
       description: string;
@@ -54,11 +56,14 @@ interface CategoriesServiceDeps {
       title: string;
     }[]
   >;
-  listCategories: (input?: { all?: boolean; limit?: number }) => Promise<CategoryListRow[]>;
-  listCategoriesForAi: (input?: { limit?: number }) => Promise<string[]>;
-  listDefinitionsForAi: () => Promise<SkillCategoryDefinition[]>;
-  patchCategoryCount: (input: { categoryId: CategoryId; count: number }) => Promise<void>;
-  updateSkillCategory: (input: { categoryId: string | null; skillId: string }) => Promise<void>;
+  listCategories: (input?: { all?: boolean; limit?: number }) => MaybePromise<CategoryListRow[]>;
+  listCategoriesForAi: (input?: { limit?: number }) => MaybePromise<string[]>;
+  listDefinitionsForAi: () => MaybePromise<SkillCategoryDefinition[]>;
+  patchCategoryCount: (input: { categoryId: CategoryId; count: number }) => MaybePromise<void>;
+  updateSkillCategory: (input: {
+    categoryId: string | null;
+    skillId: string;
+  }) => MaybePromise<void>;
 }
 
 const createDefaultCategoriesDeps = async (): Promise<CategoriesServiceDeps> => {
@@ -85,17 +90,7 @@ const createDefaultCategoriesDeps = async (): Promise<CategoriesServiceDeps> => 
       ),
     listCategories: repo.listCategories,
     listCategoriesForAi: repo.listCategoriesForAi,
-    listDefinitionsForAi: async () => {
-      const defs = await repo.listCategoryDefinitions({
-        statuses: ["active", "deprecated"],
-      });
-      return defs.map((category) => ({
-        description: category.description,
-        keywords: JSON.parse(category.keywords) as string[],
-        name: category.name,
-        slug: category.slug as SkillCategoryDefinition["slug"],
-      }));
-    },
+    listDefinitionsForAi: () => [...CATEGORY_DEFINITIONS],
     patchCategoryCount: repo.patchCategoryCount,
     updateSkillCategory: skillsRepo.updateSkillCategory,
   };
@@ -161,7 +156,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
     async getCategoryBySlug(input: { slug: string }) {
       const findCategoryBySlug = await getDep("findCategoryBySlug");
       const row = await findCategoryBySlug(input.slug);
-      if (!(row && row.status === "active")) {
+      if (!row) {
         return null;
       }
 
@@ -173,7 +168,6 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
 
       return {
         count: row.count,
-        description: row.description,
         id: row.id,
         name: row.name,
         relatedTags: relatedTags.map((related) => ({
@@ -187,15 +181,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
 
     async listCategories(input?: { all?: boolean; limit?: number }) {
       const listCategories = await getDep("listCategories");
-      const categories = await listCategories(input);
-      return categories
-        .filter((row) => row.status === "active")
-        .toSorted((left, right) => {
-          if (right.count !== left.count) {
-            return right.count - left.count;
-          }
-          return left.slug.localeCompare(right.slug);
-        });
+      return await listCategories(input);
     },
 
     async listCategoriesForAi(input?: { limit?: number }) {

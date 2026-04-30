@@ -2,37 +2,19 @@ import { extractJsonMiddleware, generateText, wrapLanguageModel } from "ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
+import { CATEGORY_SLUGS } from "./taxonomy";
+import type { CategoryDefinition } from "./taxonomy";
 
-export const skillCategorySlugSchema = z.enum([
-  "code-frameworks",
-  "tools-platforms",
-  "analysis-insights",
-  "design-creative",
-  "process-methodology",
-  "communication-strategy",
-  "domain-expertise",
-  "operations-automation",
-  "other",
-]);
+export const skillCategorySlugSchema = z.enum(CATEGORY_SLUGS);
 
 export type SkillCategorySlug = z.infer<typeof skillCategorySlugSchema>;
 
 const MAX_DESCRIPTION_CHARS = 2500;
 const JSON_CODE_FENCE_PATTERN = /^```(?:json)?\s*([\s\S]*?)\s*```$/i;
 
-const categoryScoresSchema = z.object({
-  "analysis-insights": z.number().min(0).max(10),
-  "code-frameworks": z.number().min(0).max(10),
-  "communication-strategy": z.number().min(0).max(10),
-  "design-creative": z.number().min(0).max(10),
-  "domain-expertise": z.number().min(0).max(10),
-  "operations-automation": z.number().min(0).max(10),
-  other: z.number().min(0).max(10),
-  "process-methodology": z.number().min(0).max(10),
-  "tools-platforms": z.number().min(0).max(10),
-});
+export const categoryScoresSchema = z.record(skillCategorySlugSchema, z.number().min(0).max(10));
 
-const categorizationOutputSchema = z.object({
+export const categorizationOutputSchema = z.object({
   items: z.array(
     z.object({
       confidence: z.number().min(0).max(1),
@@ -44,12 +26,7 @@ const categorizationOutputSchema = z.object({
   ),
 });
 
-export interface SkillCategoryDefinition {
-  slug: SkillCategorySlug;
-  name: string;
-  description: string;
-  keywords: string[];
-}
+export type SkillCategoryDefinition = CategoryDefinition;
 
 export interface SkillCategorizationInputItem {
   key: string;
@@ -243,7 +220,7 @@ export const generateSkillCategoriesBatch = async (
   const categoriesText = input.categories
     .map(
       (category) =>
-        `- ${category.slug} (${category.name}): ${category.description} | keywords: ${category.keywords.join(", ")}`,
+        `- ${category.slug} (${category.name}): keywords: ${category.keywords.join(", ")}`,
     )
     .join("\n");
 

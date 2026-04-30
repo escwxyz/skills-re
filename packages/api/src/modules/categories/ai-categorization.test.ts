@@ -3,7 +3,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { generateSkillCategoriesBatch, skillCategorySlugSchema } from "./ai-categorization";
+import {
+  categorizationOutputSchema,
+  generateSkillCategoriesBatch,
+  skillCategorySlugSchema,
+} from "./ai-categorization";
 import type { AiTaskRuntime } from "../ai/runtime";
 
 describe("categorization ai helpers", () => {
@@ -12,9 +16,11 @@ describe("categorization ai helpers", () => {
       {
         categories: [
           {
-            description: "Builds and ships code",
+            descriptionKey: "categories_code_frameworks_description",
             keywords: ["framework", "sdk"],
             name: "Code Frameworks",
+            nameKey: "categories_code_frameworks_name",
+            parentSlug: null,
             slug: skillCategorySlugSchema.enum["code-frameworks"],
           },
         ],
@@ -44,5 +50,30 @@ describe("categorization ai helpers", () => {
         primaryCategory: "code-frameworks",
       }),
     ]);
+  });
+
+  test("rejects categorization payloads missing a category score", () => {
+    expect(() =>
+      categorizationOutputSchema.parse({
+        items: [
+          {
+            confidence: 0.87,
+            key: "skill-1",
+            primaryCategory: "code-frameworks",
+            reasoning: "clear primary deliverable",
+            scores: {
+              "analysis-insights": 1,
+              "code-frameworks": 10,
+              "communication-strategy": 0,
+              "design-creative": 0,
+              "domain-expertise": 2,
+              "operations-automation": 0,
+              other: 0,
+              "process-methodology": 1,
+            },
+          },
+        ],
+      }),
+    ).toThrow();
   });
 });

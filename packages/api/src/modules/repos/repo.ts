@@ -12,7 +12,15 @@ export async function findRepoByNameWithOwner(nameWithOwner: string) {
     .where(eq(reposTable.nameWithOwner, nameWithOwner))
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    updatedAt: row.updatedAt,
+  };
 }
 
 export async function updateRepoStatsByNameWithOwner(input: {
@@ -67,7 +75,15 @@ export async function findRepoById(id: string) {
     .where(eq(reposTable.id, asRepoId(id)))
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    updatedAt: row.updatedAt,
+  };
 }
 
 export async function createRepo(input: {
