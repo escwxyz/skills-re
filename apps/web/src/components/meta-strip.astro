@@ -1,0 +1,26 @@
+---
+import type { StatStripItem } from "@/lib/registry-data"
+
+interface Props {
+  items: StatStripItem[]
+}
+
+const { items } = Astro.props
+---
+
+<div
+  class="border-border text-muted-foreground grid grid-cols-3 border-b font-mono text-[10.5px] tracking-widest uppercase sm:grid-cols-6"
+>
+  {
+    items.map((item) => (
+      <div class="border-border border-r px-3 py-2.5">
+        {item.label}
+        <b class="text-foreground ml-2 font-medium">{item.value}</b>
+      </div>
+    ))
+  }
+  <div class="px-3 py-2.5 text-right sm:text-right">
+    Status
+    <b class="text-editorial-green ml-2 font-medium">● Nominal</b>
+  </div>
+</div>

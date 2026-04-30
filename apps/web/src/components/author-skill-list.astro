@@ -1,0 +1,35 @@
+---
+import { m } from "@/paraglide/messages"
+import AuthorSkillRow from "@/components/author-skill-row.astro"
+import type { AuthorSkillRowData } from "@/lib/author-data"
+
+interface Props {
+  skills: AuthorSkillRowData[]
+  skillCount: number
+}
+
+const { skills, skillCount } = Astro.props
+---
+
+<div class="py-9 pr-6 pl-4 md:pr-8 md:pl-6">
+  <div
+    class="border-border mb-5.5 flex items-baseline justify-between border-b pb-3"
+  >
+    <h3 class="font-display m-0 text-[32px] font-normal">{m.author_skills_title({})}</h3>
+    <div
+      class="text-muted-foreground font-mono text-[10.5px] tracking-[.14em] uppercase"
+    >
+      {m.author_skills_total_sorted({ count: String(skillCount) })}
+    </div>
+  </div>
+
+  {skills.map((skill) => <AuthorSkillRow skill={skill} />)}
+
+  {
+    skills.length === 0 && (
+      <p class="text-muted-foreground font-serif italic">
+        {m.author_skills_none({})}
+      </p>
+    )
+  }
+</div>

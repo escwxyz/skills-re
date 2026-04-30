@@ -1,0 +1,90 @@
+---
+import { ThemeToggle } from "@/components/theme-toggle"
+import { LoginDialog } from "@/components/login-dialog"
+import { MobileMenu } from "@/components/mobile-menu"
+import { buttonVariants } from "@/components/ui/button"
+import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
+import { isLoginDialogOpenAtom } from "@/stores/app"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { m } from "@/paraglide/messages"
+import { getLocale, localizeHref } from "@/paraglide/runtime"
+import type { Locale } from "@/paraglide/runtime"
+
+const { user: currentUser } = Astro.locals
+
+const isActive = (href: string) => Astro.url.pathname.includes(href)
+const { pathname } = Astro.url
+const locale = getLocale() as Locale
+const getLocalizedHref = (path: string) => localizeHref(path)
+
+const MENUS = [
+  { label: m.header_skills(), path: "/skills" },
+  { label: m.header_categories(), path: "/categories" },
+  { label: m.header_collections(), path: "/collections" },
+  { label: m.header_authors(), path: "/authors" },
+  { label: m.header_docs(), path: "/docs" },
+]
+---
+
+<header
+  class="bg-background/80 sticky top-0 z-100 grid place-items-center border-b pr-3 pl-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm"
+  style="height: var(--header-height)"
+>
+  <nav class="grid w-full grid-cols-[1fr_auto_1fr] items-center">
+    <div class="hidden items-center gap-4.5 md:flex">
+      {
+        MENUS.map((menu) => (
+          <a
+            href={getLocalizedHref(menu.path)}
+            class={
+              isActive(getLocalizedHref(menu.path))
+                ? "underline"
+                : "text-muted-foreground"
+            }
+          >
+            {menu.label}
+          </a>
+        ))
+      }
+    </div>
+    <div class="flex items-center md:hidden">
+      <MobileMenu client:load currentPathname={pathname} />
+    </div>
+
+    <a
+      href={getLocalizedHref("/")}
+      class="font-display text-foreground text-center text-[22px] tracking-normal normal-case italic"
+      ><b class="font-serif not-italic">skills</b><i>.re</i></a
+    >
+    <div class="flex items-center justify-end gap-4.5">
+      <a
+        href={getLocalizedHref("/search")}
+        class={`hidden md:inline ${isActive(getLocalizedHref("/search")) ? "underline" : "text-muted-foreground"}`}
+        ><MagnifyingGlassIcon size={20} /></a
+      >
+      <ThemeToggle className="hidden md:block" client:load />
+      <LanguageSwitcher
+        className="hidden md:flex"
+        locale={locale}
+        client:load
+      />
+      <a
+        href={getLocalizedHref("/submit")}
+        class:list={["no-underline", buttonVariants({ variant: "secondary" })]}
+      >
+        <CloudArrowUpIcon />
+        <span class="hidden md:inline">{m.header_submit()}</span>
+      </a>
+      {
+        currentUser ? (
+          <a href={getLocalizedHref("/account")}>{currentUser.name}</a>
+        ) : (
+          <LoginDialog
+            onOpenChange={(open) => !open && isLoginDialogOpenAtom.set(false)}
+            client:load
+          />
+        )
+      }
+    </div>
+  </nav>
+</header>

@@ -1,0 +1,25 @@
+---
+import Layout from "@/layouts/main.astro"
+import PageHero from "@/components/page-hero.astro"
+import CollectionsGrid from "@/components/collections-grid.astro"
+import { createServerClient } from "@/lib/server-orpc"
+
+const client = createServerClient(Astro.request)
+const { page: collections } = await client.collections
+  .list({ limit: 100 })
+  .catch(() => ({ page: [] }))
+---
+
+<Layout title="Collections — skills.re">
+  <PageHero
+    eyebrow="§ Curated Collections"
+    description="Curated sets of skills that work well together. Built by the desk and the community — each one tested, each one argued over."
+    borderThick
+  >
+    Hand-picked <em>skill stacks.</em>
+  </PageHero>
+
+  <div class="px-4 pb-15 md:px-6">
+    <CollectionsGrid collections={collections} />
+  </div>
+</Layout>

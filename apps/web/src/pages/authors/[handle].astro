@@ -1,0 +1,99 @@
+---
+import { m } from "@/paraglide/messages"
+import Layout from "@/layouts/main.astro"
+import PageHero from "@/components/page-hero.astro"
+import AuthorStats from "@/components/author-stats.astro"
+import AuthorSkillList from "@/components/author-skill-list.astro"
+import AuthorActivity from "@/components/author-activity.astro"
+import { createServerClient } from "@/lib/server-orpc"
+import {
+  buildAuthorActivity,
+  buildAuthorStats,
+  getAuthorDisplayName,
+  getAvatarLabel,
+  toAuthorSkillRowData,
+} from "@/lib/author-data"
+import { localizeUrl } from "@/paraglide/runtime"
+
+const { handle } = Astro.params
+const client = createServerClient(Astro.request)
+
+if (!handle) {
+  throw Astro.redirect(localizeUrl(new URL("/authors", Astro.url)).pathname)
+}
+
+const author = await client.skills.getAuthorByHandle({ handle })
+if (!author) {
+  throw Astro.redirect(localizeUrl(new URL("/authors", Astro.url)).pathname)
+}
+
+const skillsResult = await client.skills.search({
+  authorHandle: handle,
+  limit: 50,
+  sort: "downloads-all-time",
+})
+const skills = skillsResult.page
+
+const pageData = {
+  activity: buildAuthorActivity(skills),
+  avatarLabel: getAvatarLabel(author),
+  githubUrl: author.githubUrl,
+  handle: author.handle,
+  isVerified: Boolean(author.isVerified),
+  name: getAuthorDisplayName(author),
+  skillCount: author.skillCount ?? skills.length,
+  skills: skills.map(toAuthorSkillRowData),
+  stats: buildAuthorStats(author, skills),
+}
+---
+
+<Layout title={`${pageData.name} — skills.re`}>
+  <PageHero
+    eyebrow={m.author_page_eyebrow()}
+    description={m.author_page_description({ handle: pageData.handle })}
+  >
+    {pageData.name}
+
+    <div slot="media" class="flex flex-col items-center justify-center px-2">
+      <div
+        class="border-background bg-foreground font-display text-background flex h-60 w-60 items-center justify-center rounded-full border-[6px] border-double text-[120px] italic [outline:1px_solid_var(--foreground)]"
+      >
+        {pageData.avatarLabel}
+      </div>
+      <div
+        class="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.14em] uppercase"
+      >
+        @{pageData.handle}
+        {
+          pageData.isVerified && (
+            <span class="text-editorial-green">
+              {" "}
+              · ● {m.author_page_verified()}
+            </span>
+          )
+        }
+      </div>
+      {
+        pageData.githubUrl && (
+          <div class="mt-6 flex flex-wrap justify-center gap-2.5">
+            <a href={pageData.githubUrl} class="btn">
+              {m.author_page_github_profile()} <span>→</span>
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </PageHero>
+
+  <AuthorStats stats={pageData.stats} />
+
+  <div class="border-border grid grid-cols-1 border-b lg:grid-cols-[2.3fr_1fr]">
+    <div class="border-border border-b lg:border-r lg:border-b-0">
+      <AuthorSkillList
+        skills={pageData.skills}
+        skillCount={pageData.skillCount}
+      />
+    </div>
+    <AuthorActivity items={pageData.activity} />
+  </div>
+</Layout>

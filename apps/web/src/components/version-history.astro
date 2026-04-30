@@ -1,0 +1,46 @@
+---
+import { m } from "@/paraglide/messages"
+interface VersionEntry {
+  version: string
+  date: string
+  label?: string
+}
+
+interface Props {
+  versions: VersionEntry[]
+}
+
+const { versions } = Astro.props
+---
+
+<div>
+  <div
+    style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
+  >
+    {m.skill_detail_changelog({})}
+  </div>
+  <div>
+    {
+      versions.map((v, i) => (
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; gap: 8px;">
+            <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--ink);">
+              v.{v.version}
+              {v.label && (
+                <span style="color: var(--muted-foreground); margin-left: 4px;">
+                  ({v.label === "current" ? m.skill_detail_current() : v.label})
+                </span>
+              )}
+            </span>
+            <span style="font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--muted-foreground); white-space: nowrap;">
+              {v.date}
+            </span>
+          </div>
+          {i < versions.length - 1 && (
+            <div style="border-top: 1px dashed var(--rule); opacity: .5;" />
+          )}
+        </div>
+      ))
+    }
+  </div>
+</div>

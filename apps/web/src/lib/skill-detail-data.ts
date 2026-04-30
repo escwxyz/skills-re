@@ -132,10 +132,10 @@ export interface SkillLayoutData {
 export interface SkillFrontmatterData {
   allowedTools?: string;
   compatibility?: string;
-  description?: string;
+  description: string;
   license?: string;
   metadata?: Record<string, string>;
-  name?: string;
+  name: string;
 }
 
 export interface SkillRelatedItem {
@@ -347,10 +347,10 @@ const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
   const result: SkillFrontmatterData = {
     allowedTools: readFrontmatterValue(values, "allowed-tools", "allowedtools"),
     compatibility: readFrontmatterValue(values, "compatibility"),
-    description: readFrontmatterValue(values, "description"),
+    description: readFrontmatterValue(values, "description") || "No description",
     license: readFrontmatterValue(values, "license"),
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-    name: readFrontmatterValue(values, "name"),
+    name: readFrontmatterValue(values, "name") || "No name",
   };
 
   return Object.values(result).some((value) => value !== undefined) ? result : null;

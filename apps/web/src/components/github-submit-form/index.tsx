@@ -4,18 +4,17 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useForm } from "@tanstack/react-form";
-import { useIntlayer } from "react-intlayer";
 
 import type { GithubSubmitInput } from "@/lib/github-submit";
 import { githubSubmitUrlSchema } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
 import { GithubSubmitFormFooter } from "./github-submit-form-footer";
 import { GithubSubmitFormHeader } from "./github-submit-form-header";
 import { GithubSubmitFormPreview } from "./github-submit-form-preview";
 import { GithubSubmitFormStatusRail } from "./github-submit-form-status-rail";
-import { formatMessage } from "./github-submit-form.utils";
 import type { FetchStatus, RepoPreview, SubmitStatus } from "./github-submit-form.types";
 
 const RESET_DELAY_MS = 5000;
@@ -32,7 +31,6 @@ export function GithubSubmitForm() {
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const form = useForm({ defaultValues: { repoUrl: "" } });
-  const content = useIntlayer("github-submit-form");
 
   const addLogs = (...lines: string[]) => setLogs((prev) => [...prev, ...lines.filter(Boolean)]);
 
@@ -78,7 +76,7 @@ export function GithubSubmitForm() {
       setRepoPreview(null);
       setSelectedSkillRootPaths([]);
       setLogs([
-        `> ${content.logsErrorPrefix} ${parsed.error.issues[0]?.message ?? content.logsInvalidUrlError}`,
+        `> ${m.logs_error_prefix({})} ${parsed.error.issues[0]?.message ?? m.logs_invalid_url_error({})}`,
       ]);
       return;
     }
@@ -92,9 +90,9 @@ export function GithubSubmitForm() {
     setSelectedSkillRootPaths([]);
     setSubmitLocked(false);
     setLogs([
-      `> ${content.logsValidatingUrl}`,
-      `> ${formatMessage(content.logsNormalizedUrl, { githubUrl: target.githubUrl })}`,
-      `> ${content.logsFetchingMetadata}`,
+      `> ${m.logs_validating_url({})}`,
+      `> ${m.logs_normalized_url({ githubUrl: target.githubUrl })}`,
+      `> ${m.logs_fetching_metadata({})}`,
     ]);
 
     try {
@@ -103,26 +101,26 @@ export function GithubSubmitForm() {
       })) as RepoPreview;
 
       const validSkillPaths = preview.skills.map((skill) => skill.skillRootPath);
-      const folderName = preview.requestedSkillPath ?? content.previewSkillRootPathFallback;
+      const folderName = preview.requestedSkillPath ?? m.preview_skill_root_path_fallback({});
 
       addLogs(
-        `> ${formatMessage(content.logsRepositorySummary, {
+        `> ${m.logs_repository_summary({
           owner: preview.owner,
           repo: preview.repo,
           branch: preview.branch,
         })}`,
-        `> ${formatMessage(content.logsFoundPublishableSkills, {
+        `> ${m.logs_found_publishable_skills({
           count: preview.skills.length,
           folder: folderName,
         })}`,
         preview.invalidSkills.length > 0
-          ? `> ${formatMessage(content.logsSkippedInvalidSkills, {
+          ? `> ${m.logs_skipped_invalid_skills({
               count: preview.invalidSkills.length,
             })}`
-          : `> ${content.logsNoInvalidSkillsSkipped}`,
+          : `> ${m.logs_no_invalid_skills_skipped({})}`,
         validSkillPaths.length > 0
-          ? `> ${content.logsReviewAndChoose}`
-          : `> ${content.logsNoPublishableSkills}`,
+          ? `> ${m.logs_review_and_choose({})}`
+          : `> ${m.logs_no_publishable_skills({})}`,
       );
 
       setRepoPreview(preview);
@@ -130,7 +128,7 @@ export function GithubSubmitForm() {
       setFetchStatus("fetched");
     } catch (error) {
       console.error("Failed to fetch GitHub repository preview", error);
-      addLogs(`> ${content.logsFailedToFetchPreview}`);
+      addLogs(`> ${m.logs_failed_to_fetch_preview({})}`);
       setFetchStatus("error");
     }
   };
@@ -143,7 +141,7 @@ export function GithubSubmitForm() {
     setSubmitLocked(true);
     setSubmitStatus("submitting");
     addLogs(
-      `> ${formatMessage(content.logsSubmittingSelected, {
+      `> ${m.logs_submitting_selected({
         count: selectedSkillRootPaths.length,
       })}`,
     );
@@ -159,14 +157,14 @@ export function GithubSubmitForm() {
       if (result.status === "submitted") {
         addLogs(
           result.workflowId
-            ? `> ${formatMessage(content.logsJobQueuedWithId, {
+            ? `> ${m.logs_job_queued_with_id({
                 workflowId: result.workflowId,
               })}`
-            : `> ${content.logsJobQueued}`,
-          `> ${formatMessage(content.logsSubmittedSkills, {
+            : `> ${m.logs_job_queued({})}`,
+          `> ${m.logs_submitted_skills({
             count: result.skillsCount,
           })}`,
-          `> ${content.logsSkillsBeingProcessed}`,
+          `> ${m.logs_skills_being_processed({})}`,
         );
         setSubmitStatus("submitted");
         scheduleReset();
@@ -174,13 +172,15 @@ export function GithubSubmitForm() {
       }
 
       addLogs(
-        `> ${formatMessage(content.logsSubmissionSkipped, { reason: result.reason ?? "unknown" })}`,
+        `> ${m.logs_submission_skipped({
+          reason: result.reason ?? "unknown",
+        })}`,
       );
       setSubmitStatus("error");
       setSubmitLocked(false);
     } catch (error) {
       console.error("Failed to submit GitHub repository", error);
-      addLogs(`> ${content.logsSubmissionFailed}`, `> ${content.logsLiveApiRequestFailed}`);
+      addLogs(`> ${m.logs_submission_failed({})}`, `> ${m.logs_live_api_request_failed({})}`);
       setSubmitStatus("error");
       setSubmitLocked(false);
     }
@@ -209,56 +209,56 @@ export function GithubSubmitForm() {
     fetchStatus !== "fetching" &&
     submitStatus !== "submitting";
 
-  let submitLabel: ReactNode = content.footerSubmit;
+  let submitLabel: ReactNode = m.footer_submit({});
   if (submitStatus === "submitting") {
-    submitLabel = content.footerSubmitting;
+    submitLabel = m.footer_submitting({});
   } else if (submitStatus === "submitted") {
-    submitLabel = content.footerQueued;
+    submitLabel = m.footer_queued({});
   }
 
   const selectedSummary = repoPreview
-    ? formatMessage(content.footerSelectedSummary, {
+    ? m.footer_selected_summary({
         selected: selectedSkillRootPaths.length,
         total: repoPreview.skills.length,
       })
-    : content.previewNoPreviewYet;
+    : m.preview_no_preview_yet({});
 
   const statusItems = [
     {
       id: "fetch",
-      label: content.railFetch,
+      label: m.rail_fetch({}),
       status: fetchStatus,
       statusText:
         fetchStatus === "idle"
-          ? content.statusFetchIdle
+          ? m.status_fetch_idle({})
           : fetchStatus === "fetching"
-            ? content.statusFetchFetching
+            ? m.status_fetch_fetching({})
             : fetchStatus === "fetched"
-              ? content.statusFetchFetched
-              : content.statusFetchError,
+              ? m.status_fetch_fetched({})
+              : m.status_fetch_error({}),
     },
     {
       id: "submit",
-      label: content.railSubmit,
+      label: m.rail_submit({}),
       status: submitStatus,
       statusText:
         submitStatus === "idle"
-          ? content.statusSubmitIdle
+          ? m.status_submit_idle({})
           : submitStatus === "submitting"
-            ? content.statusSubmitSubmitting
+            ? m.status_submit_submitting({})
             : submitStatus === "submitted"
-              ? content.statusSubmitSubmitted
-              : content.statusSubmitError,
+              ? m.status_submit_submitted({})
+              : m.status_submit_error({}),
     },
   ] as const;
 
   return (
     <div className="px-6 py-10 lg:px-8">
-      <GithubSubmitFormHeader description={content.pageDescription} title={content.pageTitle} />
+      <GithubSubmitFormHeader description={m.page_description({})} title={m.page_title({})} />
 
       <div className="mb-6">
         <label className="mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
-          {content.inputLabel}
+          {m.input_label({})}
         </label>
         <form.Field name="repoUrl">
           {(field) => (
@@ -269,8 +269,7 @@ export function GithubSubmitForm() {
                   "placeholder:text-muted-text/60 disabled:opacity-60",
                 )}
                 type="url"
-                // not working
-                // placeholder={String(content.inputPlaceholder)}
+                placeholder={m.input_placeholder({})}
                 value={field.state.value}
                 onChange={(event) => {
                   field.handleChange(event.target.value);
@@ -301,12 +300,12 @@ export function GithubSubmitForm() {
                     : "text-ink hover:bg-paper-2",
                 )}
               >
-                {fetchStatus === "fetching" ? content.inputFetching : content.inputFetch}
+                {fetchStatus === "fetching" ? m.input_fetching({}) : m.input_fetch({})}
               </button>
             </div>
           )}
         </form.Field>
-        <p className="font-serif mt-1.5 text-[12px] italic text-muted-text">{content.inputHelp}</p>
+        <p className="font-serif mt-1.5 text-[12px] italic text-muted-text">{m.input_help({})}</p>
       </div>
 
       {logs.length > 0 && (
@@ -333,21 +332,21 @@ export function GithubSubmitForm() {
 
       {repoPreview && (
         <GithubSubmitFormPreview
-          branchLabel={content.previewBranch}
-          clearLabel={content.previewClear}
-          invalidSkillsLabel={content.previewInvalidSkillsTitle}
+          branchLabel={m.preview_branch({})}
+          clearLabel={m.preview_clear({})}
+          invalidSkillsLabel={m.preview_invalid_skills_title({})}
           onClearSelectedSkills={clearSelectedSkills}
           onToggleSkillSelection={toggleSkillSelection}
           onSelectAllSkills={selectAllSkills}
-          previewLabel={content.previewTitle}
-          publishableSkillsLabel={content.previewPublishableSkills}
+          previewLabel={m.preview_title({})}
+          publishableSkillsLabel={m.preview_publishable_skills({})}
           repoPreview={repoPreview}
-          rootPathFallback={content.previewSkillRootPathFallback}
-          selectAllLabel={content.previewSelectAll}
-          selectSkillsLabel={content.previewSelectSkillsToPublish}
+          rootPathFallback={m.preview_skill_root_path_fallback({})}
+          selectAllLabel={m.preview_select_all({})}
+          selectSkillsLabel={m.preview_select_skills_to_publish({})}
           selectedSkillRootPaths={selectedSkillRootPaths}
-          skippedInvalidSkillsLabel={content.previewSkippedInvalidSkills}
-          skillTitleFallback={content.previewUntitledSkill}
+          skippedInvalidSkillsLabel={m.preview_skipped_invalid_skills({})}
+          skillTitleFallback={m.preview_untitled_skill({})}
         />
       )}
 

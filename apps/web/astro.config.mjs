@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import alchemy from "alchemy/cloudflare/astro";
 import { defineConfig, envField } from "astro/config";
 import react from "@astrojs/react";
-import { intlayer } from "astro-intlayer";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 
 // https://astro.build/config
 export default defineConfig({
@@ -32,7 +32,35 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss({ optimize: true })],
+    plugins: [
+      tailwindcss({ optimize: true }),
+      paraglideVitePlugin({
+        project: "./project.inlang",
+        outdir: "./src/paraglide",
+        cookieName: "locale",
+        strategy: ["url", "cookie", "preferredLanguage", "baseLocale"],
+        urlPatterns: [
+          // Localized home route
+          {
+            localized: [
+              ["de", "/de"],
+              ["zh-Hans", "/zh-Hans"],
+              ["en", "/"],
+            ],
+            pattern: "/",
+          },
+          // Other routes - locale-aware
+          {
+            localized: [
+              ["de", "/de/:path(.*)?"],
+              ["zh-Hans", "/zh-Hans/:path(.*)?"],
+              ["en", "/:path(.*)?"],
+            ],
+            pattern: "/:path(.*)?",
+          },
+        ],
+      }),
+    ],
   },
-  integrations: [react(), intlayer()],
+  integrations: [react()],
 });

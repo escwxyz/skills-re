@@ -1,8 +1,10 @@
 import type { APIRoute } from "astro";
-import { getMultilingualUrls } from "intlayer";
+import { baseLocale as defaultLocale, locales } from "@/paraglide/runtime";
 
 const getAllMultilingualUrls = (urls: string[]) =>
-  urls.flatMap((url) => Object.values(getMultilingualUrls(url)) as string[]);
+  locales.flatMap((locale) =>
+    urls.map((url) => (locale === defaultLocale ? url : `/${locale}${url}`)),
+  );
 
 const disallowedPaths = getAllMultilingualUrls(["/dashboard", "/api"]);
 

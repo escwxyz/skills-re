@@ -1,0 +1,86 @@
+---
+import { localizeHref } from "@/paraglide/runtime"
+import { m } from "@/paraglide/messages"
+
+interface Props {
+  className?: string
+}
+
+const { className = "" } = Astro.props
+---
+
+<footer
+  class:list={[
+    "border-border mx-auto mt-7.5 mb-1.5 grid w-full grid-cols-1 gap-8 border-t-[3px] px-2.5 py-10 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr]",
+    className,
+  ]}
+>
+  <div>
+    <div class="font-display mb-4 text-[40px] leading-none italic">
+      skills.<em>re</em>
+    </div>
+    <p class="text-ink-2 font-serif text-[13px]">
+      {m.footer_description({})}
+    </p>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      {m.footer_platform_title({})}
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li>
+        <a href={localizeHref("/skills")}>{m.footer_platform_index({})}</a>
+      </li>
+      <li>
+        <a href={localizeHref("/collections")}
+          >{m.footer_platform_collections({})}</a
+        >
+      </li>
+      <li>
+        <a href={localizeHref("/authors")}>{m.footer_platform_authors({})}</a>
+      </li>
+      <li>
+        <a href={localizeHref("/search")}>{m.footer_platform_search({})}</a>
+      </li>
+    </ul>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      {m.footer_publish_title({})}
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li>
+        <a href={localizeHref("/submit")}>{m.footer_publish_submit({})}</a>
+      </li>
+      <li>
+        <a href={localizeHref("/changelog")}>{m.footer_publish_changelog({})}</a
+        >
+      </li>
+      <li><a href="#">{m.footer_publish_docs({})}</a></li>
+      <li><a href="#">{m.footer_publish_signing({})}</a></li>
+    </ul>
+  </div>
+  <div>
+    <h6 class="mb-3 font-mono text-[10.5px] tracking-[.16em] uppercase">
+      {m.footer_legal_title({})}
+    </h6>
+    <ul
+      class="text-ink-2 m-0 list-none p-0 font-mono text-[11px] leading-loose"
+    >
+      <li>
+        <a href={localizeHref("/imprint")}>{m.footer_legal_imprint({})}</a>
+      </li>
+      <li><a href={localizeHref("/terms")}>{m.footer_legal_terms({})}</a></li>
+      <li>
+        <a href={localizeHref("/privacy")}>{m.footer_legal_privacy({})}</a>
+      </li>
+      <li>
+        <a href={localizeHref("/cookies")}>{m.footer_legal_cookies({})}</a>
+      </li>
+    </ul>
+  </div>
+</footer>
