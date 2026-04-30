@@ -12,7 +12,7 @@ export const relatedTagSchema = z.object({
 export const relatedCategorySchema = z.object({
   count: z.number().int().nonnegative(),
   name: z.string(),
-  slug: tagSlugSchema,
+  slug: categorySlugSchema,
 });
 
 export const skillListItemSchema = z.object({

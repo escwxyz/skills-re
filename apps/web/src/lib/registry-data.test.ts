@@ -42,8 +42,6 @@ describe("registry-data", () => {
       toCategoryCardItem(
         {
           count: 42,
-          description:
-            "Prompts and skills for building application code, frameworks, and libraries.",
           id: "cat_code_frameworks",
           name: "Code Frameworks",
           slug: "code-frameworks",
@@ -51,7 +49,8 @@ describe("registry-data", () => {
         0,
       ),
     ).toEqual({
-      description: "Prompts and skills for building application code, frameworks, and libraries.",
+      description:
+        "Reusable libraries, SDKs, boilerplates, and scaffolds for building software faster.",
       id: "code-frameworks",
       num: "01",
       skillCount: 42,
@@ -106,8 +105,6 @@ describe("registry-data", () => {
       toBrowseCategoryItem(
         {
           count: 1420,
-          description:
-            "Prompts and skills for building application code, frameworks, and libraries.",
           id: "cat_code",
           name: "Code Frameworks",
           slug: "code-frameworks",

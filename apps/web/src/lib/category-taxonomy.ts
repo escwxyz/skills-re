@@ -1,62 +1,39 @@
-import { m } from "@/paraglide/messages";
-import { getLocale } from "@/paraglide/runtime";
-import { CATEGORY_DEFINITION_BY_SLUG } from "../../../../packages/contract/src/categories-taxonomy";
-import type { CategorySlug } from "../../../../packages/contract/src/categories-taxonomy";
+import {
+  CATEGORY_DEFINITION_BY_SLUG,
+  CATEGORY_DEFINITIONS,
+  CATEGORY_SLUGS,
+} from "@skills-re/contract/categories-taxonomy";
+import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 
-type CategoryLocale = "de" | "en" | "zh-Hans";
-type CategoryMessageKey = keyof typeof CATEGORY_MESSAGE_GETTERS;
-type CategoryMessageGetter = (locale: CategoryLocale) => string;
-
-const CATEGORY_MESSAGE_GETTERS = {
-  categories_analysis_insights_description: (locale) =>
-    m.categories_analysis_insights_description({}, { locale }),
-  categories_analysis_insights_name: (locale) =>
-    m.categories_analysis_insights_name({}, { locale }),
-  categories_code_frameworks_description: (locale) =>
-    m.categories_code_frameworks_description({}, { locale }),
-  categories_code_frameworks_name: (locale) => m.categories_code_frameworks_name({}, { locale }),
-  categories_communication_strategy_description: (locale) =>
-    m.categories_communication_strategy_description({}, { locale }),
-  categories_communication_strategy_name: (locale) =>
-    m.categories_communication_strategy_name({}, { locale }),
-  categories_design_creative_description: (locale) =>
-    m.categories_design_creative_description({}, { locale }),
-  categories_design_creative_name: (locale) => m.categories_design_creative_name({}, { locale }),
-  categories_domain_expertise_description: (locale) =>
-    m.categories_domain_expertise_description({}, { locale }),
-  categories_domain_expertise_name: (locale) => m.categories_domain_expertise_name({}, { locale }),
-  categories_operations_automation_description: (locale) =>
-    m.categories_operations_automation_description({}, { locale }),
-  categories_operations_automation_name: (locale) =>
-    m.categories_operations_automation_name({}, { locale }),
-  categories_other_description: (locale) => m.categories_other_description({}, { locale }),
-  categories_other_name: (locale) => m.categories_other_name({}, { locale }),
-  categories_process_methodology_description: (locale) =>
-    m.categories_process_methodology_description({}, { locale }),
-  categories_process_methodology_name: (locale) =>
-    m.categories_process_methodology_name({}, { locale }),
-  categories_tools_platforms_description: (locale) =>
-    m.categories_tools_platforms_description({}, { locale }),
-  categories_tools_platforms_name: (locale) => m.categories_tools_platforms_name({}, { locale }),
-} as const satisfies Record<string, CategoryMessageGetter>;
-
-const normalizeLocale = (locale: string | undefined): CategoryLocale =>
-  locale === "de" || locale === "zh-Hans" ? locale : "en";
+const CATEGORY_DESCRIPTIONS: Record<CategorySlug, string> = {
+  "analysis-insights":
+    "Research, analysis, and synthesis work that turns information into insight.",
+  "code-frameworks":
+    "Reusable libraries, SDKs, boilerplates, and scaffolds for building software faster.",
+  "communication-strategy":
+    "Writing, messaging, stakeholder alignment, and planning work that shapes how ideas land.",
+  "design-creative":
+    "Visual, branding, illustration, and other creative work focused on presentation.",
+  "domain-expertise":
+    "Specialized knowledge and experience in a particular industry, field, or vertical.",
+  "operations-automation":
+    "Automation, orchestration, and recurring operational workflows that keep things running.",
+  other: "Fallback classification for ambiguous, weak, or uncategorized items.",
+  "process-methodology":
+    "Process, workflow, checklist, and protocol work that defines how tasks should be done.",
+  "tools-platforms":
+    "Tooling, platforms, CLI utilities, infrastructure, and workspace support systems.",
+};
 
 const getCategoryDefinition = (slug: string) =>
   CATEGORY_DEFINITION_BY_SLUG[slug as CategorySlug] ?? CATEGORY_DEFINITION_BY_SLUG.other;
 
-const getCategoryMessage = (locale: CategoryLocale, key: string) => {
-  const message = CATEGORY_MESSAGE_GETTERS[key as CategoryMessageKey];
-  return message ? message(locale) : "";
-};
-
-export const getCategoryCopy = (locale: CategoryLocale, slug: string) => {
+export const getCategoryCopy = (_locale: string, slug: string) => {
   const definition = getCategoryDefinition(slug);
 
   return {
-    description: getCategoryMessage(locale, definition.descriptionKey),
-    title: getCategoryMessage(locale, definition.nameKey),
+    description: CATEGORY_DESCRIPTIONS[definition.slug],
+    title: definition.name,
   };
 };
 
@@ -69,11 +46,9 @@ export const getCategoryPresentation = (slug: string, index: number) => {
   } as const;
 };
 
-export const getCategoryTitle = (slug: string) =>
-  getCategoryCopy(normalizeLocale(getLocale()), slug).title;
+export const getCategoryTitle = (slug: string) => getCategoryCopy("en", slug).title;
 
-export const getCategoryDescription = (slug: string) =>
-  getCategoryCopy(normalizeLocale(getLocale()), slug).description;
+export const getCategoryDescription = (slug: string) => getCategoryCopy("en", slug).description;
 
 export const getCategoryLabel = (slug: string) => getCategoryTitle(slug);
 

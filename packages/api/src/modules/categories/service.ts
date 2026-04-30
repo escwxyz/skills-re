@@ -7,6 +7,7 @@ import {
 } from "./ai-categorization";
 import type { SkillCategoryDefinition } from "./ai-categorization";
 import { CATEGORY_DEFINITIONS } from "./taxonomy";
+import type { CategorySlug } from "./taxonomy";
 import type { AiTaskRuntime } from "../ai/runtime";
 import { asCategoryId, asSkillId } from "@skills-re/db/utils";
 import type { CategoryId } from "@skills-re/db/utils";
@@ -15,7 +16,7 @@ interface CategoryListRow {
   count: number;
   id: string;
   name: string;
-  slug: string;
+  slug: CategorySlug;
 }
 
 type MaybePromise<T> = T | Promise<T>;
@@ -180,13 +181,7 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
 
     async listCategories(input?: { all?: boolean; limit?: number }) {
       const listCategories = await getDep("listCategories");
-      const categories = await listCategories(input);
-      return categories.toSorted((left, right) => {
-        if (right.count !== left.count) {
-          return right.count - left.count;
-        }
-        return left.slug.localeCompare(right.slug);
-      });
+      return await listCategories(input);
     },
 
     async listCategoriesForAi(input?: { limit?: number }) {

@@ -15,12 +15,12 @@ const toOutputItem = (row: ReviewWithAuthor) => ({
     name: row.authorName,
   },
   content: row.content,
-  createdAt: row.createdAt instanceof Date ? row.createdAt.getTime() : row.createdAt,
+  createdAt: row.createdAt.getTime(),
   id: String(row.id),
   rating: row.rating,
   skillId: String(row.skillId),
   title: row.title ?? undefined,
-  updatedAt: row.updatedAt instanceof Date ? row.updatedAt.getTime() : row.updatedAt,
+  updatedAt: row.updatedAt.getTime(),
   userId: String(row.userId),
 });
 

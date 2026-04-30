@@ -12,6 +12,7 @@ import type { SkillId, TagId } from "@skills-re/db/utils";
 import { db } from "../shared/db";
 import { defaultLimit } from "../shared/pagination";
 import { CATEGORY_DEFINITION_BY_SLUG } from "../categories/taxonomy";
+import type { CategorySlug } from "../categories/taxonomy";
 
 const toTopSkillRows = () => ({
   authorHandle: reposTable.ownerHandle,
@@ -85,7 +86,13 @@ export async function listIndexableTags(limit?: number) {
   return await listTags({ limit });
 }
 
-export async function getRelatedCategoriesByTagSlug(slug: string) {
+export async function getRelatedCategoriesByTagSlug(slug: string): Promise<
+  {
+    count: number;
+    name: string;
+    slug: CategorySlug;
+  }[]
+> {
   const taggedSkillIds = db
     .select({
       skillId: skillsTagsTable.skillId,

@@ -42,14 +42,14 @@ describe("categories service", () => {
         count: 3,
         id: "category-1",
         name: "Old",
-        slug: "old",
+        slug: "tools-platforms",
       }),
       listCategories: () => [
         {
           count: 3,
           id: "category-1",
           name: "Old",
-          slug: "old",
+          slug: "tools-platforms",
         },
         {
           count: 5,
@@ -60,26 +60,26 @@ describe("categories service", () => {
       ],
     });
 
-    await expect(service.getCategoryBySlug({ slug: "old" })).resolves.toEqual({
+    await expect(service.getCategoryBySlug({ slug: "tools-platforms" })).resolves.toEqual({
       count: 3,
       id: "category-1",
       name: "Old",
       relatedTags: [],
-      slug: "old",
+      slug: "tools-platforms",
       topSkills: [],
     });
     await expect(service.listCategories()).resolves.toEqual([
+      {
+        count: 3,
+        id: "category-1",
+        name: "Old",
+        slug: "tools-platforms",
+      },
       {
         count: 5,
         id: "category-2",
         name: "Tools & Platforms",
         slug: "tools-platforms",
-      },
-      {
-        count: 3,
-        id: "category-1",
-        name: "Old",
-        slug: "old",
       },
     ]);
   });
@@ -92,7 +92,7 @@ describe("categories service", () => {
               count: 5,
               id: "category-1",
               name: "Tools & Platforms",
-              slug,
+              slug: "tools-platforms",
             }
           : null,
       getRelatedTagsByCategorySlug: (slug) => [

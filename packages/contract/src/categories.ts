@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { baseContract } from "./common/base";
 import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
-import { categorySlugSchema } from "./categories-taxonomy";
 
 const listCategoriesInputSchema = z
   .object({
@@ -12,7 +11,7 @@ const listCategoriesInputSchema = z
   .optional();
 
 const categoryLookupInputSchema = z.object({
-  slug: categorySlugSchema,
+  slug: z.string().min(1),
 });
 
 const categoriesListContract = baseContract

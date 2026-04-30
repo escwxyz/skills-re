@@ -12,9 +12,9 @@ export type SkillCategorySlug = z.infer<typeof skillCategorySlugSchema>;
 const MAX_DESCRIPTION_CHARS = 2500;
 const JSON_CODE_FENCE_PATTERN = /^```(?:json)?\s*([\s\S]*?)\s*```$/i;
 
-const categoryScoresSchema = z.record(skillCategorySlugSchema, z.number().min(0).max(10));
+export const categoryScoresSchema = z.record(skillCategorySlugSchema, z.number().min(0).max(10));
 
-const categorizationOutputSchema = z.object({
+export const categorizationOutputSchema = z.object({
   items: z.array(
     z.object({
       confidence: z.number().min(0).max(1),

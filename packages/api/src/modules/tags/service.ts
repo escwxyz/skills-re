@@ -1,6 +1,7 @@
 import { toSearchSkillItem } from "../shared/search-skill";
 import type { SearchSkillRow } from "../shared/search-skill";
 import { createDepGetter } from "../shared/deps";
+import type { CategorySlug } from "../categories/taxonomy";
 
 import { getIndexableTagMinCount, isTagIndexable } from "./indexable";
 import {
@@ -49,7 +50,7 @@ interface TagsServiceDeps {
   findTagBySlug: (slug: string) => Promise<TagDetailRow | null>;
   getRelatedCategoriesByTagSlug: (
     slug: string,
-  ) => Promise<{ count: number; name: string; slug: string }[]>;
+  ) => Promise<{ count: number; name: string; slug: CategorySlug }[]>;
   getRelatedTagsByTagSlug: (slug: string) => Promise<{ count: number; slug: string }[]>;
   getTopSkillsByTagSlug: (slug: string) => Promise<SearchSkillRow[]>;
   listSkillIdsWithoutTags: (input?: { limit?: number }) => Promise<string[]>;

@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { categoryCountsTable } from "./categories";
+import { categoryCountsTable } from "./category-counts";
 
 const getExtraConfigNames = (table: object) => {
   const builderKey = Object.getOwnPropertySymbols(table).find((symbol) =>

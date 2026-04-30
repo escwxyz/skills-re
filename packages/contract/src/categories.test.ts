@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
+import {
+  categoryDetailSchema,
+  categoryListItemSchema,
+  relatedCategorySchema,
+} from "./common/content";
 import { categoriesContract } from "./categories";
 
 describe("categories contract", () => {
@@ -65,6 +69,20 @@ describe("categories contract", () => {
           title: "Widget",
         },
       ],
+    });
+  });
+
+  test("accepts a related category payload", () => {
+    expect(
+      relatedCategorySchema.parse({
+        count: 2,
+        name: "Tools & Platforms",
+        slug: "tools-platforms",
+      }),
+    ).toEqual({
+      count: 2,
+      name: "Tools & Platforms",
+      slug: "tools-platforms",
     });
   });
 

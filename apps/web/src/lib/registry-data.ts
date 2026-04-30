@@ -34,7 +34,6 @@ interface SearchSkillListItem {
 
 interface CategoryListItem {
   count: number;
-  description: string;
   id: string;
   name: string;
   slug: string;
@@ -240,6 +239,8 @@ export const getLiveStats = (input: {
 export const formatInteger = (value: number) => INTEGER_FORMATTER.format(value);
 
 export const formatCompactNumber = (value: number) => COMPACT_INTEGER_FORMATTER.format(value);
+
+export { getCategoryPresentation };
 
 export const sumDailyMetrics = (points: DailyMetricPoint[]) => {
   const totals = {
