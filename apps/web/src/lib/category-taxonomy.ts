@@ -1,55 +1,117 @@
 import {
+  categories_analysis_insights_description,
+  categories_analysis_insights_name,
+  categories_code_frameworks_description,
+  categories_code_frameworks_name,
+  categories_communication_strategy_description,
+  categories_communication_strategy_name,
+  categories_design_creative_description,
+  categories_design_creative_name,
+  categories_domain_expertise_description,
+  categories_domain_expertise_name,
+  categories_operations_automation_description,
+  categories_operations_automation_name,
+  categories_other_description,
+  categories_other_name,
+  categories_process_methodology_description,
+  categories_process_methodology_name,
+  categories_tools_platforms_description,
+  categories_tools_platforms_name,
+} from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
+import type { Locale } from "@/paraglide/runtime";
+import {
   CATEGORY_DEFINITION_BY_SLUG,
   CATEGORY_DEFINITIONS,
   CATEGORY_SLUGS,
 } from "@skills-re/contract/categories-taxonomy";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 
-const CATEGORY_DESCRIPTIONS: Record<CategorySlug, string> = {
-  "analysis-insights":
-    "Research, analysis, and synthesis work that turns information into insight.",
-  "code-frameworks":
-    "Reusable libraries, SDKs, boilerplates, and scaffolds for building software faster.",
-  "communication-strategy":
-    "Writing, messaging, stakeholder alignment, and planning work that shapes how ideas land.",
-  "design-creative":
-    "Visual, branding, illustration, and other creative work focused on presentation.",
-  "domain-expertise":
-    "Specialized knowledge and experience in a particular industry, field, or vertical.",
-  "operations-automation":
-    "Automation, orchestration, and recurring operational workflows that keep things running.",
-  other: "Fallback classification for ambiguous, weak, or uncategorized items.",
-  "process-methodology":
-    "Process, workflow, checklist, and protocol work that defines how tasks should be done.",
-  "tools-platforms":
-    "Tooling, platforms, CLI utilities, infrastructure, and workspace support systems.",
+type CategoryMessage = typeof categories_code_frameworks_name;
+
+const CATEGORY_MESSAGES: Record<
+  CategorySlug,
+  {
+    description: CategoryMessage;
+    title: CategoryMessage;
+  }
+> = {
+  "analysis-insights": {
+    description: categories_analysis_insights_description,
+    title: categories_analysis_insights_name,
+  },
+  "code-frameworks": {
+    description: categories_code_frameworks_description,
+    title: categories_code_frameworks_name,
+  },
+  "communication-strategy": {
+    description: categories_communication_strategy_description,
+    title: categories_communication_strategy_name,
+  },
+  "design-creative": {
+    description: categories_design_creative_description,
+    title: categories_design_creative_name,
+  },
+  "domain-expertise": {
+    description: categories_domain_expertise_description,
+    title: categories_domain_expertise_name,
+  },
+  "operations-automation": {
+    description: categories_operations_automation_description,
+    title: categories_operations_automation_name,
+  },
+  other: {
+    description: categories_other_description,
+    title: categories_other_name,
+  },
+  "process-methodology": {
+    description: categories_process_methodology_description,
+    title: categories_process_methodology_name,
+  },
+  "tools-platforms": {
+    description: categories_tools_platforms_description,
+    title: categories_tools_platforms_name,
+  },
 };
 
-const getCategoryDefinition = (slug: string) =>
-  CATEGORY_DEFINITION_BY_SLUG[slug as CategorySlug] ?? CATEGORY_DEFINITION_BY_SLUG.other;
+const resolveLocale = (locale?: Locale) => locale ?? getLocale();
 
-export const getCategoryCopy = (_locale: string, slug: string) => {
-  const definition = getCategoryDefinition(slug);
+const getCategoryMessage = (slug: CategorySlug, locale?: Locale) => {
+  const messages = CATEGORY_MESSAGES[slug];
 
   return {
-    description: CATEGORY_DESCRIPTIONS[definition.slug],
-    title: definition.name,
+    description: messages.description({}, { locale: resolveLocale(locale) }),
+    title: messages.title({}, { locale: resolveLocale(locale) }),
   };
 };
 
-export const getCategoryPresentation = (slug: string, index: number) => {
+export const getCategoryDefinition = (slug: string) =>
+  CATEGORY_DEFINITION_BY_SLUG[slug as CategorySlug] ?? CATEGORY_DEFINITION_BY_SLUG.other;
+
+export const getCategoryCopy = (locale: Locale, slug: string) => {
   const definition = getCategoryDefinition(slug);
 
-  return {
-    num: String(definition.position ?? index + 1).padStart(2, "0"),
-    variant: definition.variant ?? "default",
-  } as const;
+  return getCategoryMessage(definition.slug, locale);
 };
 
-export const getCategoryTitle = (slug: string) => getCategoryCopy("en", slug).title;
+export const getCategoryTitle = (slug: string, locale?: Locale) =>
+  getCategoryCopy(resolveLocale(locale), slug).title;
 
-export const getCategoryDescription = (slug: string) => getCategoryCopy("en", slug).description;
+export const getCategoryDescription = (slug: string, locale?: Locale) =>
+  getCategoryCopy(resolveLocale(locale), slug).description;
 
-export const getCategoryLabel = (slug: string) => getCategoryTitle(slug);
+export const getCategoryLabel = (slug: string, locale?: Locale) => getCategoryTitle(slug, locale);
+
+export const getCategoryPresentation = (slug: string, index?: number, locale?: Locale) => {
+  const definition = getCategoryDefinition(slug);
+  const copy = getCategoryCopy(resolveLocale(locale), slug);
+  const position = index ?? definition.position;
+
+  return {
+    ...copy,
+    num: String(position + 1).padStart(2, "0"),
+    variant: definition.variant,
+  };
+};
 
 export { CATEGORY_DEFINITIONS, CATEGORY_DEFINITION_BY_SLUG, CATEGORY_SLUGS, type CategorySlug };

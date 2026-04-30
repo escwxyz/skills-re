@@ -1,5 +1,6 @@
 "use client";
 
+import { m } from "@/paraglide/messages";
 import type { BrowseCategoryItem } from "@/lib/registry-data";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export function SkillsCategoriesBar({ activeClass, categories, onClassChange }: Props) {
   const items = [
-    { id: "all", num: "00 / all", title: "The Index" },
+    { id: "all", num: m.skills_browse_all_num(), title: m.skills_browse_all_title() },
     ...categories.map((category) => ({
       id: category.id,
       num: category.num,

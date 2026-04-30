@@ -49,8 +49,7 @@ describe("registry-data", () => {
         0,
       ),
     ).toEqual({
-      description:
-        "Reusable libraries, SDKs, boilerplates, and scaffolds for building software faster.",
+      description: "Prompts and skills for building application code, frameworks, and libraries.",
       id: "code-frameworks",
       num: "01",
       skillCount: 42,
