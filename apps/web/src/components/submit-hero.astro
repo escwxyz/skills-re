@@ -1,0 +1,12 @@
+---
+import PageHero from "@/components/page-hero.astro"
+import { m } from "@/paraglide/messages"
+---
+
+<PageHero
+  eyebrow={m.submit_hero_eyebrow({})}
+  description={m.submit_hero_description({})}
+  descriptionItalic
+>
+  {m.submit_hero_title({})}
+</PageHero>

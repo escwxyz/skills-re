@@ -1,0 +1,10 @@
+---
+import Layout from "@/layouts/main.astro"
+import SubmitHero from "@/components/submit-hero.astro"
+import { SubmitSkillTabs } from "@/components/submit-skill-tabs"
+---
+
+<Layout title="Submit a Skill — skills.re">
+  <SubmitHero />
+  <SubmitSkillTabs client:only="react" />
+</Layout>

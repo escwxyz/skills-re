@@ -1,0 +1,51 @@
+---
+import { m } from "@/paraglide/messages"
+
+const steps = [
+  {
+    num: "i.",
+    title: m.how_it_works_step_1_title({}),
+    body: m.how_it_works_step_1_body({}),
+    meta: m.how_it_works_step_1_meta({}),
+  },
+  {
+    num: "ii.",
+    title: m.how_it_works_step_2_title({}),
+    body: m.how_it_works_step_2_body({}),
+    meta: m.how_it_works_step_2_meta({}),
+  },
+  {
+    num: "iii.",
+    title: m.how_it_works_step_3_title({}),
+    body: m.how_it_works_step_3_body({}),
+    meta: m.how_it_works_step_3_meta({}),
+  },
+]
+---
+
+<section>
+  <div class="section-title">
+    <h3>{m.how_it_works_title({})}</h3>
+    <div class="eyebrow">{m.how_it_works_eyebrow({})}</div>
+  </div>
+  <div class="border-border grid grid-cols-1 border-b sm:grid-cols-3">
+    {
+      steps.map((step) => (
+        <div class="border-border border-b px-5.5 py-7 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0">
+          <div class="font-display text-muted-text-2 text-[72px] leading-none italic">
+            {step.num}
+          </div>
+          <h5 class="font-display mt-2.5 mb-2 text-[28px] leading-[1.05] font-normal">
+            {step.title}
+          </h5>
+          <p class="text-ink-2 m-0 font-serif text-sm leading-normal">
+            {step.body}
+          </p>
+          <div class="border-border text-muted-foreground mt-4.5 border-t pt-3.5 font-mono text-[10.5px] tracking-[.14em] uppercase">
+            {step.meta}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

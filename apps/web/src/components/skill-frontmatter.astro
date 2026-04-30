@@ -1,0 +1,51 @@
+---
+import { m } from "@/paraglide/messages"
+import type { SkillFrontmatterData } from "@/lib/skill-detail-data"
+
+type Props = SkillFrontmatterData
+
+const { name, description, license, compatibility, metadata, allowedTools } =
+  Astro.props
+
+const fields: { lbl: string; val: string }[] = [
+  { lbl: m.skill_detail_frontmatter_name({}), val: name },
+  { lbl: m.skill_detail_frontmatter_description({}), val: description },
+  ...(license ? [{ lbl: m.skill_detail_frontmatter_license({}), val: license }] : []),
+  ...(compatibility
+    ? [{ lbl: m.skill_detail_frontmatter_compatibility({}), val: compatibility }]
+    : []),
+  ...(allowedTools
+    ? [{ lbl: m.skill_detail_frontmatter_allowed_tools({}), val: allowedTools }]
+    : []),
+]
+---
+
+<aside
+  class="text-muted-text hidden self-start font-mono text-[11px] leading-[1.7] lg:sticky lg:top-17.5 lg:block"
+>
+  <h6
+    class="text-muted-text mb-2 font-mono text-[10.5px] tracking-[0.18em] uppercase"
+  >
+    {m.skill_detail_frontmatter({})}
+  </h6>
+  {
+    fields.map((item) => (
+      <div class="border-rule text-ink-2 border-t py-2">
+        <b class="text-ink block font-medium">{item.lbl}</b>
+        {item.val}
+      </div>
+    ))
+  }
+  {
+    metadata && Object.keys(metadata).length > 0 && (
+      <div class="border-rule text-ink-2 border-t py-2">
+        <b class="text-ink block font-medium">{m.skill_detail_frontmatter_metadata({})}</b>
+        {Object.entries(metadata).map(([k, v]) => (
+          <div>
+            <span class="text-muted-text">{k}:</span> {v}
+          </div>
+        ))}
+      </div>
+    )
+  }
+</aside>

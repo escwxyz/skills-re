@@ -15,10 +15,3 @@ export function dotClass(status: FetchStatus | SubmitStatus): string {
 
   return "bg-rule";
 }
-
-export function formatMessage(template: string, values: Record<string, string | number>): string {
-  return template.replaceAll(/\{(\w+)\}/g, (_, key: string) => {
-    const value = values[key];
-    return value === undefined ? `{${key}}` : String(value);
-  });
-}

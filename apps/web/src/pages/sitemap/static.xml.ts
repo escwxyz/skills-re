@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { defaultLocale } from "intlayer";
+import { baseLocale as defaultLocale, locales } from "@/paraglide/runtime";
 import { renderUrlEntry, resolveUrl, wrapUrlSet, XML_RESPONSE_HEADERS } from "@/lib/sitemap";
 
 const STATIC_URLS = [
@@ -33,19 +33,31 @@ export const GET: APIRoute = async () => {
       lastmod: e.data.updatedAt?.toISOString().slice(0, 10),
     }));
 
-  const entries = [
-    ...STATIC_URLS.map((u) =>
-      renderUrlEntry({ loc: resolveUrl(u.path), priority: u.priority, changefreq: u.changefreq }),
-    ),
-    ...docEntries.map((u) =>
+  const localizePath = (path: string, locale: string) =>
+    locale === defaultLocale ? path : `/${locale}${path}`;
+
+  const localizedStaticEntries = locales.flatMap((locale) =>
+    STATIC_URLS.map((u) =>
       renderUrlEntry({
-        loc: resolveUrl(u.path),
+        loc: resolveUrl(localizePath(u.path, locale)),
+        priority: u.priority,
+        changefreq: u.changefreq,
+      }),
+    ),
+  );
+
+  const localizedDocEntries = locales.flatMap((locale) =>
+    docEntries.map((u) =>
+      renderUrlEntry({
+        loc: resolveUrl(localizePath(u.path, locale)),
         priority: u.priority,
         changefreq: u.changefreq,
         lastmod: u.lastmod,
       }),
     ),
-  ];
+  );
+
+  const entries = [...localizedStaticEntries, ...localizedDocEntries];
 
   return new Response(wrapUrlSet(entries), { headers: XML_RESPONSE_HEADERS });
 };

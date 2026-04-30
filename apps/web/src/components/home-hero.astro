@@ -1,0 +1,56 @@
+---
+import { m } from "@/paraglide/messages"
+import { localizeHref } from "@/paraglide/runtime"
+
+interface Props {
+  totalSkills: string
+}
+
+const { totalSkills } = Astro.props
+---
+
+<section
+  class="grid grid-cols-1 gap-8 border-b border-border pt-6 pb-2 md:grid-cols-[3fr_2fr]"
+>
+  <div class="border-b border-border pb-8 md:border-b-0 md:border-r md:pb-0 md:pr-8">
+    <div class="mb-2 flex items-center gap-2.5">
+      <span class="inline-block h-2 w-2 rounded-full bg-destructive"></span>
+      <span class="font-mono text-[10.5px] tracking-[.2em] uppercase text-destructive">
+        {m.home_hero_leading({})}
+      </span>
+    </div>
+    <h2
+      class="font-display my-1 mb-4 text-[clamp(40px,6vw,74px)] font-normal leading-[.94] tracking-[-0.015em]"
+    >
+      {m.home_hero_not_a_package({})} <em>{m.home_hero_a_practice({})}</em><br />{m.home_hero_a_skill_is_an({})} <em>{m.home_hero_instruction({})}</em>{m.home_hero_not_an_install({})}
+    </h2>
+    <p class="mb-5 max-w-155 font-serif text-[20px] leading-[1.4] text-ink-2">
+      {m.home_hero_description({})}
+    </p>
+    <div class="mt-4.5 mb-2.5 flex flex-wrap gap-3">
+      <a href={localizeHref("/skills")} class="btn">
+        {m.home_hero_browse_index({})} <span>→</span>
+      </a>
+      <a href={localizeHref("/submit")} class="btn ghost">
+        {m.home_hero_publish_skill({})}
+      </a>
+    </div>
+    <div class="mt-6.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+      {m.home_hero_filed({})}
+    </div>
+  </div>
+
+  <div class="grid content-start gap-3.5">
+    <div class="ph aspect-4/3">
+      <span class="ph-label">Figure 01 — skill graph</span>
+    </div>
+    <div class="font-serif text-[13px] italic leading-[1.4] text-muted-foreground">
+      <b class="not-italic font-mono text-[10.5px] tracking-[.14em] uppercase text-foreground mr-1.5">
+        Fig. 01
+      </b>
+      A constellation of {totalSkills} skills, rendered by their call graph. Dense nodes are
+      <em>code-review</em> and <em>research-synthesis</em>; peripheral clusters are
+      domain-specific.
+    </div>
+  </div>
+</section>

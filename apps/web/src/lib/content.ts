@@ -1,5 +1,8 @@
+// oxlint-disable no-nested-ternary
 import { getCollection, getEntry } from "astro:content";
-import { getLocaleFromPath, defaultLocale } from "intlayer";
+import type { CollectionEntry } from "astro:content";
+import { baseLocale as defaultLocale, getLocaleForUrl, locales } from "@/paraglide/runtime";
+import type { Locale } from "@/paraglide/runtime";
 
 export type PageSlug = "terms" | "privacy" | "cookies" | "imprint";
 
@@ -11,12 +14,39 @@ export type DocSlug =
   | "best-practices"
   | "troubleshooting";
 
+const resolveLocale = (pathOrLocale?: string): Locale =>
+  locales.includes(pathOrLocale as Locale)
+    ? (pathOrLocale as Locale)
+    : pathOrLocale
+      ? getLocaleForUrl(pathOrLocale)
+      : defaultLocale;
+
+const getLocalizedCollection = async <T extends "docs" | "faqs" | "changelogs">(
+  collection: T,
+  locale: Locale,
+  filter?: (entry: CollectionEntry<T>) => boolean,
+) => {
+  const entries = await getCollection(
+    collection,
+    (entry) => entry.id.startsWith(`${locale}/`) && (filter ? filter(entry) : true),
+  );
+
+  if (entries.length > 0 || locale === defaultLocale) {
+    return entries;
+  }
+
+  return getCollection(
+    collection,
+    (entry) => entry.id.startsWith(`${defaultLocale}/`) && (filter ? filter(entry) : true),
+  );
+};
+
 /**
  * Fetches a static page entry for the given locale, falling back to the
  * default locale ("en") if a translation hasn't been authored yet.
  */
 export async function getPage(slug: PageSlug, pathOrLocale?: string) {
-  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
+  const locale = resolveLocale(pathOrLocale);
   return (
     (await getEntry("pages", `${locale}/${slug}`)) ??
     (await getEntry("pages", `${defaultLocale}/${slug}`))
@@ -28,11 +58,8 @@ export async function getPage(slug: PageSlug, pathOrLocale?: string) {
  * Results are sorted by the `order` frontmatter field.
  */
 export async function getDocs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
-  const all = await getCollection("docs");
-  const locale_docs = all.filter((e) => e.id.startsWith(`${locale}/`));
-  const entries =
-    locale_docs.length > 0 ? locale_docs : all.filter((e) => e.id.startsWith(`${defaultLocale}/`));
+  const locale = resolveLocale(pathOrLocale);
+  const entries = await getLocalizedCollection("docs", locale);
   return entries.toSorted((a, b) => a.data.order - b.data.order);
 }
 
@@ -40,7 +67,7 @@ export async function getDocs(pathOrLocale?: string) {
  * Fetches a single doc entry for the given locale, falling back to "en".
  */
 export async function getDoc(slug: string, pathOrLocale?: string) {
-  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
+  const locale = resolveLocale(pathOrLocale);
   return (
     (await getEntry("docs", `${locale}/${slug}`)) ??
     (await getEntry("docs", `${defaultLocale}/${slug}`))
@@ -52,11 +79,8 @@ export async function getDoc(slug: string, pathOrLocale?: string) {
  * Results are sorted by the `order` frontmatter field.
  */
 export async function getFaqs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
-  const all = await getCollection("faqs");
-  const locale_faqs = all.filter((e) => e.id.startsWith(`${locale}/`));
-  const entries =
-    locale_faqs.length > 0 ? locale_faqs : all.filter((e) => e.id.startsWith(`${defaultLocale}/`));
+  const locale = resolveLocale(pathOrLocale);
+  const entries = await getLocalizedCollection("faqs", locale);
   return entries.toSorted((a, b) => a.data.order - b.data.order);
 }
 
@@ -65,13 +89,12 @@ export async function getFaqs(pathOrLocale?: string) {
  * back to "en". Results are sorted by semantic version, newest first.
  */
 export async function getChangelogs(pathOrLocale?: string) {
-  const locale = pathOrLocale ? (getLocaleFromPath(pathOrLocale) ?? defaultLocale) : defaultLocale;
-  const all = await getCollection("changelogs");
-  const locale_changelogs = all.filter((e) => e.id.startsWith(`${locale}/`) && e.data.isPublished);
-  const entries =
-    locale_changelogs.length > 0
-      ? locale_changelogs
-      : all.filter((e) => e.id.startsWith(`${defaultLocale}/`) && e.data.isPublished);
+  const locale = resolveLocale(pathOrLocale);
+  const entries = await getLocalizedCollection(
+    "changelogs",
+    locale,
+    ({ data }) => data.isPublished,
+  );
   return entries.toSorted((a, b) => {
     const d = b.data.versionMajor - a.data.versionMajor;
     if (d !== 0) {

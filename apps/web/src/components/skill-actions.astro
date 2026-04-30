@@ -1,0 +1,32 @@
+---
+import { m } from "@/paraglide/messages"
+import { ClaimAuthorButton } from "@/components/claim-author-button"
+import { localizeHref } from "@/paraglide/runtime"
+
+interface Props {
+  version: string
+  slug: string
+}
+
+const { version, slug } = Astro.props
+---
+
+<div>
+  <div
+    style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
+  >
+    {m.skill_actions_snapshot_actions({})}
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <a
+      href={localizeHref(`/skills/${slug}/archive?v=${version}`)}
+      class="btn"
+      style="width: 100%; justify-content: center; letter-spacing: .12em;"
+    >
+      {m.skill_actions_download_archive({ version })}
+    </a>
+
+    <ClaimAuthorButton slug={slug} client:load />
+  </div>
+</div>

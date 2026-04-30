@@ -1,0 +1,65 @@
+---
+import { m } from "@/paraglide/messages"
+import { localizeHref } from "@/paraglide/runtime"
+import type { FeaturedPickItem } from "@/lib/registry-data"
+
+interface Props {
+  picks: FeaturedPickItem[]
+}
+
+const { picks } = Astro.props
+const [featured, ...rest] = picks
+---
+
+<section class="grid grid-cols-1 border-b-[3px] border-border md:grid-cols-[1.2fr_1fr]">
+  <div class="border-b border-border py-7 md:border-b-0 md:border-r md:pr-8">
+    <div class="mb-2 font-mono text-[10.5px] tracking-[.2em] uppercase text-destructive">
+      {m.featured_picks_eyebrow({})}
+    </div>
+    <h3 class="font-display m-0 mb-3.5 text-[clamp(36px,4vw,54px)] font-normal italic leading-none">
+      {featured.title},<br />{m.featured_picks_unexpectedly_legible({})}
+    </h3>
+    <p class="font-serif text-[18px] leading-normal text-ink-2">
+      {featured.description}
+    </p>
+    <div class="mt-4 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+      {featured.versionLabel} · installs <b class="text-foreground font-medium">{featured.installsLabel}</b>
+    </div>
+    <div class="ph aspect-video mt-4.5">
+      <span class="ph-label">{m.featured_picks_feature_screenshot({})} — {featured.title}</span>
+    </div>
+  </div>
+
+  <div class="py-7 md:pl-8">
+    <h5 class="m-0 mb-3.5 font-mono text-[10.5px] tracking-[.2em] uppercase text-foreground">
+      {m.featured_picks_editors_picks({})}
+    </h5>
+    {
+      rest.map((skill, i) => (
+        <a
+          href={localizeHref(`/skills/${skill.slug}`)}
+          class="grid grid-cols-[40px_1fr_auto] items-start gap-3.5 border-t border-border py-3.5 no-underline hover:no-underline"
+        >
+          <div class="font-display text-[34px] leading-none text-muted-foreground">
+            {String(i + 1).padStart(2, "0")}
+          </div>
+          <div>
+            <div class="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">
+              SKILL_ID: {skill.id} <b class="font-medium text-foreground">{skill.versionLabel}</b>
+            </div>
+            <div class="font-display my-0.5 mb-1 text-[22px] leading-[1.1]">
+              {skill.title}
+            </div>
+            <div class="font-serif text-[13px] leading-[1.4] text-ink-2">
+              {skill.description}
+            </div>
+          </div>
+          <div class="font-mono text-[10.5px] tracking-[.05em] text-right text-muted-foreground">
+            INSTALLS
+            <b class="block font-medium text-foreground text-[13px]">{skill.installsLabel}</b>
+          </div>
+        </a>
+      ))
+    }
+  </div>
+</section>

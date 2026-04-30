@@ -1,0 +1,47 @@
+---
+import { localizeHref } from "@/paraglide/runtime"
+import type { SkillRelatedItem } from "@/lib/skill-detail-data"
+
+interface Props {
+  related: SkillRelatedItem[]
+  title?: string
+}
+
+const { related, title = "More From This Author" } = Astro.props
+---
+
+<section class="hidden px-6 pt-10 lg:block">
+  <div class="mx-auto max-w-350">
+    <div class="border-rule flex items-baseline justify-between border-b pb-3">
+      <h3 class="font-display m-0 text-[32px] font-normal">{title}</h3>
+      <div class="eyebrow">§ adjacent entries in the registry</div>
+    </div>
+    <div
+      class="border-rule mt-0 grid grid-cols-1 border md:grid-cols-2 xl:grid-cols-4"
+    >
+      {
+        related.map((skill, index) => (
+          <a
+            href={localizeHref(`/skills/${skill.slug}`)}
+            class:list={[
+              "border-rule flex min-h-45 flex-col justify-between border-r p-5 text-inherit no-underline",
+              index === related.length - 1 ? "border-r-0" : "",
+            ]}
+          >
+            <div>
+              <div class="text-muted-text font-mono text-[10px] tracking-[0.16em] uppercase">
+                {skill.id} · {skill.versionLabel}
+              </div>
+              <h5 class="font-display my-2 text-[22px] leading-[1.05] font-normal">
+                {skill.title}
+              </h5>
+            </div>
+            <p class="text-ink-2 m-0 font-serif text-[12.5px] leading-[1.45]">
+              {skill.description}
+            </p>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>

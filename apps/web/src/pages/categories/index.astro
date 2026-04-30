@@ -1,0 +1,105 @@
+---
+import Layout from "@/layouts/main.astro"
+import PageHero from "@/components/page-hero.astro"
+import CategoryCard from "@/components/category-card.astro"
+import { getLiveStats, toCategoryCardItem } from "@/lib/registry-data"
+import type { DailyMetricPoint } from "@/lib/registry-data"
+import { createServerClient } from "@/lib/server-orpc"
+
+const client = createServerClient(Astro.request)
+
+const authors = await client.skills.listAuthors()
+const categories = await client.categories.list({ all: true, limit: 100 })
+const categoryCount = await client.categories.count()
+
+let dailyMetrics: DailyMetricPoint[] = []
+try {
+  dailyMetrics = await client.metrics.dailySkillsSnapshots({ limit: 30 })
+} catch {
+  dailyMetrics = []
+}
+
+const skillsCount = await client.skills.count()
+const liveStats = getLiveStats({
+  authors,
+  categoryCount,
+  dailyMetrics,
+  skillsCount,
+})
+const categoriesPage = {
+  categories: categories.map((category, index) =>
+    toCategoryCardItem(category, index)
+  ),
+  stats: [
+    { label: "Disciplines", value: liveStats.categoriesCountLabel },
+    { label: "Skills Indexed", value: liveStats.skillsCountLabel },
+    { label: "Listed Authors", value: liveStats.authorsCountLabel },
+    { label: "New Skills (30d)", value: liveStats.newSkills30dLabel },
+  ],
+}
+const totalSkills = categoriesPage.categories.reduce(
+  (sum, category) => sum + category.skillCount,
+  0
+)
+---
+
+<Layout title="The Classifications — skills.re">
+  <PageHero
+    eyebrow="The Registry — Classifications"
+    description="Fourteen disciplines that organize the registry. Every skill belongs to exactly one classification — each one a distinct thread of practice, a coherent body of work."
+  >
+    The <em>Classifications</em>
+    <aside
+      slot="aside"
+      class="border-border text-muted-foreground mt-8 self-end border-t pt-6 font-mono text-[11px] leading-[1.7] md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-8"
+    >
+      <span class="text-foreground mb-2 block tracking-[.16em] uppercase">
+        § How to read this page
+      </span>
+      Each card is a classification — a named discipline with a distinct number, a
+      body of {totalSkills.toLocaleString()} skills divided among them. The counts
+      are pulled from the live registry catalog. Click any card to browse its index.
+    </aside>
+  </PageHero>
+
+  <!-- STATS STRIP -->
+  <div
+    class="border-border grid grid-cols-2 border-b-[3px] font-mono text-[10.5px] tracking-widest uppercase md:grid-cols-4"
+  >
+    {
+      categoriesPage.stats.map((s, i) => (
+        <div
+          class:list={[
+            "border-border border-r px-5 py-4.5",
+            i === categoriesPage.stats.length - 1 && "border-r-0",
+          ]}
+        >
+          <div class="text-muted-foreground">{s.label}</div>
+          <div class="font-display mt-1 text-[36px] leading-none font-normal">
+            {s.value}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <section>
+    <div
+      class="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+    >
+      {
+        categoriesPage.categories.map((category) => (
+          <CategoryCard category={category} />
+        ))
+      }
+    </div>
+  </section>
+
+  <div
+    class="border-border text-muted-foreground border-b p-6 text-center font-mono text-[10.5px] tracking-widest uppercase"
+  >
+    <b class="text-foreground font-medium">§ Note —</b> Classifications are assigned
+    by the Registry Desk on submission and may be contested via pull request. The
+    counts on this page reflect the current public registry catalog.
+  </div>
+</Layout>

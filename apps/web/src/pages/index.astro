@@ -1,0 +1,102 @@
+---
+import { m } from "@/paraglide/messages"
+import Layout from "@/layouts/main.astro"
+import Nameplate from "@/components/nameplate.astro"
+// import { MetaStrip } from "@/components/meta-strip"
+import CategoryCard from "@/components/category-card.astro"
+import HowItWorks from "@/components/how-it-works.astro"
+import HomeHero from "@/components/home-hero.astro"
+// import { NumbersStrip } from "@/components/numbers-strip"
+import FeaturedPicks from "@/components/featured-picks.astro"
+import BlogSection from "@/components/blog-section.astro"
+import { toCategoryCardItem, toFeaturedPickItem } from "@/lib/registry-data"
+import { createServerClient } from "@/lib/server-orpc"
+import { localizeHref } from "@/paraglide/runtime"
+
+const client = createServerClient(Astro.request)
+
+// const authors = await client.skills.listAuthors()
+const categories = await client.categories.list({ limit: 8 })
+// const categoryCount = await client.categories.count()
+
+// let dailyMetrics: DailyMetricPoint[] = []
+// try {
+//   dailyMetrics = await client.metrics.dailySkillsSnapshots({ limit: 30 })
+// } catch {
+//   dailyMetrics = []
+// }
+
+const featuredSkills = await client.skills.search({
+  limit: 5,
+  sort: "downloads-all-time",
+})
+// const skillsCount = await client.skills.count()
+
+// const liveStats = getLiveStats({
+//   authors,
+//   categoryCount,
+//   dailyMetrics,
+//   skillsCount,
+// })
+const homeData = {
+  categories: categories.map((category, index) =>
+    toCategoryCardItem(category, index)
+  ),
+  featuredPicks: featuredSkills.page.map(toFeaturedPickItem),
+  // metaStripItems: liveStats.metaStripItems,
+  // numbersStripItems: liveStats.numbersStripItems,
+  // totalSkillsLabel: liveStats.skillsCountLabel,
+}
+---
+
+<Layout title="The Registry of Agent Skills">
+  <main class="mx-auto max-w-345 px-6 pb-15">
+    <Nameplate />
+    <!-- <MetaStrip items={homeData.metaStripItems} /> -->
+    <HomeHero totalSkills={"10000"} />
+    <!-- <NumbersStrip items={homeData.numbersStripItems} /> -->
+
+    <section class="terminal-panel my-8">
+      <div class="tbar">
+        <span>guest@skills.re ~ %</span>
+        <span>install a skill in one line</span>
+      </div>
+      <pre><span class="m1"># fetch a skill from the registry and mount it into your agent</span>
+<span class="p1">$</span> <span class="k1">skr install</span> <span class="c1">code-review@2.4.1</span> <span class="m1">--to ./skills</span>
+<span class="m1">→ resolving code-review@2.4.1  </span>[ok]
+<span class="m1">→ verifying sha256 fingerprint </span>[ok]
+<span class="m1">→ running acceptance evals     </span>[21/21 passed]
+<span class="m1">→ mounted at ./skills/code-review  </span>
+<span class="p1">$</span> <span class="k1">claude run</span> <span class="c1">--skill code-review</span> <span class="c1">./src</span><span class="cursor-blink" /></pre>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h3>{m.home_hero_skill_categories()}</h3>
+        <div class="eyebrow">
+          § browse by category - <a href={localizeHref("/categories")}
+            >{m.home_hero_view_all()}</a
+          >
+        </div>
+      </div>
+      <div
+        class="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-4"
+      >
+        {
+          homeData.categories.map((category) => (
+            <CategoryCard category={category} />
+          ))
+        }
+      </div>
+    </section>
+
+    {
+      homeData.featuredPicks.length > 0 && (
+        <FeaturedPicks picks={homeData.featuredPicks} />
+      )
+    }
+    <BlogSection />
+    <HowItWorks />
+    <!-- <CollectionsGrid collections={COLLECTIONS} /> -->
+  </main>
+</Layout>

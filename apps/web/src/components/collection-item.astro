@@ -1,0 +1,118 @@
+---
+import { localizeHref } from "@/paraglide/runtime"
+interface CollectionSkillItem {
+  description: string
+  id: string
+  installs: string
+  passRate: string
+  publisherName: string
+  tags: string[]
+  slug: string
+  title: string
+  version: string
+}
+
+interface Props {
+  skill: CollectionSkillItem
+  index: number
+}
+
+const { skill, index } = Astro.props
+
+const isItalic = index % 2 === 0
+const isAccent = (index + 1) % 3 === 0
+const isBlue = (index + 1) % 5 === 0
+const getTitleColor = () => {
+  if (isAccent) {
+    return "var(--editorial-red)"
+  } else if (isBlue) {
+    return "var(--editorial-blue)"
+  }
+  return "var(--ink)"
+}
+---
+
+<a
+  href={localizeHref(`/skills/${skill.slug}`)}
+  class="grid grid-cols-[56px_1fr] items-start gap-x-5 gap-y-3 border-b border-(--rule) px-4 py-7 text-inherit no-underline transition-colors hover:bg-(--paper-2) md:grid-cols-[72px_1fr_auto] md:gap-x-8 md:px-6 md:py-9"
+>
+  <!-- Index number -->
+  <div
+    class="text-muted-text-2 pt-1 text-[clamp(2.5rem,6vw,5rem)] leading-none font-(--font-display) italic"
+  >
+    {String(index + 1).padStart(2, "0")}.
+  </div>
+
+  <!-- Main content -->
+  <div class="min-w-0">
+    <div
+      class="mb-2 truncate font-mono text-[10.5px] tracking-widest text-(--muted-text) uppercase"
+    >
+      {skill.id} · v.{skill.version} · {skill.publisherName}
+    </div>
+    <h3
+      class={`font-display text-[clamp(1.8rem,4vw,3rem)] leading-[.95] font-normal tracking-tight mb-3 m-0 ${
+        isItalic && !isAccent && !isBlue ? "italic" : ""
+      }`}
+      style={`color: ${getTitleColor()};`}
+    >
+      {skill.title}
+    </h3>
+    <p class="text-ink-2 m-0 mb-3 font-serif text-[15px] leading-relaxed">
+      {skill.description}
+    </p>
+    <div class="mt-3 flex flex-wrap gap-2 md:gap-2.5">
+      {
+        skill.tags.length > 0 ? (
+          skill.tags.map((tag) => (
+            <span
+              class="max-w-full rounded-full border border-(--rule) px-2.5 py-1 font-mono text-[10px] leading-none tracking-[.14em] text-(--muted-text) uppercase"
+            >
+              {tag}
+            </span>
+          ))
+        ) : (
+          <span class="font-mono text-[10px] tracking-[.14em] text-(--muted-text) uppercase">
+            No tags
+          </span>
+        )
+      }
+    </div>
+
+    <!-- Stats: visible on mobile, hidden on md+ (shown in aside column) -->
+    <div
+      class="mt-4 flex gap-5 font-mono text-[10.5px] tracking-widest text-(--muted-text) uppercase md:hidden"
+    >
+      <div>
+        Pass <b
+          class="font-display ml-1 text-[13px] font-normal tracking-normal text-(--ink) normal-case"
+          >{skill.passRate}</b
+        >
+      </div>
+      <div>
+        Installs <b
+          class="font-display ml-1 text-[13px] font-normal tracking-normal text-(--ink) normal-case"
+          >{skill.installs}</b
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats aside: hidden on mobile, visible on md+ -->
+  <div
+    class="hidden shrink-0 pt-1 font-mono text-[10.5px] leading-loose tracking-widest text-(--muted-text) uppercase md:block"
+  >
+    <div>
+      PASS
+      <b class="font-display block text-[14px] font-normal text-(--ink)">
+        {skill.passRate}
+      </b>
+    </div>
+    <div>
+      INSTALLS
+      <b class="font-display block text-[14px] font-normal text-(--ink)">
+        {skill.installs}
+      </b>
+    </div>
+  </div>
+</a>

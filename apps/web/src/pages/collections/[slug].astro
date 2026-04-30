@@ -1,0 +1,177 @@
+---
+import Layout from "@/layouts/main.astro"
+import CollectionItem from "@/components/collection-item.astro"
+import { m } from "@/paraglide/messages"
+import {
+  formatCollectionLicenseMix,
+  formatCollectionPassRate,
+  formatCollectionSkillPassRate,
+  formatCollectionTotalDownloads,
+  formatCollectionTotalFileSize,
+} from "@/lib/collection-data"
+import { createServerClient } from "@/lib/server-orpc"
+import { formatCompactNumber } from "@/lib/registry-data"
+import { localizeHref, localizeUrl } from "@/paraglide/runtime"
+
+const { slug } = Astro.params
+const client = createServerClient(Astro.request)
+const collection = slug
+  ? await client.collections.getBySlug({ slug }).catch(() => null)
+  : null
+
+if (!collection) {
+  return Astro.redirect(localizeUrl(new URL("/collections", Astro.url)))
+}
+
+const skills = collection.skills.map((s) => ({
+  description: s.description,
+  id: s.id,
+  installs:
+    typeof s.downloadsAllTime === "number"
+      ? formatCompactNumber(s.downloadsAllTime)
+      : "—",
+  passRate: formatCollectionSkillPassRate(s),
+  publisherName: s.author?.name ?? s.authorHandle ?? "—",
+  tags: s.tags ?? [],
+  slug: s.slug,
+  title: s.title,
+  version: s.latestVersion ?? "—",
+}))
+
+const passingSkills = formatCollectionPassRate(collection.skills)
+const totalDownloads = formatCollectionTotalDownloads(collection.skills)
+const totalFileSize = formatCollectionTotalFileSize(collection.skills)
+const licenseMix = formatCollectionLicenseMix(collection.skills)
+
+const metaItems = [
+  { lbl: m.collections_page_skills(), val: String(collection.skills.length) },
+  { lbl: m.collections_page_total_downloads(), val: totalDownloads },
+  { lbl: m.collections_page_license_mix(), val: licenseMix },
+  { lbl: m.collections_page_total_file_size(), val: totalFileSize },
+  { lbl: m.collections_page_passing(), val: passingSkills, accent: true },
+]
+---
+
+<Layout title={`${collection.title} — skills.re`}>
+  <!-- HERO: full-width, no image -->
+  <section class="border-b border-(--rule) px-5 py-10 md:px-10 md:py-16">
+    <div
+      class="mb-4 font-mono text-[10.5px] tracking-[.2em] text-(--editorial-red) uppercase"
+    >
+      ● {m.collections_page_eyebrow({ slug: collection.slug })}
+    </div>
+    <h1
+      class="font-display m-0 mb-5 text-[clamp(2.8rem,8vw,7rem)] leading-[.88] font-normal tracking-tight"
+    >
+      {collection.title}
+    </h1>
+    <p
+      class="text-ink-2 m-0 max-w-3xl font-serif text-[clamp(1rem,2vw,1.4rem)] leading-relaxed"
+    >
+      {collection.description}
+    </p>
+  </section>
+
+  <!-- META BAR: 2 cols mobile → 5 cols desktop -->
+  <div
+    class="grid grid-cols-2 border-b-[3px] border-(--rule) font-mono text-[10.5px] tracking-widest uppercase sm:grid-cols-3 md:grid-cols-5"
+  >
+    {
+      metaItems.map((m, i) => (
+        <div
+          class={`border-r border-(--rule) px-4 py-3.5 text-(--muted-text) last:border-r-0 ${
+            i === 1 ? "border-(--rule) sm:border-r-0 md:border-r" : ""
+          }`}
+        >
+          {m.lbl}
+          <b
+            class={`font-display mt-1 block text-base font-medium ${m.accent ? "text-editorial-green" : "text-(--ink)"}`}
+          >
+            {m.val}
+          </b>
+        </div>
+      ))
+    }
+  </div>
+
+  <!-- EDITORIAL INTRO: stacked mobile → 3 cols desktop -->
+  <section
+    class="grid grid-cols-1 gap-0 border-b border-(--rule) md:grid-cols-[1fr_2fr] lg:grid-cols-3"
+  >
+    <aside
+      class="border-b border-(--rule) px-5 py-8 font-mono text-[11px] leading-relaxed text-(--muted-text) md:border-r md:border-b-0 md:px-7"
+    >
+      <b
+        class="mb-1.5 block font-medium tracking-widest text-(--ink) uppercase"
+      >
+        § {m.collections_page_editors_note()}
+      </b>
+      {m.collections_page_working_collection()}
+      <br /><br />
+      <b
+        class="mb-1.5 block font-medium tracking-widest text-(--ink) uppercase"
+      >
+        § {m.collections_page_mount_all()}
+      </b>
+      <span class="tracking-wider break-all text-(--ink)"
+        >skr install @skills.re/{collection.slug}</span
+      >
+    </aside>
+
+    <div
+      class="border-b border-(--rule) px-5 py-8 text-[17px] leading-[1.6] font-(--font-serif) md:px-8 lg:border-r lg:border-b-0"
+    >
+      <p class="dropcap m-0 mb-4">
+        {m.collections_page_intro_1()}
+      </p>
+      <p class="m-0 mb-4">
+        {m.collections_page_intro_2()}
+      </p>
+      <p class="m-0">
+        {m.collections_page_intro_3()}
+      </p>
+    </div>
+
+    <aside
+      class="hidden px-5 py-8 font-mono text-[11px] leading-relaxed text-(--muted-text) md:px-7 lg:block"
+    >
+      <b
+        class="mb-1.5 block font-medium tracking-widest text-(--ink) uppercase"
+      >
+        § {m.collections_page_in_this_collection()}
+      </b>
+      <div class="mt-2 leading-loose">
+        {
+          skills.map((s, i) => (
+            <div class="truncate">
+              {String(i + 1).padStart(2, "0")} · {s.title}
+            </div>
+          ))
+        }
+      </div>
+    </aside>
+  </section>
+
+  <!-- COLLECTION SKILL ITEMS -->
+  {skills.map((skill, i) => <CollectionItem skill={skill} index={i} />)}
+
+  <!-- TAIL -->
+  <div class="border-b border-(--rule) px-5 py-12 text-center">
+    <div
+      class="font-mono text-[11px] tracking-[.16em] text-(--muted-text) uppercase"
+    >
+      {m.collections_page_end_of_collection()}
+    </div>
+    <div class="font-display my-2 text-[32px] italic">— skills.re</div>
+    <div
+      class="font-mono text-[11px] tracking-[.16em] text-(--muted-text) uppercase"
+    >
+      {m.collections_page_thanks_for_reading()}
+    </div>
+    <div class="mt-6 flex justify-center">
+      <a href={localizeHref("/collections")} class="btn ghost"
+        >← {m.collections_page_all_collections()}</a
+      >
+    </div>
+  </div>
+</Layout>

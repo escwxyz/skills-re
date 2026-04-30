@@ -1,0 +1,35 @@
+---
+import { m } from "@/paraglide/messages"
+import type { AuthorStatsData } from "@/lib/author-data"
+
+interface Props {
+  stats: AuthorStatsData
+}
+
+const { stats } = Astro.props
+---
+
+<div
+  class="border-border grid grid-cols-2 border-b-[3px] sm:grid-cols-3 md:grid-cols-5"
+>
+  {
+    stats.metrics.map((stat, index) => (
+      <div class="border-border border-r px-5 py-5.5 last:border-r-0">
+        <div class="font-display text-[46px] leading-none font-normal">
+          {stat.value}
+        </div>
+        <div class="text-muted-foreground mt-2 font-mono text-[10px] tracking-[.14em] uppercase">
+          {index === 0
+            ? m.author_stats_published_skills()
+            : index === 1
+              ? m.author_stats_repositories()
+              : index === 2
+                ? m.author_stats_total_installs()
+                : index === 3
+                  ? m.author_stats_aggregate_stars()
+                  : m.author_stats_avg_audit_score()}
+        </div>
+      </div>
+    ))
+  }
+</div>

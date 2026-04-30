@@ -1,11 +1,12 @@
 ---
 import Layout from "@/layouts/main.astro"
-import { SkillTag } from "@/components/skill-tag"
+import SkillTag from "@/components/skill-tag.astro"
 import { InstallTabs } from "@/components/install-tabs"
 import { SkillTabsActions } from "@/components/skill-tabs-actions"
-import { VersionHistory } from "@/components/version-history"
-import { SkillActions } from "@/components/skill-actions"
+import VersionHistory from "@/components/version-history.astro"
+import SkillActions from "@/components/skill-actions.astro"
 import type { SkillLayoutData } from "@/lib/skill-detail-data"
+import { m } from "@/paraglide/messages"
 import {
   ChatsIcon,
   ClockCounterClockwiseIcon,
@@ -13,7 +14,8 @@ import {
   ShieldCheckIcon,
   TreeViewIcon,
 } from "@phosphor-icons/react"
-import { SkillBreadcrumb } from "@/components/skill-breadcrumb"
+import SkillBreadcrumb from "@/components/skill-breadcrumb.astro"
+import { localizeHref } from "@/paraglide/runtime"
 
 type TabId =
   | "skill.md"
@@ -32,6 +34,64 @@ interface Props {
 
 const { skill, activeTab, title } = Astro.props
 
+const translateMetaLabel = (label: string) => {
+  switch (label) {
+    case "Version": {
+      return m.skill_detail_meta_version()
+    }
+    case "Author": {
+      return m.skill_detail_meta_author()
+    }
+    case "License": {
+      return m.skill_detail_meta_license()
+    }
+    case "Category": {
+      return m.skill_detail_meta_category()
+    }
+    case "Repository": {
+      return m.skill_detail_meta_repository()
+    }
+    case "Published": {
+      return m.skill_detail_meta_published()
+    }
+    case "Updated": {
+      return m.skill_detail_meta_updated()
+    }
+    default: {
+      return label
+    }
+  }
+}
+
+const translateMetricLabel = (label: string) => {
+  switch (label) {
+    case "Audit Score": {
+      return m.skill_detail_metric_audit_score()
+    }
+    case "Installs": {
+      return m.skill_detail_metric_installs()
+    }
+    case "Stars": {
+      return m.skill_detail_metric_stars()
+    }
+    case "Latest Version": {
+      return m.skill_detail_metric_latest_version()
+    }
+    case "Views": {
+      return m.skill_detail_metric_views()
+    }
+    case "Trending": {
+      return m.skill_detail_metric_trending()
+    }
+    case "Forks": {
+      return m.skill_detail_metric_forks()
+    }
+    default: {
+      return label
+    }
+  }
+}
+
 const tabs: {
   id: TabId
   label: string
@@ -41,33 +101,33 @@ const tabs: {
   {
     id: "skill.md",
     label: "skill.md",
-    href: `/skills/${skill.slug}#skill-tabs`,
+    href: localizeHref(`/skills/${skill.slug}#skill-tabs`),
     icon: FileTextIcon,
   },
   {
     id: "file-tree",
-    label: "File Tree",
-    href: `/skills/${skill.slug}/file-tree#skill-tabs`,
+    label: m.skill_detail_file_tree(),
+    href: localizeHref(`/skills/${skill.slug}/file-tree#skill-tabs`),
     icon: TreeViewIcon,
   },
   // { id: "sandbox", label: "Sandbox", href: null },
   {
     id: "audit",
-    label: "Static Audit",
-    href: `/skills/${skill.slug}/audit#skill-tabs`,
+    label: m.skill_detail_static_audit(),
+    href: localizeHref(`/skills/${skill.slug}/audit#skill-tabs`),
     icon: ShieldCheckIcon,
   },
   // { id: "evals", label: "Evals", href: null },
   {
     id: "reviews",
-    label: skill.reviewTabLabel,
-    href: `/skills/${skill.slug}/reviews#skill-tabs`,
+    label: m.skill_detail_review_tab(),
+    href: localizeHref(`/skills/${skill.slug}/reviews#skill-tabs`),
     icon: ChatsIcon,
   },
   {
     id: "changelog",
-    label: "Changelog",
-    href: `/skills/${skill.slug}/changelog#skill-tabs`,
+    label: m.skill_detail_changelog(),
+    href: localizeHref(`/skills/${skill.slug}/changelog#skill-tabs`),
     icon: ClockCounterClockwiseIcon,
   },
 ]
@@ -94,7 +154,7 @@ const tabs: {
         {
           skill.isVerified && (
             <span style="display: inline-flex; align-items: center; vertical-align: middle; margin-left: 12px; margin-bottom: 6px; padding: 3px 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 4px; opacity: .7;">
-              Verified
+              {m.skill_detail_verified()}
             </span>
           )
         }
@@ -114,7 +174,7 @@ const tabs: {
           skill.metaItems.map((item) => (
             <div>
               <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-text);">
-                {item.label}
+                {translateMetaLabel(item.label)}
               </div>
               <div
                 style={`margin-top: 4px; font-family: ${item.mono ? "var(--font-mono)" : "var(--font-serif)"}; font-size: ${item.mono ? "13px" : "15px"};`}
@@ -153,12 +213,11 @@ const tabs: {
         />
       </div>
 
-      <!-- TODO: replace Performance metrics -->
       <div style="padding: 18px 22px; border-bottom: 1px solid var(--rule);">
         <div
           style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
         >
-          Performance Metrics
+          {m.skill_detail_performance_metrics()}
         </div>
         <div
           style={`display: grid; grid-template-columns: repeat(${Math.min(Math.max(skill.metricItems.length, 1), 2)}, 1fr); gap: 12px;`}
@@ -167,7 +226,7 @@ const tabs: {
             skill.metricItems.map((item) => (
               <div style="padding: 8px 0 2px;">
                 <div style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-text);">
-                  {item.label}
+                  {translateMetricLabel(item.label)}
                 </div>
                 <div style="font-family: var(--font-display); font-size: 28px; line-height: 1; margin-top: 6px;">
                   {item.value}
@@ -188,7 +247,7 @@ const tabs: {
         <div
           style="font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-text); margin-bottom: 10px;"
         >
-          Tags
+          {m.skill_detail_tags()}
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
           {
@@ -196,7 +255,7 @@ const tabs: {
               skill.tags.map((tag) => <SkillTag>{tag}</SkillTag>)
             ) : (
               <span class="text-muted-text font-mono text-[10px] tracking-[.12em] uppercase">
-                No tags
+                {m.skill_detail_no_tags()}
               </span>
             )
           }
