@@ -2,6 +2,7 @@
 import Layout from "@/layouts/main.astro"
 import { DashboardShell } from "@/layouts/dashboard-shell"
 import { DashboardSettings } from "@/components/dashboard/settings"
+import { m } from "@/paraglide/messages"
 
 const currentUser = Astro.locals.user as {
   email?: string | null
@@ -13,7 +14,7 @@ const currentUser = Astro.locals.user as {
 ---
 
 <Layout
-  title="Settings — skills.re"
+  title={`${m.dashboard_settings_page_title()} — skills.re`}
   showFooter={false}
   showStatusBar={false}
   enableViewTransitions

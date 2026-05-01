@@ -3,6 +3,7 @@
 
 import { ArrowRightIcon, RobotIcon } from "@phosphor-icons/react";
 
+import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -20,76 +21,92 @@ export function AgentAccessCard({ agentConfiguration, isLoading }: AgentAccessCa
     <Card className="rounded-none border-rule/70 bg-background">
       <CardHeader className="border-b border-rule/60 pb-3">
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-          Agent access
+          {m.dashboard_settings_agent_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <RobotIcon className="size-5 text-muted-text" />
-          Discovery and approvals
+          {m.dashboard_settings_agent_title()}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 py-4">
         <p className="text-[13px] leading-[1.6] text-foreground/80">
-          This route now exposes the Better Auth discovery document at
+          {m.dashboard_settings_agent_description()}{" "}
+          {m.dashboard_settings_agent_discovery_path_prefix()}{" "}
           <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[12px]">
             /.well-known/agent-configuration
           </code>
-          so agents can discover the provider and supported approval methods.
         </p>
 
         {agentConfiguration ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div className="border border-rule/70 bg-paper/70 p-4">
               <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-                Provider
+                {m.dashboard_settings_agent_provider_label()}
               </p>
               <p className="mt-2 font-serif text-[18px] leading-[1.1]">
-                {agentConfiguration.provider_name ?? "skills.re"}
+                {agentConfiguration.provider_name ??
+                  m.dashboard_settings_agent_provider_name_default()}
               </p>
               <p className="mt-2 text-[12px] leading-normal text-foreground/70">
                 {agentConfiguration.provider_description ??
                   agentConfiguration.description ??
-                  "Agent discovery document."}
+                  m.dashboard_settings_agent_provider_description_default()}
               </p>
             </div>
 
             <div className="border border-rule/70 bg-paper/70 p-4">
               <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-                Modes and approvals
+                {m.dashboard_settings_agent_modes_label()}
               </p>
               <p className="mt-2 text-[12px] leading-[1.6] text-foreground/70">
-                Modes: {(agentConfiguration.modes ?? []).join(", ") || "delegated"}
+                {m.dashboard_settings_agent_modes({
+                  modes:
+                    (agentConfiguration.modes ?? []).join(", ") ||
+                    m.dashboard_settings_agent_modes_default(),
+                })}
               </p>
               <p className="text-[12px] leading-[1.6] text-foreground/70">
-                Approval methods:{" "}
-                {(agentConfiguration.approval_methods ?? []).join(", ") || "device_authorization"}
+                {m.dashboard_settings_agent_approval_methods({
+                  methods:
+                    (agentConfiguration.approval_methods ?? []).join(", ") ||
+                    m.dashboard_settings_agent_approval_methods_default(),
+                })}
               </p>
               <p className="text-[12px] leading-[1.6] text-foreground/70">
-                Algorithms: {(agentConfiguration.algorithms ?? []).join(", ") || "n/a"}
+                {m.dashboard_settings_agent_algorithms({
+                  algorithms:
+                    (agentConfiguration.algorithms ?? []).join(", ") ||
+                    m.dashboard_settings_agent_algorithms_default(),
+                })}
               </p>
             </div>
 
             <div className="border border-rule/70 bg-paper/70 p-4">
               <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-                Discovery path
+                {m.dashboard_settings_agent_discovery_path_label()}
               </p>
               <p className="mt-2 font-mono text-[12px] leading-[1.6] text-foreground/70">
-                {agentConfiguration.default_location ?? "n/a"}
+                {agentConfiguration.default_location ??
+                  m.dashboard_settings_agent_discovery_path_default()}
               </p>
               <p className="text-[12px] leading-[1.6] text-foreground/70">
-                Issuer: {agentConfiguration.issuer ?? "n/a"}
+                {m.dashboard_settings_agent_issuer_label()}{" "}
+                {agentConfiguration.issuer ?? m.dashboard_settings_agent_discovery_path_default()}
               </p>
               <p className="text-[12px] leading-[1.6] text-foreground/70">
-                Endpoints: {Object.keys(agentConfiguration.endpoints ?? {}).length}
+                {m.dashboard_settings_agent_endpoints({
+                  count: Object.keys(agentConfiguration.endpoints ?? {}).length,
+                })}
               </p>
             </div>
           </div>
         ) : isLoading ? (
           <p className="text-[13px] leading-normal text-muted-text">
-            Loading agent discovery document...
+            {m.dashboard_settings_agent_loading()}
           </p>
         ) : (
           <p className="text-[13px] leading-normal text-muted-text">
-            Agent discovery is enabled, but no configuration was returned.
+            {m.dashboard_settings_agent_empty()}
           </p>
         )}
 
@@ -98,13 +115,13 @@ export function AgentAccessCard({ agentConfiguration, isLoading }: AgentAccessCa
             className={buttonVariants({ size: "sm", variant: "outline" })}
             href={"/.well-known/agent-configuration"}
           >
-            Open discovery document
+            {m.dashboard_settings_agent_open_discovery_document()}
           </a>
           <a
             className={buttonVariants({ size: "sm", variant: "outline" })}
             href={localizeHref("/dashboard")}
           >
-            Review dashboard
+            {m.dashboard_settings_agent_review_dashboard()}
             <ArrowRightIcon />
           </a>
         </div>

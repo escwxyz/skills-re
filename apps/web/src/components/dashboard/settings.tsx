@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -62,7 +63,11 @@ export function DashboardSettings({ currentUser }: Props) {
           fetch(localizeHref("/.well-known/agent-configuration"))
             .then(async (response) => {
               if (!response.ok) {
-                throw new Error(`Failed to load agent discovery document (${response.status}).`);
+                throw new Error(
+                  m.dashboard_settings_error_failed_to_load_agent_discovery_document({
+                    status: String(response.status),
+                  }),
+                );
               }
 
               return { data: (await response.json()) as AgentConfiguration, error: null };
@@ -82,7 +87,10 @@ export function DashboardSettings({ currentUser }: Props) {
           setAccounts([]);
           if (accountsResult.error) {
             nextErrors.push(
-              toDisplayError(accountsResult.error, "Failed to load linked accounts."),
+              toDisplayError(
+                accountsResult.error,
+                m.dashboard_settings_error_failed_to_load_linked_accounts(),
+              ),
             );
           }
         }
@@ -92,7 +100,12 @@ export function DashboardSettings({ currentUser }: Props) {
         } else {
           setApiKeys([]);
           if (apiKeysResult.error) {
-            nextErrors.push(toDisplayError(apiKeysResult.error, "Failed to load API keys."));
+            nextErrors.push(
+              toDisplayError(
+                apiKeysResult.error,
+                m.dashboard_settings_error_failed_to_load_api_keys(),
+              ),
+            );
           }
         }
 
@@ -102,7 +115,10 @@ export function DashboardSettings({ currentUser }: Props) {
           setAgentConfiguration(null);
           if (agentResult.error) {
             nextErrors.push(
-              toDisplayError(agentResult.error, "Failed to load agent discovery data."),
+              toDisplayError(
+                agentResult.error,
+                m.dashboard_settings_error_failed_to_load_agent_discovery_data(),
+              ),
             );
           }
         }
@@ -111,7 +127,9 @@ export function DashboardSettings({ currentUser }: Props) {
         setStatusMessage(null);
       } catch (error) {
         if (isActive) {
-          setErrorMessage(toDisplayError(error, "Failed to load settings."));
+          setErrorMessage(
+            toDisplayError(error, m.dashboard_settings_error_failed_to_load_settings()),
+          );
           setStatusMessage(null);
         }
       } finally {
@@ -143,7 +161,9 @@ export function DashboardSettings({ currentUser }: Props) {
         provider,
       });
     } catch (error) {
-      setErrorMessage(toDisplayError(error, "Unable to start account linking."));
+      setErrorMessage(
+        toDisplayError(error, m.dashboard_settings_error_unable_to_start_account_linking()),
+      );
     } finally {
       setPendingAction(null);
     }
@@ -151,7 +171,7 @@ export function DashboardSettings({ currentUser }: Props) {
 
   const handleUnlinkAccount = async (account: LinkedAccount) => {
     if (accounts.length <= 1) {
-      setErrorMessage("Keep at least one account connected before removing another one.");
+      setErrorMessage(m.dashboard_settings_error_keep_at_least_one_account_connected());
       return;
     }
 
@@ -166,14 +186,16 @@ export function DashboardSettings({ currentUser }: Props) {
       })) as { data: { status?: boolean } | null; error: unknown };
 
       if (result.error) {
-        setErrorMessage(toDisplayError(result.error, "Unable to unlink the account."));
+        setErrorMessage(
+          toDisplayError(result.error, m.dashboard_settings_error_unable_to_unlink_account()),
+        );
         return;
       }
 
-      setStatusMessage("Account removed.");
+      setStatusMessage(m.dashboard_settings_status_account_removed());
       requestRefresh();
     } catch (error) {
-      setErrorMessage(toDisplayError(error, "Unable to unlink the account."));
+      setErrorMessage(toDisplayError(error, m.dashboard_settings_error_unable_to_unlink_account()));
     } finally {
       setPendingAction(null);
     }
@@ -197,16 +219,18 @@ export function DashboardSettings({ currentUser }: Props) {
       };
 
       if (result.error || !result.data?.key) {
-        setErrorMessage(toDisplayError(result.error, "Unable to create an API key."));
+        setErrorMessage(
+          toDisplayError(result.error, m.dashboard_settings_error_unable_to_create_api_key()),
+        );
         return;
       }
 
       setCreatedSecret(result.data.key);
       setApiKeyName("");
-      setStatusMessage("API key generated. Copy the secret now, it will not be shown again.");
+      setStatusMessage(m.dashboard_settings_status_api_key_generated());
       requestRefresh();
     } catch (error) {
-      setErrorMessage(toDisplayError(error, "Unable to create an API key."));
+      setErrorMessage(toDisplayError(error, m.dashboard_settings_error_unable_to_create_api_key()));
     } finally {
       setPendingAction(null);
     }
@@ -224,14 +248,16 @@ export function DashboardSettings({ currentUser }: Props) {
       };
 
       if (result.error) {
-        setErrorMessage(toDisplayError(result.error, "Unable to delete the API key."));
+        setErrorMessage(
+          toDisplayError(result.error, m.dashboard_settings_error_unable_to_delete_api_key()),
+        );
         return;
       }
 
-      setStatusMessage("API key revoked.");
+      setStatusMessage(m.dashboard_settings_status_api_key_revoked());
       requestRefresh();
     } catch (error) {
-      setErrorMessage(toDisplayError(error, "Unable to delete the API key."));
+      setErrorMessage(toDisplayError(error, m.dashboard_settings_error_unable_to_delete_api_key()));
     } finally {
       setPendingAction(null);
     }
@@ -248,12 +274,12 @@ export function DashboardSettings({ currentUser }: Props) {
     const trimmedPassword = newPassword.trim();
 
     if (!trimmedCurrentPassword) {
-      setErrorMessage("Enter your current password before saving.");
+      setErrorMessage(m.dashboard_settings_error_enter_current_password());
       return false;
     }
 
     if (!trimmedPassword) {
-      setErrorMessage("Enter a new password before saving.");
+      setErrorMessage(m.dashboard_settings_error_enter_new_password());
       return false;
     }
 
@@ -271,15 +297,19 @@ export function DashboardSettings({ currentUser }: Props) {
       };
 
       if (result.error) {
-        setErrorMessage(toDisplayError(result.error, "Unable to update the password."));
+        setErrorMessage(
+          toDisplayError(result.error, m.dashboard_settings_error_unable_to_update_password()),
+        );
         return false;
       }
 
-      setStatusMessage("Password updated.");
+      setStatusMessage(m.dashboard_settings_status_password_updated());
       requestRefresh();
       return true;
     } catch (error) {
-      setErrorMessage(toDisplayError(error, "Unable to update the password."));
+      setErrorMessage(
+        toDisplayError(error, m.dashboard_settings_error_unable_to_update_password()),
+      );
       return false;
     }
   };
@@ -294,12 +324,12 @@ export function DashboardSettings({ currentUser }: Props) {
             className={buttonVariants({ size: "sm", variant: "outline" })}
             href={localizeHref("/dashboard")}
           >
-            Back to overview
+            {m.dashboard_settings_back_to_overview()}
           </a>
         }
-        description={`Connected accounts, CLI keys, and agent access for ${displayHandle}.`}
-        eyebrow="Dashboard / Settings"
-        title="Access controls"
+        description={m.dashboard_settings_description({ handle: displayHandle })}
+        eyebrow={m.dashboard_settings_eyebrow()}
+        title={m.dashboard_settings_title()}
       >
         <div className="space-y-4">
           <SettingsAlerts errorMessage={errorMessage} statusMessage={statusMessage} />

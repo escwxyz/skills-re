@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { m } from "@/paraglide/messages";
 
 import { formatDateTime } from "@/lib/utils";
 import type { ApiKeyItem } from "./settings-data";
@@ -38,17 +39,16 @@ export function ApiKeysCard({
     <Card className="rounded-none border-rule/70 bg-background">
       <CardHeader className="border-b border-rule/60 pb-3">
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-          API keys
+          {m.dashboard_settings_api_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <KeyIcon className="size-5 text-muted-text" />
-          CLI access
+          {m.dashboard_settings_api_title()}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 py-4">
         <p className="text-[13px] leading-[1.6] text-foreground/80">
-          Generate API keys for the CLI or any other programmatic client. The secret is only shown
-          once at creation time.
+          {m.dashboard_settings_api_description()}
         </p>
 
         <form className="space-y-3" onSubmit={onCreateApiKey}>
@@ -57,7 +57,7 @@ export function ApiKeysCard({
               className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text"
               htmlFor="api-key-name"
             >
-              Key label
+              {m.dashboard_settings_api_key_label()}
             </label>
             <Input
               autoComplete="off"
@@ -66,7 +66,7 @@ export function ApiKeysCard({
               onChange={(event) => {
                 onApiKeyNameChange(event.target.value);
               }}
-              placeholder="CLI access"
+              placeholder={m.dashboard_settings_api_key_placeholder()}
               value={apiKeyName}
             />
           </div>
@@ -76,17 +76,19 @@ export function ApiKeysCard({
             disabled={pendingAction === "create-api-key"}
             type="submit"
           >
-            {pendingAction === "create-api-key" ? "Generating..." : "Generate API key"}
+            {pendingAction === "create-api-key"
+              ? m.dashboard_settings_api_generating()
+              : m.dashboard_settings_api_generate()}
           </button>
         </form>
 
         {createdSecret ? (
           <div className="border border-amber-500/25 bg-amber-50 p-4 text-[13px] leading-[1.6] text-foreground/80">
             <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-800">
-              Copy once
+              {m.dashboard_settings_api_copy_once()}
             </p>
             <p className="mt-2">
-              <span className="font-medium">Secret:</span>{" "}
+              <span className="font-medium">{m.dashboard_settings_api_secret()}</span>{" "}
               <code className="break-all rounded bg-background px-2 py-1 text-[12px]">
                 {createdSecret}
               </code>
@@ -106,19 +108,24 @@ export function ApiKeysCard({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="font-serif text-[18px] leading-[1.1]">
-                        {key.name ?? "Unnamed key"}
+                        {key.name ?? m.dashboard_settings_api_unnamed_key()}
                       </p>
                       <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text">
                         {key.prefix && key.start
                           ? `${key.prefix}${key.start}`
-                          : (key.start ?? "No prefix")}{" "}
-                        · {key.enabled ? "Enabled" : "Disabled"}
+                          : (key.start ?? m.dashboard_settings_api_no_prefix())}{" "}
+                        ·{" "}
+                        {key.enabled
+                          ? m.dashboard_settings_api_enabled()
+                          : m.dashboard_settings_api_disabled()}
                       </p>
                       <p className="text-[12px] leading-normal text-foreground/70">
-                        Created {formatDateTime(key.createdAt)}
+                        {m.dashboard_settings_api_created({ date: formatDateTime(key.createdAt) })}
                       </p>
                       <p className="text-[12px] leading-normal text-foreground/70">
-                        Last used {formatDateTime(key.lastRequest)}
+                        {m.dashboard_settings_api_last_used({
+                          date: formatDateTime(key.lastRequest),
+                        })}
                       </p>
                     </div>
 
@@ -133,22 +140,28 @@ export function ApiKeysCard({
                       }}
                       type="button"
                     >
-                      {isDeleting ? "Revoking..." : "Revoke"}
+                      {isDeleting
+                        ? m.dashboard_settings_api_revoking()
+                        : m.dashboard_settings_api_revoke()}
                     </button>
                   </div>
 
                   <p className="mt-3 text-[12px] leading-normal text-muted-text">
-                    Requests this window: {key.requestCount}
-                    {key.remaining === null ? "" : ` · Remaining: ${key.remaining}`}
+                    {m.dashboard_settings_api_requests_window({ count: key.requestCount })}
+                    {key.remaining === null
+                      ? ""
+                      : ` · ${m.dashboard_settings_api_remaining({ count: key.remaining })}`}
                   </p>
                 </div>
               );
             })
           ) : isLoading ? (
-            <p className="text-[13px] leading-normal text-muted-text">Loading API keys...</p>
+            <p className="text-[13px] leading-normal text-muted-text">
+              {m.dashboard_settings_api_loading()}
+            </p>
           ) : (
             <p className="text-[13px] leading-normal text-muted-text">
-              No API keys have been created yet.
+              {m.dashboard_settings_api_empty()}
             </p>
           )}
         </div>

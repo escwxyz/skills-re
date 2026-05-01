@@ -4,6 +4,7 @@
 import { LinkSimpleIcon, UserCircleIcon } from "@phosphor-icons/react";
 
 import { useAppForm } from "@/hooks/form-hook";
+import { m } from "@/paraglide/messages";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -51,17 +52,16 @@ export function IdentityLinksCard({
     <Card className="rounded-none border-rule/70 bg-background">
       <CardHeader className="border-b border-rule/60 pb-3">
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-          Connected accounts
+          {m.dashboard_settings_identity_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <UserCircleIcon className="size-5 text-muted-text" />
-          Identity links
+          {m.dashboard_settings_identity_title()}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 py-4">
         <p className="text-[13px] leading-[1.6] text-foreground/80">
-          Link Google or GitHub to this account. Keep at least one provider attached so you do not
-          lock yourself out.
+          {m.dashboard_settings_identity_description()}
         </p>
 
         <div className="space-y-3">
@@ -80,11 +80,15 @@ export function IdentityLinksCard({
                         {account.accountId}
                       </p>
                       <p className="text-[12px] leading-normal text-foreground/70">
-                        Linked {formatDateTime(account.createdAt)}
+                        {m.dashboard_settings_identity_linked_at({
+                          date: formatDateTime(account.createdAt),
+                        })}
                       </p>
                       {account.scopes.length > 0 ? (
                         <p className="text-[12px] leading-normal text-foreground/70">
-                          Scopes: {account.scopes.join(", ")}
+                          {m.dashboard_settings_identity_scopes({
+                            scopes: account.scopes.join(", "),
+                          })}
                         </p>
                       ) : null}
                     </div>
@@ -100,29 +104,34 @@ export function IdentityLinksCard({
                       }}
                       type="button"
                     >
-                      {pendingAction === `unlink-${account.id}` ? "Removing..." : "Unlink"}
+                      {pendingAction === `unlink-${account.id}`
+                        ? m.dashboard_settings_identity_removing()
+                        : m.dashboard_settings_identity_unlink()}
                     </button>
                   </div>
 
                   {isLastAccount ? (
                     <p className="mt-3 text-[12px] leading-normal text-muted-text">
-                      This is the last connected account, so unlinking is disabled until another
-                      provider is linked.
+                      {m.dashboard_settings_identity_last_account_note()}
                     </p>
                   ) : null}
 
                   {account.providerId === "credential" ? (
                     <p className="mt-3 text-[12px] leading-normal text-muted-text">
-                      Email password login is active for this account.
+                      {m.dashboard_settings_identity_credential_active()}
                     </p>
                   ) : null}
                 </div>
               );
             })
           ) : isLoading ? (
-            <p className="text-[13px] leading-normal text-muted-text">Loading linked accounts...</p>
+            <p className="text-[13px] leading-normal text-muted-text">
+              {m.dashboard_settings_identity_loading()}
+            </p>
           ) : (
-            <p className="text-[13px] leading-normal text-muted-text">No linked accounts found.</p>
+            <p className="text-[13px] leading-normal text-muted-text">
+              {m.dashboard_settings_identity_empty()}
+            </p>
           )}
         </div>
 
@@ -130,7 +139,7 @@ export function IdentityLinksCard({
 
         <div className="space-y-3">
           <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-            Link another provider
+            {m.dashboard_settings_identity_link_another_provider()}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {(Object.keys(providerMeta) as SocialProvider[]).map((provider) => {
@@ -150,10 +159,16 @@ export function IdentityLinksCard({
                   type="button"
                 >
                   {pendingAction === `link-${provider}`
-                    ? `Connecting ${providerMeta[provider].label}...`
+                    ? m.dashboard_settings_identity_connecting_provider({
+                        provider: providerMeta[provider].label,
+                      })
                     : isConnected
-                      ? `${providerMeta[provider].label} connected`
-                      : `Link ${providerMeta[provider].label}`}
+                      ? m.dashboard_settings_identity_provider_connected({
+                          provider: providerMeta[provider].label,
+                        })
+                      : m.dashboard_settings_identity_link_provider({
+                          provider: providerMeta[provider].label,
+                        })}
                 </button>
               );
             })}
@@ -167,10 +182,10 @@ export function IdentityLinksCard({
               <Form className="space-y-3">
                 <div className="space-y-1">
                   <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-                    Password access
+                    {m.dashboard_settings_identity_password_access()}
                   </p>
                   <p className="text-[13px] leading-normal text-foreground/70">
-                    Update the password backing the email credential login.
+                    {m.dashboard_settings_identity_password_description()}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -180,7 +195,7 @@ export function IdentityLinksCard({
                         autoComplete="current-password"
                         className="h-10"
                         onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Current password"
+                        placeholder={m.dashboard_settings_identity_current_password()}
                         type="password"
                         value={field.state.value}
                       />
@@ -192,7 +207,7 @@ export function IdentityLinksCard({
                         autoComplete="new-password"
                         className="h-10"
                         onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="New password"
+                        placeholder={m.dashboard_settings_identity_new_password()}
                         type="password"
                         value={field.state.value}
                       />
@@ -206,7 +221,9 @@ export function IdentityLinksCard({
                       disabled={isSubmitting}
                       type="submit"
                     >
-                      {isSubmitting ? "Saving..." : "Save password"}
+                      {isSubmitting
+                        ? m.dashboard_settings_identity_saving()
+                        : m.dashboard_settings_identity_save_password()}
                     </button>
                   )}
                 </passwordForm.Subscribe>
@@ -215,8 +232,7 @@ export function IdentityLinksCard({
           </>
         ) : currentUserEmail ? (
           <div className="border border-rule/70 bg-paper/70 p-4 text-[13px] leading-[1.6] text-foreground/75">
-            Email login is not linked yet. Use a social account or connect a credential-based login
-            first.
+            {m.dashboard_settings_identity_email_not_linked()}
           </div>
         ) : null}
       </CardContent>
