@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { useAppForm } from "@/hooks/form-hook";
 import { localizeHref } from "@/paraglide/runtime";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Field, FieldError } from "@/components/ui/form";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 import type { CurrentUser } from "./dashboard/shared";
 
@@ -17,50 +24,37 @@ interface Props {
 }
 
 export function DeviceApproval({ currentUser, userCode = "" }: Props) {
-  const [code, setCode] = useState(userCode);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<"approve" | "deny" | null>(null);
+  const actionRef = useRef<"approve" | "deny">("approve");
 
-  const handleApprove = async () => {
-    if (!code.trim()) {
-      setMessage("Enter a device code first.");
-      return;
-    }
+  const form = useAppForm({
+    defaultValues: { userCode: userCode.replaceAll("-", "") },
+    onSubmit: async ({ value }) => {
+      const code = value.userCode.trim();
+      const action = actionRef.current;
+      setPendingAction(action);
+      setMessage(null);
 
-    setIsProcessing(true);
-    setMessage(null);
+      try {
+        // oxlint-disable-next-line unicorn/prefer-ternary
+        if (action === "approve") {
+          await authClient.device.approve({ userCode: code });
+        } else {
+          await authClient.device.deny({ userCode: code });
+        }
+        window.location.href = localizeHref("/dashboard/settings");
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : `Failed to ${action} the device.`);
+      } finally {
+        setPendingAction(null);
+      }
+    },
+  });
 
-    try {
-      await authClient.device.approve({
-        userCode: code.trim(),
-      });
-      window.location.href = localizeHref("/dashboard/settings");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Failed to approve the device.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDeny = async () => {
-    if (!code.trim()) {
-      setMessage("Enter a device code first.");
-      return;
-    }
-
-    setIsProcessing(true);
-    setMessage(null);
-
-    try {
-      await authClient.device.deny({
-        userCode: code.trim(),
-      });
-      window.location.href = localizeHref("/dashboard/settings");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Failed to deny the device.");
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleAction = (action: "approve" | "deny") => {
+    actionRef.current = action;
+    void form.handleSubmit();
   };
 
   return (
@@ -81,36 +75,57 @@ export function DeviceApproval({ currentUser, userCode = "" }: Props) {
               : "Sign in first, then return here to approve the device."}
           </p>
 
-          <div className="space-y-2">
-            <label className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
-              User code
-            </label>
-            <Input
-              className="h-10"
-              onChange={(event) => setCode(event.target.value)}
-              placeholder="ABCD-1234"
-              value={code}
-            />
-          </div>
+          <form.AppForm>
+            <form.AppField
+              name="userCode"
+              validators={{
+                onSubmit: ({ value }) => (value.trim() ? undefined : "Enter a device code first."),
+              }}
+            >
+              {(field) => (
+                <Field className="space-y-2">
+                  <label className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+                    User code
+                  </label>
+                  <InputOTP maxLength={8} value={field.state.value} onChange={field.handleChange}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                    <InputOTPSeparator />
+                    <InputOTPGroup>
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                      <InputOTPSlot index={6} />
+                      <InputOTPSlot index={7} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                  <FieldError />
+                </Field>
+              )}
+            </form.AppField>
+          </form.AppForm>
 
           {message ? <p className="text-[13px] text-destructive">{message}</p> : null}
 
           <div className="flex flex-wrap gap-2">
             <button
               className={buttonVariants({ size: "sm" })}
-              disabled={isProcessing || !currentUser}
-              onClick={() => void handleApprove()}
+              disabled={pendingAction !== null || !currentUser}
+              onClick={() => handleAction("approve")}
               type="button"
             >
-              {isProcessing ? "Processing..." : "Approve"}
+              {pendingAction === "approve" ? "Approving..." : "Approve"}
             </button>
             <button
               className={buttonVariants({ size: "sm", variant: "outline" })}
-              disabled={isProcessing || !currentUser}
-              onClick={() => void handleDeny()}
+              disabled={pendingAction !== null || !currentUser}
+              onClick={() => handleAction("deny")}
               type="button"
             >
-              Deny
+              {pendingAction === "deny" ? "Denying..." : "Deny"}
             </button>
           </div>
         </CardContent>

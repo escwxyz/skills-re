@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-import { formatDateTime } from "./settings-data";
+import { formatDateTime } from "@/lib/utils";
 import type { ApiKeyItem } from "./settings-data";
 
 interface ApiKeysCardProps {
@@ -40,7 +40,7 @@ export function ApiKeysCard({
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
           API keys
         </CardDescription>
-        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-[1] tracking-[-0.03em]">
+        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <KeyIcon className="size-5 text-muted-text" />
           CLI access
         </CardTitle>

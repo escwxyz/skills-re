@@ -1,48 +1,51 @@
 // oxlint-disable no-nested-ternary
 "use client";
 
-import type { FormEvent } from "react";
-
 import { LinkSimpleIcon, UserCircleIcon } from "@phosphor-icons/react";
 
+import { useAppForm } from "@/hooks/form-hook";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-import { formatDateTime, formatProviderLabel, providerMeta } from "./settings-data";
+import { formatDateTime } from "@/lib/utils";
+import { formatProviderLabel, providerMeta } from "./settings-data";
 import type { LinkedAccount, SocialProvider } from "./settings-data";
 
 interface IdentityLinksCardProps {
   accounts: LinkedAccount[];
-  currentPassword: string;
   currentUserEmail?: string | null;
   isLoading: boolean;
   linkedCredentialAccount?: LinkedAccount | null;
-  newPassword: string;
-  onCurrentPasswordChange: (value: string) => void;
   onLinkProvider: (provider: SocialProvider) => void;
-  onNewPasswordChange: (value: string) => void;
-  onSavePassword: (event: FormEvent<HTMLFormElement>) => void;
+  onSavePassword: (values: { currentPassword: string; newPassword: string }) => Promise<boolean>;
   onUnlinkAccount: (account: LinkedAccount) => void;
   pendingAction: string | null;
 }
 
 export function IdentityLinksCard({
   accounts,
-  currentPassword,
   currentUserEmail,
   isLoading,
   linkedCredentialAccount,
-  newPassword,
-  onCurrentPasswordChange,
   onLinkProvider,
-  onNewPasswordChange,
   onSavePassword,
   onUnlinkAccount,
   pendingAction,
 }: IdentityLinksCardProps) {
   const connectedProviderIds = new Set(accounts.map((account) => account.providerId));
+
+  const passwordForm = useAppForm({
+    defaultValues: { currentPassword: "", newPassword: "" },
+    onSubmit: async ({ value, formApi }) => {
+      const ok = await onSavePassword(value);
+      if (ok) {
+        formApi.reset();
+      }
+    },
+  });
 
   return (
     <Card className="rounded-none border-rule/70 bg-background">
@@ -160,41 +163,55 @@ export function IdentityLinksCard({
         {linkedCredentialAccount ? (
           <>
             <Separator />
-            <form className="space-y-3" onSubmit={onSavePassword}>
-              <div className="space-y-1">
-                <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
-                  Password access
-                </p>
-                <p className="text-[13px] leading-normal text-foreground/70">
-                  Update the password backing the email credential login.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  autoComplete="current-password"
-                  className="h-10"
-                  onChange={(event) => {
-                    onCurrentPasswordChange(event.target.value);
-                  }}
-                  placeholder="Current password"
-                  type="password"
-                  value={currentPassword}
-                />
-                <Input
-                  autoComplete="new-password"
-                  className="h-10"
-                  onChange={(event) => {
-                    onNewPasswordChange(event.target.value);
-                  }}
-                  placeholder="New password"
-                  type="password"
-                  value={newPassword}
-                />
-              </div>
-              <button className={buttonVariants({ size: "sm" })} type="submit">
-                {pendingAction === "set-password" ? "Saving..." : "Save password"}
-              </button>
-            </form>
+            <passwordForm.AppForm>
+              <Form className="space-y-3">
+                <div className="space-y-1">
+                  <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+                    Password access
+                  </p>
+                  <p className="text-[13px] leading-normal text-foreground/70">
+                    Update the password backing the email credential login.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <passwordForm.AppField name="currentPassword">
+                    {(field) => (
+                      <Input
+                        autoComplete="current-password"
+                        className="h-10"
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Current password"
+                        type="password"
+                        value={field.state.value}
+                      />
+                    )}
+                  </passwordForm.AppField>
+                  <passwordForm.AppField name="newPassword">
+                    {(field) => (
+                      <Input
+                        autoComplete="new-password"
+                        className="h-10"
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="New password"
+                        type="password"
+                        value={field.state.value}
+                      />
+                    )}
+                  </passwordForm.AppField>
+                </div>
+                <passwordForm.Subscribe selector={(state) => state.isSubmitting}>
+                  {(isSubmitting) => (
+                    <button
+                      className={buttonVariants({ size: "sm" })}
+                      disabled={isSubmitting}
+                      type="submit"
+                    >
+                      {isSubmitting ? "Saving..." : "Save password"}
+                    </button>
+                  )}
+                </passwordForm.Subscribe>
+              </Form>
+            </passwordForm.AppForm>
           </>
         ) : currentUserEmail ? (
           <div className="border border-rule/70 bg-paper/70 p-4 text-[13px] leading-[1.6] text-foreground/75">

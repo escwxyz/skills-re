@@ -22,7 +22,7 @@ export function AgentAccessCard({ agentConfiguration, isLoading }: AgentAccessCa
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
           Agent access
         </CardDescription>
-        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-[1] tracking-[-0.03em]">
+        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <RobotIcon className="size-5 text-muted-text" />
           Discovery and approvals
         </CardTitle>
@@ -45,7 +45,7 @@ export function AgentAccessCard({ agentConfiguration, isLoading }: AgentAccessCa
               <p className="mt-2 font-serif text-[18px] leading-[1.1]">
                 {agentConfiguration.provider_name ?? "skills.re"}
               </p>
-              <p className="mt-2 text-[12px] leading-[1.5] text-foreground/70">
+              <p className="mt-2 text-[12px] leading-normal text-foreground/70">
                 {agentConfiguration.provider_description ??
                   agentConfiguration.description ??
                   "Agent discovery document."}
@@ -96,7 +96,7 @@ export function AgentAccessCard({ agentConfiguration, isLoading }: AgentAccessCa
         <div className="flex flex-wrap gap-2">
           <a
             className={buttonVariants({ size: "sm", variant: "outline" })}
-            href={localizeHref("/.well-known/agent-configuration")}
+            href={"/.well-known/agent-configuration"}
           >
             Open discovery document
           </a>

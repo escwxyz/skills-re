@@ -46,17 +46,6 @@ export const providerMeta: Record<SocialProvider, { label: string }> = {
   },
 };
 
-export const formatDateTime = (value: string | Date | null | undefined) => {
-  if (!value) {
-    return "Never";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-};
-
 export const formatProviderLabel = (providerId: string) => {
   if (providerId === "credential") {
     return "Email";

@@ -1,7 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
-
 import type {
   AgentConfiguration,
   ApiKeyItem,
@@ -26,19 +24,15 @@ interface SettingsDashboardPanelsProps {
   agentConfiguration: AgentConfiguration | null;
   apiKeyName: string;
   apiKeys: ApiKeyItem[];
-  currentPassword: string;
   currentUserEmail?: string | null;
   createdSecret: string | null;
   isLoading: boolean;
   linkedCredentialAccount?: LinkedAccount | null;
-  newPassword: string;
   onApiKeyNameChange: (value: string) => void;
-  onChangePassword: (event: FormEvent<HTMLFormElement>) => void;
-  onCreateApiKey: (event: FormEvent<HTMLFormElement>) => void;
+  onCreateApiKey: (event: React.FormEvent<HTMLFormElement>) => void;
   onDeleteApiKey: (keyId: string) => void;
-  onCurrentPasswordChange: (value: string) => void;
   onLinkProvider: (provider: SocialProvider) => void;
-  onNewPasswordChange: (value: string) => void;
+  onSavePassword: (values: { currentPassword: string; newPassword: string }) => Promise<boolean>;
   onUnlinkAccount: (account: LinkedAccount) => void;
   pendingAction: string | null;
 }
@@ -48,19 +42,15 @@ export function SettingsDashboardPanels({
   agentConfiguration,
   apiKeyName,
   apiKeys,
-  currentPassword,
   currentUserEmail,
   createdSecret,
   isLoading,
   linkedCredentialAccount,
-  newPassword,
   onApiKeyNameChange,
-  onChangePassword,
   onCreateApiKey,
   onDeleteApiKey,
-  onCurrentPasswordChange,
   onLinkProvider,
-  onNewPasswordChange,
+  onSavePassword,
   onUnlinkAccount,
   pendingAction,
 }: SettingsDashboardPanelsProps) {
@@ -69,15 +59,11 @@ export function SettingsDashboardPanels({
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <IdentityLinksCard
           accounts={accounts}
-          currentPassword={currentPassword}
           currentUserEmail={currentUserEmail}
           isLoading={isLoading}
           linkedCredentialAccount={linkedCredentialAccount}
-          newPassword={newPassword}
-          onCurrentPasswordChange={onCurrentPasswordChange}
           onLinkProvider={onLinkProvider}
-          onNewPasswordChange={onNewPasswordChange}
-          onSavePassword={onChangePassword}
+          onSavePassword={onSavePassword}
           onUnlinkAccount={onUnlinkAccount}
           pendingAction={pendingAction}
         />

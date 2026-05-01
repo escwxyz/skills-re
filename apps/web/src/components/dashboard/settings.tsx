@@ -37,8 +37,6 @@ export function DashboardSettings({ currentUser }: Props) {
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -49,66 +47,78 @@ export function DashboardSettings({ currentUser }: Props) {
     const loadSettings = async () => {
       setIsLoading(true);
 
-      const [accountsResult, apiKeysResult, agentResult] = await Promise.all([
-        authClient.listAccounts().catch((error: unknown) => ({ data: null, error })),
-        authClient.apiKey
-          .list({
-            query: {
-              limit: 20,
-              sortBy: "createdAt",
-              sortDirection: "desc",
-            },
-          })
-          .catch((error: unknown) => ({ data: null, error })),
-        fetch(localizeHref("/.well-known/agent-configuration"))
-          .then(async (response) => {
-            if (!response.ok) {
-              throw new Error(`Failed to load agent discovery document (${response.status}).`);
-            }
+      try {
+        const [accountsResult, apiKeysResult, agentResult] = await Promise.all([
+          authClient.listAccounts().catch((error: unknown) => ({ data: null, error })),
+          authClient.apiKey
+            .list({
+              query: {
+                limit: 20,
+                sortBy: "createdAt",
+                sortDirection: "desc",
+              },
+            })
+            .catch((error: unknown) => ({ data: null, error })),
+          fetch(localizeHref("/.well-known/agent-configuration"))
+            .then(async (response) => {
+              if (!response.ok) {
+                throw new Error(`Failed to load agent discovery document (${response.status}).`);
+              }
 
-            return { data: (await response.json()) as AgentConfiguration, error: null };
-          })
-          .catch((error: unknown) => ({ data: null, error })),
-      ]);
+              return { data: (await response.json()) as AgentConfiguration, error: null };
+            })
+            .catch((error: unknown) => ({ data: null, error })),
+        ]);
 
-      if (!isActive) {
-        return;
-      }
+        if (!isActive) {
+          return;
+        }
 
-      const nextErrors: string[] = [];
+        const nextErrors: string[] = [];
 
-      if (accountsResult.data) {
-        setAccounts(accountsResult.data as LinkedAccount[]);
-      } else {
-        setAccounts([]);
-        if (accountsResult.error) {
-          nextErrors.push(toDisplayError(accountsResult.error, "Failed to load linked accounts."));
+        if (accountsResult.data) {
+          setAccounts(accountsResult.data as LinkedAccount[]);
+        } else {
+          setAccounts([]);
+          if (accountsResult.error) {
+            nextErrors.push(
+              toDisplayError(accountsResult.error, "Failed to load linked accounts."),
+            );
+          }
+        }
+
+        if (apiKeysResult.data) {
+          setApiKeys((apiKeysResult.data as { apiKeys: ApiKeyItem[] }).apiKeys ?? []);
+        } else {
+          setApiKeys([]);
+          if (apiKeysResult.error) {
+            nextErrors.push(toDisplayError(apiKeysResult.error, "Failed to load API keys."));
+          }
+        }
+
+        if (agentResult.data) {
+          setAgentConfiguration(agentResult.data as AgentConfiguration);
+        } else {
+          setAgentConfiguration(null);
+          if (agentResult.error) {
+            nextErrors.push(
+              toDisplayError(agentResult.error, "Failed to load agent discovery data."),
+            );
+          }
+        }
+
+        setErrorMessage(nextErrors.length > 0 ? nextErrors.join(" ") : null);
+        setStatusMessage(null);
+      } catch (error) {
+        if (isActive) {
+          setErrorMessage(toDisplayError(error, "Failed to load settings."));
+          setStatusMessage(null);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
         }
       }
-
-      if (apiKeysResult.data) {
-        setApiKeys((apiKeysResult.data as { apiKeys: ApiKeyItem[] }).apiKeys ?? []);
-      } else {
-        setApiKeys([]);
-        if (apiKeysResult.error) {
-          nextErrors.push(toDisplayError(apiKeysResult.error, "Failed to load API keys."));
-        }
-      }
-
-      if (agentResult.data) {
-        setAgentConfiguration(agentResult.data as AgentConfiguration);
-      } else {
-        setAgentConfiguration(null);
-        if (agentResult.error) {
-          nextErrors.push(
-            toDisplayError(agentResult.error, "Failed to load agent discovery data."),
-          );
-        }
-      }
-
-      setStatusMessage(nextErrors.length > 0 ? nextErrors.join(" ") : null);
-      setErrorMessage(null);
-      setIsLoading(false);
     };
 
     void loadSettings();
@@ -227,22 +237,26 @@ export function DashboardSettings({ currentUser }: Props) {
     }
   };
 
-  const handleSetPassword = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const trimmedPassword = newPassword.trim();
+  const handleSetPassword = async ({
+    currentPassword,
+    newPassword,
+  }: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<boolean> => {
     const trimmedCurrentPassword = currentPassword.trim();
-    if (!trimmedPassword) {
-      setErrorMessage("Enter a new password before saving.");
-      return;
-    }
+    const trimmedPassword = newPassword.trim();
 
     if (!trimmedCurrentPassword) {
       setErrorMessage("Enter your current password before saving.");
-      return;
+      return false;
     }
 
-    setPendingAction("set-password");
+    if (!trimmedPassword) {
+      setErrorMessage("Enter a new password before saving.");
+      return false;
+    }
+
     setErrorMessage(null);
     setStatusMessage(null);
 
@@ -258,17 +272,15 @@ export function DashboardSettings({ currentUser }: Props) {
 
       if (result.error) {
         setErrorMessage(toDisplayError(result.error, "Unable to update the password."));
-        return;
+        return false;
       }
 
-      setCurrentPassword("");
-      setNewPassword("");
       setStatusMessage("Password updated.");
       requestRefresh();
+      return true;
     } catch (error) {
       setErrorMessage(toDisplayError(error, "Unable to update the password."));
-    } finally {
-      setPendingAction(null);
+      return false;
     }
   };
 
@@ -296,21 +308,17 @@ export function DashboardSettings({ currentUser }: Props) {
             agentConfiguration={agentConfiguration}
             apiKeyName={apiKeyName}
             apiKeys={apiKeys}
-            currentPassword={currentPassword}
             currentUserEmail={currentUser?.email}
             createdSecret={createdSecret}
             isLoading={isLoading}
             linkedCredentialAccount={linkedCredentialAccount}
-            newPassword={newPassword}
             onApiKeyNameChange={setApiKeyName}
-            onChangePassword={handleSetPassword}
             onCreateApiKey={handleCreateApiKey}
             onDeleteApiKey={handleDeleteApiKey}
-            onCurrentPasswordChange={setCurrentPassword}
             onLinkProvider={(provider) => {
               void handleLinkProvider(provider);
             }}
-            onNewPasswordChange={setNewPassword}
+            onSavePassword={handleSetPassword}
             onUnlinkAccount={(account) => {
               void handleUnlinkAccount(account);
             }}
