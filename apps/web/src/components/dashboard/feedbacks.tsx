@@ -200,7 +200,7 @@ export function DashboardFeedbacks({
                 </button>
               }
             />
-            <DialogContent className="!max-w-4xl max-h-[85vh] overflow-y-auto rounded-none border-border/60 bg-background p-0 shadow-2xl">
+            <DialogContent className="max-w-4xl! max-h-[85vh] overflow-y-auto rounded-none border-border/60 bg-background p-0 shadow-2xl">
               <DialogHeader className="sr-only">
                 <DialogTitle>{m.ui_submit_feedback()}</DialogTitle>
                 <DialogDescription>{m.ui_submit_feedback_dialog_description()}</DialogDescription>

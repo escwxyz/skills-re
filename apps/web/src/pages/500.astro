@@ -1,0 +1,429 @@
+---
+import Layout from "@/layouts/main.astro"
+import { m } from "@/paraglide/messages"
+import { localizeHref } from "@/paraglide/runtime"
+
+interface Props {
+  error: unknown
+}
+
+const { error } = Astro.props
+const errorMessage = error instanceof Error ? error.message : String(error)
+
+const now = new Date()
+const pad = (n: number, d = 2) => String(n).padStart(d, "0")
+const timestamp = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}.${pad(now.getUTCMilliseconds(), 3)}`
+
+const uuid = crypto.randomUUID().replaceAll("-", "").toUpperCase()
+const hashLines = [
+  `0x${uuid.slice(0, 13)}`,
+  uuid.slice(13, 29),
+  uuid.slice(29, 45),
+]
+---
+
+<Layout
+  title={m.error_500_meta_title()}
+  description={m.error_500_meta_description()}
+  noIndex={true}
+>
+  <div class="error-page">
+    <!-- TOP SECTION -->
+    <section class="error-top">
+      <div class="left-rail"></div>
+
+      <!-- Main: error code + 500 + description box -->
+      <div class="main-area">
+        <p class="eyebrow">{m.error_page_fatal_error_code()}</p>
+        <div class="main-content">
+          <div class="error-number">500</div>
+          <div class="description-box">
+            <h2 class="box-title">{m.error_500_title()}</h2>
+            <p class="box-body">{m.error_500_description()}</p>
+          </div>
+        </div>
+        <div class="return-cta">
+          <a href={localizeHref("/")} class="btn ghost">
+            ← {m.error_page_return_to_origin()}
+          </a>
+        </div>
+      </div>
+
+      <!-- Right metadata panel -->
+      <div class="metadata-panel">
+        <div class="meta-block">
+          <p class="eyebrow">{m.error_page_timestamp_label()}</p>
+          <hr class="rule" />
+          <p class="mono-value">{timestamp}</p>
+        </div>
+
+        <div class="meta-block">
+          <p class="eyebrow">{m.error_page_system_diagnostics()}</p>
+          <hr class="rule" />
+          <div class="diag-list">
+            <div class="diag-row">
+              <span class="eyebrow">{m.error_page_request_label()} →</span>
+              <span class="eyebrow diag-status"
+                >{m.error_500_status_request()}</span
+              >
+            </div>
+            <div class="diag-row">
+              <span class="eyebrow">{m.error_page_routing_label()} →</span>
+              <span class="eyebrow diag-status"
+                >{m.error_500_status_routing()}</span
+              >
+            </div>
+            <div class="diag-row">
+              <span class="eyebrow">{m.error_page_sector_label()} →</span>
+              <span class="eyebrow diag-status"
+                >{m.error_500_status_sector()}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-block">
+          <p class="eyebrow">{m.error_page_session_hash()}</p>
+          <hr class="rule" />
+          <div class="hash-lines">
+            {hashLines.map((line) => <p>{line}</p>)}
+          </div>
+          <div class="barcode"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM SECTION -->
+    <section class="error-bottom">
+      <!-- Terminal panel -->
+      <div class="terminal-panel error-terminal">
+        <div class="tbar">
+          <span>{m.error_page_terminal_prompt()}</span>
+          <span>tty1</span>
+        </div>
+        <pre><span class="m1">{m.error_500_terminal_line_1()}</span>
+<span class="m1">{m.error_500_terminal_line_2()}</span>
+<span class="m1">{m.error_500_terminal_line_3()}</span>
+<span class="m1">&gt;</span>
+<span class="p1">{m.error_500_terminal_line_4()}</span>
+<span class="p1">{m.error_500_terminal_line_5()}</span>
+<span class="m1">&gt;</span>
+<span class="k1">{m.error_500_terminal_line_7()}</span>
+<span class="k1">{m.error_500_terminal_line_8()}</span>
+{errorMessage && <span class="m1">&gt; <span class="terminal-token">{errorMessage}</span></span>}
+<span class="k1">&gt; <span class="cursor-blink" /></span></pre>
+      </div>
+
+      <!-- Crosshair panel -->
+      <div class="crosshair-panel terminal-panel">
+        <div class="crosshair-inner">
+          <svg
+            class="crosshair-svg"
+            viewBox="0 0 200 200"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="4"
+              y="4"
+              width="192"
+              height="192"
+              stroke="currentColor"
+              stroke-width="0.5"
+              fill="none"></rect>
+            <circle
+              cx="100"
+              cy="100"
+              r="78"
+              stroke="currentColor"
+              stroke-width="0.8"
+              fill="none"></circle>
+            <circle
+              cx="100"
+              cy="100"
+              r="46"
+              stroke="currentColor"
+              stroke-width="0.8"
+              fill="none"
+              stroke-dasharray="3 3"></circle>
+            <rect x="88" y="88" width="24" height="24" fill="currentColor"
+            ></rect>
+            <line
+              x1="100"
+              y1="22"
+              x2="100"
+              y2="78"
+              stroke="currentColor"
+              stroke-width="0.8"></line>
+            <line
+              x1="100"
+              y1="122"
+              x2="100"
+              y2="178"
+              stroke="currentColor"
+              stroke-width="0.8"></line>
+            <line
+              x1="22"
+              y1="100"
+              x2="78"
+              y2="100"
+              stroke="currentColor"
+              stroke-width="0.8"></line>
+            <line
+              x1="122"
+              y1="100"
+              x2="178"
+              y2="100"
+              stroke="currentColor"
+              stroke-width="0.8"></line>
+          </svg>
+          <p class="eyebrow fig-label">{m.error_page_fig_label()}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .error-page {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - var(--header-height));
+  }
+
+  /* ── TOP SECTION ── */
+  .error-top {
+    display: grid;
+    grid-template-columns: 28px 1fr 260px;
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .left-rail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+  }
+
+  .return-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-decoration: none;
+    color: var(--muted-foreground);
+    transition: color 0.15s;
+  }
+
+  .return-label:hover {
+    color: var(--foreground);
+  }
+
+  .main-area {
+    padding: 28px 32px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    flex: 1;
+  }
+
+  .return-cta {
+    padding-top: 24px;
+  }
+
+  .error-number {
+    font-family: var(--font-display);
+    font-size: clamp(72px, 13vw, 190px);
+    line-height: 0.85;
+    font-weight: 400;
+    font-style: italic;
+    background: repeating-linear-gradient(
+      0deg,
+      var(--foreground) 0px,
+      var(--foreground) 5px,
+      transparent 5px,
+      transparent 11px
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .description-box {
+    border: 1px solid var(--foreground);
+    padding: 20px 22px;
+    max-width: 270px;
+    flex-shrink: 0;
+  }
+
+  .box-title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: var(--foreground);
+  }
+
+  .box-body {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+    margin: 0;
+  }
+
+  /* ── METADATA PANEL ── */
+  .metadata-panel {
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .meta-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mono-value {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--foreground);
+    margin: 0;
+    margin-top: 4px;
+  }
+
+  .diag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+  }
+
+  .diag-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .diag-status {
+    color: var(--foreground);
+  }
+
+  .hash-lines {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.7;
+    color: var(--muted-foreground);
+    margin: 4px 0 0;
+  }
+
+  .hash-lines p {
+    margin: 0;
+  }
+
+  .barcode {
+    height: 34px;
+    margin-top: 10px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--foreground) 0px,
+      var(--foreground) 1.5px,
+      transparent 1.5px,
+      transparent 3.5px,
+      var(--foreground) 3.5px,
+      var(--foreground) 5px,
+      transparent 5px,
+      transparent 7px,
+      var(--foreground) 7px,
+      var(--foreground) 9px,
+      transparent 9px,
+      transparent 12px,
+      var(--foreground) 12px,
+      var(--foreground) 13px,
+      transparent 13px,
+      transparent 15px
+    );
+  }
+
+  /* ── BOTTOM SECTION ── */
+  .error-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 280px;
+  }
+
+  .error-terminal {
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid #2a2720;
+  }
+
+  .terminal-token {
+    border: 1px solid #4a4840;
+    padding: 1px 5px;
+    background: #1a1916;
+    border-radius: 2px;
+  }
+
+  .crosshair-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: none;
+    color: #8a8475;
+  }
+
+  .crosshair-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .crosshair-svg {
+    width: 150px;
+    height: 150px;
+  }
+
+  .fig-label {
+    color: #8a8475;
+    text-align: center;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .error-top {
+      grid-template-columns: 20px 1fr;
+    }
+    .metadata-panel {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .main-content {
+      grid-template-columns: 1fr;
+    }
+    .description-box {
+      max-width: 100%;
+    }
+    .error-bottom {
+      grid-template-columns: 1fr;
+    }
+    .crosshair-panel {
+      display: none;
+    }
+  }
+</style>
