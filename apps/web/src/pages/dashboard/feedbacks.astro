@@ -1,0 +1,20 @@
+---
+import Layout from "@/layouts/main.astro"
+import { DashboardFeedbacksPage } from "@/components/dashboard/feedbacks-page"
+
+const currentUser = Astro.locals.user as {
+  email?: string | null
+  github?: string | null
+  id?: string
+  image?: string | null
+  name?: string | null
+} | null
+---
+
+<Layout
+  title="Feedbacks — skills.re"
+  showFooter={false}
+  showStatusBar={false}
+>
+  <DashboardFeedbacksPage client:only="react" currentUser={currentUser} />
+</Layout>
