@@ -224,6 +224,19 @@ export interface SkillsServiceDeps {
       repoOwner: string;
     }[];
   }>;
+  listSkillsByUserId: (input: { userId: string; limit?: number }) => Promise<
+    {
+      authorHandle: string | null;
+      createdAt: number;
+      description: string;
+      id: string;
+      latestVersion: string | null;
+      repoName: string | null;
+      slug: string;
+      title: string;
+      updatedAt: number;
+    }[]
+  >;
   listSkillsPageBySyncTime: (input?: { cursor?: string; limit?: number }) => Promise<{
     continueCursor: string;
     isDone: boolean;
@@ -319,6 +332,10 @@ const defaultDeps: SkillsServiceDeps = {
   listReposPageBySyncTime: async (input) => {
     const { listReposPageBySyncTime } = await import("./repo");
     return await listReposPageBySyncTime(input);
+  },
+  listSkillsByUserId: async (input) => {
+    const { listSkillsByUserId } = await import("./repo");
+    return await listSkillsByUserId(input);
   },
   listSkillsPageBySyncTime: async (input) => {
     const { listSkillsPageBySyncTime } = await import("./repo");
@@ -433,6 +450,21 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     async getByPath(input: { authorHandle: string; repoName?: string; skillSlug: string }) {
       const row = await deps.findSkillByPath(input);
       return row ? toSearchSkillItem(row) : null;
+    },
+
+    async listMine(input: { userId: string; limit?: number }) {
+      const rows = await deps.listSkillsByUserId(input);
+      return rows.map((row) => ({
+        authorHandle: row.authorHandle ?? undefined,
+        createdAt: row.createdAt,
+        description: row.description,
+        id: row.id,
+        latestVersion: row.latestVersion ?? undefined,
+        repoName: row.repoName ?? undefined,
+        slug: row.slug,
+        title: row.title,
+        updatedAt: row.updatedAt,
+      }));
     },
 
     async list(input?: { cursor?: string; limit?: number }) {
@@ -817,6 +849,10 @@ export async function listReposPage(input?: { cursor?: string; limit?: number })
 
 export async function listSkills(input?: { cursor?: string; limit?: number }) {
   return await skillsService.list(input);
+}
+
+export async function listMineSkills(input: { userId: string; limit?: number }) {
+  return await skillsService.listMine(input);
 }
 
 export async function resolvePathBySlug(input: { slug: string }) {

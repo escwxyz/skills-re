@@ -8,21 +8,7 @@ import { m } from "@/paraglide/messages";
 
 import { DashboardFeedbacks } from "@/components/dashboard/feedbacks";
 
-import type { CurrentUser } from "./shared";
-
-type FeedbackStatus = "pending" | "resolved" | "in_review";
-type FeedbackType = "bug" | "request" | "general";
-
-interface DashboardFeedbackItem {
-  _creationTime: number;
-  _id: string;
-  content: string;
-  response: string | null;
-  status: FeedbackStatus;
-  title: string;
-  type: FeedbackType;
-  userId: string;
-}
+import type { CurrentUser, DashboardFeedbackItem } from "./shared";
 
 interface Props {
   currentUser?: CurrentUser | null;

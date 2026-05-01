@@ -15,6 +15,7 @@ const currentUser = Astro.locals.user as {
   title="Feedbacks — skills.re"
   showFooter={false}
   showStatusBar={false}
+  enableViewTransitions
 >
-  <DashboardFeedbacksPage client:only="react" currentUser={currentUser} />
+  <DashboardFeedbacksPage client:load currentUser={currentUser} />
 </Layout>

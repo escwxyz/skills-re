@@ -64,6 +64,13 @@
       "when": 1777550189345,
       "tag": "0008_strong_vision",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1777646043949,
+      "tag": "0009_pale_earthquake",
+      "breakpoints": true
     }
   ]
 }

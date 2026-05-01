@@ -71,6 +71,30 @@ export async function listSkillsPageBySyncTime(input?: { cursor?: string; limit?
   };
 }
 
+export async function listSkillsByUserId(input: { userId: string; limit?: number }) {
+  const limit = input.limit ?? 50;
+
+  const rows = await db
+    .select({
+      authorHandle: reposTable.ownerHandle,
+      createdAt: skillsTable.createdAt,
+      description: skillsTable.description,
+      id: skillsTable.id,
+      latestVersion: skillsTable.latestVersion,
+      repoName: reposTable.name,
+      slug: skillsTable.slug,
+      title: skillsTable.title,
+      updatedAt: skillsTable.updatedAt,
+    })
+    .from(skillsTable)
+    .leftJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .where(eq(skillsTable.userId, asUserId(input.userId)))
+    .orderBy(desc(skillsTable.updatedAt), desc(skillsTable.id))
+    .limit(limit);
+
+  return rows;
+}
+
 export async function createSkill(input: {
   description: string;
   repoId: string;

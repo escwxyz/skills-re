@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/main.astro"
-import { DashboardReviewsPage } from "@/components/dashboard/reviews-page"
 import { m } from "@/paraglide/messages"
+import { DashboardSkillsPage } from "@/components/dashboard/skills-page"
 
 const currentUser = Astro.locals.user as {
   email?: string | null
@@ -13,10 +13,10 @@ const currentUser = Astro.locals.user as {
 ---
 
 <Layout
-  title={`${m.dashboard_reviews_title()} — skills.re`}
+  title={`${m.dashboard_skills_page_title()} — skills.re`}
   showFooter={false}
   showStatusBar={false}
   enableViewTransitions
 >
-  <DashboardReviewsPage client:load currentUser={currentUser} />
+  <DashboardSkillsPage client:load currentUser={currentUser} />
 </Layout>

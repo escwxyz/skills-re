@@ -2,8 +2,18 @@
 
 import { useEffect, useState } from "react";
 
-import { dashboardNavItems } from "@/pages/dashboard/constants";
-import type { DashboardRoute } from "@/pages/dashboard/constants";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { getDashboardNavItems } from "@/pages/dashboard/constants";
+import type { DashboardNavItem, DashboardRoute } from "@/pages/dashboard/constants";
+import { m } from "@/paraglide/messages";
 
 export interface CurrentUser {
   email?: string | null;
@@ -27,15 +37,16 @@ function getDisplayInitial(displayName: string, displayHandle: string) {
 }
 
 function getMobileTitle(activeRoute: DashboardRoute) {
-  return dashboardNavItems.find((item) => item.route === activeRoute)?.label ?? "Dashboard";
+  return getDashboardNavItems().find((item) => item.route === activeRoute)?.label ?? "Dashboard";
 }
 
 function getFooterNote(activeRoute: DashboardRoute) {
   if (activeRoute === "overview") {
-    return "Overview shows the live dashboard snapshot.";
+    return m.dashboard_footer_overview_note();
   }
 
-  return `Viewing ${activeRoute}.`;
+  const routeLabel = getDashboardNavItems().find((item) => item.route === activeRoute)?.label;
+  return m.dashboard_footer_viewing_route({ route: routeLabel ?? activeRoute });
 }
 
 function DashboardPlaceholder({ onSignIn }: { onSignIn: () => void }) {
@@ -103,7 +114,7 @@ function DashboardNavItem({
   onNavigate,
 }: {
   activeRoute: DashboardRoute;
-  item: (typeof dashboardNavItems)[number];
+  item: DashboardNavItem;
   onNavigate: () => void;
 }) {
   const isActive = item.route === activeRoute;
@@ -133,6 +144,7 @@ function DashboardSidebar({
   displayHandle,
   displayInitial,
   displayName,
+  showHeader = true,
   onNavigate,
 }: {
   activeRoute: DashboardRoute;
@@ -140,23 +152,26 @@ function DashboardSidebar({
   displayHandle: string;
   displayInitial: string;
   displayName: string;
+  showHeader?: boolean;
   onNavigate: () => void;
 }) {
   return (
     <div className="flex h-full flex-col border border-rule bg-paper shadow-[0_14px_50px_rgba(20,18,14,0.08)]">
-      <DashboardSidebarHeader
-        currentUser={currentUser}
-        displayHandle={displayHandle}
-        displayInitial={displayInitial}
-        displayName={displayName}
-      />
+      {showHeader ? (
+        <DashboardSidebarHeader
+          currentUser={currentUser}
+          displayHandle={displayHandle}
+          displayInitial={displayInitial}
+          displayName={displayName}
+        />
+      ) : null}
 
       <nav className="flex-1 overflow-y-auto border-b border-rule p-3">
         <p className="px-2 py-1 font-mono text-[10.5px] tracking-[0.16em] uppercase text-muted-text">
           Routes
         </p>
         <div className="mt-2 space-y-1">
-          {dashboardNavItems.map((item) => (
+          {getDashboardNavItems().map((item) => (
             <DashboardNavItem
               key={item.route}
               activeRoute={activeRoute}
@@ -182,26 +197,24 @@ function DashboardSidebar({
 function DashboardMobileChrome({
   activeRoute,
   drawerOpen,
-  onToggle,
 }: {
   activeRoute: DashboardRoute;
   drawerOpen: boolean;
-  onToggle: () => void;
 }) {
   return (
     <div className="sticky top-(--header-height) z-30 flex h-13 items-center justify-between border-b border-rule bg-paper px-4 lg:hidden">
-      <button
-        type="button"
-        aria-label={drawerOpen ? "Close navigation" : "Open navigation"}
-        aria-controls="dashboard-mobile-drawer"
-        aria-expanded={drawerOpen}
-        onClick={onToggle}
-        className="flex flex-col gap-1.25 p-1"
-      >
-        <span className="block h-px w-5 bg-foreground" />
-        <span className="block h-px w-5 bg-foreground" />
-        <span className="block h-px w-3.5 bg-foreground" />
-      </button>
+      <DrawerTrigger asChild>
+        <button
+          type="button"
+          aria-label={drawerOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={drawerOpen}
+          className="flex flex-col gap-1.25 p-1"
+        >
+          <span className="block h-px w-5 bg-foreground" />
+          <span className="block h-px w-5 bg-foreground" />
+          <span className="block h-px w-3.5 bg-foreground" />
+        </button>
+      </DrawerTrigger>
       <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted-text">
         {getMobileTitle(activeRoute)}
       </span>
@@ -231,62 +244,54 @@ function DashboardShellFrame({
   onCloseDrawer: () => void;
   onToggleDrawer: () => void;
 }) {
-  useEffect(() => {
-    if (!drawerOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCloseDrawer();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [drawerOpen, onCloseDrawer]);
-
   return (
     <div className="min-h-[calc(100vh-var(--header-height))] bg-background text-foreground">
-      <DashboardMobileChrome
-        activeRoute={activeRoute}
-        drawerOpen={drawerOpen}
-        onToggle={onToggleDrawer}
-      />
-
-      {drawerOpen && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          className="fixed inset-0 z-40 bg-foreground/30 lg:hidden"
-          style={{ top: "var(--header-height)" }}
-          onClick={onCloseDrawer}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onCloseDrawer();
-            }
-          }}
-        />
-      )}
-
-      <div
-        id="dashboard-mobile-drawer"
-        className="fixed bottom-0 left-0 z-50 w-75 max-w-[85vw] transition-transform duration-200 lg:hidden"
-        style={{
-          top: "var(--header-height)",
-          transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
+      <Drawer
+        direction="bottom"
+        open={drawerOpen}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            onToggleDrawer();
+          } else {
+            onCloseDrawer();
+          }
         }}
       >
-        <DashboardSidebar
-          activeRoute={activeRoute}
-          currentUser={currentUser}
-          displayHandle={displayHandle}
-          displayInitial={displayInitial}
-          displayName={displayName}
-          onNavigate={onCloseDrawer}
-        />
-      </div>
+        <DashboardMobileChrome activeRoute={activeRoute} drawerOpen={drawerOpen} />
+        <DrawerContent className="border-t border-rule bg-paper lg:hidden data-[vaul-drawer-direction=bottom]:mb-0 data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-var(--header-height))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-var(--header-height))] data-[vaul-drawer-direction=bottom]:rounded-t-none">
+          <DrawerHeader className="border-b border-rule px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DrawerTitle className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-text">
+                  {getMobileTitle(activeRoute)}
+                </DrawerTitle>
+                <DrawerDescription className="sr-only">
+                  {m.mobile_menu_description()}
+                </DrawerDescription>
+              </div>
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text"
+                >
+                  {m.mobile_menu_close()}
+                </button>
+              </DrawerClose>
+            </div>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <DashboardSidebar
+              activeRoute={activeRoute}
+              currentUser={currentUser}
+              displayHandle={displayHandle}
+              displayInitial={displayInitial}
+              displayName={displayName}
+              showHeader={false}
+              onNavigate={onCloseDrawer}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <div className="mx-auto max-w-430 px-4 pb-6 pt-4 md:px-6">
         <div className="grid gap-4 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[268px_minmax(0,1fr)]">
@@ -298,6 +303,7 @@ function DashboardShellFrame({
                 displayHandle={displayHandle}
                 displayInitial={displayInitial}
                 displayName={displayName}
+                showHeader
                 onNavigate={onCloseDrawer}
               />
             </div>
@@ -337,13 +343,6 @@ export function DashboardShell({ activeRoute, children, currentUser }: Props) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = drawerOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [drawerOpen]);
-
   if (shouldPromptLogin) {
     return <DashboardPlaceholder onSignIn={() => null} />;
   }
@@ -351,7 +350,6 @@ export function DashboardShell({ activeRoute, children, currentUser }: Props) {
   return (
     <DashboardShellFrame
       activeRoute={activeRoute}
-      children={children}
       currentUser={currentUser}
       displayHandle={displayHandle}
       displayInitial={displayInitial}
@@ -359,6 +357,8 @@ export function DashboardShell({ activeRoute, children, currentUser }: Props) {
       drawerOpen={drawerOpen}
       onCloseDrawer={() => setDrawerOpen(false)}
       onToggleDrawer={() => setDrawerOpen((value) => !value)}
-    />
+    >
+      {children}
+    </DashboardShellFrame>
   );
 }
