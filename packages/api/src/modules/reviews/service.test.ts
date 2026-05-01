@@ -142,4 +142,44 @@ describe("reviews service", () => {
       service.getMineBySkill({ skillId: "skill-1", userId: "user-1" }),
     ).resolves.toBeNull();
   });
+
+  test("lists the authenticated user's review history", async () => {
+    const service = createReviewsService({
+      listReviewsByUserId: () => [
+        {
+          authorAvatarUrl: null,
+          authorName: "Ada",
+          content: "Helpful",
+          createdAt: new Date(123),
+          id: asReviewId("review-1"),
+          rating: 5,
+          skillId: asSkillId("skill-1"),
+          skillSlug: "astro-migration",
+          skillTitle: "Astro migration",
+          title: "Strong fit",
+          updatedAt: new Date(123),
+          userId: asUserId("user-1"),
+        },
+      ],
+    });
+
+    await expect(service.listMine({ userId: "user-1", limit: 20 })).resolves.toEqual([
+      {
+        author: {
+          avatarUrl: null,
+          name: "Ada",
+        },
+        content: "Helpful",
+        createdAt: 123,
+        id: "review-1",
+        rating: 5,
+        skillId: "skill-1",
+        skillSlug: "astro-migration",
+        skillTitle: "Astro migration",
+        title: "Strong fit",
+        updatedAt: 123,
+        userId: "user-1",
+      },
+    ]);
+  });
 });

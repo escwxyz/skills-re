@@ -25,6 +25,7 @@ import {
 import { FeedbackComposer } from "@/components/feedback-composer";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
+import { formatDateTime } from "@/lib/utils";
 
 import type { CurrentUser } from "./shared";
 import { DashboardSection } from "./shared";
@@ -75,19 +76,6 @@ const typeLabel: Record<FeedbackType, string> = {
   request: m.ui_request(),
 };
 
-let runtimeLocale: string | undefined = getLocale();
-
-if (!runtimeLocale && typeof navigator !== "undefined") {
-  runtimeLocale = navigator.language;
-}
-
-const feedbackDateFormatter = new Intl.DateTimeFormat(runtimeLocale, {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-const formatFeedbackDate = (timestamp: number) => feedbackDateFormatter.format(new Date(timestamp));
-
 const getStatusIcon = (status: FeedbackStatus) => {
   switch (status) {
     case "in_review": {
@@ -137,6 +125,7 @@ function FeedbackTypePill({ type }: { type: FeedbackType }) {
 }
 
 function FeedbackCard({ feedback }: { feedback: DashboardFeedbackItem }) {
+  const runtimeLocale = getLocale();
   return (
     <Card className="rounded-none border-rule/70 bg-background">
       <CardHeader className="border-b border-rule/60 pb-3">
@@ -145,7 +134,7 @@ function FeedbackCard({ feedback }: { feedback: DashboardFeedbackItem }) {
             <div className="flex flex-wrap items-center gap-2">
               <FeedbackTypePill type={feedback.type} />
               <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
-                {formatFeedbackDate(feedback._creationTime)}
+                {formatDateTime(feedback._creationTime, runtimeLocale)}
               </span>
             </div>
             <CardTitle className="font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
@@ -211,7 +200,7 @@ export function DashboardFeedbacks({
                 </button>
               }
             />
-            <DialogContent className="!max-w-4xl max-h-[85vh] overflow-y-auto rounded-none border-border/60 bg-[#f7f0e4] p-0 shadow-2xl">
+            <DialogContent className="max-w-4xl! max-h-[85vh] overflow-y-auto rounded-none border-border/60 bg-[#f7f0e4] p-0 shadow-2xl">
               <DialogHeader className="sr-only">
                 <DialogTitle>{m.ui_submit_feedback()}</DialogTitle>
                 <DialogDescription>{m.ui_submit_feedback_dialog_description()}</DialogDescription>
