@@ -90,12 +90,17 @@ app.use(
   cors({
     origin: env.CORS_ORIGIN,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "x-api-key"],
     credentials: true,
   }),
 );
 // Better Auth is exposed on the platform API origin at /auth/*.
 app.on(["POST", "GET"], `${AUTH_PREFIX}/*`, (c) => createRuntimeAuth().handler(c.req.raw));
+app.get("/.well-known/agent-configuration", async (c) => {
+  const runtimeAuth = createRuntimeAuth();
+  const configuration = await runtimeAuth.api.getAgentConfiguration();
+  return c.json(configuration);
+});
 app.get("/api/skills/download", async (c) => {
   const url = new URL(c.req.url);
   return await createSkillArchiveDownloadResponse(

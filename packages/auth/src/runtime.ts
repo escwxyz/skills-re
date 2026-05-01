@@ -2,8 +2,9 @@ import { createDb } from "@skills-re/db/runtime";
 import { env } from "@skills-re/env/server";
 
 import { createAuth } from "./index";
+import type { AuthInstance } from "./index";
 
-export function createRuntimeAuth() {
+export function createRuntimeAuth(): AuthInstance {
   return createAuth({
     db: createDb(),
     env: {

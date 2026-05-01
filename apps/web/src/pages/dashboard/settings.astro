@@ -1,0 +1,24 @@
+---
+import Layout from "@/layouts/main.astro"
+import { DashboardShell } from "@/layouts/dashboard-shell"
+import { DashboardSettings } from "@/components/dashboard/settings"
+
+const currentUser = Astro.locals.user as {
+  email?: string | null
+  github?: string | null
+  id?: string
+  image?: string | null
+  name?: string | null
+} | null
+---
+
+<Layout
+  title="Settings — skills.re"
+  showFooter={false}
+  showStatusBar={false}
+  enableViewTransitions
+>
+  <DashboardShell client:load activeRoute="settings" currentUser={currentUser}>
+    <DashboardSettings currentUser={currentUser} />
+  </DashboardShell>
+</Layout>

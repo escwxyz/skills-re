@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { baseTableColumns, timestampMsColumn } from "../utils";
@@ -69,47 +70,232 @@ export const verificationsTable = sqliteTable(
   (table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
 
-// export const apikeysTable = sqliteTable(
-//   "apikeys",
-//   {
-//     ...baseTableColumns<ApikeyId>(),
-//     enabled: integer("enabled", { mode: "boolean" }).default(true),
-//     expiresAt: timestampMsColumn("expires_at"),
-//     key: text("key").notNull(),
-//     lastRefillAt: timestampMsColumn("last_refill_at"),
-//     lastRequest: timestampMsColumn("last_request"),
-//     metadata: text("metadata"),
-//     name: text("name"),
-//     permissions: text("permissions"),
-//     prefix: text("prefix"),
-//     rateLimitEnabled: integer("rate_limit_enabled", { mode: "boolean" }).default(true),
-//     rateLimitMax: integer("rate_limit_max").default(10),
-//     rateLimitTimeWindow: integer("rate_limit_time_window").default(86_400_000),
-//     refillAmount: integer("refill_amount"),
-//     refillInterval: integer("refill_interval"),
-//     remaining: integer("remaining"),
-//     requestCount: integer("request_count").default(0),
-//     start: text("start"),
-//     updatedAt: timestampMsColumn("updated_at").default(currentTimestampMs).notNull(),
-//     userId: text("user_id")
-//       .$type<UserId>()
-//       .notNull()
-//       .references(() => usersTable.id, { onDelete: "cascade" }),
-//   },
-//   (table) => [index("apikeys_key_idx").on(table.key), index("apikeys_userId_idx").on(table.userId)],
-// );
+export const apikeysTable = sqliteTable(
+  "apikeys",
+  {
+    id: text("id").primaryKey(),
+    configId: text("config_id").default("default").notNull(),
+    name: text("name"),
+    start: text("start"),
+    referenceId: text("reference_id").notNull(),
+    prefix: text("prefix"),
+    key: text("key").notNull(),
+    refillInterval: integer("refill_interval"),
+    refillAmount: integer("refill_amount"),
+    lastRefillAt: timestampMsColumn("last_refill_at"),
+    enabled: integer("enabled", { mode: "boolean" }).default(true),
+    rateLimitEnabled: integer("rate_limit_enabled", { mode: "boolean" }).default(true),
+    rateLimitTimeWindow: integer("rate_limit_time_window").default(86_400_000),
+    rateLimitMax: integer("rate_limit_max").default(10),
+    requestCount: integer("request_count").default(0),
+    remaining: integer("remaining"),
+    lastRequest: timestampMsColumn("last_request"),
+    expiresAt: timestampMsColumn("expires_at"),
+    createdAt: timestampMsColumn("created_at").notNull(),
+    updatedAt: timestampMsColumn("updated_at").notNull(),
+    permissions: text("permissions"),
+    metadata: text("metadata"),
+  },
+  (table) => [
+    index("apikeys_configId_idx").on(table.configId),
+    index("apikeys_referenceId_idx").on(table.referenceId),
+    index("apikeys_key_idx").on(table.key),
+  ],
+);
+
+export const agentHostsTable = sqliteTable(
+  "agent_hosts",
+  {
+    id: text("id").primaryKey(),
+    name: text("name"),
+    userId: text("user_id")
+      .$type<UserId>()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    defaultCapabilities: text("default_capabilities"),
+    publicKey: text("public_key"),
+    kid: text("kid"),
+    jwksUrl: text("jwks_url"),
+    enrollmentTokenHash: text("enrollment_token_hash"),
+    enrollmentTokenExpiresAt: timestampMsColumn("enrollment_token_expires_at"),
+    status: text("status").default("active").notNull(),
+    activatedAt: timestampMsColumn("activated_at"),
+    expiresAt: timestampMsColumn("expires_at"),
+    lastUsedAt: timestampMsColumn("last_used_at"),
+    createdAt: timestampMsColumn("created_at").notNull(),
+    updatedAt: timestampMsColumn("updated_at").notNull(),
+  },
+  (table) => [
+    index("agentHosts_userId_idx").on(table.userId),
+    index("agentHosts_kid_idx").on(table.kid),
+    index("agentHosts_enrollmentTokenHash_idx").on(table.enrollmentTokenHash),
+    index("agentHosts_status_idx").on(table.status),
+  ],
+);
+
+export const agentsTable = sqliteTable(
+  "agents",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    userId: text("user_id")
+      .$type<UserId>()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    hostId: text("host_id")
+      .notNull()
+      .references(() => agentHostsTable.id, { onDelete: "cascade" }),
+    status: text("status").default("active").notNull(),
+    mode: text("mode").default("delegated").notNull(),
+    publicKey: text("public_key").notNull(),
+    kid: text("kid"),
+    jwksUrl: text("jwks_url"),
+    lastUsedAt: timestampMsColumn("last_used_at"),
+    activatedAt: timestampMsColumn("activated_at"),
+    expiresAt: timestampMsColumn("expires_at"),
+    metadata: text("metadata"),
+    createdAt: timestampMsColumn("created_at").notNull(),
+    updatedAt: timestampMsColumn("updated_at").notNull(),
+  },
+  (table) => [
+    index("agents_userId_idx").on(table.userId),
+    index("agents_hostId_idx").on(table.hostId),
+    index("agents_status_idx").on(table.status),
+    index("agents_kid_idx").on(table.kid),
+  ],
+);
+
+export const agentCapabilityGrantsTable = sqliteTable(
+  "agent_capability_grants",
+  {
+    id: text("id").primaryKey(),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agentsTable.id, { onDelete: "cascade" }),
+    capability: text("capability").notNull(),
+    deniedBy: text("denied_by")
+      .$type<UserId>()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    grantedBy: text("granted_by")
+      .$type<UserId>()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    expiresAt: timestampMsColumn("expires_at"),
+    createdAt: timestampMsColumn("created_at").notNull(),
+    updatedAt: timestampMsColumn("updated_at").notNull(),
+    status: text("status").default("active").notNull(),
+    reason: text("reason"),
+    constraints: text("constraints"),
+  },
+  (table) => [
+    index("agentCapabilityGrants_agentId_idx").on(table.agentId),
+    index("agentCapabilityGrants_capability_idx").on(table.capability),
+    index("agentCapabilityGrants_grantedBy_idx").on(table.grantedBy),
+    index("agentCapabilityGrants_status_idx").on(table.status),
+  ],
+);
+
+export const approvalRequestsTable = sqliteTable(
+  "approval_requests",
+  {
+    id: text("id").primaryKey(),
+    method: text("method").notNull(),
+    agentId: text("agent_id").references(() => agentsTable.id, { onDelete: "cascade" }),
+    hostId: text("host_id").references(() => agentHostsTable.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .$type<UserId>()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    capabilities: text("capabilities"),
+    status: text("status").default("pending").notNull(),
+    userCodeHash: text("user_code_hash"),
+    loginHint: text("login_hint"),
+    bindingMessage: text("binding_message"),
+    clientNotificationToken: text("client_notification_token"),
+    clientNotificationEndpoint: text("client_notification_endpoint"),
+    deliveryMode: text("delivery_mode"),
+    interval: integer("interval").notNull(),
+    lastPolledAt: timestampMsColumn("last_polled_at"),
+    expiresAt: timestampMsColumn("expires_at").notNull(),
+    createdAt: timestampMsColumn("created_at").notNull(),
+    updatedAt: timestampMsColumn("updated_at").notNull(),
+  },
+  (table) => [
+    index("approvalRequests_agentId_idx").on(table.agentId),
+    index("approvalRequests_hostId_idx").on(table.hostId),
+    index("approvalRequests_userId_idx").on(table.userId),
+    index("approvalRequests_status_idx").on(table.status),
+  ],
+);
 
 export const authTables = {
   accounts: accountsTable,
-  // apikeys: apikeysTable,
+  agentCapabilityGrants: agentCapabilityGrantsTable,
+  agentHosts: agentHostsTable,
+  agents: agentsTable,
+  approvalRequests: approvalRequestsTable,
+  apikeys: apikeysTable,
   sessions: sessionsTable,
   users: usersTable,
   verifications: verificationsTable,
 } as const;
 
-// export const apikeysRelations = relations(apikeysTable, ({ one }) => ({
-//   user: one(usersTable, {
-//     fields: [apikeysTable.userId],
-//     references: [usersTable.id],
-//   }),
-// }));
+export const agentHostsRelations = relations(agentHostsTable, ({ one, many }) => ({
+  users: one(usersTable, {
+    fields: [agentHostsTable.userId],
+    references: [usersTable.id],
+  }),
+  agents: many(agentsTable),
+  approvalRequests: many(approvalRequestsTable),
+}));
+
+export const agentsRelations = relations(agentsTable, ({ one, many }) => ({
+  users: one(usersTable, {
+    fields: [agentsTable.userId],
+    references: [usersTable.id],
+  }),
+  agentHosts: one(agentHostsTable, {
+    fields: [agentsTable.hostId],
+    references: [agentHostsTable.id],
+  }),
+  agentCapabilityGrants: many(agentCapabilityGrantsTable),
+  approvalRequests: many(approvalRequestsTable),
+}));
+
+export const agentCapabilityGrantsDeniedByRelations = relations(
+  agentCapabilityGrantsTable,
+  ({ one }) => ({
+    users: one(usersTable, {
+      fields: [agentCapabilityGrantsTable.deniedBy],
+      references: [usersTable.id],
+    }),
+  }),
+);
+
+export const agentCapabilityGrantsGrantedByRelations = relations(
+  agentCapabilityGrantsTable,
+  ({ one }) => ({
+    users: one(usersTable, {
+      fields: [agentCapabilityGrantsTable.grantedBy],
+      references: [usersTable.id],
+    }),
+  }),
+);
+
+export const agentCapabilityGrantsRelations = relations(agentCapabilityGrantsTable, ({ one }) => ({
+  agents: one(agentsTable, {
+    fields: [agentCapabilityGrantsTable.agentId],
+    references: [agentsTable.id],
+  }),
+}));
+
+export const approvalRequestsRelations = relations(approvalRequestsTable, ({ one }) => ({
+  agents: one(agentsTable, {
+    fields: [approvalRequestsTable.agentId],
+    references: [agentsTable.id],
+  }),
+  agentHosts: one(agentHostsTable, {
+    fields: [approvalRequestsTable.hostId],
+    references: [agentHostsTable.id],
+  }),
+  users: one(usersTable, {
+    fields: [approvalRequestsTable.userId],
+    references: [usersTable.id],
+  }),
+}));

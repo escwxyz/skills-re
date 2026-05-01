@@ -1,8 +1,9 @@
 import { createLocalDb } from "@skills-re/db";
 
 import { createAuth } from "./index";
+import type { AuthInstance } from "./index";
 
-const auth = createAuth({
+const auth: AuthInstance = createAuth({
   db: createLocalDb({
     url: process.env.BETTER_AUTH_DB_URL ?? "file:./.better-auth.db",
   }),

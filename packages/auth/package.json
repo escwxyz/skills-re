@@ -13,8 +13,9 @@
     "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/generate.ts --output ../db/src/schema/auth-schema.ts --yes"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.6.5",
-    "@better-auth/oauth-provider": "^1.6.5",
+    "@better-auth/agent-auth": "^0.4.5",
+    "@better-auth/api-key": "catalog:",
+    "@better-auth/oauth-provider": "catalog:",
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
     "better-auth": "catalog:",

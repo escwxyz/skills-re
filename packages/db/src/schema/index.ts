@@ -1,4 +1,15 @@
-export { accountsTable, authTables, sessionsTable, usersTable, verificationsTable } from "./auth";
+export {
+  accountsTable,
+  agentCapabilityGrantsTable,
+  agentHostsTable,
+  agentsTable,
+  approvalRequestsTable,
+  apikeysTable,
+  authTables,
+  sessionsTable,
+  usersTable,
+  verificationsTable,
+} from "./auth";
 export { collectionsTable, collectionsSkillsTable } from "./collections";
 export { categoryCountsTable } from "./category-counts";
 export { reposTable } from "./repos";
@@ -13,6 +24,12 @@ export { staticAuditsTable } from "./static-audits";
 export { tagsTable } from "./tags";
 export {
   accountsRelations,
+  agentCapabilityGrantsDeniedByRelations,
+  agentCapabilityGrantsGrantedByRelations,
+  agentCapabilityGrantsRelations,
+  agentHostsRelations,
+  agentsRelations,
+  approvalRequestsRelations,
   collectionsRelations,
   collectionsSkillsRelations,
   reposRelations,

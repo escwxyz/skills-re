@@ -5,6 +5,15 @@ import { describe, expect, test } from "bun:test";
 import {
   accountsRelations,
   accountsTable,
+  agentCapabilityGrantsRelations,
+  agentCapabilityGrantsTable,
+  agentHostsRelations,
+  agentHostsTable,
+  agentsRelations,
+  agentsTable,
+  approvalRequestsRelations,
+  approvalRequestsTable,
+  apikeysTable,
   authTables,
   newsletterTable,
   sessionsRelations,
@@ -38,10 +47,19 @@ describe("database schema registry", () => {
     expect(authTables.users).toBe(usersTable);
     expect(authTables.sessions).toBe(sessionsTable);
     expect(authTables.accounts).toBe(accountsTable);
+    expect(authTables.apikeys).toBe(apikeysTable);
+    expect(authTables.agentHosts).toBe(agentHostsTable);
+    expect(authTables.agents).toBe(agentsTable);
+    expect(authTables.agentCapabilityGrants).toBe(agentCapabilityGrantsTable);
+    expect(authTables.approvalRequests).toBe(approvalRequestsTable);
     expect(authTables.verifications).toBe(verificationsTable);
     expect(usersRelations).toBeDefined();
     expect(sessionsRelations).toBeDefined();
     expect(accountsRelations).toBeDefined();
+    expect(agentHostsRelations).toBeDefined();
+    expect(agentsRelations).toBeDefined();
+    expect(agentCapabilityGrantsRelations).toBeDefined();
+    expect(approvalRequestsRelations).toBeDefined();
   });
 
   test("exports the repo tables and relations", () => {
