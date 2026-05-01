@@ -14,8 +14,12 @@ export function formatDateTime(
   if (value === null) {
     return fallback;
   }
+  const d = new Date(value as number | string | Date);
+  if (Number.isNaN(d.getTime())) {
+    return fallback;
+  }
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value as number | string | Date));
+  }).format(d);
 }

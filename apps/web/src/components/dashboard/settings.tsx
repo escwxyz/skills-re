@@ -60,7 +60,7 @@ export function DashboardSettings({ currentUser }: Props) {
               },
             })
             .catch((error: unknown) => ({ data: null, error })),
-          fetch(localizeHref("/.well-known/agent-configuration"))
+          fetch("/.well-known/agent-configuration")
             .then(async (response) => {
               if (!response.ok) {
                 throw new Error(

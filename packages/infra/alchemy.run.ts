@@ -289,7 +289,7 @@ export const server = await Worker("server", {
     DB: db,
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
     PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
-    PUBLIC_SITE_URL: alchemy.env.PUBLIC_SITE_URL ?? "http://localhost:4321",
+    PUBLIC_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     GH_PAT: alchemy.secret.env.GH_PAT!,
     GITHUB_CLIENT_ID: alchemy.env.GH_CLIENT_ID ?? alchemy.env.GITHUB_CLIENT_ID!,
     GITHUB_CLIENT_SECRET:
