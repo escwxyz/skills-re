@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/main.astro"
+import { DeviceApproval } from "@/components/device-approval"
+import type { CurrentUser } from "@/components/dashboard/shared"
+
+const currentUser = Astro.locals.user as CurrentUser | null
+const userCode = Astro.url.searchParams.get("user_code") ?? ""
+---
+
+<Layout
+  title="Device approval — skills.re"
+  showFooter={false}
+  showStatusBar={false}
+  enableViewTransitions
+>
+  <DeviceApproval client:load currentUser={currentUser} userCode={userCode} />
+</Layout>

@@ -40,6 +40,14 @@ export default defineConfig({
         cookieName: "locale",
         strategy: ["url", "cookie", "preferredLanguage", "baseLocale"],
         urlPatterns: [
+          {
+            localized: [
+              ["de", "/.well-knwon/agent-configuration"],
+              ["zh-Hans", "/.well-knwon/agent-configuration"],
+              ["en", "/.well-knwon/agent-configuration"],
+            ],
+            pattern: "/.well-knwon/agent-configuration",
+          },
           // Localized home route
           {
             localized: [

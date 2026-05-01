@@ -1,6 +1,14 @@
 import { relations } from "drizzle-orm";
 
-import { accountsTable, sessionsTable, usersTable } from "./auth";
+import {
+  accountsTable,
+  agentCapabilityGrantsTable,
+  agentHostsTable,
+  agentsTable,
+  approvalRequestsTable,
+  sessionsTable,
+  usersTable,
+} from "./auth";
 import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
 import { savedSkillsTable } from "./saved-skills";
@@ -14,6 +22,15 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
   accounts: many(accountsTable),
   sessions: many(sessionsTable),
   savedSkills: many(savedSkillsTable),
+  agentHosts: many(agentHostsTable),
+  agents: many(agentsTable),
+  agentCapabilityGrantsDeniedBy: many(agentCapabilityGrantsTable, {
+    relationName: "agentCapabilityGrants_deniedBy",
+  }),
+  agentCapabilityGrantsGrantedBy: many(agentCapabilityGrantsTable, {
+    relationName: "agentCapabilityGrants_grantedBy",
+  }),
+  approvalRequests: many(approvalRequestsTable),
 }));
 
 export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
@@ -26,6 +43,60 @@ export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
 export const accountsRelations = relations(accountsTable, ({ one }) => ({
   user: one(usersTable, {
     fields: [accountsTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const agentHostsRelations = relations(agentHostsTable, ({ one, many }) => ({
+  user: one(usersTable, {
+    fields: [agentHostsTable.userId],
+    references: [usersTable.id],
+  }),
+  agents: many(agentsTable),
+  approvalRequests: many(approvalRequestsTable),
+}));
+
+export const agentsRelations = relations(agentsTable, ({ one, many }) => ({
+  user: one(usersTable, {
+    fields: [agentsTable.userId],
+    references: [usersTable.id],
+  }),
+  agentHost: one(agentHostsTable, {
+    fields: [agentsTable.hostId],
+    references: [agentHostsTable.id],
+  }),
+  agentCapabilityGrants: many(agentCapabilityGrantsTable),
+  approvalRequests: many(approvalRequestsTable),
+}));
+
+export const agentCapabilityGrantsRelations = relations(agentCapabilityGrantsTable, ({ one }) => ({
+  agent: one(agentsTable, {
+    fields: [agentCapabilityGrantsTable.agentId],
+    references: [agentsTable.id],
+  }),
+  deniedBy: one(usersTable, {
+    fields: [agentCapabilityGrantsTable.deniedBy],
+    references: [usersTable.id],
+    relationName: "agentCapabilityGrants_deniedBy",
+  }),
+  grantedBy: one(usersTable, {
+    fields: [agentCapabilityGrantsTable.grantedBy],
+    references: [usersTable.id],
+    relationName: "agentCapabilityGrants_grantedBy",
+  }),
+}));
+
+export const approvalRequestsRelations = relations(approvalRequestsTable, ({ one }) => ({
+  agent: one(agentsTable, {
+    fields: [approvalRequestsTable.agentId],
+    references: [agentsTable.id],
+  }),
+  agentHost: one(agentHostsTable, {
+    fields: [approvalRequestsTable.hostId],
+    references: [agentHostsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [approvalRequestsTable.userId],
     references: [usersTable.id],
   }),
 }));

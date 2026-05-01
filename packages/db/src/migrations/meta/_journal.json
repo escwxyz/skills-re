@@ -71,6 +71,13 @@
       "when": 1777646043949,
       "tag": "0009_pale_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1777658033391,
+      "tag": "0010_tranquil_stranger",
+      "breakpoints": true
     }
   ]
 }
