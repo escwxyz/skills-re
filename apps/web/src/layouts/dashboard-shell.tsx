@@ -350,7 +350,6 @@ export function DashboardShell({ activeRoute, children, currentUser }: Props) {
   return (
     <DashboardShellFrame
       activeRoute={activeRoute}
-      children={children}
       currentUser={currentUser}
       displayHandle={displayHandle}
       displayInitial={displayInitial}
@@ -358,6 +357,8 @@ export function DashboardShell({ activeRoute, children, currentUser }: Props) {
       drawerOpen={drawerOpen}
       onCloseDrawer={() => setDrawerOpen(false)}
       onToggleDrawer={() => setDrawerOpen((value) => !value)}
-    />
+    >
+      {children}
+    </DashboardShellFrame>
   );
 }

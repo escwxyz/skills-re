@@ -13,6 +13,44 @@ export interface CurrentUser {
   name?: string | null;
 }
 
+export interface SkillItem {
+  authorHandle?: string;
+  createdAt?: number;
+  description: string;
+  id: string;
+  latestVersion?: string;
+  repoName?: string;
+  slug: string;
+  tags?: string[];
+  title: string;
+  updatedAt?: number;
+}
+
+export type FeedbackStatus = "pending" | "resolved" | "in_review";
+export type FeedbackType = "bug" | "request" | "general";
+
+export interface DashboardFeedbackItem {
+  _creationTime: number;
+  _id: string;
+  content: string;
+  response: string | null;
+  status: FeedbackStatus;
+  title: string;
+  type: FeedbackType;
+  userId: string;
+}
+
+export interface ReviewItem {
+  content: string;
+  createdAt: number;
+  id: string;
+  rating: number;
+  skillSlug: string;
+  skillTitle: string;
+  title?: string | null;
+  updatedAt: number;
+}
+
 interface DashboardSectionProps {
   actions?: ReactNode;
   children?: ReactNode;

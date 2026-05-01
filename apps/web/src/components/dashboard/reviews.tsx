@@ -9,19 +9,8 @@ import { formatDateTime } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import type { CurrentUser } from "./shared";
+import type { CurrentUser, ReviewItem } from "./shared";
 import { DashboardSection } from "./shared";
-
-interface ReviewItem {
-  content: string;
-  createdAt: number;
-  id: string;
-  rating: number;
-  skillSlug: string;
-  skillTitle: string;
-  title?: string | null;
-  updatedAt: number;
-}
 
 interface Props {
   currentUser?: CurrentUser | null;

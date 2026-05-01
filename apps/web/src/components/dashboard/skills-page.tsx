@@ -8,20 +8,7 @@ import { orpc } from "@/lib/orpc";
 
 import { DashboardSkills } from "@/components/dashboard/skills";
 
-import type { CurrentUser } from "./shared";
-
-interface SkillItem {
-  authorHandle?: string;
-  createdAt?: number;
-  description: string;
-  id: string;
-  latestVersion?: string;
-  repoName?: string;
-  slug: string;
-  tags?: string[];
-  title: string;
-  updatedAt?: number;
-}
+import type { CurrentUser, SkillItem } from "./shared";
 
 interface Props {
   currentUser?: CurrentUser | null;

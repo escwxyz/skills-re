@@ -8,18 +8,7 @@ import { orpc } from "@/lib/orpc";
 
 import { DashboardReviews } from "@/components/dashboard/reviews";
 
-import type { CurrentUser } from "./shared";
-
-interface ReviewItem {
-  content: string;
-  createdAt: number;
-  id: string;
-  rating: number;
-  skillSlug: string;
-  skillTitle: string;
-  title?: string | null;
-  updatedAt: number;
-}
+import type { CurrentUser, ReviewItem } from "./shared";
 
 interface Props {
   currentUser?: CurrentUser | null;

@@ -14,21 +14,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import type { CurrentUser } from "./shared";
+import type { CurrentUser, SkillItem } from "./shared";
 import { DashboardSection } from "./shared";
-
-interface SkillItem {
-  authorHandle?: string;
-  createdAt?: number;
-  description: string;
-  id: string;
-  latestVersion?: string;
-  repoName?: string;
-  slug: string;
-  tags?: string[];
-  title: string;
-  updatedAt?: number;
-}
 
 interface Props {
   currentUser?: CurrentUser | null;
