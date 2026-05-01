@@ -24,8 +24,6 @@ export { staticAuditsTable } from "./static-audits";
 export { tagsTable } from "./tags";
 export {
   accountsRelations,
-  agentCapabilityGrantsDeniedByRelations,
-  agentCapabilityGrantsGrantedByRelations,
   agentCapabilityGrantsRelations,
   agentHostsRelations,
   agentsRelations,

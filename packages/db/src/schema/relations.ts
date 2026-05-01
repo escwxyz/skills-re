@@ -24,7 +24,12 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
   savedSkills: many(savedSkillsTable),
   agentHosts: many(agentHostsTable),
   agents: many(agentsTable),
-  agentCapabilityGrants: many(agentCapabilityGrantsTable),
+  agentCapabilityGrantsDeniedBy: many(agentCapabilityGrantsTable, {
+    relationName: "agentCapabilityGrants_deniedBy",
+  }),
+  agentCapabilityGrantsGrantedBy: many(agentCapabilityGrantsTable, {
+    relationName: "agentCapabilityGrants_grantedBy",
+  }),
   approvalRequests: many(approvalRequestsTable),
 }));
 
@@ -64,30 +69,20 @@ export const agentsRelations = relations(agentsTable, ({ one, many }) => ({
   approvalRequests: many(approvalRequestsTable),
 }));
 
-export const agentCapabilityGrantsDeniedByRelations = relations(
-  agentCapabilityGrantsTable,
-  ({ one }) => ({
-    user: one(usersTable, {
-      fields: [agentCapabilityGrantsTable.deniedBy],
-      references: [usersTable.id],
-    }),
-  }),
-);
-
-export const agentCapabilityGrantsGrantedByRelations = relations(
-  agentCapabilityGrantsTable,
-  ({ one }) => ({
-    user: one(usersTable, {
-      fields: [agentCapabilityGrantsTable.grantedBy],
-      references: [usersTable.id],
-    }),
-  }),
-);
-
 export const agentCapabilityGrantsRelations = relations(agentCapabilityGrantsTable, ({ one }) => ({
   agent: one(agentsTable, {
     fields: [agentCapabilityGrantsTable.agentId],
     references: [agentsTable.id],
+  }),
+  deniedBy: one(usersTable, {
+    fields: [agentCapabilityGrantsTable.deniedBy],
+    references: [usersTable.id],
+    relationName: "agentCapabilityGrants_deniedBy",
+  }),
+  grantedBy: one(usersTable, {
+    fields: [agentCapabilityGrantsTable.grantedBy],
+    references: [usersTable.id],
+    relationName: "agentCapabilityGrants_grantedBy",
   }),
 }));
 
