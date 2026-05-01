@@ -58,14 +58,14 @@ export interface AuthInstance {
 // replace with https://alchemy.run/providers/cloudflare/email-sender/
 const resendApiUrl = "https://api.resend.com/emails";
 
-const normalizePublicPath = (path: string) => {
+export const normalizePublicPath = (path: string) => {
   const trimmedPath = path.trim();
 
   if (!trimmedPath) {
     return "/";
   }
 
-  if (trimmedPath.includes("://")) {
+  if (trimmedPath.startsWith("//") || trimmedPath.includes("://")) {
     throw new Error("Public page paths must not include a protocol.");
   }
 
