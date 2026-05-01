@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
-import { PUBLIC_SERVER_URL } from "astro:env/client";
+import { SERVER_URL } from "astro:env/server";
 
 export const GET: APIRoute = async () => {
-  const response = await fetch(new URL("/.well-known/agent-configuration", PUBLIC_SERVER_URL));
+  const response = await fetch(new URL("/.well-known/agent-configuration", SERVER_URL));
 
   if (!response.ok) {
     return new Response("Failed to load agent configuration.", {

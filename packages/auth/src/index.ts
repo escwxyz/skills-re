@@ -199,7 +199,10 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
 
             const searchUrl = new URL("/search", env.PUBLIC_SITE_URL);
             searchUrl.searchParams.set("q", args.query);
-            return await fetchPublicContent(searchUrl.pathname + searchUrl.search, env.PUBLIC_SITE_URL);
+            return await fetchPublicContent(
+              searchUrl.pathname + searchUrl.search,
+              env.PUBLIC_SITE_URL,
+            );
           }
 
           throw new Error(`Unsupported agent capability: ${capability}`);
