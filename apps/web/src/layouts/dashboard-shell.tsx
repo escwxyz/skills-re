@@ -247,7 +247,7 @@ function DashboardShellFrame({
   }, [drawerOpen, onCloseDrawer]);
 
   return (
-    <div className="min-h-[calc(100vh-var(--header-height))] bg-[radial-gradient(circle_at_top,#f8f3ea_0%,#f4efe5_44%,#ece4d6_100%)] text-foreground">
+    <div className="min-h-[calc(100vh-var(--header-height))] bg-background text-foreground">
       <DashboardMobileChrome
         activeRoute={activeRoute}
         drawerOpen={drawerOpen}

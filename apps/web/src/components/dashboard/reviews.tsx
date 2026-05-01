@@ -55,7 +55,7 @@ function ReviewCard({ locale, review }: { locale?: string; review: ReviewItem })
                 {review.skillSlug}
               </span>
             </div>
-            <CardTitle className="font-serif text-[1.35rem] leading-[1] tracking-[-0.03em]">
+            <CardTitle className="font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
               {review.title ?? review.skillTitle}
             </CardTitle>
             <a
