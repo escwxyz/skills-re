@@ -50,7 +50,7 @@ export function IdentityLinksCard({
         <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
           Connected accounts
         </CardDescription>
-        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-[1] tracking-[-0.03em]">
+        <CardTitle className="mt-2 flex items-center gap-2 font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
           <UserCircleIcon className="size-5 text-muted-text" />
           Identity links
         </CardTitle>
@@ -76,11 +76,11 @@ export function IdentityLinksCard({
                       <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text">
                         {account.accountId}
                       </p>
-                      <p className="text-[12px] leading-[1.5] text-foreground/70">
+                      <p className="text-[12px] leading-normal text-foreground/70">
                         Linked {formatDateTime(account.createdAt)}
                       </p>
                       {account.scopes.length > 0 ? (
-                        <p className="text-[12px] leading-[1.5] text-foreground/70">
+                        <p className="text-[12px] leading-normal text-foreground/70">
                           Scopes: {account.scopes.join(", ")}
                         </p>
                       ) : null}

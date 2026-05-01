@@ -88,7 +88,7 @@ app.use("/*", async (c, next) => {
 app.use(
   "/*",
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: env.PUBLIC_SITE_URL,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "x-api-key"],
     credentials: true,

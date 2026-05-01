@@ -11,7 +11,7 @@ const auth: AuthInstance = createAuth({
     ADMIN: process.env.ADMIN ?? "",
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "local-dev-secret-local-dev-secret",
     PUBLIC_SERVER_URL: process.env.PUBLIC_SERVER_URL ?? "http://localhost:3000",
-    CORS_ORIGIN: process.env.CORS_ORIGIN ?? "http://localhost:4321",
+    PUBLIC_SITE_URL: process.env.PUBLIC_SITE_URL ?? "http://localhost:4321",
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ?? "",
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET ?? "",
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",

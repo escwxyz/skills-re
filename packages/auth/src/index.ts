@@ -16,7 +16,7 @@ export interface AuthEnv {
   ADMIN: string;
   BETTER_AUTH_SECRET: string;
   PUBLIC_SERVER_URL: string;
-  CORS_ORIGIN: string;
+  PUBLIC_SITE_URL: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   GOOGLE_CLIENT_ID: string;
@@ -189,7 +189,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
               throw new Error("read_public_page requires a string path.");
             }
 
-            return await fetchPublicContent(args.path, env.PUBLIC_SERVER_URL);
+            return await fetchPublicContent(args.path, env.PUBLIC_SITE_URL);
           }
 
           if (capability === "search_site") {
@@ -197,12 +197,9 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
               throw new Error("search_site requires a string query.");
             }
 
-            const searchUrl = new URL("/search", env.PUBLIC_SERVER_URL);
+            const searchUrl = new URL("/search", env.PUBLIC_SITE_URL);
             searchUrl.searchParams.set("q", args.query);
-            return await fetchPublicContent(
-              searchUrl.pathname + searchUrl.search,
-              env.PUBLIC_SERVER_URL,
-            );
+            return await fetchPublicContent(searchUrl.pathname + searchUrl.search, env.PUBLIC_SITE_URL);
           }
 
           throw new Error(`Unsupported agent capability: ${capability}`);
@@ -268,7 +265,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     telemetry: {
       enabled: false,
     },
-    trustedOrigins: [env.CORS_ORIGIN, env.PUBLIC_SERVER_URL],
+    trustedOrigins: [env.PUBLIC_SITE_URL, env.PUBLIC_SERVER_URL],
     user: {
       additionalFields: {
         github: {
