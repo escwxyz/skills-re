@@ -16,6 +16,7 @@ const currentUser = Astro.locals.user as {
   title={`${m.dashboard_reviews_title()} — skills.re`}
   showFooter={false}
   showStatusBar={false}
+  enableViewTransitions
 >
-  <DashboardReviewsPage client:only="react" currentUser={currentUser} />
+  <DashboardReviewsPage client:load currentUser={currentUser} />
 </Layout>

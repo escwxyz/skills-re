@@ -12,6 +12,11 @@ const currentUser = Astro.locals.user as {
 } | null
 ---
 
-<Layout title={`${m.dashboard_skills_page_title()} — skills.re`} showFooter={false} showStatusBar={false}>
-  <DashboardSkillsPage client:only="react" currentUser={currentUser} />
+<Layout
+  title={`${m.dashboard_skills_page_title()} — skills.re`}
+  showFooter={false}
+  showStatusBar={false}
+  enableViewTransitions
+>
+  <DashboardSkillsPage client:load currentUser={currentUser} />
 </Layout>
