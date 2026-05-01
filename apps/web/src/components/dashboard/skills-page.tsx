@@ -31,6 +31,9 @@ export function DashboardSkillsPage({ currentUser }: Props) {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [skillsError, setSkillsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedSkills, setSavedSkills] = useState<SkillItem[]>([]);
+  const [savedSkillsError, setSavedSkillsError] = useState<string | null>(null);
+  const [isSavedSkillsLoading, setIsSavedSkillsLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -73,11 +76,55 @@ export function DashboardSkillsPage({ currentUser }: Props) {
     };
   }, [currentUser]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSavedSkills = async () => {
+      if (!currentUser) {
+        if (isActive) {
+          setSavedSkills([]);
+          setSavedSkillsError(null);
+          setIsSavedSkillsLoading(false);
+        }
+        return;
+      }
+
+      setIsSavedSkillsLoading(true);
+      setSavedSkillsError(null);
+
+      try {
+        const data = await orpc.skills.listMineSaved({ limit: 100 });
+
+        if (isActive) {
+          setSavedSkills(data);
+          setSavedSkillsError(null);
+        }
+      } catch {
+        if (isActive) {
+          setSavedSkillsError(m.dashboard_skills_failed());
+        }
+      } finally {
+        if (isActive) {
+          setIsSavedSkillsLoading(false);
+        }
+      }
+    };
+
+    void loadSavedSkills();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentUser]);
+
   return (
     <DashboardShell activeRoute="skills" currentUser={currentUser}>
       <DashboardSkills
         currentUser={currentUser}
         isLoading={isLoading}
+        savedSkills={savedSkills}
+        savedSkillsError={savedSkillsError}
+        savedSkillsLoading={isSavedSkillsLoading}
         skills={skills}
         skillsError={skillsError}
       />

@@ -46,6 +46,15 @@ const skillListMineItemSchema = z.object({
   updatedAt: z.number().int().nonnegative().optional(),
 });
 
+const saveSkillInputSchema = z.object({
+  slug: skillSlugSchema,
+});
+
+const saveSkillResultSchema = z.object({
+  alreadySaved: z.boolean(),
+  saved: z.boolean(),
+});
+
 const authorHandleInputSchema = z.object({
   handle: z.string().min(1),
 });
@@ -294,6 +303,17 @@ export const skillsContract = {
     })
     .input(claimAsAuthorInputSchema)
     .output(claimAsAuthorResultSchema),
+  save: baseContract
+    .route({
+      description: "Saves a public skill to the authenticated user's dashboard.",
+      method: "POST",
+      path: "/skills/save",
+      tags: ["Skills"],
+      successDescription: "Save result",
+      summary: "Save a skill",
+    })
+    .input(saveSkillInputSchema)
+    .output(saveSkillResultSchema),
   list: skillListContract,
   listAuthors: listAuthorsContract,
   listMine: baseContract
@@ -304,6 +324,17 @@ export const skillsContract = {
       tags: ["Skills"],
       successDescription: "Owned skill list",
       summary: "List my skills",
+    })
+    .input(skillListMineInputSchema)
+    .output(z.array(skillListMineItemSchema)),
+  listMineSaved: baseContract
+    .route({
+      description: "Returns the authenticated user's saved skills, sorted by save time.",
+      method: "GET",
+      path: "/skills/saved",
+      tags: ["Skills"],
+      successDescription: "Saved skill list",
+      summary: "List my saved skills",
     })
     .input(skillListMineInputSchema)
     .output(z.array(skillListMineItemSchema)),

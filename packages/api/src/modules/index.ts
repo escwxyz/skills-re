@@ -17,6 +17,12 @@ export {
   uploadSkills,
 } from "./skills/service";
 export { listSkillsHistoryInfoByIds } from "./skills/repo";
+export {
+  createSavedSkillsService,
+  listMineSavedSkills,
+  saveSkill,
+  savedSkillsService,
+} from "./saved-skills/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
 export { dailySkillsSnapshots, refreshDailySkillsSnapshots } from "./metrics/service";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";

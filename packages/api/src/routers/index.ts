@@ -42,6 +42,7 @@ import {
   listIndexableTags,
   listReposPage,
   listMineReviews,
+  listMineSavedSkills,
   listReviewsBySkill,
   listSnapshotsBySkill,
   listMineSkills,
@@ -54,6 +55,7 @@ import {
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
+  saveSkill,
   setCollectionSkills,
   syncRepoStats,
   updateCollection,
@@ -378,6 +380,22 @@ export const appRouter = {
       checkExistingSkill(input),
     ),
     count: publicProcedure.skills.count.handler(() => countSkills()),
+    save: protectedProcedure.skills.save.handler(async ({ input, context }) => {
+      try {
+        return await saveSkill({
+          slug: input.slug,
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Save failed.";
+        if (message === "Skill not found.") {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Save failed.",
+        });
+      }
+    }),
     claimAsAuthor: protectedProcedure.skills.claimAsAuthor.handler(async ({ input, context }) => {
       try {
         return await claimAsAuthor({
@@ -416,6 +434,9 @@ export const appRouter = {
     listAuthors: publicProcedure.skills.listAuthors.handler(() => listAuthors()),
     listMine: protectedProcedure.skills.listMine.handler(({ input, context }) =>
       listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
+    ),
+    listMineSaved: protectedProcedure.skills.listMineSaved.handler(({ input, context }) =>
+      listMineSavedSkills({ limit: input?.limit, userId: context.session.user.id }),
     ),
     aiSearch: publicProcedure.skills.aiSearch.handler(({ input, context }) =>
       aiSearch(input, context.aiSearch),

@@ -35,6 +35,9 @@ interface Props {
   isLoading?: boolean;
   skills: SkillItem[];
   skillsError?: string | null;
+  savedSkills: SkillItem[];
+  savedSkillsError?: string | null;
+  savedSkillsLoading?: boolean;
 }
 
 function SkillCard({ skill }: { skill: SkillItem }) {
@@ -59,6 +62,11 @@ function SkillCard({ skill }: { skill: SkillItem }) {
             <CardTitle className="font-serif text-[1.35rem] leading-none tracking-[-0.03em]">
               {skill.title}
             </CardTitle>
+            {skill.authorHandle || skill.repoName ? (
+              <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+                {[skill.authorHandle, skill.repoName].filter(Boolean).join(" / ")}
+              </p>
+            ) : null}
           </div>
           {skill.latestVersion ? (
             <span className="inline-flex items-center gap-1.5 border border-rule bg-paper px-2 py-1 font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
@@ -99,7 +107,15 @@ function SkillCard({ skill }: { skill: SkillItem }) {
   );
 }
 
-export function DashboardSkills({ currentUser, isLoading, skills, skillsError }: Props) {
+export function DashboardSkills({
+  currentUser,
+  isLoading,
+  savedSkills,
+  savedSkillsError,
+  savedSkillsLoading,
+  skills,
+  skillsError,
+}: Props) {
   const displayHandle =
     currentUser?.github ?? currentUser?.email?.split("@")[0] ?? currentUser?.id ?? "dashboard";
 
@@ -145,6 +161,48 @@ export function DashboardSkills({ currentUser, isLoading, skills, skillsError }:
     );
   }
 
+  let savedBody = (
+    <div className="border border-dashed border-rule bg-background px-5 py-10 text-center">
+      <BookmarkSimpleIcon className="mx-auto size-8 text-muted-text" />
+      <p className="mt-4 font-serif text-[1.4rem] leading-none tracking-[-0.03em] text-foreground">
+        {m.dashboard_skills_saved_coming_soon()}
+      </p>
+      <p className="mx-auto mt-3 max-w-lg text-[13px] leading-[1.6] text-muted-text">
+        {m.dashboard_skills_saved_description_body()}
+      </p>
+    </div>
+  );
+
+  if (savedSkillsLoading) {
+    savedBody = (
+      <div className="border border-dashed border-rule bg-background px-5 py-10 text-center">
+        <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+          {m.dashboard_skills_loading()}
+        </p>
+      </div>
+    );
+  } else if (savedSkillsError) {
+    savedBody = (
+      <div className="border border-dashed border-destructive/40 bg-background px-5 py-10 text-center">
+        <WarningCircleIcon className="mx-auto size-8 text-destructive" />
+        <p className="mt-4 font-serif text-[1.4rem] leading-none tracking-[-0.03em] text-foreground">
+          {m.dashboard_skills_failed()}
+        </p>
+        <p className="mx-auto mt-3 max-w-lg text-[13px] leading-[1.6] text-muted-text">
+          {m.dashboard_skills_failed_description()}
+        </p>
+      </div>
+    );
+  } else if (savedSkills.length > 0) {
+    savedBody = (
+      <div className="space-y-3">
+        {savedSkills.map((skill) => (
+          <SkillCard key={skill.id} skill={skill} />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <DashboardSection
@@ -169,15 +227,7 @@ export function DashboardSkills({ currentUser, isLoading, skills, skillsError }:
         title={m.dashboard_skills_saved_title()}
         description={m.dashboard_skills_saved_description({ handle: displayHandle })}
       >
-        <div className="border border-dashed border-rule bg-background px-5 py-10 text-center">
-          <BookmarkSimpleIcon className="mx-auto size-8 text-muted-text" />
-          <p className="mt-4 font-serif text-[1.4rem] leading-none tracking-[-0.03em] text-foreground">
-            {m.dashboard_skills_saved_coming_soon()}
-          </p>
-          <p className="mx-auto mt-3 max-w-lg text-[13px] leading-[1.6] text-muted-text">
-            {m.dashboard_skills_saved_description_body()}
-          </p>
-        </div>
+        {savedBody}
       </DashboardSection>
     </div>
   );

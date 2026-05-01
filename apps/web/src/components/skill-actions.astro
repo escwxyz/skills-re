@@ -1,6 +1,7 @@
 ---
 import { m } from "@/paraglide/messages"
 import { ClaimAuthorButton } from "@/components/claim-author-button"
+import { SaveSkillButton } from "@/components/save-skill-button"
 import { localizeHref } from "@/paraglide/runtime"
 
 interface Props {
@@ -27,6 +28,7 @@ const { version, slug } = Astro.props
       {m.skill_actions_download_archive({ version })}
     </a>
 
+    <SaveSkillButton slug={slug} client:load />
     <ClaimAuthorButton slug={slug} client:load />
   </div>
 </div>
