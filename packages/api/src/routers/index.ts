@@ -44,6 +44,7 @@ import {
   listMineReviews,
   listReviewsBySkill,
   listSnapshotsBySkill,
+  listMineSkills,
   listSkills,
   listTags,
   listTagsForSeo,
@@ -413,6 +414,9 @@ export const appRouter = {
     ),
     list: publicProcedure.skills.list.handler(({ input }) => listSkills(input)),
     listAuthors: publicProcedure.skills.listAuthors.handler(() => listAuthors()),
+    listMine: protectedProcedure.skills.listMine.handler(({ input, context }) =>
+      listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
+    ),
     aiSearch: publicProcedure.skills.aiSearch.handler(({ input, context }) =>
       aiSearch(input, context.aiSearch),
     ),

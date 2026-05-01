@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/main.astro"
+import { m } from "@/paraglide/messages"
+import { DashboardSkillsPage } from "@/components/dashboard/skills-page"
+
+const currentUser = Astro.locals.user as {
+  email?: string | null
+  github?: string | null
+  id?: string
+  image?: string | null
+  name?: string | null
+} | null
+---
+
+<Layout title={`${m.dashboard_skills_page_title()} — skills.re`} showFooter={false} showStatusBar={false}>
+  <DashboardSkillsPage client:only="react" currentUser={currentUser} />
+</Layout>

@@ -8,6 +8,7 @@ export {
   getByPath as getSkillByPath,
   getSkillsHistoryInfo,
   listAuthorsPublic as listAuthors,
+  listMineSkills,
   listSkills,
   searchSkills,
   resolvePathBySlug,

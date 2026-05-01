@@ -28,6 +28,24 @@ const skillListInputSchema = z
   })
   .optional();
 
+const skillListMineInputSchema = z
+  .object({
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .optional();
+
+const skillListMineItemSchema = z.object({
+  authorHandle: z.string().optional(),
+  createdAt: z.number().int().nonnegative().optional(),
+  description: z.string(),
+  id: z.string().min(1),
+  latestVersion: z.string().optional(),
+  repoName: z.string().optional(),
+  slug: skillSlugSchema,
+  title: z.string(),
+  updatedAt: z.number().int().nonnegative().optional(),
+});
+
 const authorHandleInputSchema = z.object({
   handle: z.string().min(1),
 });
@@ -278,6 +296,17 @@ export const skillsContract = {
     .output(claimAsAuthorResultSchema),
   list: skillListContract,
   listAuthors: listAuthorsContract,
+  listMine: baseContract
+    .route({
+      description: "Returns the authenticated user's own skills regardless of visibility.",
+      method: "GET",
+      path: "/skills/mine",
+      tags: ["Skills"],
+      successDescription: "Owned skill list",
+      summary: "List my skills",
+    })
+    .input(skillListMineInputSchema)
+    .output(z.array(skillListMineItemSchema)),
   resolvePathBySlug: resolveSkillPathContract,
   uploadSkills: baseContract
     .route({

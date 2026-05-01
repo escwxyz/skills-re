@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { dashboardNavItems } from "@/pages/dashboard/constants";
-import type { DashboardRoute } from "@/pages/dashboard/constants";
+import { getDashboardNavItems } from "@/pages/dashboard/constants";
+import type { DashboardNavItem, DashboardRoute } from "@/pages/dashboard/constants";
+import { m } from "@/paraglide/messages";
 
 export interface CurrentUser {
   email?: string | null;
@@ -27,15 +28,16 @@ function getDisplayInitial(displayName: string, displayHandle: string) {
 }
 
 function getMobileTitle(activeRoute: DashboardRoute) {
-  return dashboardNavItems.find((item) => item.route === activeRoute)?.label ?? "Dashboard";
+  return getDashboardNavItems().find((item) => item.route === activeRoute)?.label ?? "Dashboard";
 }
 
 function getFooterNote(activeRoute: DashboardRoute) {
   if (activeRoute === "overview") {
-    return "Overview shows the live dashboard snapshot.";
+    return m.dashboard_footer_overview_note();
   }
 
-  return `Viewing ${activeRoute}.`;
+  const routeLabel = getDashboardNavItems().find((item) => item.route === activeRoute)?.label;
+  return m.dashboard_footer_viewing_route({ route: routeLabel ?? activeRoute });
 }
 
 function DashboardPlaceholder({ onSignIn }: { onSignIn: () => void }) {
@@ -103,7 +105,7 @@ function DashboardNavItem({
   onNavigate,
 }: {
   activeRoute: DashboardRoute;
-  item: (typeof dashboardNavItems)[number];
+  item: DashboardNavItem;
   onNavigate: () => void;
 }) {
   const isActive = item.route === activeRoute;
@@ -156,7 +158,7 @@ function DashboardSidebar({
           Routes
         </p>
         <div className="mt-2 space-y-1">
-          {dashboardNavItems.map((item) => (
+          {getDashboardNavItems().map((item) => (
             <DashboardNavItem
               key={item.route}
               activeRoute={activeRoute}
