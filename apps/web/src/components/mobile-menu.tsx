@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { m } from "@/paraglide/messages";
 import { getLocale, localizeHref } from "@/paraglide/runtime";
+import { isActiveLocalizedPath } from "@/lib/navigation";
 
 interface Props {
   currentPathname: string;
@@ -23,6 +24,7 @@ interface Props {
 export const MobileMenu = ({ currentPathname }: Props) => {
   const isOpen = useStore(isMobileMenuOpenAtom);
   const currentLocale = getLocale();
+  const isActive = (href: string) => isActiveLocalizedPath(currentPathname, href);
 
   const NAV_LINKS = [
     { label: m.mobile_menu_skills(), href: localizeHref("/skills") },
@@ -81,7 +83,7 @@ export const MobileMenu = ({ currentPathname }: Props) => {
                   <a
                     href={link.href}
                     className={`block py-4 font-mono text-2xl transition-colors hover:text-foreground ${
-                      currentPathname.includes(link.href) ? "text-foreground" : "text-foreground/70"
+                      isActive(link.href) ? "text-foreground" : "text-foreground/70"
                     }`}
                   >
                     {link.label}

@@ -9,13 +9,14 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { m } from "@/paraglide/messages"
 import { getLocale, localizeHref } from "@/paraglide/runtime"
 import type { Locale } from "@/paraglide/runtime"
+import { isActiveLocalizedPath } from "@/lib/navigation"
 
 const { user: currentUser } = Astro.locals
 
-const isActive = (href: string) => Astro.url.pathname.includes(href)
 const { pathname } = Astro.url
 const locale = getLocale() as Locale
 const getLocalizedHref = (path: string) => localizeHref(path)
+const isActive = (href: string) => isActiveLocalizedPath(pathname, href)
 
 const MENUS = [
   { label: m.header_skills(), path: "/skills" },
