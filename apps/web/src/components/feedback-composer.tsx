@@ -1,185 +1,185 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { SubmitEventHandler } from "react";
+import { z } from "zod/v4";
+
+import { useAppForm } from "@/hooks/form-hook";
+import { orpc } from "@/lib/orpc";
+import { m } from "@/paraglide/messages";
 
 import { Button } from "@/components/ui/button";
+import { Field as FormField, FieldError, Form } from "@/components/ui/form";
+import { Field as LayoutField, FieldContent, FieldLabel, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { orpc } from "@/lib/orpc";
 
 type FeedbackType = "bug" | "request" | "general";
 
-const feedbackTypes: {
-  description: string;
-  label: string;
-  value: FeedbackType;
-}[] = [
-  {
-    description: "Unexpected behavior or a broken flow.",
-    label: "Bug",
-    value: "bug",
-  },
-  {
-    description: "A new capability or workflow improvement.",
-    label: "Request",
-    value: "request",
-  },
-  {
-    description: "General notes, questions, or follow-up.",
-    label: "General",
-    value: "general",
-  },
-];
+const feedbackTypes: FeedbackType[] = ["bug", "request", "general"];
 
-export function FeedbackComposer() {
+interface Props {
+  onSubmitted?: () => void;
+}
+
+const feedbackSchema = z.object({
+  content: z.string().trim().min(1, m.ui_please_enter_feedback_details()),
+  title: z.string().trim().min(1, m.ui_please_enter_a_subject()),
+  type: z.enum(["bug", "request", "general"]),
+});
+
+type FeedbackFormValues = z.infer<typeof feedbackSchema>;
+
+export function FeedbackComposer({ onSubmitted }: Props) {
+  const [error, setError] = useState<string | null>(null);
   const titleId = useId();
   const contentId = useId();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [type, setType] = useState<FeedbackType>("bug");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = title.trim().length > 0 && content.trim().length > 0 && !isSubmitting;
+  const form = useAppForm({
+    defaultValues: {
+      content: "",
+      title: "",
+      type: "general",
+    } as FeedbackFormValues,
+    onSubmit: async ({ value }) => {
+      setError(null);
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
-    event.preventDefault();
+      try {
+        await orpc.feedback.create({
+          content: value.content.trim(),
+          title: value.title.trim(),
+          type: value.type,
+        });
 
-    if (!canSubmit) {
-      return;
-    }
+        form.reset({
+          content: "",
+          title: "",
+          type: "general",
+        } as FeedbackFormValues);
 
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      await orpc.feedback.create({
-        content: content.trim(),
-        title: title.trim(),
-        type,
-      });
-
-      setTitle("");
-      setContent("");
-
-      window.location.reload();
-    } catch (caughtError) {
-      console.error("Failed to submit feedback", caughtError);
-      setError("Could not submit feedback. If you are signed out, this will fail for now.");
-      setIsSubmitting(false);
-    }
-  };
+        onSubmitted?.();
+      } catch (caughtError) {
+        console.error("Failed to submit feedback", caughtError);
+        setError(m.ui_feedback_submission_failed());
+      }
+    },
+    validators: {
+      onSubmit: feedbackSchema,
+    },
+  });
 
   return (
-    <form className="space-y-4 border border-rule bg-[#f8f2e6] p-4 md:p-5" onSubmit={handleSubmit}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10.5px] tracking-[0.18em] uppercase text-muted-text">
-            Submit feedback
-          </p>
-          <h3 className="mt-3 font-serif text-[clamp(1.7rem,2.4vw,2.6rem)] leading-[0.96] tracking-[-0.03em]">
-            Report a bug or request a change
+    <form.AppForm>
+      <Form className="mx-auto w-full max-w-4xl space-y-6 p-6 md:p-8">
+        <div className="max-w-2xl">
+          <p className="font-mono text-xs uppercase text-muted-text">{m.ui_submit_feedback()}</p>
+          <h3 className="mt-4 text-2xl text-foreground">
+            {m.ui_report_a_bug_or_request_a_change()}
           </h3>
         </div>
-        <p className="max-w-[20rem] text-[13px] leading-[1.55] text-muted-text">
-          This form is wired to the live feedback endpoint. Authentication checks will be added
-          later.
-        </p>
-      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label
-              className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-muted-text"
-              htmlFor={titleId}
-            >
-              Title
-            </label>
-            <Input
-              id={titleId}
-              name="title"
-              value={title}
-              onChange={(event) => setTitle(event.currentTarget.value)}
-              placeholder="Short summary"
-            />
-          </div>
+        <form.AppField name="type">
+          {(field) => (
+            <FormField className="space-y-2">
+              <fieldset className="m-0 min-w-0 space-y-2 p-0">
+                <legend className="font-mono text-xs uppercase text-muted-text">
+                  {m.ui_feedback_type()}
+                </legend>
+                <RadioGroup
+                  className="grid gap-3 grid-cols-1 md:grid-cols-3"
+                  name={field.name}
+                  onValueChange={(value) => field.handleChange(value as FeedbackType)}
+                  value={field.state.value}
+                >
+                  {feedbackTypes.map((type) => {
+                    let label = m.ui_general();
 
-          <div className="space-y-2">
-            <label
-              className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-muted-text"
-              htmlFor={contentId}
-            >
-              Details
-            </label>
-            <Textarea
-              id={contentId}
-              name="content"
-              value={content}
-              onChange={(event) => setContent(event.currentTarget.value)}
-              placeholder="Explain what happened, what you expected, and any context."
-              className="min-h-40"
-            />
-          </div>
-        </div>
+                    if (type === "bug") {
+                      label = m.ui_bug();
+                    } else if (type === "request") {
+                      label = m.ui_request();
+                    }
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-muted-text">
-              Type
-            </p>
-            <div className="flex border border-rule" role="group" aria-label="Feedback type">
-              {feedbackTypes.map((item) => {
-                const active = type === item.value;
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setType(item.value)}
-                    className={`flex-1 border-r border-rule px-2 py-2 font-mono text-[10.5px] tracking-[0.12em] uppercase last:border-r-0 transition-colors ${
-                      active
-                        ? "bg-foreground text-background"
-                        : "bg-background text-muted-text hover:bg-[#f0ebe0]"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
+                    const id = `${field.name}-${type}`;
+
+                    return (
+                      <FieldLabel key={type} htmlFor={id}>
+                        <LayoutField
+                          orientation="horizontal"
+                          className="border border-foreground/75 px-4 py-3 transition-colors"
+                        >
+                          <FieldContent className="min-w-0 gap-0">
+                            <FieldTitle className="font-mono uppercase">{label}</FieldTitle>
+                          </FieldContent>
+                          <RadioGroupItem id={id} value={type} />
+                        </LayoutField>
+                      </FieldLabel>
+                    );
+                  })}
+                </RadioGroup>
+              </fieldset>
+              <FieldError />
+            </FormField>
+          )}
+        </form.AppField>
+
+        <form.AppField name="title">
+          {(field) => (
+            <FormField className="space-y-2">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-text" htmlFor={titleId}>
+                {m.ui_subject()}
+              </FieldLabel>
+              <Input
+                id={titleId}
+                className="font-mono text-xs"
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                placeholder={m.ui_brief_summary()}
+                required
+                value={field.state.value}
+              />
+              <FieldError />
+            </FormField>
+          )}
+        </form.AppField>
+
+        <form.AppField name="content">
+          {(field) => (
+            <FormField className="space-y-2">
+              <FieldLabel
+                className="font-mono text-xs uppercase text-muted-text"
+                htmlFor={contentId}
+              >
+                {m.ui_content()}
+              </FieldLabel>
+              <Textarea
+                id={contentId}
+                className="min-h-32 font-mono text-xs"
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                placeholder={m.ui_describe_the_issue_or_idea()}
+                required
+                value={field.state.value}
+              />
+              <FieldError />
+            </FormField>
+          )}
+        </form.AppField>
+
+        {error ? <p className="text-sm text-foreground">{error}</p> : null}
+
+        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+          {([canSubmit, isSubmitting]) => (
+            <div className="flex justify-end pt-2">
+              <Button
+                className="cursor-pointer px-6"
+                disabled={!canSubmit || isSubmitting}
+                type="submit"
+              >
+                {isSubmitting ? m.ui_sending() : m.ui_submit_feedback()}
+              </Button>
             </div>
-          </div>
-
-          <div className="space-y-2 border border-rule bg-background p-3">
-            <p className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-muted-text">
-              Queue hints
-            </p>
-            <ul className="space-y-2 text-[13px] leading-normal text-muted-text">
-              {feedbackTypes.map((item) => (
-                <li key={item.value}>
-                  <span className="font-medium text-foreground">{item.label}:</span>{" "}
-                  {item.description}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {error ? (
-            <p className="border border-rule bg-background px-3 py-2 text-[13px] leading-normal text-foreground">
-              {error}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-4 border-t border-rule pt-4">
-        <p className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-muted-text">
-          {canSubmit ? "Ready to send" : "Fill in title and details"}
-        </p>
-        <Button disabled={!canSubmit} type="submit">
-          {isSubmitting ? "Sending..." : "Send feedback"}
-        </Button>
-      </div>
-    </form>
+          )}
+        </form.Subscribe>
+      </Form>
+    </form.AppForm>
   );
 }
