@@ -179,7 +179,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
           },
         ],
         approvalMethods: ["device_authorization", "ciba"],
-        deviceAuthorizationPage: "/device/capabilities",
+        deviceAuthorizationPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
         modes: ["delegated"],
         providerDescription: "Public website content and content discovery for AI agents.",
         providerName: "skills.re",
