@@ -322,8 +322,17 @@ const getSnapshotFileByPathWithFallback = async (
 const normalizeFiles = (directoryPath: string, files: { content: string; path: string }[]) => {
   const normalized: { content: string; path: string }[] = [];
   const seen = new Set<string>();
+  const normalizedRoot = normalizeSkillDirectoryRoot(directoryPath);
 
   for (const file of files) {
+    const trimmed = file.path.replaceAll("\\", "/").trim();
+    const isRooted = trimmed.startsWith("/");
+    const normalizedFilePath = normalizeSnapshotPath(file.path);
+
+    if (isRooted && normalizedFilePath !== normalizedRoot && !normalizedFilePath.startsWith(`${normalizedRoot}/`)) {
+      throw new Error(`File path is outside the snapshot root: ${file.path}`);
+    }
+
     const path = toRootedSnapshotPath(directoryPath, file.path);
     if (seen.has(path)) {
       throw new Error(`Duplicate file path detected: ${path}`);
