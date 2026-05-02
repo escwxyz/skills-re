@@ -1,0 +1,22 @@
+---
+import Layout from "@/layouts/main.astro"
+import { m } from "@/paraglide/messages"
+import { DashboardOverviewPage } from "@/components/dashboard/overview-page"
+
+const currentUser = Astro.locals.user as {
+  email?: string | null
+  github?: string | null
+  id?: string
+  image?: string | null
+  name?: string | null
+} | null
+---
+
+<Layout
+  title={`${m.dashboard_overview_page_title()} — skills.re`}
+  showFooter={false}
+  showStatusBar={false}
+  enableViewTransitions
+>
+  <DashboardOverviewPage client:load currentUser={currentUser} />
+</Layout>
