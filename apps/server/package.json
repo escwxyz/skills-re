@@ -18,6 +18,7 @@
     "@skills-re/auth": "workspace:*",
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
+    "@tanstack/ai-groq": "^0.1.8",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",

@@ -1,16 +1,35 @@
-import { createGeminiChat, createOpenAiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
+import { createGeminiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
+import { createGroqText } from "@tanstack/ai-groq";
 
 import type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
 
 interface CreateAiTasksRuntimeOptions {
   createGeminiChat?: typeof createGeminiChat;
-  createOpenAiChat?: typeof createOpenAiChat;
+  createGroqText?: typeof createGroqText;
   createWorkersAiChat?: typeof createWorkersAiChat;
 }
 
-type GroqTaskModel = "openai/gpt-oss-120b" | "meta-llama/llama-4-scout-17b-16e-instruct";
-type GeminiTaskModel = "gemini-3.1-flash-lite-preview" | "gemini-2.5-flash";
-type WorkersAiTaskModel = "@cf/openai/gpt-oss-120b" | "@cf/meta/llama-4-scout-17b-16e-instruct";
+type GroqTaskModel = Parameters<typeof createGroqText>[0];
+type GeminiTaskModel = Parameters<typeof createGeminiChat>[0];
+type WorkersAiTaskModel = Parameters<typeof createWorkersAiChat>[0];
+
+const GROQ_GW_API_KEY_PLACEHOLDER = "unused";
+
+const createGroqGatewayFetch = (cfApiKeyValue: string) => {
+  const wrappedFetch = ((input, init) => {
+    const headers = new Headers(init?.headers as never);
+    headers.delete("authorization");
+    headers.set("cf-aig-authorization", `Bearer ${cfApiKeyValue}`);
+
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  }) as typeof fetch;
+
+  wrappedFetch.preconnect = globalThis.fetch.preconnect.bind(globalThis.fetch);
+  return wrappedFetch;
+};
 
 const getTaskAdapters = (clients: {
   createGeminiAdapter: (model: GeminiTaskModel) => AiTaskAdapter;
@@ -20,19 +39,19 @@ const getTaskAdapters = (clients: {
   ({
     "skill-categorization": [
       clients.createGroqAdapter("openai/gpt-oss-120b"),
-      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
       clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.createGeminiAdapter("gemini-2.5-flash"),
       clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
       clients.createWorkersAiAdapter("@cf/meta/llama-4-scout-17b-16e-instruct"),
+      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
+      clients.createGeminiAdapter("gemini-2.5-flash"),
     ],
     "skill-tagging": [
       clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.createGeminiAdapter("gemini-2.5-flash"),
       clients.createGroqAdapter("openai/gpt-oss-120b"),
-      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
       clients.createWorkersAiAdapter("@cf/meta/llama-4-scout-17b-16e-instruct"),
       clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
+      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
+      clients.createGeminiAdapter("gemini-2.5-flash"),
     ],
   }) as const satisfies Record<AiTaskType, readonly AiTaskAdapter[]>;
 
@@ -41,7 +60,7 @@ export const createAiTasksRuntime = (
   options: CreateAiTasksRuntimeOptions = {},
 ): AiTaskRuntime => {
   const createGeminiChatClient = options.createGeminiChat ?? createGeminiChat;
-  const createOpenAiChatClient = options.createOpenAiChat ?? createOpenAiChat;
+  const createGroqTextClient = options.createGroqText ?? createGroqText;
   const createWorkersAiChatClient = options.createWorkersAiChat ?? createWorkersAiChat;
 
   let cachedAiClients: {
@@ -78,14 +97,15 @@ export const createAiTasksRuntime = (
     };
 
     const createGeminiAdapter = (model: GeminiTaskModel) =>
-      createGeminiChatClient(
-        model as Parameters<typeof createGeminiChat>[0],
-        gatewayConfig,
-      ) as unknown as AiTaskAdapter;
+      createGeminiChatClient(model, gatewayConfig) as unknown as AiTaskAdapter;
 
-    // Groq is exposed through Cloudflare AI Gateway's OpenAI-compatible path.
+    // Groq uses Cloudflare AI Gateway's provider-specific /groq path so the gateway
+    // can apply the stored Groq key instead of routing through the OpenAI schema.
     const createGroqAdapter = (model: GroqTaskModel) =>
-      createOpenAiChatClient(`groq/${model}` as never, gatewayConfig) as unknown as AiTaskAdapter;
+      createGroqTextClient(model, GROQ_GW_API_KEY_PLACEHOLDER, {
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/groq`,
+        fetch: createGroqGatewayFetch(cfApiKey),
+      }) as unknown as AiTaskAdapter;
 
     const createWorkersAiAdapter = (model: WorkersAiTaskModel) =>
       createWorkersAiChatClient(model, {

@@ -2,13 +2,19 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type {
-  createGeminiChat,
-  createOpenAiChat,
-  createWorkersAiChat,
-} from "@cloudflare/tanstack-ai";
+import type { createGeminiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
+import type { createGroqText as createGroqTextAdapter } from "@tanstack/ai-groq";
 
 import { createAiTasksRuntime } from "./ai-tasks";
+
+interface GroqCallRecord {
+  apiKey: string;
+  config: {
+    baseURL?: string;
+    hasFetch: boolean;
+  };
+  model: string;
+}
 
 interface RecordedCall {
   config: {
@@ -27,20 +33,33 @@ const callsForEnv = (calls: RecordedCall[], accountId: string) =>
   calls.filter((call) => call.config.accountId === accountId);
 
 describe("createAiTasksRuntime", () => {
-  test("keeps AI client caches isolated per env", () => {
-    const createOpenAiChatCalls: string[] = [];
+  test("keeps AI client caches isolated per env", async () => {
+    const createGroqTextCalls: GroqCallRecord[] = [];
     const createGeminiChatCalls: string[] = [];
     const createWorkersAiChatCalls: string[] = [];
+    const groqFetchers: (GroqTextConfig | undefined)[] = [];
 
-    type OpenAiChatModel = Parameters<typeof createOpenAiChat>[0];
-    type OpenAiChatConfig = Parameters<typeof createOpenAiChat>[1];
+    type GroqTextModel = Parameters<typeof createGroqTextAdapter>[0];
     type GeminiChatModel = Parameters<typeof createGeminiChat>[0];
     type GeminiChatConfig = Parameters<typeof createGeminiChat>[1];
     type WorkersAiChatModel = Parameters<typeof createWorkersAiChat>[0];
     type WorkersAiChatConfig = Parameters<typeof createWorkersAiChat>[1];
 
-    const createOpenAiChatStub = (model: OpenAiChatModel, config: OpenAiChatConfig) => {
-      createOpenAiChatCalls.push(JSON.stringify({ config, model }));
+    interface GroqTextConfig {
+      baseURL?: string;
+      fetch?: typeof fetch;
+    }
+
+    const createGroqTextStub = (model: GroqTextModel, apiKey: string, config?: GroqTextConfig) => {
+      createGroqTextCalls.push({
+        apiKey,
+        config: {
+          baseURL: config?.baseURL ?? undefined,
+          hasFetch: typeof config?.fetch === "function",
+        },
+        model,
+      });
+      groqFetchers.push(config);
       return (() => ({ kind: "chat-adapter" })) as never;
     };
 
@@ -62,7 +81,7 @@ describe("createAiTasksRuntime", () => {
       } as never,
       {
         createGeminiChat: createGeminiChatStub as never,
-        createOpenAiChat: createOpenAiChatStub as never,
+        createGroqText: createGroqTextStub as never,
         createWorkersAiChat: createWorkersAiChatStub as never,
       },
     );
@@ -78,39 +97,44 @@ describe("createAiTasksRuntime", () => {
       } as never,
       {
         createGeminiChat: createGeminiChatStub as never,
-        createOpenAiChat: createOpenAiChatStub as never,
+        createGroqText: createGroqTextStub as never,
         createWorkersAiChat: createWorkersAiChatStub as never,
       },
     );
 
     expect(runtimeB.getAdapters("skill-tagging")).toHaveLength(6);
 
-    expect(createOpenAiChatCalls).toHaveLength(8);
+    expect(createGroqTextCalls).toHaveLength(8);
     expect(createGeminiChatCalls).toHaveLength(8);
     expect(createWorkersAiChatCalls).toHaveLength(8);
 
-    const openAiCalls = createOpenAiChatCalls.map(parseCall);
+    const groqCalls = createGroqTextCalls;
     const geminiCalls = createGeminiChatCalls.map(parseCall);
     const workersAiCalls = createWorkersAiChatCalls.map(parseCall);
 
-    const openAiCallsA = callsForEnv(openAiCalls, "account-a");
-    const openAiCallsB = callsForEnv(openAiCalls, "account-b");
+    const groqCallsA = groqCalls.filter((call) => call.config.baseURL?.includes("/account-a/"));
+    const groqCallsB = groqCalls.filter((call) => call.config.baseURL?.includes("/account-b/"));
     const geminiCallsA = callsForEnv(geminiCalls, "account-a");
     const geminiCallsB = callsForEnv(geminiCalls, "account-b");
     const workersAiCallsA = callsForEnv(workersAiCalls, "account-a");
     const workersAiCallsB = callsForEnv(workersAiCalls, "account-b");
 
-    expect(openAiCallsA).toHaveLength(4);
-    expect(openAiCallsB).toHaveLength(4);
+    expect(groqCallsA).toHaveLength(4);
+    expect(groqCallsB).toHaveLength(4);
     expect(geminiCallsA).toHaveLength(4);
     expect(geminiCallsB).toHaveLength(4);
     expect(workersAiCallsA).toHaveLength(4);
     expect(workersAiCallsB).toHaveLength(4);
 
-    for (const call of [...openAiCallsA, ...openAiCallsB]) {
-      expect(call.config.cfApiKey).toMatch(/^token-/);
-      expect(call.config.gatewayId).toMatch(/^gateway-/);
-      expect(call.model.startsWith("groq/")).toBe(true);
+    for (const call of [...groqCallsA, ...groqCallsB]) {
+      expect(call.apiKey).toBe("unused");
+      expect(call.config.baseURL).toMatch(
+        /^https:\/\/gateway\.ai\.cloudflare\.com\/v1\/account-[ab]\/gateway-[ab]\/groq$/,
+      );
+      expect(call.config.hasFetch).toBe(true);
+      expect(["openai/gpt-oss-120b", "meta-llama/llama-4-scout-17b-16e-instruct"]).toContain(
+        call.model,
+      );
     }
 
     for (const call of geminiCallsA) {
@@ -139,6 +163,39 @@ describe("createAiTasksRuntime", () => {
       );
       expect(call.config.apiKey).toBe("token-b");
       expect(call.config.gatewayId).toBeUndefined();
+    }
+
+    const originalFetch = globalThis.fetch;
+    const groqFetchCalls: { headers: Headers; init?: RequestInit }[] = [];
+    globalThis.fetch = ((_input: RequestInfo | URL, init?: RequestInit) => {
+      groqFetchCalls.push({
+        headers: new Headers(init?.headers as never),
+        init,
+      });
+      return Promise.resolve(new Response("ok", { status: 200 }));
+    }) as typeof fetch;
+
+    try {
+      const [groqConfig] = groqFetchers;
+      expect(groqConfig?.fetch).toBeTypeOf("function");
+      if (!groqConfig?.fetch) {
+        throw new Error("Groq fetch wrapper was not configured.");
+      }
+
+      await groqConfig.fetch(
+        new Request("https://api.groq.com/openai/v1/chat/completions", {
+          body: JSON.stringify({ model: "openai/gpt-oss-120b" }),
+          headers: { authorization: "Bearer should-be-stripped" },
+          method: "POST",
+        }),
+      );
+
+      expect(groqFetchCalls).toHaveLength(1);
+      const forwardedHeaders = groqFetchCalls[0]?.headers;
+      expect(forwardedHeaders?.get("authorization")).toBeNull();
+      expect(forwardedHeaders?.get("cf-aig-authorization")).toBe("Bearer token-a");
+    } finally {
+      globalThis.fetch = originalFetch;
     }
   });
 });

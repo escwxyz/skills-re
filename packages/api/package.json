@@ -28,6 +28,7 @@
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
     "@tanstack/ai": "^0.14.0",
+    "@tanstack/ai-groq": "^0.1.8",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "modern-tar": "^0.7.3",
