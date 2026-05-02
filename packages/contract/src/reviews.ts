@@ -45,6 +45,16 @@ const reviewListMineItemSchema = reviewItemSchema.extend({
 });
 
 export const reviewsContract = {
+  countMine: baseContract
+    .route({
+      description: "Returns the authenticated user's total review count.",
+      method: "GET",
+      path: "/reviews/mine/count",
+      tags: ["Reviews"],
+      successDescription: "Review count",
+      summary: "Count my reviews",
+    })
+    .output(z.number().int().nonnegative()),
   create: baseContract
     .route({
       description: "Creates a review for the authenticated user.",

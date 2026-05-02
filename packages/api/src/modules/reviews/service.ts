@@ -3,6 +3,7 @@ import { createDepGetter } from "../shared/deps";
 
 import type {
   ReviewWithAuthor,
+  countReviewsByUserId,
   createReview,
   getReviewBySkillIdAndUserId,
   listReviewsBySkillId,
@@ -25,6 +26,7 @@ const toOutputItem = (row: ReviewWithAuthor) => ({
 });
 
 interface ReviewsServiceDeps {
+  countReviewsByUserId: typeof countReviewsByUserId;
   createReview: typeof createReview;
   getReviewBySkillIdAndUserId: typeof getReviewBySkillIdAndUserId;
   listReviewsBySkillId: typeof listReviewsBySkillId;
@@ -34,6 +36,7 @@ interface ReviewsServiceDeps {
 const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
   const repo = await import("./repo");
   return {
+    countReviewsByUserId: repo.countReviewsByUserId,
     createReview: repo.createReview,
     getReviewBySkillIdAndUserId: repo.getReviewBySkillIdAndUserId,
     listReviewsBySkillId: repo.listReviewsBySkillId,
@@ -112,6 +115,11 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
       return rows.map((row) => toOutputItem(row));
     },
 
+    async countMine(input: { userId: string }) {
+      const countFn = await getDep("countReviewsByUserId");
+      return await countFn({ userId: asUserId(input.userId) });
+    },
+
     async listMine(input: { userId: string; limit?: number }) {
       const listReviewsByUserIdFn = await getDep("listReviewsByUserId");
       const rows = await listReviewsByUserIdFn({
@@ -150,4 +158,8 @@ export async function listReviewsBySkill(input: { skillId: string; limit?: numbe
 
 export async function listMineReviews(input: { userId: string; limit?: number }) {
   return await reviewsService.listMine(input);
+}
+
+export async function countMineReviews(input: { userId: string }) {
+  return await reviewsService.countMine(input);
 }

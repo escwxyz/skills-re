@@ -11,6 +11,8 @@ import {
   addSkillToCollection,
   countCategories,
   countCollections,
+  countMineFeedback,
+  countMineReviews,
   createCollection,
   createFeedbackRecord,
   createReviewRecord,
@@ -223,6 +225,9 @@ export const appRouter = {
     }),
   },
   feedback: {
+    countMine: protectedProcedure.feedback.countMine.handler(({ context }) =>
+      countMineFeedback({ userId: context.session.user.id }),
+    ),
     create: protectedProcedure.feedback.create.handler(({ input, context }) =>
       createFeedbackRecord({
         content: input.content,
@@ -253,6 +258,9 @@ export const appRouter = {
     ),
   },
   reviews: {
+    countMine: protectedProcedure.reviews.countMine.handler(({ context }) =>
+      countMineReviews({ userId: context.session.user.id }),
+    ),
     create: protectedProcedure.reviews.create.handler(async ({ input, context }) => {
       try {
         return await createReviewRecord({

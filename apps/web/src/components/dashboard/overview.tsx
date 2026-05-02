@@ -27,9 +27,12 @@ interface ActivityItem {
 
 export interface OverviewProps {
   currentUser?: CurrentUser | null;
+  feedbackPending?: number;
+  feedbackTotal?: number;
   feedbacks?: DashboardFeedbackItem[];
   isLoading?: boolean;
   reviews?: ReviewItem[];
+  reviewsTotal?: number;
   savedSkills?: SkillItem[];
   skills?: SkillItem[];
 }
@@ -65,9 +68,10 @@ function OverviewMetricCard({
 interface OverviewMetricsProps {
   displayHandle: string;
   displayName: string;
-  feedbacks: DashboardFeedbackItem[];
+  feedbackPending: number;
+  feedbackTotal: number;
   isLoading: boolean;
-  reviews: ReviewItem[];
+  reviewsTotal: number;
   savedSkills: SkillItem[];
   skills: SkillItem[];
 }
@@ -75,14 +79,14 @@ interface OverviewMetricsProps {
 function OverviewMetrics({
   displayHandle,
   displayName,
-  feedbacks,
+  feedbackPending,
+  feedbackTotal,
   isLoading,
-  reviews,
+  reviewsTotal,
   savedSkills,
   skills,
 }: OverviewMetricsProps) {
   const dash = isLoading ? "—" : undefined;
-  const pendingCount = feedbacks.filter((f) => f.status === "pending").length;
 
   const metrics = [
     {
@@ -97,15 +101,15 @@ function OverviewMetrics({
     },
     {
       label: m.dashboard_overview_metric_reviews(),
-      value: dash ?? String(reviews.length),
+      value: dash ?? String(reviewsTotal),
       note: m.dashboard_overview_metric_note_reviews(),
     },
     {
       label: m.dashboard_overview_metric_feedback(),
-      value: dash ?? String(feedbacks.length),
+      value: dash ?? String(feedbackTotal),
       note:
-        !isLoading && pendingCount > 0
-          ? m.dashboard_overview_metric_note_feedback_pending({ count: String(pendingCount) })
+        !isLoading && feedbackPending > 0
+          ? m.dashboard_overview_metric_note_feedback_pending({ count: String(feedbackPending) })
           : m.dashboard_overview_metric_note_feedback_none(),
     },
   ];
@@ -279,9 +283,12 @@ function OverviewShortcuts() {
 
 export function DashboardOverview({
   currentUser,
+  feedbackPending = 0,
+  feedbackTotal = 0,
   feedbacks = [],
   isLoading = false,
   reviews = [],
+  reviewsTotal = 0,
   savedSkills = [],
   skills = [],
 }: OverviewProps) {
@@ -294,9 +301,10 @@ export function DashboardOverview({
       <OverviewMetrics
         displayHandle={displayHandle}
         displayName={displayName}
-        feedbacks={feedbacks}
+        feedbackPending={feedbackPending}
+        feedbackTotal={feedbackTotal}
         isLoading={isLoading}
-        reviews={reviews}
+        reviewsTotal={reviewsTotal}
         savedSkills={savedSkills}
         skills={skills}
       />
