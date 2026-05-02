@@ -1,4 +1,5 @@
 import type { AiTaskRuntime } from "@skills-re/api/types";
+import type { RunSkillsTaggingPipelineOverrides } from "@skills-re/api/modules/tags/service";
 import { runSkillsTaggingPipeline } from "@skills-re/api/modules/tags/service";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
 import { makeWorkflowScheduler } from "./lib/scheduler";
@@ -14,11 +15,7 @@ type SkillsCategorizationWorkflowBinding = WorkflowCreateBinding<{
 
 export interface RunSkillsTaggingWorkflowDeps {
   aiTasks?: AiTaskRuntime;
-  readSnapshotFileContent?: (input: {
-    maxBytes?: number;
-    path: string;
-    snapshotId: string;
-  }) => Promise<{ content: string }>;
+  readSnapshotFileContent?: RunSkillsTaggingPipelineOverrides["readSnapshotFileContent"];
   runSkillsTaggingPipeline?: typeof runSkillsTaggingPipeline;
   scheduleCategorization?: (input: { skillIds: string[] }) => Promise<{ workId: string }>;
 }
