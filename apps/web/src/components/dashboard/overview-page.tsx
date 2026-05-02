@@ -26,6 +26,10 @@ export function DashboardOverviewPage({ currentUser }: Props) {
     const loadData = async () => {
       if (!currentUser) {
         if (isActive) {
+          setSkills([]);
+          setSavedSkills([]);
+          setReviews([]);
+          setFeedbacks([]);
           setIsLoading(false);
         }
         return;
