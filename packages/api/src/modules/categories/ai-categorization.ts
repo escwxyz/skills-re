@@ -110,6 +110,7 @@ export const generateSkillCategoriesBatch = async (
   const userPrompt = `Categories:\n${categoriesText}\n\nSkills:\n${skillsText}\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","scores":{"code-frameworks":0,"tools-platforms":0,"analysis-insights":0,"design-creative":0,"process-methodology":0,"communication-strategy":0,"domain-expertise":0,"operations-automation":0,"other":0},"primaryCategory":"code-frameworks","confidence":0.85,"reasoning":"<short reason>"}]}`;
 
   const adapters = resolvedDeps.getAdapters("skill-categorization");
+  const expectedKeys = new Set(input.items.map((item) => item.key));
   let lastError: unknown = null;
   for (const adapter of adapters) {
     try {
@@ -120,6 +121,19 @@ export const generateSkillCategoriesBatch = async (
         outputSchema: categorizationOutputSchema,
         systemPrompts: [systemPrompt],
       });
+
+      const returnedKeys = new Set(output.items.map((item) => item.key));
+      if (output.items.length !== input.items.length || returnedKeys.size !== expectedKeys.size) {
+        lastError = new Error("Categorization output must contain exactly one result per input item.");
+        continue;
+      }
+      for (const key of expectedKeys) {
+        if (!returnedKeys.has(key)) {
+          lastError = new Error(`Categorization output is missing key: ${key}`);
+          break;
+        }
+      }
+      if (lastError) continue;
 
       return {
         items: output.items.map(
