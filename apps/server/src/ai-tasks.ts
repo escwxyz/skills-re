@@ -26,8 +26,6 @@ const createGroqGatewayFetch = (cfApiKeyValue: string) => {
       headers,
     });
   }) as typeof fetch;
-
-  wrappedFetch.preconnect = globalThis.fetch.preconnect.bind(globalThis.fetch);
   return wrappedFetch;
 };
 
