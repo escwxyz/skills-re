@@ -5,7 +5,7 @@ import { describe, expect, test } from "bun:test";
 import { asSnapshotId } from "@skills-re/db/utils";
 
 import { encodeCursor } from "../shared/pagination";
-import { createSnapshotsService } from "./service";
+import { createHistoricalSnapshotRunner, createSnapshotsService } from "./service";
 
 describe("snapshots service", () => {
   test("creates a historical snapshot when no matching commit exists", async () => {
@@ -43,6 +43,89 @@ describe("snapshots service", () => {
 
     await expect(
       service.createHistoricalSnapshot({
+        description: "Widget skill",
+        directoryPath: "custom/boards/widget/",
+        entryPath: "custom/boards/widget/skill.md",
+        files: [
+          {
+            content: "skill content",
+            path: "custom/boards/widget/skill.md",
+          },
+        ],
+        name: "widget",
+        skillId: "skill-1",
+        sourceCommitDate: Date.parse("2024-01-02T00:00:00.000Z"),
+        sourceCommitMessage: "feat: add widget",
+        sourceCommitSha: "sha-1",
+        sourceCommitUrl: "https://github.com/acme/widget/commit/sha-1",
+        version: "1.1.0",
+      }),
+    ).resolves.toEqual("snapshot-1");
+
+    expect(snapshotCalls).toEqual([
+      {
+        description: "Widget skill",
+        directoryPath: "custom/boards/widget/",
+        entryPath: "custom/boards/widget/skill.md",
+        hash: "bf03119fbc84893f53e9e7b70af2c69957a10e3578de42d71e8bb045cf88b47b",
+        name: "widget",
+        skillId: "skill-1",
+        sourceCommitDate: Date.parse("2024-01-02T00:00:00.000Z"),
+        sourceCommitMessage: "feat: add widget",
+        sourceCommitSha: "sha-1",
+        sourceCommitUrl: "https://github.com/acme/widget/commit/sha-1",
+        syncTime: Date.parse("2024-01-02T00:00:00.000Z"),
+        version: "1.1.0",
+      },
+    ]);
+    expect(uploadCalls).toEqual([
+      {
+        files: [
+          {
+            content: "skill content",
+            path: "custom/boards/widget/skill.md",
+          },
+        ],
+        snapshotId: "snapshot-1",
+      },
+    ]);
+  });
+
+  test("creates historical snapshots through a configured runner", async () => {
+    const snapshotCalls: {
+      description: string;
+      directoryPath: string;
+      entryPath: string;
+      hash: string;
+      name: string;
+      skillId: string;
+      sourceCommitDate?: number;
+      sourceCommitMessage?: string | null;
+      sourceCommitSha: string;
+      sourceCommitUrl?: string | null;
+      syncTime: number;
+      version: string;
+    }[] = [];
+    const uploadCalls: {
+      files: { content: string; path: string }[];
+      snapshotId: string;
+    }[] = [];
+
+    const createHistoricalSnapshot = createHistoricalSnapshotRunner({
+      createSnapshot: (input) => {
+        snapshotCalls.push(input);
+        return Promise.resolve("snapshot-1");
+      },
+      deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+      getSnapshotBySkillAndCommit: () => Promise.resolve(null),
+      uploadSnapshotFiles: (input) => {
+        uploadCalls.push(input);
+        return Promise.resolve({ workId: "workflow-1" });
+      },
+    });
+
+    await expect(
+      createHistoricalSnapshot({
         description: "Widget skill",
         directoryPath: "custom/boards/widget/",
         entryPath: "custom/boards/widget/skill.md",
@@ -449,6 +532,67 @@ describe("snapshots service", () => {
     });
   });
 
+  test("reads snapshot file content from relative paths using rooted snapshot files", async () => {
+    const service = createSnapshotsService({
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: null,
+          description: "Widget skill snapshot",
+          directoryPath: "skills/acme/widget/",
+          entryPath: "skills/acme/widget/skill.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "widget",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      getSnapshotFileByPath: (input) =>
+        Promise.resolve(
+          input.path === "skills/acme/widget/guide.md"
+            ? {
+                contentType: "text/markdown; charset=utf-8",
+                fileHash: "hash-1",
+                path: "skills/acme/widget/guide.md",
+                r2Key: "snapshots/acme/widget/guide.md",
+                size: 6,
+                sourceSha: "sha-1",
+              }
+            : null,
+        ),
+      readSnapshotFileObject: (_key, range) => {
+        expect(range).toEqual({
+          length: 3,
+          offset: 0,
+        });
+        return Promise.resolve({
+          arrayBuffer: () => Promise.resolve(new TextEncoder().encode("abc").buffer),
+          body: new ReadableStream(),
+          size: 6,
+        });
+      },
+    });
+
+    await expect(
+      service.readSnapshotFileContent({
+        maxBytes: 3,
+        path: "guide.md",
+        snapshotId: "snapshot-1",
+      }),
+    ).resolves.toEqual({
+      bytesRead: 3,
+      content: "abc",
+      isTruncated: true,
+      offset: 0,
+      totalBytes: 6,
+    });
+  });
+
   test("maps snapshot tree entries to blob entries", async () => {
     const service = createSnapshotsService({
       listSnapshotFiles: () =>
@@ -615,7 +759,7 @@ describe("snapshots service", () => {
       }),
     ).resolves.toMatchObject({
       archiveBytes: archiveContent.byteLength,
-      archiveKey: "archives/acme/widget-repo/skills/acme/widget/1.0.0/skills.tar.gz",
+      archiveKey: "acme/widget-repo/skills/acme/widget/1.0.0/skills.tar.gz",
       filesCount: 1,
       snapshotId: "snapshot-1",
     });
@@ -853,7 +997,7 @@ describe("snapshots service", () => {
       }),
     ).resolves.toMatchObject({
       archiveBytes: archiveBuffer.byteLength,
-      archiveKey: "archives/acme/widget-repo/skills/acme/widget/1.0.0/skills.tar.gz",
+      archiveKey: "acme/widget-repo/skills/acme/widget/1.0.0/skills.tar.gz",
       filesCount: 1,
       snapshotId: "snapshot-1",
     });
@@ -914,14 +1058,14 @@ describe("snapshots service", () => {
     await expect(
       service.uploadSnapshotArchiveFromStaging({
         archiveBytes: 0,
-        archiveKey: "archives/acme/widget/skills.tar.gz",
+        archiveKey: "acme/widget/skills.tar.gz",
         filesCount: 1,
         snapshotId: "snapshot-1",
         stagingKey: "snapshot-archive/staging/2024-01-01/abc.tar.gz",
       }),
     ).resolves.toEqual({
       archiveBytes: archiveBuffer.byteLength,
-      archiveKey: "archives/acme/widget/skills.tar.gz",
+      archiveKey: "acme/widget/skills.tar.gz",
       filesCount: 1,
       snapshotId: "snapshot-1",
     });
@@ -931,12 +1075,12 @@ describe("snapshots service", () => {
       {
         body: archiveBuffer,
         contentType: "application/gzip",
-        key: "archives/acme/widget/skills.tar.gz",
+        key: "acme/widget/skills.tar.gz",
       },
     ]);
     expect(setCalls).toEqual([
       {
-        archiveR2Key: "archives/acme/widget/skills.tar.gz",
+        archiveR2Key: "acme/widget/skills.tar.gz",
         snapshotId: "snapshot-1",
       },
     ]);

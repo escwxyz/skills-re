@@ -1,4 +1,5 @@
 import type { Context as ApiContext } from "@skills-re/api/types";
+import { asSkillId } from "@skills-re/db/utils";
 import type { Context as HonoContext } from "hono";
 
 import { createAiSearchRuntime } from "./ai-search";
@@ -13,6 +14,8 @@ import { getSnapshotsArchiveUploadWorkflowScheduler } from "./workflows/snapshot
 import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-scheduler";
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
 import type { WorkerLogger } from "./worker-logger";
+import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
+import { getSnapshotBySkillAndCommit } from "@skills-re/api/modules/skills/repo";
 
 type ServerHonoContext = HonoContext<{
   Bindings: Env;
@@ -77,10 +80,22 @@ async function createServerRuntime(
   });
   const githubSubmit = createGithubSubmitRuntime(env, { logger: options.logger });
   const snapshotStorage = createSnapshotArchiveStorageRuntime(env);
-  const [{ createHistoricalSnapshot }, { listSkillsHistoryInfoByIds }] = await Promise.all([
-    import("@skills-re/api/modules/snapshots/service"),
-    import("@skills-re/api/modules/skills/repo"),
-  ]);
+  const snapshotUploadScheduler = getSnapshotUploadWorkflowScheduler(env);
+  const { listSkillsHistoryInfoByIds } = await import("@skills-re/api/modules/skills/repo");
+  const createHistoricalSnapshot = createHistoricalSnapshotRunner({
+    getSnapshotBySkillAndCommit: async (input) =>
+      await getSnapshotBySkillAndCommit({
+        skillId: asSkillId(input.skillId),
+        sourceCommitSha: input.sourceCommitSha,
+      }),
+    uploadSnapshotFiles: async (input) => {
+      if (!snapshotUploadScheduler) {
+        throw new Error("Snapshot upload workflow is not configured.");
+      }
+
+      return await snapshotUploadScheduler.enqueue(input);
+    },
+  });
 
   return {
     aiTasks,
@@ -97,7 +112,7 @@ async function createServerRuntime(
     workflowSchedulers: {
       repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,
-      snapshotUpload: getSnapshotUploadWorkflowScheduler(env) ?? undefined,
+      snapshotUpload: snapshotUploadScheduler ?? undefined,
       skillsTagging: getSkillsTaggingWorkflowScheduler(env) ?? undefined,
       skillsUpload: getSkillsUploadWorkflowScheduler(env) ?? undefined,
     },
