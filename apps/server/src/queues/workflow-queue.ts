@@ -208,6 +208,10 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
 const isWorkflowAlreadyCreatedError = (error: unknown) =>
   error instanceof Error && DUPLICATE_WORKFLOW_ERROR_PATTERN.test(error.message);
 
+const assertUnreachable = (value: never): never => {
+  throw new Error(`Unhandled workflow kind: ${String(value)}`);
+};
+
 const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
   switch (kind) {
     case "evaluation": {
@@ -235,7 +239,7 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
       return "skills-re-v1-skills-upload";
     }
     default: {
-      return "unknown-workflow";
+      return assertUnreachable(kind);
     }
   }
 };
