@@ -4,6 +4,7 @@ import {
   AnalyticsEngineDataset,
   Astro,
   D1Database,
+  DurableObjectNamespace,
   Queue,
   R2Bucket,
   Workflow,
@@ -49,6 +50,10 @@ const archiveFilesBucket = await R2Bucket("ARCHIVE_FILES", {
 
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills_re_download_events",
+});
+
+const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limiter", {
+  className: "SubmitRateLimiter",
 });
 
 // Legacy queues – owned by the skills.re worker; kept here so Alchemy does not delete them.
@@ -306,6 +311,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     ...workflowBindings,
     ...workflowQueueBindings,
   },

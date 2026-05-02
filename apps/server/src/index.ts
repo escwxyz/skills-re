@@ -17,6 +17,7 @@ import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
 import type { WorkerLogger } from "./worker-logger";
+import type { RateLimitResult } from "./lib/cloudflare/do";
 
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
@@ -26,6 +27,7 @@ export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization"
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
+export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -171,6 +173,40 @@ export const rpcHandler = new RPCHandler(appRouter, {
 //   await mcpServer.connect(transport);
 //   return transport.handleRequest(c);
 // });
+
+app.use("/rpc/skills/submitGithubRepoPublic", async (c, next) => {
+  const auth = createRuntimeAuth();
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  if (session?.user) {
+    return next();
+  }
+
+  const ip =
+    c.req.header("CF-Connecting-IP") ??
+    c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ??
+    "unknown";
+
+  // Cast needed: alchemy wraps the DO namespace with Rpc.DurableObjectBranded causing TS2589
+  // oxlint-disable-next-line typescript/no-explicit-any
+  const ns = c.env.SUBMIT_RATE_LIMITER as any;
+  const doId = ns.idFromName(ip);
+  const stub = ns.get(doId);
+  const response = (await stub.fetch(
+    new Request("https://rate-limiter/check", { method: "POST" }),
+  )) as Response;
+  const result = (await response.json()) as RateLimitResult;
+
+  if (!result.allowed) {
+    const message =
+      result.reason === "window_limit"
+        ? `Rate limit exceeded. Please try again in ${result.retryAfterSeconds} seconds.`
+        : "You have reached the maximum number of skill submissions for unregistered users.";
+    return c.json({ code: "RATE_LIMITED", message }, 429);
+  }
+
+  return next();
+});
 
 app.use("/*", async (c, next) => {
   const context = await createServerContext({ context: c });
