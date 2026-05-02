@@ -126,19 +126,17 @@ describe("createAiTasksRuntime", () => {
     }
 
     for (const call of workersAiCallsA) {
-      expect([
-        "@cf/openai/gpt-oss-120b",
-        "@cf/meta-llama/llama-4-scout-17b-16e-instruct",
-      ]).toContain(call.model);
+      expect(["@cf/openai/gpt-oss-120b", "@cf/meta/llama-4-scout-17b-16e-instruct"]).toContain(
+        call.model,
+      );
       expect(call.config.apiKey).toBe("token-a");
       expect(call.config.gatewayId).toBeUndefined();
     }
 
     for (const call of workersAiCallsB) {
-      expect([
-        "@cf/openai/gpt-oss-120b",
-        "@cf/meta-llama/llama-4-scout-17b-16e-instruct",
-      ]).toContain(call.model);
+      expect(["@cf/openai/gpt-oss-120b", "@cf/meta/llama-4-scout-17b-16e-instruct"]).toContain(
+        call.model,
+      );
       expect(call.config.apiKey).toBe("token-b");
       expect(call.config.gatewayId).toBeUndefined();
     }

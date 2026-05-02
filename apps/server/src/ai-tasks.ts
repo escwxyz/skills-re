@@ -10,9 +10,7 @@ interface CreateAiTasksRuntimeOptions {
 
 type GroqTaskModel = "openai/gpt-oss-120b" | "meta-llama/llama-4-scout-17b-16e-instruct";
 type GeminiTaskModel = "gemini-3.1-flash-lite-preview" | "gemini-2.5-flash";
-type WorkersAiTaskModel =
-  | "@cf/openai/gpt-oss-120b"
-  | "@cf/meta-llama/llama-4-scout-17b-16e-instruct";
+type WorkersAiTaskModel = "@cf/openai/gpt-oss-120b" | "@cf/meta/llama-4-scout-17b-16e-instruct";
 
 const getTaskAdapters = (clients: {
   createGeminiAdapter: (model: GeminiTaskModel) => AiTaskAdapter;
@@ -26,14 +24,14 @@ const getTaskAdapters = (clients: {
       clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
       clients.createGeminiAdapter("gemini-2.5-flash"),
       clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
-      clients.createWorkersAiAdapter("@cf/meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createWorkersAiAdapter("@cf/meta/llama-4-scout-17b-16e-instruct"),
     ],
     "skill-tagging": [
       clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
       clients.createGeminiAdapter("gemini-2.5-flash"),
       clients.createGroqAdapter("openai/gpt-oss-120b"),
       clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
-      clients.createWorkersAiAdapter("@cf/meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createWorkersAiAdapter("@cf/meta/llama-4-scout-17b-16e-instruct"),
       clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
     ],
   }) as const satisfies Record<AiTaskType, readonly AiTaskAdapter[]>;
