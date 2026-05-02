@@ -74,9 +74,11 @@ export const buildSnapshotArchiveTarEntries = (input: {
       throw new Error(`File path cannot equal the snapshot directory: ${file.path}`);
     }
 
-    const entryPath = normalizedPath.startsWith(directoryPrefix)
-      ? normalizedPath.slice(directoryPrefix.length)
-      : normalizedPath;
+    if (!normalizedPath.startsWith(directoryPrefix)) {
+      throw new Error(`File path must live under the snapshot directory: ${file.path}`);
+    }
+
+    const entryPath = normalizedPath.slice(directoryPrefix.length);
 
     return {
       body: file.content,

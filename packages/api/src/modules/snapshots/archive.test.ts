@@ -40,8 +40,8 @@ describe("snapshots archive helpers", () => {
     ]);
   });
 
-  test("accepts relative file paths when building tar entries", () => {
-    expect(
+  test("rejects file paths outside the snapshot directory", () => {
+    expect(() =>
       buildSnapshotArchiveTarEntries({
         directoryPath: "skills/acme/widget/",
         files: [
@@ -51,16 +51,21 @@ describe("snapshots archive helpers", () => {
           },
         ],
       }),
-    ).toEqual([
-      {
-        body: new TextEncoder().encode("hello"),
-        header: {
-          name: "SKILL.md",
-          size: 5,
-          type: "file",
-        },
-      },
-    ]);
+    ).toThrow("File path must live under the snapshot directory: SKILL.md");
+  });
+
+  test("rejects rooted file paths outside the snapshot directory", () => {
+    expect(() =>
+      buildSnapshotArchiveTarEntries({
+        directoryPath: "skills/acme/widget/",
+        files: [
+          {
+            content: new TextEncoder().encode("hello"),
+            path: "skills/acme/other/skill.md",
+          },
+        ],
+      }),
+    ).toThrow("File path must live under the snapshot directory: skills/acme/other/skill.md");
   });
 
   test("packs and gzips archive entries", async () => {
