@@ -647,7 +647,7 @@ const uploadSingleSkill = async (
   });
 
   const skillId = await deps.createSkill({
-    description: skill.description,
+    description: skill.description ?? "",
     repoId,
     slug,
     syncTime: now,
@@ -657,7 +657,7 @@ const uploadSingleSkill = async (
   });
 
   const snapshotId = await deps.createSnapshot({
-    description: skill.description,
+    description: skill.description ?? "",
     directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
     entryPath: normalizeUploadEntryPath(skill.entryPath),
     frontmatterHash: skill.frontmatterHash ?? null,

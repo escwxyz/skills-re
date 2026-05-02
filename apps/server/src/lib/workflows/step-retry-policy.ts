@@ -50,6 +50,11 @@ export const workflowStepRetryPolicy = {
     limit: 1,
     timeout: "2 minutes",
   }),
+  skillSummaryPipeline: buildStepConfig({
+    delay: "20 seconds",
+    limit: 1,
+    timeout: "2 minutes",
+  }),
   skillsTaggingPipeline: buildStepConfig({
     delay: "20 seconds",
     limit: 1,

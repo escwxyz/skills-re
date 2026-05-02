@@ -16,20 +16,40 @@ export interface SnapshotUploadWorkflowDeps {
     files: { content: string; path: string }[];
     snapshotId: string;
   }) => Promise<unknown>;
+  scheduleSkillSummary?: (input: { snapshotId: string }) => Promise<unknown>;
 }
 
-export const runSnapshotUploadWorkflow = (
+export const runSnapshotUploadWorkflow = async (
   event: Readonly<WorkflowEvent<SnapshotUploadWorkflowPayload>>,
   step: WorkflowStep,
   deps: SnapshotUploadWorkflowDeps,
-) =>
-  step.do("upload-snapshot-files", workflowStepRetryPolicy.snapshotUpload, async () => {
-    const uploadPayload = await loadStagedSnapshotUploadPayload(event.payload);
-    await deps.runUploadSnapshotFiles(uploadPayload);
+) => {
+  const result = await step.do(
+    "upload-snapshot-files",
+    workflowStepRetryPolicy.snapshotUpload,
+    async () => {
+      const uploadPayload = await loadStagedSnapshotUploadPayload(event.payload);
+      await deps.runUploadSnapshotFiles(uploadPayload);
 
-    return {
-      filesCount: uploadPayload.files.length,
-      snapshotId: uploadPayload.snapshotId,
-      status: "uploaded",
-    } as const;
-  });
+      return {
+        filesCount: uploadPayload.files.length,
+        snapshotId: uploadPayload.snapshotId,
+        status: "uploaded",
+      } as const;
+    },
+  );
+
+  const { scheduleSkillSummary } = deps;
+
+  if (scheduleSkillSummary) {
+    await step.do(
+      "trigger-skill-summary",
+      workflowStepRetryPolicy.repoSnapshotEnqueue,
+      async () => {
+        await scheduleSkillSummary({ snapshotId: result.snapshotId });
+      },
+    );
+  }
+
+  return result;
+};

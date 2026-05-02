@@ -4,6 +4,7 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
 import { createSnapshotsService } from "@skills-re/api/modules/snapshots/service";
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./snapshots-archive-upload";
+import { getSkillSummaryWorkflowScheduler } from "./skill-summary";
 
 import { runSnapshotUploadWorkflow } from "./snapshot-upload-runner";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
@@ -35,12 +36,17 @@ export class SnapshotUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
       },
     });
 
+    const skillSummaryScheduler = getSkillSummaryWorkflowScheduler(this.env);
+
     return runWorkflowWithFailureLog({
       entrypoint: "SnapshotUploadWorkflow",
       instanceId: event.instanceId,
       run: () =>
         runSnapshotUploadWorkflow(event, step, {
           runUploadSnapshotFiles: (input) => snapshotsService.runUploadSnapshotFilesPipeline(input),
+          scheduleSkillSummary: skillSummaryScheduler
+            ? (input) => skillSummaryScheduler.enqueue(input)
+            : undefined,
         }),
       workflowName: "skills-re-v1-snapshot-upload",
     });

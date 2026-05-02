@@ -146,6 +146,10 @@ const snapshotsArchiveUploadWorkflowQueue = await Queue(
   },
 );
 
+const skillSummaryWorkflowQueue = await Queue("SKILL_SUMMARY_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-skill-summary-workflow",
+});
+
 const workflowQueueEventSources = [
   // {
   //   queue: evaluationWorkflowQueue,
@@ -170,6 +174,13 @@ const workflowQueueEventSources = [
   },
   {
     queue: snapshotsArchiveUploadWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 1000,
+    },
+  },
+  {
+    queue: skillSummaryWorkflowQueue,
     settings: {
       batchSize: 1,
       maxWaitTimeMs: 1000,
@@ -255,6 +266,10 @@ const workflowBindings = {
     className: "SkillsTaggingWorkflow",
     workflowName: "skills-re-v1-skills-tagging",
   }),
+  SKILL_SUMMARY_WORKFLOW: Workflow("SKILL_SUMMARY_WORKFLOW", {
+    className: "SkillSummaryWorkflow",
+    workflowName: "skills-re-v1-skill-summary",
+  }),
   SKILLS_UPLOAD_WORKFLOW: Workflow("SKILLS_UPLOAD_WORKFLOW", {
     className: "SkillsUploadWorkflow",
     workflowName: "skills-re-v1-skills-upload",
@@ -272,6 +287,7 @@ const workflowQueueBindings = {
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE: snapshotsArchiveUploadWorkflowQueue,
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE: skillsCategorizationWorkflowQueue,
   SKILLS_TAGGING_WORKFLOW_QUEUE: skillsTaggingWorkflowQueue,
+  SKILL_SUMMARY_WORKFLOW_QUEUE: skillSummaryWorkflowQueue,
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
