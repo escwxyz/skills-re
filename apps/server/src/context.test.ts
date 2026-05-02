@@ -66,7 +66,7 @@ describe("createServerContextFromBase", () => {
       },
       {
         aiTasks: {
-          getModel() {
+          getAdapters() {
             return {} as never;
           },
         },

@@ -76,7 +76,7 @@ const createDefaultCategoriesDeps = async (): Promise<CategoriesServiceDeps> => 
       await generateSkillCategoriesBatchImpl(
         input,
         aiTasks ?? {
-          getModel: () => {
+          getAdapters: () => {
             throw new Error("AI categorization runtime is unavailable.");
           },
         },

@@ -1,9 +1,9 @@
-import type { generateText } from "ai";
+import type { chat } from "@tanstack/ai";
 
 export type AiTaskType = "skill-categorization" | "skill-tagging";
 
-export type AiTaskModel = Parameters<typeof generateText>[0]["model"];
+export type AiTaskAdapter = Parameters<typeof chat>[0]["adapter"];
 
 export interface AiTaskRuntime {
-  getModel(task: AiTaskType): AiTaskModel;
+  getAdapters(task: AiTaskType): AiTaskAdapter[];
 }

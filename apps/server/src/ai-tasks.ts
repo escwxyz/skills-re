@@ -1,103 +1,85 @@
-import { createGroq } from "@ai-sdk/groq";
-import { createAiGateway } from "ai-gateway-provider";
-import { createUnified } from "ai-gateway-provider/providers/unified";
+import { createOpenAiChat } from "@cloudflare/tanstack-ai";
 
-import type { AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
-
-interface AiClients {
-  aiGateway: ReturnType<typeof createAiGateway>;
-  groq: ReturnType<typeof createGroq>;
-  unified: ReturnType<typeof createUnified>;
-}
+import type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
 
 interface CreateAiTasksRuntimeOptions {
-  createAiGateway?: typeof createAiGateway;
-  createGroq?: typeof createGroq;
-  createUnified?: typeof createUnified;
+  createOpenAiChat?: typeof createOpenAiChat;
 }
 
-const getTaskRoutes = (clients: AiClients) =>
+const getTaskAdapters = (clients: { createAdapter: (model: string) => AiTaskAdapter }) =>
   ({
     "skill-categorization": [
-      clients.groq("openai/gpt-oss-120b"),
-      clients.unified("workers-ai/@cf/openai/gpt-oss-120b"),
-      clients.groq("meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.unified("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
+      clients.createAdapter("groq/openai/gpt-oss-120b"),
+      clients.createAdapter("workers-ai/@cf/openai/gpt-oss-120b"),
+      clients.createAdapter("groq/meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createAdapter("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
     ],
     "skill-tagging": [
-      clients.groq("meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.unified("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
-      clients.groq("openai/gpt-oss-120b"),
-      clients.unified("workers-ai/@cf/openai/gpt-oss-120b"),
+      clients.createAdapter("groq/meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createAdapter("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
+      clients.createAdapter("groq/openai/gpt-oss-120b"),
+      clients.createAdapter("workers-ai/@cf/openai/gpt-oss-120b"),
     ],
-  }) as const satisfies Record<AiTaskType, unknown[]>;
+  }) as const satisfies Record<AiTaskType, readonly AiTaskAdapter[]>;
 
 export const createAiTasksRuntime = (
   env: Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CLOUDFLARE_GATEWAY">,
   options: CreateAiTasksRuntimeOptions = {},
 ): AiTaskRuntime => {
-  const {
-    createAiGateway: createAiGatewayClient = createAiGateway,
-    createGroq: createGroqClient = createGroq,
-    createUnified: createUnifiedClient = createUnified,
-  } = options;
+  const createOpenAiChatClient = options.createOpenAiChat ?? createOpenAiChat;
 
-  let cachedAiClients: { key: string; clients: AiClients } | null = null;
+  let cachedAiClients: {
+    adaptersByTask: Record<AiTaskType, readonly AiTaskAdapter[]>;
+    key: string;
+  } | null = null;
 
-  const getAiClients = (): AiClients => {
+  const getAiClients = () => {
     const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
     if (!accountId) {
-      throw new Error("CLOUDFLARE_ACCOUNT_ID is required for AI tagging.");
+      throw new Error("CLOUDFLARE_ACCOUNT_ID is required for AI Gateway routing.");
     }
 
-    const gateway = env.CLOUDFLARE_GATEWAY?.trim();
-    if (!gateway) {
-      throw new Error("CLOUDFLARE_GATEWAY is required for AI tagging.");
+    const gatewayId = env.CLOUDFLARE_GATEWAY?.trim();
+    if (!gatewayId) {
+      throw new Error("CLOUDFLARE_GATEWAY is required for AI Gateway routing.");
     }
 
-    const apiToken = env.CLOUDFLARE_API_TOKEN?.trim();
-    if (!apiToken) {
-      throw new Error("CLOUDFLARE_API_TOKEN is required for AI tagging.");
+    const cfApiKey = env.CLOUDFLARE_API_TOKEN?.trim();
+    if (!cfApiKey) {
+      throw new Error("CLOUDFLARE_API_TOKEN is required for AI Gateway routing.");
     }
 
-    const key = `${accountId}|${gateway}|${apiToken}`;
+    const key = `${accountId}|${gatewayId}|${cfApiKey}`;
     if (cachedAiClients?.key === key) {
-      return cachedAiClients.clients;
+      return cachedAiClients;
     }
 
-    const headers = {
-      "cf-aig-authorization": `Bearer ${apiToken}`,
+    const config = {
+      accountId,
+      cacheTtl: 3600,
+      cfApiKey,
+      gatewayId,
     };
 
-    const clients = {
-      aiGateway: createAiGatewayClient({
-        accountId,
-        apiKey: apiToken,
-        gateway,
-        options: {
-          cacheTtl: 3600,
-          retries: {
-            maxAttempts: 2,
-          },
-        },
-      }),
-      groq: createGroqClient({ headers }),
-      unified: createUnifiedClient({ headers }),
-    };
+    const createAdapter = (model: string) =>
+      createOpenAiChatClient(model as never, config) as unknown as AiTaskAdapter;
+
+    const adaptersByTask = getTaskAdapters({
+      createAdapter,
+    });
 
     cachedAiClients = {
-      clients,
+      adaptersByTask,
       key,
     };
 
-    return clients;
+    return cachedAiClients;
   };
 
   return {
-    getModel(task) {
+    getAdapters(task) {
       const clients = getAiClients();
-      const taskRoutes = getTaskRoutes(clients);
-      return clients.aiGateway([...taskRoutes[task]]);
+      return [...clients.adaptersByTask[task]];
     },
   };
 };

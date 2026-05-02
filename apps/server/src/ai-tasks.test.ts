@@ -2,36 +2,20 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { createGroq } from "@ai-sdk/groq";
-import type { createAiGateway } from "ai-gateway-provider";
-import type { createUnified } from "ai-gateway-provider/providers/unified";
+import type { createOpenAiChat } from "@cloudflare/tanstack-ai";
 
 import { createAiTasksRuntime } from "./ai-tasks";
 
 describe("createAiTasksRuntime", () => {
   test("keeps AI client caches isolated per env", () => {
-    const createAiGatewayCalls: string[] = [];
-    const createGroqCalls: string[] = [];
-    const createUnifiedCalls: string[] = [];
+    const createOpenAiChatCalls: string[] = [];
 
-    type AiGatewayOptions = Parameters<typeof createAiGateway>[0];
-    type GroqOptions = Parameters<typeof createGroq>[0];
-    type UnifiedOptions = Parameters<typeof createUnified>[0];
+    type OpenAiChatModel = Parameters<typeof createOpenAiChat>[0];
+    type OpenAiChatConfig = Parameters<typeof createOpenAiChat>[1];
 
-    const createAiGatewayStub = (input: AiGatewayOptions) => {
-      createAiGatewayCalls.push(JSON.stringify(input));
-
-      return (() => ({ kind: "ai-gateway" })) as never;
-    };
-
-    const createGroqStub = (input: GroqOptions = {}) => {
-      createGroqCalls.push(JSON.stringify(input));
-      return (() => ({ kind: "groq" })) as never;
-    };
-
-    const createUnifiedStub = (input: UnifiedOptions = {}) => {
-      createUnifiedCalls.push(JSON.stringify(input));
-      return (() => ({ kind: "unified" })) as never;
+    const createOpenAiChatStub = (model: OpenAiChatModel, config: OpenAiChatConfig) => {
+      createOpenAiChatCalls.push(JSON.stringify({ config, model }));
+      return (() => ({ kind: "chat-adapter" })) as never;
     };
 
     const runtimeA = createAiTasksRuntime(
@@ -41,14 +25,12 @@ describe("createAiTasksRuntime", () => {
         CLOUDFLARE_GATEWAY: "gateway-a",
       } as never,
       {
-        createAiGateway: createAiGatewayStub,
-        createGroq: createGroqStub,
-        createUnified: createUnifiedStub,
+        createOpenAiChat: createOpenAiChatStub as never,
       },
     );
 
-    runtimeA.getModel("skill-tagging");
-    runtimeA.getModel("skill-categorization");
+    expect(runtimeA.getAdapters("skill-tagging")).toHaveLength(4);
+    expect(runtimeA.getAdapters("skill-categorization")).toHaveLength(4);
 
     const runtimeB = createAiTasksRuntime(
       {
@@ -57,21 +39,19 @@ describe("createAiTasksRuntime", () => {
         CLOUDFLARE_GATEWAY: "gateway-b",
       } as never,
       {
-        createAiGateway: createAiGatewayStub,
-        createGroq: createGroqStub,
-        createUnified: createUnifiedStub,
+        createOpenAiChat: createOpenAiChatStub as never,
       },
     );
 
-    runtimeB.getModel("skill-tagging");
+    expect(runtimeB.getAdapters("skill-tagging")).toHaveLength(4);
 
-    expect(createAiGatewayCalls[0]).toContain("account-a");
-    expect(createAiGatewayCalls[0]).toContain("gateway-a");
-    expect(createAiGatewayCalls[0]).toContain("token-a");
-    expect(createAiGatewayCalls[1]).toContain("account-b");
-    expect(createAiGatewayCalls[1]).toContain("gateway-b");
-    expect(createAiGatewayCalls[1]).toContain("token-b");
-    expect(createGroqCalls).toHaveLength(2);
-    expect(createUnifiedCalls).toHaveLength(2);
+    expect(createOpenAiChatCalls).toHaveLength(16);
+    expect(createOpenAiChatCalls[0]).toContain("groq/openai/gpt-oss-120b");
+    expect(createOpenAiChatCalls[0]).toContain("account-a");
+    expect(createOpenAiChatCalls[0]).toContain("gateway-a");
+    expect(createOpenAiChatCalls[0]).toContain("token-a");
+    expect(createOpenAiChatCalls[8]).toContain("account-b");
+    expect(createOpenAiChatCalls[8]).toContain("gateway-b");
+    expect(createOpenAiChatCalls[8]).toContain("token-b");
   });
 });

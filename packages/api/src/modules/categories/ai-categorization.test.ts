@@ -8,10 +8,10 @@ import {
   generateSkillCategoriesBatch,
   skillCategorySlugSchema,
 } from "./ai-categorization";
-import type { AiTaskRuntime } from "../ai/runtime";
 
 describe("categorization ai helpers", () => {
-  test("parses a fenced categorization payload", async () => {
+  test("parses a structured categorization payload and falls back across adapters", async () => {
+    const chatCalls: unknown[] = [];
     const result = await generateSkillCategoriesBatch(
       {
         categories: [
@@ -34,12 +34,36 @@ describe("categorization ai helpers", () => {
         ],
       },
       {
-        generateText: (async () => ({
-          text: `{"items":[{"confidence":0.87,"key":"skill-1","primaryCategory":"code-frameworks","reasoning":"clear primary deliverable","scores":{"analysis-insights":1,"code-frameworks":10,"communication-strategy":0,"design-creative":0,"domain-expertise":2,"operations-automation":0,"other":0,"process-methodology":1,"tools-platforms":2}}]}`,
-        })) as unknown as typeof generateSkillCategoriesBatch extends (...args: never[]) => unknown
-          ? never
-          : never,
-        getModel: (() => null) as unknown as AiTaskRuntime["getModel"],
+        // oxlint-disable-next-line require-await
+        chat: (async ({ adapter }) => {
+          chatCalls.push(adapter);
+          if (chatCalls.length === 1) {
+            throw new Error("primary adapter failed");
+          }
+
+          return {
+            items: [
+              {
+                confidence: 0.87,
+                key: "skill-1",
+                primaryCategory: "code-frameworks",
+                reasoning: "clear primary deliverable",
+                scores: {
+                  "analysis-insights": 1,
+                  "code-frameworks": 10,
+                  "communication-strategy": 0,
+                  "design-creative": 0,
+                  "domain-expertise": 2,
+                  "operations-automation": 0,
+                  other: 0,
+                  "process-methodology": 1,
+                  "tools-platforms": 2,
+                },
+              },
+            ],
+          };
+        }) as never,
+        getAdapters: (() => [{ id: "adapter-1" }, { id: "adapter-2" }]) as never,
       } as never,
     );
 
@@ -50,6 +74,7 @@ describe("categorization ai helpers", () => {
         primaryCategory: "code-frameworks",
       }),
     ]);
+    expect(chatCalls).toHaveLength(2);
   });
 
   test("rejects categorization payloads missing a category score", () => {
