@@ -167,6 +167,17 @@ export const generateSkillTagsBatch = async (
         systemPrompts: [systemPrompt],
       });
 
+      const expectedKeys = new Set(input.items.map((item) => item.key));
+      const returnedKeys = output.items.map((item) => item.key);
+      if (
+        returnedKeys.length !== input.items.length ||
+        new Set(returnedKeys).size !== returnedKeys.length ||
+        returnedKeys.some((key) => !expectedKeys.has(key))
+      ) {
+        lastError = new Error("Tagging response keys did not match the input batch.");
+        continue;
+      }
+
       return {
         items: output.items.map((item): SkillTaggingOutputItem => {
           const selectedByDimension: Record<
