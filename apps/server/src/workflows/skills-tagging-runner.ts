@@ -14,6 +14,11 @@ type SkillsCategorizationWorkflowBinding = WorkflowCreateBinding<{
 
 export interface RunSkillsTaggingWorkflowDeps {
   aiTasks?: AiTaskRuntime;
+  readSnapshotFileContent?: (input: {
+    maxBytes?: number;
+    path: string;
+    snapshotId: string;
+  }) => Promise<{ content: string }>;
   runSkillsTaggingPipeline?: typeof runSkillsTaggingPipeline;
   scheduleCategorization?: (input: { skillIds: string[] }) => Promise<{ workId: string }>;
 }
@@ -40,6 +45,11 @@ export const runSkillsTaggingWorkflow = async (
       skillIds: event.payload.skillIds,
     },
     deps.aiTasks,
+    deps.readSnapshotFileContent
+      ? {
+          readSnapshotFileContent: deps.readSnapshotFileContent,
+        }
+      : undefined,
   );
 
   if (event.payload.triggerCategorizationAfterTagging) {

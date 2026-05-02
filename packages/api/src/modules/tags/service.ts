@@ -425,6 +425,7 @@ export async function syncSkillTagsFromAi(input: {
 export async function runSkillsTaggingPipeline(
   input: { skillIds: string[] },
   aiTasks?: AiTaskRuntime,
+  overrides: Partial<TagsServiceDeps> = {},
 ) {
-  return await createTagsService().runSkillsTaggingPipeline(input, aiTasks);
+  return await createTagsService(overrides).runSkillsTaggingPipeline(input, aiTasks);
 }
