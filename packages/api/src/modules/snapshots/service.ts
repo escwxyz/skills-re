@@ -994,7 +994,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
   };
 };
 
-type HistoricalSnapshotRunnerDeps = Pick<
+export type HistoricalSnapshotRunnerDeps = Pick<
   SnapshotsServiceDeps,
   "getSnapshotBySkillAndCommit" | "uploadSnapshotFiles"
 > &

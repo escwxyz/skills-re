@@ -10,10 +10,19 @@ import { runSkillsUploadWorkflow } from "./skills-upload-runner";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SkillsUploadWorkflowPayload } from "./skills-upload";
 import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
+import type { HistoricalSnapshotRunnerDeps } from "@skills-re/api/modules/snapshots/service";
 import {
   getSnapshotBySkillAndCommit,
   listSkillsHistoryInfoByIds,
 } from "@skills-re/api/modules/skills/repo";
+
+type HistoricalGetSnapshotBySkillAndCommitInput = Parameters<
+  HistoricalSnapshotRunnerDeps["getSnapshotBySkillAndCommit"]
+>[0];
+
+type HistoricalUploadSnapshotFilesInput = Parameters<
+  HistoricalSnapshotRunnerDeps["uploadSnapshotFiles"]
+>[0];
 
 export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
   run(event: Readonly<WorkflowEvent<SkillsUploadWorkflowPayload>>, step: WorkflowStep) {
@@ -21,12 +30,12 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
     const snapshotUploadScheduler = getSnapshotUploadWorkflowScheduler(this.env);
     const snapshotHistory = createSnapshotsHistoryRuntime({
       createHistoricalSnapshot: createHistoricalSnapshotRunner({
-        getSnapshotBySkillAndCommit: async (input) =>
+        getSnapshotBySkillAndCommit: async (input: HistoricalGetSnapshotBySkillAndCommitInput) =>
           await getSnapshotBySkillAndCommit({
             skillId: asSkillId(input.skillId),
             sourceCommitSha: input.sourceCommitSha,
           }),
-        uploadSnapshotFiles: async (input) => {
+        uploadSnapshotFiles: async (input: HistoricalUploadSnapshotFilesInput) => {
           if (!snapshotUploadScheduler) {
             throw new Error("Snapshot upload workflow is not configured.");
           }
