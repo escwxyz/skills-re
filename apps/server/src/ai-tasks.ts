@@ -1,24 +1,40 @@
-import { createOpenAiChat } from "@cloudflare/tanstack-ai";
+import { createGeminiChat, createOpenAiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
 
 import type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
 
 interface CreateAiTasksRuntimeOptions {
+  createGeminiChat?: typeof createGeminiChat;
   createOpenAiChat?: typeof createOpenAiChat;
+  createWorkersAiChat?: typeof createWorkersAiChat;
 }
 
-const getTaskAdapters = (clients: { createAdapter: (model: string) => AiTaskAdapter }) =>
+type GroqTaskModel = "openai/gpt-oss-120b" | "meta-llama/llama-4-scout-17b-16e-instruct";
+type GeminiTaskModel = "gemini-3.1-flash-lite-preview" | "gemini-2.5-flash";
+type WorkersAiTaskModel =
+  | "@cf/openai/gpt-oss-120b"
+  | "@cf/meta-llama/llama-4-scout-17b-16e-instruct";
+
+const getTaskAdapters = (clients: {
+  createGeminiAdapter: (model: GeminiTaskModel) => AiTaskAdapter;
+  createGroqAdapter: (model: GroqTaskModel) => AiTaskAdapter;
+  createWorkersAiAdapter: (model: WorkersAiTaskModel) => AiTaskAdapter;
+}) =>
   ({
     "skill-categorization": [
-      clients.createAdapter("groq/openai/gpt-oss-120b"),
-      clients.createAdapter("workers-ai/@cf/openai/gpt-oss-120b"),
-      clients.createAdapter("groq/meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.createAdapter("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
+      clients.createGroqAdapter("openai/gpt-oss-120b"),
+      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
+      clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createGeminiAdapter("gemini-2.5-flash"),
+      clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
+      clients.createWorkersAiAdapter("@cf/meta-llama/llama-4-scout-17b-16e-instruct"),
     ],
     "skill-tagging": [
-      clients.createAdapter("groq/meta-llama/llama-4-scout-17b-16e-instruct"),
-      clients.createAdapter("workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct"),
-      clients.createAdapter("groq/openai/gpt-oss-120b"),
-      clients.createAdapter("workers-ai/@cf/openai/gpt-oss-120b"),
+      clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createGeminiAdapter("gemini-2.5-flash"),
+      clients.createGroqAdapter("openai/gpt-oss-120b"),
+      clients.createGeminiAdapter("gemini-3.1-flash-lite-preview"),
+      clients.createWorkersAiAdapter("@cf/meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
     ],
   }) as const satisfies Record<AiTaskType, readonly AiTaskAdapter[]>;
 
@@ -26,7 +42,9 @@ export const createAiTasksRuntime = (
   env: Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CLOUDFLARE_GATEWAY">,
   options: CreateAiTasksRuntimeOptions = {},
 ): AiTaskRuntime => {
+  const createGeminiChatClient = options.createGeminiChat ?? createGeminiChat;
   const createOpenAiChatClient = options.createOpenAiChat ?? createOpenAiChat;
+  const createWorkersAiChatClient = options.createWorkersAiChat ?? createWorkersAiChat;
 
   let cachedAiClients: {
     adaptersByTask: Record<AiTaskType, readonly AiTaskAdapter[]>;
@@ -54,18 +72,33 @@ export const createAiTasksRuntime = (
       return cachedAiClients;
     }
 
-    const config = {
+    const gatewayConfig = {
       accountId,
       cacheTtl: 3600,
       cfApiKey,
       gatewayId,
     };
 
-    const createAdapter = (model: string) =>
-      createOpenAiChatClient(model as never, config) as unknown as AiTaskAdapter;
+    const createGeminiAdapter = (model: GeminiTaskModel) =>
+      createGeminiChatClient(
+        model as Parameters<typeof createGeminiChat>[0],
+        gatewayConfig,
+      ) as unknown as AiTaskAdapter;
+
+    // Groq is exposed through Cloudflare AI Gateway's OpenAI-compatible path.
+    const createGroqAdapter = (model: GroqTaskModel) =>
+      createOpenAiChatClient(`groq/${model}` as never, gatewayConfig) as unknown as AiTaskAdapter;
+
+    const createWorkersAiAdapter = (model: WorkersAiTaskModel) =>
+      createWorkersAiChatClient(model, {
+        accountId,
+        apiKey: cfApiKey,
+      }) as unknown as AiTaskAdapter;
 
     const adaptersByTask = getTaskAdapters({
-      createAdapter,
+      createGeminiAdapter,
+      createGroqAdapter,
+      createWorkersAiAdapter,
     });
 
     cachedAiClients = {
