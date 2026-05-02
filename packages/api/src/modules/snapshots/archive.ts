@@ -98,7 +98,9 @@ const gzipBuffer = async (input: Uint8Array, deps: SnapshotArchiveCodecDeps = de
       controller.close();
     },
   });
-  const compressed = source.pipeThrough(deps.createGzipEncoder());
+  const compressed = source.pipeThrough(deps.createGzipEncoder() as never) as ReadableStream<
+    Uint8Array<ArrayBufferLike>
+  >;
   const compressedBuffer = await new Response(compressed).arrayBuffer();
   return new Uint8Array(compressedBuffer);
 };

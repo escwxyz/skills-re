@@ -2,7 +2,6 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { AiTaskRuntime } from "../ai/runtime";
 import { generateSkillTagsBatch, normalizeSkillTags } from "./ai-tagging";
 
 describe("tagging ai helpers", () => {
@@ -13,7 +12,7 @@ describe("tagging ai helpers", () => {
     ]);
   });
 
-  test("parses a fenced tagging payload and preserves structured output", async () => {
+  test("parses a structured tagging payload and preserves normalized output", async () => {
     const result = await generateSkillTagsBatch(
       {
         existingTagCandidates: ["ai", "workflow"],
@@ -28,14 +27,44 @@ describe("tagging ai helpers", () => {
       },
       {
         // oxlint-disable-next-line require-await
-        generateText: (async () => ({
-          text: `\`\`\`json
-          {"items":[{"confidence":0.91,"dimensions":{"domain":[{"tag":"automation","source":"new","matchScore":0.92}],"skillType":["best-practices"],"techStack":["AI Tools",{"tag":"ai","source":"existing","matchScore":0.88}]},"key":"skill-1","reason":"clear match"}]}
-          \`\`\``,
-        })) as unknown as typeof generateSkillTagsBatch extends (...args: never[]) => unknown
-          ? never
-          : never,
-        getModel: (() => null) as unknown as AiTaskRuntime["getModel"],
+        chat: (async () => ({
+          items: [
+            {
+              confidence: 0.91,
+              dimensions: {
+                domain: [
+                  {
+                    matchScore: 0.92,
+                    source: "new",
+                    tag: "automation",
+                  },
+                ],
+                skillType: [
+                  {
+                    matchScore: 0.91,
+                    source: "new",
+                    tag: "best-practices",
+                  },
+                ],
+                techStack: [
+                  {
+                    matchScore: 0.91,
+                    source: "new",
+                    tag: "AI Tools",
+                  },
+                  {
+                    matchScore: 0.88,
+                    source: "existing",
+                    tag: "ai",
+                  },
+                ],
+              },
+              key: "skill-1",
+              reason: "clear match",
+            },
+          ],
+        })) as never,
+        getAdapters: (() => [{ id: "adapter-1" }]) as never,
       } as never,
     );
 

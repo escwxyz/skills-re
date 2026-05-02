@@ -319,12 +319,12 @@ const getSnapshotFileByPathWithFallback = async (
   });
 };
 
-const normalizeFiles = (files: { content: string; path: string }[]) => {
+const normalizeFiles = (directoryPath: string, files: { content: string; path: string }[]) => {
   const normalized: { content: string; path: string }[] = [];
   const seen = new Set<string>();
 
   for (const file of files) {
-    const path = normalizeSnapshotPath(file.path);
+    const path = toRootedSnapshotPath(directoryPath, file.path);
     if (seen.has(path)) {
       throw new Error(`Duplicate file path detected: ${path}`);
     }
@@ -554,7 +554,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       return null;
     }
 
-    const normalizedFiles = normalizeFiles(input.files);
+    const normalizedFiles = normalizeFiles(input.directoryPath, input.files);
     const snapshotId = await deps.createSnapshot({
       description: input.description,
       directoryPath: input.directoryPath,
@@ -627,7 +627,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
 
           return {
             content: new Uint8Array(await object.arrayBuffer()),
-            path: file.path,
+            path: toRootedSnapshotPath(snapshot.directoryPath, file.path),
           };
         }),
       );
@@ -922,6 +922,7 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       }
 
       const storageContext = await deps.getSnapshotStorageContext(asSnapshotId(input.snapshotId));
+      const normalizedFiles = normalizeFiles(snapshot.directoryPath, input.files);
 
       const manifest: {
         contentType: string;
@@ -931,8 +932,8 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         size: number;
       }[] = [];
 
-      for (const file of input.files) {
-        const normalizedPath = normalizeSnapshotPath(file.path);
+      for (const file of normalizedFiles) {
+        const normalizedPath = file.path;
         const fileHash = await hashText(file.content);
         const r2Key = buildSnapshotFileR2Key(storageContext, input.snapshotId, normalizedPath);
         const contentType = getSnapshotFileContentType(normalizedPath);

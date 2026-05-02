@@ -19,8 +19,6 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.64",
-    "@ai-sdk/groq": "^3.0.35",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -29,7 +27,7 @@
     "@skills-re/contract": "workspace:*",
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
-    "ai": "^6.0.168",
+    "@tanstack/ai": "^0.14.0",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "modern-tar": "^0.7.3",

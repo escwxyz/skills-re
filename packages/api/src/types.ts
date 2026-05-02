@@ -1,6 +1,6 @@
 import type { AiTaskRuntime } from "./modules/ai/runtime";
 
-export type { AiTaskRuntime, AiTaskType } from "./modules/ai/runtime";
+export type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "./modules/ai/runtime";
 
 export type AuthSession = {
   session: {
