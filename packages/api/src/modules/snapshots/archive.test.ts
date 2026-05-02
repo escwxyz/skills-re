@@ -40,6 +40,29 @@ describe("snapshots archive helpers", () => {
     ]);
   });
 
+  test("accepts relative file paths when building tar entries", () => {
+    expect(
+      buildSnapshotArchiveTarEntries({
+        directoryPath: "skills/acme/widget/",
+        files: [
+          {
+            content: new TextEncoder().encode("hello"),
+            path: "SKILL.md",
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        body: new TextEncoder().encode("hello"),
+        header: {
+          name: "SKILL.md",
+          size: 5,
+          type: "file",
+        },
+      },
+    ]);
+  });
+
   test("packs and gzips archive entries", async () => {
     const packCalls: unknown[] = [];
     const archive = await createSnapshotArchiveBuffer(
