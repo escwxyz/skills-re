@@ -3,6 +3,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 
 import { createAiTasksRuntime } from "../ai-tasks";
 import { runSkillsCategorizationWorkflow } from "./skills-categorization-runner";
+import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SkillsCategorizationWorkflowPayload } from "./skills-categorization-runner";
 
 export class SkillsCategorizationWorkflow extends WorkflowEntrypoint<
@@ -11,8 +12,14 @@ export class SkillsCategorizationWorkflow extends WorkflowEntrypoint<
 > {
   run(event: Readonly<WorkflowEvent<SkillsCategorizationWorkflowPayload>>, _step: WorkflowStep) {
     const aiTasks = createAiTasksRuntime(this.env);
-    return runSkillsCategorizationWorkflow(event, {
-      aiTasks,
+    return runWorkflowWithFailureLog({
+      entrypoint: "SkillsCategorizationWorkflow",
+      instanceId: event.instanceId,
+      run: () =>
+        runSkillsCategorizationWorkflow(event, {
+          aiTasks,
+        }),
+      workflowName: "skills-re-v1-skills-categorization",
     });
   }
 }

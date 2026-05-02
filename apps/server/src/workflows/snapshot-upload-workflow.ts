@@ -6,6 +6,7 @@ import { createSnapshotsService } from "@skills-re/api/modules/snapshots/service
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./snapshots-archive-upload";
 
 import { runSnapshotUploadWorkflow } from "./snapshot-upload-runner";
+import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SnapshotUploadWorkflowPayload } from "./snapshot-upload";
 
 export class SnapshotUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
@@ -34,8 +35,14 @@ export class SnapshotUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
       },
     });
 
-    return runSnapshotUploadWorkflow(event, step, {
-      runUploadSnapshotFiles: (input) => snapshotsService.runUploadSnapshotFilesPipeline(input),
+    return runWorkflowWithFailureLog({
+      entrypoint: "SnapshotUploadWorkflow",
+      instanceId: event.instanceId,
+      run: () =>
+        runSnapshotUploadWorkflow(event, step, {
+          runUploadSnapshotFiles: (input) => snapshotsService.runUploadSnapshotFilesPipeline(input),
+        }),
+      workflowName: "skills-re-v1-snapshot-upload",
     });
   }
 }

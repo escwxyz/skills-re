@@ -1,8 +1,9 @@
 import type { RepoStatsSyncWorkflowPayload } from "../workflows/repo-stats";
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
-import { createWorkerLogger } from "../worker-logger";
 import type { WorkerLogger } from "../worker-logger";
+import { createWorkflowQueueLogger } from "../logging";
+import { logWorkflowFailure } from "../workflows/workflow-failure-log";
 
 export interface EvaluationWorkflowPayload {
   archiveR2Key?: string | null;
@@ -150,6 +151,40 @@ const DUPLICATE_WORKFLOW_ERROR_PATTERN = /already exists|duplicate|conflict/i;
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object";
 
+const summarizeInvalidQueueBody = (value: unknown) => {
+  if (value === null) {
+    return {
+      bodyType: "null" as const,
+    };
+  }
+
+  const bodyType = typeof value;
+  if (bodyType !== "object") {
+    return {
+      bodyType,
+    };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      bodyLength: value.length,
+      bodyType: "array" as const,
+    };
+  }
+
+  try {
+    const objectValue = value as Record<string, unknown>;
+    return {
+      bodyKeys: Object.keys(objectValue).slice(0, 10),
+      bodyType: "object" as const,
+    };
+  } catch {
+    return {
+      bodyType: "object" as const,
+    };
+  }
+};
+
 const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage => {
   if (!isObjectRecord(value)) {
     return false;
@@ -172,6 +207,42 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
 
 const isWorkflowAlreadyCreatedError = (error: unknown) =>
   error instanceof Error && DUPLICATE_WORKFLOW_ERROR_PATTERN.test(error.message);
+
+const assertUnreachable = (value: never): never => {
+  throw new Error(`Unhandled workflow kind: ${String(value)}`);
+};
+
+const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
+  switch (kind) {
+    case "evaluation": {
+      return "skills-re-v1-evaluation";
+    }
+    case "repo-snapshot-sync": {
+      return "skills-re-v1-repo-snapshot-sync";
+    }
+    case "repo-stats-sync": {
+      return "skills-re-v1-repo-stats-sync";
+    }
+    case "snapshot-archive-upload": {
+      return "skills-re-v1-snapshots-archive-upload";
+    }
+    case "snapshot-upload": {
+      return "skills-re-v1-snapshot-upload";
+    }
+    case "skills-categorization": {
+      return "skills-re-v1-skills-categorization";
+    }
+    case "skills-tagging": {
+      return "skills-re-v1-skills-tagging";
+    }
+    case "skills-upload": {
+      return "skills-re-v1-skills-upload";
+    }
+    default: {
+      return assertUnreachable(kind);
+    }
+  }
+};
 
 const getWorkflowBinding = <TPayload>(env: WorkflowQueueEnv, key: keyof WorkflowQueueEnv) => {
   const binding = env[key];
@@ -272,12 +343,12 @@ export const processWorkflowQueueBatch = async (
   env: WorkflowQueueEnv,
   logger?: WorkerLogger,
 ) => {
-  const log = logger ?? createWorkerLogger({ component: "workflow.queue" });
+  const log = logger ?? createWorkflowQueueLogger();
 
   for (const message of batch.messages) {
     if (!isWorkflowQueueMessage(message.body)) {
       log.error("workflow.queue.invalid-message", {
-        body: JSON.stringify(message.body),
+        ...summarizeInvalidQueueBody(message.body),
       });
       message.ack();
       continue;
@@ -296,10 +367,16 @@ export const processWorkflowQueueBatch = async (
         continue;
       }
 
-      log.error("workflow.queue.start-failed", {
-        error: error instanceof Error ? error : new Error(String(error)),
-        kind: message.body.kind,
-        workflowId: message.body.workflowId,
+      logWorkflowFailure({
+        component: "workflow.queue",
+        entrypoint: "WorkflowQueue",
+        error,
+        fields: {
+          kind: message.body.kind,
+          workflowId: message.body.workflowId,
+        },
+        instanceId: message.body.workflowId,
+        workflowName: getWorkflowNameForQueueKind(message.body.kind),
       });
       message.retry();
     }
