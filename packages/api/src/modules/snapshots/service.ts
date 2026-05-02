@@ -287,36 +287,39 @@ const getSnapshotFileByPathWithFallback = async (
     snapshotId: SnapshotId;
   },
 ) => {
-  const direct = await deps.getSnapshotFileByPath({
-    path: input.path,
-    snapshotId: input.snapshotId,
-  });
-  if (direct) {
-    return direct;
-  }
-
+  const normalizedPath = normalizeSnapshotPath(input.path);
   const snapshot = await deps.getSnapshotById(input.snapshotId);
-  if (!snapshot) {
-    return null;
+  const candidatePaths = [normalizedPath];
+
+  if (snapshot?.directoryPath) {
+    const rootedPath = toRootedSnapshotPath(snapshot.directoryPath, normalizedPath);
+    if (!candidatePaths.includes(rootedPath)) {
+      candidatePaths.push(rootedPath);
+    }
+
+    const normalizedDirectoryPath = normalizeSkillDirectoryRoot(snapshot.directoryPath);
+    if (
+      normalizedDirectoryPath.length > 0 &&
+      normalizedPath.startsWith(`${normalizedDirectoryPath}/`)
+    ) {
+      const relativePath = normalizedPath.slice(normalizedDirectoryPath.length + 1);
+      if (relativePath.length > 0 && !candidatePaths.includes(relativePath)) {
+        candidatePaths.push(relativePath);
+      }
+    }
   }
 
-  const normalizedDirectoryPath = snapshot.directoryPath.replaceAll(/\/+$/g, "");
-  if (
-    normalizedDirectoryPath.length === 0 ||
-    !input.path.startsWith(`${normalizedDirectoryPath}/`)
-  ) {
-    return null;
+  for (const path of candidatePaths) {
+    const file = await deps.getSnapshotFileByPath({
+      path,
+      snapshotId: input.snapshotId,
+    });
+    if (file) {
+      return file;
+    }
   }
 
-  const relativePath = input.path.slice(normalizedDirectoryPath.length + 1);
-  if (relativePath.length === 0) {
-    return null;
-  }
-
-  return await deps.getSnapshotFileByPath({
-    path: relativePath,
-    snapshotId: input.snapshotId,
-  });
+  return null;
 };
 
 const normalizeFiles = (directoryPath: string, files: { content: string; path: string }[]) => {
@@ -525,11 +528,10 @@ const buildSnapshotArchiveR2Key = async (
 ) => {
   const storageContext = await deps.getSnapshotStorageContext(snapshotId);
   if (!(storageContext?.repoOwner && storageContext.repoName)) {
-    return `archives/${snapshotId}/skills.tar.gz`;
+    return `${snapshotId}/skills.tar.gz`;
   }
 
   return [
-    "archives",
     storageContext.repoOwner,
     storageContext.repoName,
     storageContext.directoryPath.replaceAll(/\/+$/g, ""),
@@ -990,6 +992,17 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       };
     },
   };
+};
+
+type HistoricalSnapshotRunnerDeps = Pick<
+  SnapshotsServiceDeps,
+  "getSnapshotBySkillAndCommit" | "uploadSnapshotFiles"
+> &
+  Partial<Pick<SnapshotsServiceDeps, "createSnapshot" | "deprecateSnapshotsBeyondLimit">>;
+
+export const createHistoricalSnapshotRunner = (overrides: HistoricalSnapshotRunnerDeps) => {
+  const service = createSnapshotsService(overrides);
+  return service.createHistoricalSnapshot;
 };
 
 const createSnapshotServiceWithStorage = (snapshotStorage?: SnapshotStorageDeps) =>

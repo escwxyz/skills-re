@@ -15,7 +15,7 @@ describe("createSkillArchiveDownloadResponse", () => {
       },
       {
         getBySkillAndVersion: async () => ({
-          archiveR2Key: "archives/acme/widget/skills.tar.gz",
+          archiveR2Key: "acme/widget/skills.tar.gz",
           description: "Widget skill snapshot",
           directoryPath: "skills/acme/widget/",
           entryPath: "skills/acme/widget/skill.md",
@@ -32,7 +32,7 @@ describe("createSkillArchiveDownloadResponse", () => {
           version: "1.0.0",
         }),
         getSnapshotArchiveDownloadObject: async () => ({
-          archiveKey: "archives/acme/widget/skills.tar.gz",
+          archiveKey: "acme/widget/skills.tar.gz",
           object: {
             body: new TextEncoder().encode("archive-bytes"),
             httpEtag: "etag-1",
@@ -42,7 +42,7 @@ describe("createSkillArchiveDownloadResponse", () => {
             size: 13,
           },
           snapshot: {
-            archiveR2Key: "archives/acme/widget/skills.tar.gz",
+            archiveR2Key: "acme/widget/skills.tar.gz",
             description: "Widget skill snapshot",
             directoryPath: "skills/acme/widget/",
             entryPath: "skills/acme/widget/skill.md",

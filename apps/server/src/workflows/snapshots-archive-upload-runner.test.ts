@@ -13,7 +13,7 @@ describe("runSnapshotArchiveUploadWorkflow", () => {
         calls.push(`create:${input.snapshotId}`);
         return Promise.resolve({
           archiveBytes: 12,
-          archiveKey: "archives/acme/widget/skills.tar.gz",
+          archiveKey: "acme/widget/skills.tar.gz",
           filesCount: 1,
           snapshotId: input.snapshotId,
           stagingKey: "snapshot-archive/staging/2024-01-01/abc.tar.gz",
@@ -56,7 +56,7 @@ describe("runSnapshotArchiveUploadWorkflow", () => {
 
     expect(result).toEqual({
       archiveBytes: 12,
-      archiveKey: "archives/acme/widget/skills.tar.gz",
+      archiveKey: "acme/widget/skills.tar.gz",
       filesCount: 1,
       snapshotId: "snapshot-1",
     });
@@ -90,7 +90,7 @@ describe("runSnapshotArchiveUploadWorkflow", () => {
               calls.push(`create:${input.snapshotId}`);
               return Promise.resolve({
                 archiveBytes: 12,
-                archiveKey: "archives/acme/widget/skills.tar.gz",
+                archiveKey: "acme/widget/skills.tar.gz",
                 filesCount: 1,
                 snapshotId: input.snapshotId,
                 stagingKey: "snapshot-archive/staging/2024-01-01/abc.tar.gz",
