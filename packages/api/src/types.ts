@@ -207,6 +207,29 @@ export interface SnapshotHistoryRuntime {
   }): Promise<null>;
 }
 
+export interface SnapshotStorageRuntime {
+  buildSnapshotFilePublicUrl(key: string): string;
+  getSnapshotArchiveObject(key: string): Promise<{
+    body?: unknown;
+    httpEtag?: string;
+    httpMetadata?: {
+      contentType?: string;
+    };
+    size?: number;
+  } | null>;
+  getSnapshotFileObject(
+    key: string,
+    range?: {
+      length: number;
+      offset: number;
+    },
+  ): Promise<{
+    arrayBuffer(): Promise<ArrayBuffer>;
+    body?: unknown;
+    size?: number;
+  } | null>;
+}
+
 export interface GithubSnapshotTreeEntry {
   path: string;
   sha: string;
@@ -243,6 +266,7 @@ export interface Context {
   githubFetch?: GithubFetchRuntime;
   githubSubmit?: GithubSubmitRuntime;
   snapshotHistory?: SnapshotHistoryRuntime;
+  snapshotStorage?: SnapshotStorageRuntime;
   workerLogger?: WorkerLogger;
   workflowSchedulers?: {
     snapshotArchiveUpload?: SnapshotArchiveUploadScheduler;

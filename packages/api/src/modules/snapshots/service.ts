@@ -1,5 +1,9 @@
 import { decodeCursor, encodeCursor } from "../shared/pagination";
-import type { SnapshotArchiveUploadScheduler, SnapshotUploadScheduler } from "../../types";
+import type {
+  SnapshotArchiveUploadScheduler,
+  SnapshotStorageRuntime,
+  SnapshotUploadScheduler,
+} from "../../types";
 import {
   buildSnapshotArchiveStagingKey,
   buildSnapshotArchiveTarEntries,
@@ -235,6 +239,11 @@ const defaultDeps: SnapshotsServiceDeps = {
   uploadSnapshotFiles: () =>
     Promise.reject(new Error("Snapshot upload workflow is not configured.")),
 };
+
+type SnapshotStorageDeps = Pick<
+  SnapshotStorageRuntime,
+  "buildSnapshotFilePublicUrl" | "getSnapshotArchiveObject" | "getSnapshotFileObject"
+>;
 
 const normalizeSnapshotPath = (input: string) => {
   const replaced = input.replaceAll("\\", "/").trim();
@@ -969,6 +978,15 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
   };
 };
 
+const createSnapshotServiceWithStorage = (snapshotStorage?: SnapshotStorageDeps) =>
+  snapshotStorage
+    ? createSnapshotsService({
+        buildSnapshotFilePublicUrl: snapshotStorage.buildSnapshotFilePublicUrl,
+        getSnapshotArchiveObject: snapshotStorage.getSnapshotArchiveObject,
+        readSnapshotFileObject: snapshotStorage.getSnapshotFileObject,
+      })
+    : snapshotsService;
+
 export const snapshotsService = createSnapshotsService();
 
 export const getBySkillAndVersion = (input: { skillId: string; version: string }) =>
@@ -980,11 +998,15 @@ export const createSnapshotArchiveStaging = (input: { snapshotId: string }) =>
 export const getSnapshotDownloadManifest = (input: { snapshotId: string }) =>
   snapshotsService.getSnapshotDownloadManifest(input);
 
-export const getSnapshotArchiveDownloadObject = (input: { snapshotId: string }) =>
-  snapshotsService.getSnapshotArchiveDownloadObject(input);
+export const getSnapshotArchiveDownloadObject = (
+  input: { snapshotId: string },
+  snapshotStorage?: SnapshotStorageDeps,
+) => createSnapshotServiceWithStorage(snapshotStorage).getSnapshotArchiveDownloadObject(input);
 
-export const getSnapshotFileSignedUrl = (input: { path: string; snapshotId: string }) =>
-  snapshotsService.getSnapshotFileSignedUrl(input);
+export const getSnapshotFileSignedUrl = (
+  input: { path: string; snapshotId: string },
+  snapshotStorage?: SnapshotStorageDeps,
+) => createSnapshotServiceWithStorage(snapshotStorage).getSnapshotFileSignedUrl(input);
 
 export const getSnapshotTreeEntries = (input: { snapshotId: string }) =>
   snapshotsService.getSnapshotTreeEntries(input);
@@ -992,12 +1014,15 @@ export const getSnapshotTreeEntries = (input: { snapshotId: string }) =>
 export const listBySkill = (input: { cursor?: string; limit?: number; skillId: string }) =>
   snapshotsService.listBySkill(input);
 
-export const readSnapshotFileContent = (input: {
-  maxBytes?: number;
-  offset?: number;
-  path: string;
-  snapshotId: string;
-}) => snapshotsService.readSnapshotFileContent(input);
+export const readSnapshotFileContent = (
+  input: {
+    maxBytes?: number;
+    offset?: number;
+    path: string;
+    snapshotId: string;
+  },
+  snapshotStorage?: SnapshotStorageDeps,
+) => createSnapshotServiceWithStorage(snapshotStorage).readSnapshotFileContent(input);
 
 export const createHistoricalSnapshots = (
   input: {

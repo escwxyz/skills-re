@@ -5,6 +5,7 @@ import { createAiSearchRuntime } from "./ai-search";
 import { createGithubFetchRuntime } from "./github-fetch";
 import { createGithubSubmitRuntime } from "./github-submit";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
+import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { createSnapshotsHistoryRuntime } from "./snapshots-history";
 import { getRepoStatsSyncWorkflowScheduler } from "./workflows/repo-stats";
 import { getSnapshotUploadWorkflowScheduler } from "./workflows/snapshot-upload";
@@ -31,6 +32,7 @@ export interface CreateServerRuntimeDeps {
   githubFetch?: ApiContext["githubFetch"];
   githubSubmit?: ApiContext["githubSubmit"];
   snapshotHistory?: ApiContext["snapshotHistory"];
+  snapshotStorage?: ApiContext["snapshotStorage"];
   workflowSchedulers?: ApiContext["workflowSchedulers"];
 }
 
@@ -54,6 +56,7 @@ export function createServerContextFromBase(
     githubFetch: runtimeDeps.githubFetch,
     githubSubmit: runtimeDeps.githubSubmit,
     snapshotHistory: runtimeDeps.snapshotHistory,
+    snapshotStorage: runtimeDeps.snapshotStorage,
     workerLogger,
     workflowSchedulers: runtimeDeps.workflowSchedulers,
   };
@@ -73,6 +76,7 @@ async function createServerRuntime(
     logger: options.logger,
   });
   const githubSubmit = createGithubSubmitRuntime(env, { logger: options.logger });
+  const snapshotStorage = createSnapshotArchiveStorageRuntime(env);
   const [{ createHistoricalSnapshot }, { listSkillsHistoryInfoByIds }] = await Promise.all([
     import("@skills-re/api/modules/snapshots/service"),
     import("@skills-re/api/modules/skills/repo"),
@@ -89,6 +93,7 @@ async function createServerRuntime(
       githubHistory,
       listSkillsHistoryInfoByIds,
     }),
+    snapshotStorage,
     workflowSchedulers: {
       repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,

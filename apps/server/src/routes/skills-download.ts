@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SnapshotStorageRuntime } from "@skills-re/api/types";
 
 export const snapshotArchiveDownloadInputSchema = z.object({
   format: z.literal("tar.gz").optional(),
@@ -24,7 +25,10 @@ export interface SkillArchiveDownloadDeps {
     syncTime: number;
     version: string;
   } | null>;
-  getSnapshotArchiveDownloadObject: (input: { snapshotId: string }) => Promise<{
+  getSnapshotArchiveDownloadObject: (
+    input: { snapshotId: string },
+    snapshotStorage?: SnapshotStorageRuntime,
+  ) => Promise<{
     archiveKey: string;
     object: {
       body?: unknown;
@@ -52,6 +56,7 @@ export interface SkillArchiveDownloadDeps {
       version: string;
     };
   } | null>;
+  snapshotStorage?: SnapshotStorageRuntime;
   recordSuccessfulSkillDownload: (input: { skillId: string; version: string }) => Promise<void>;
 }
 
@@ -60,9 +65,9 @@ const defaultDeps: SkillArchiveDownloadDeps = {
     const { getBySkillAndVersion } = await import("@skills-re/api/modules");
     return await getBySkillAndVersion(input);
   },
-  getSnapshotArchiveDownloadObject: async (input) => {
+  getSnapshotArchiveDownloadObject: async (input, snapshotStorage) => {
     const { getSnapshotArchiveDownloadObject } = await import("@skills-re/api/modules");
-    return await getSnapshotArchiveDownloadObject(input);
+    return await getSnapshotArchiveDownloadObject(input, snapshotStorage);
   },
   // oxlint-disable-next-line no-empty-function
   recordSuccessfulSkillDownload: async () => {},
@@ -96,9 +101,12 @@ export const createSkillArchiveDownloadResponse = async (
     return new Response("Snapshot not found.", { status: 404 });
   }
 
-  const archive = await activeDeps.getSnapshotArchiveDownloadObject({
-    snapshotId: snapshot.id,
-  });
+  const archive = await activeDeps.getSnapshotArchiveDownloadObject(
+    {
+      snapshotId: snapshot.id,
+    },
+    activeDeps.snapshotStorage,
+  );
   if (!archive) {
     return new Response("Snapshot archive not found.", { status: 404 });
   }

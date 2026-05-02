@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "generate:paraglide": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
     "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && astro build",
     "preview": "astro preview",
     "astro": "astro",

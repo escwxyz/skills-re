@@ -72,6 +72,10 @@ interface TagsServiceDeps {
   }) => Promise<string[]>;
 }
 
+export type RunSkillsTaggingPipelineOverrides = Partial<
+  Pick<TagsServiceDeps, "readSnapshotFileContent">
+>;
+
 const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
   const repo = await import("./repo");
   const snapshots = await import("../snapshots/service");
@@ -425,6 +429,7 @@ export async function syncSkillTagsFromAi(input: {
 export async function runSkillsTaggingPipeline(
   input: { skillIds: string[] },
   aiTasks?: AiTaskRuntime,
+  overrides: RunSkillsTaggingPipelineOverrides = {},
 ) {
-  return await createTagsService().runSkillsTaggingPipeline(input, aiTasks);
+  return await createTagsService(overrides).runSkillsTaggingPipeline(input, aiTasks);
 }

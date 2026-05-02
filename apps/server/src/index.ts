@@ -7,6 +7,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createServerContext } from "./context";
 import { createDownloadMetricsRecorder } from "./download-metrics";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
+import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
 import { env } from "@skills-re/env/server";
@@ -110,6 +111,7 @@ app.get("/api/skills/download", async (c) => {
       version: url.searchParams.get("version") ?? "",
     },
     {
+      snapshotStorage: createSnapshotArchiveStorageRuntime(c.env),
       recordSuccessfulSkillDownload: createDownloadMetricsRecorder(
         c.env as {
           DOWNLOAD_EVENTS?: { writeDataPoint(dataPoint: { blobs: [string, string] }): void };
