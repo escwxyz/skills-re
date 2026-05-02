@@ -343,7 +343,7 @@ export const appRouter = {
       ({ input }) => getSnapshotDownloadManifest(input),
     ),
     getSnapshotFileSignedUrl: publicProcedure.snapshots.getSnapshotFileSignedUrl.handler(
-      ({ input }) => getSnapshotFileSignedUrl(input),
+      ({ input, context }) => getSnapshotFileSignedUrl(input, context.snapshotStorage),
     ),
     getSnapshotTreeEntries: publicProcedure.snapshots.getSnapshotTreeEntries.handler(({ input }) =>
       getSnapshotTreeEntries(input),
@@ -362,7 +362,7 @@ export const appRouter = {
       },
     ),
     readSnapshotFileContent: publicProcedure.snapshots.readSnapshotFileContent.handler(
-      ({ input }) => readSnapshotFileContent(input),
+      ({ input, context }) => readSnapshotFileContent(input, context.snapshotStorage),
     ),
     uploadSnapshotFiles: adminProcedure.snapshots.uploadSnapshotFiles.handler(
       ({ input, context }) => {
