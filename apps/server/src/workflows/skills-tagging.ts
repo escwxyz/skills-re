@@ -7,6 +7,7 @@ import {
   createCategorizationWorkflowScheduler,
   runSkillsTaggingWorkflow,
 } from "./skills-tagging-runner";
+import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SkillsTaggingWorkflowPayload } from "./skills-tagging-runner";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
 import { createSnapshotsService } from "@skills-re/api/modules/snapshots/service";
@@ -30,10 +31,16 @@ export class SkillsTaggingWorkflow extends WorkflowEntrypoint<Env, SkillsTagging
       env.SKILLS_CATEGORIZATION_WORKFLOW,
     );
 
-    return runSkillsTaggingWorkflow(event, {
-      aiTasks,
-      readSnapshotFileContent: snapshotsService.readSnapshotFileContent,
-      scheduleCategorization,
+    return runWorkflowWithFailureLog({
+      entrypoint: "SkillsTaggingWorkflow",
+      instanceId: event.instanceId,
+      run: () =>
+        runSkillsTaggingWorkflow(event, {
+          aiTasks,
+          readSnapshotFileContent: snapshotsService.readSnapshotFileContent,
+          scheduleCategorization,
+        }),
+      workflowName: "skills-re-v1-skills-tagging",
     });
   }
 }

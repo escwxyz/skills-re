@@ -1,6 +1,7 @@
 import type { RepoStatsSyncScheduler } from "@skills-re/api/types";
 import { reposService } from "@skills-re/api/modules/repos/service";
 import { nanoid } from "nanoid";
+import { logHandledError } from "../logging";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
 import { createWorkerLogger } from "../worker-logger";
@@ -16,39 +17,43 @@ type RepoStatsSyncWorkflowEnv = Env & {
 };
 
 const createLocalScheduler = (logger?: WorkerLogger): RepoStatsSyncScheduler => ({
-  enqueue(payload) {
+  async enqueue(payload) {
     const workId = `local-${nanoid()}`;
     const log = (logger ?? createWorkerLogger({ component: "repo-stats.local-scheduler" })).child({
       workId,
     });
 
-    void (async () => {
-      let { cursor } = payload;
-      let pages = 0;
+    let { cursor } = payload;
+    let pages = 0;
 
-      while (pages < 25) {
-        try {
-          const result = await reposService.syncStats({
-            cursor,
-            limit: payload.limit,
-          });
+    while (pages < 25) {
+      try {
+        const result = await reposService.syncStats({
+          cursor,
+          limit: payload.limit,
+        });
 
-          pages += 1;
-          if (!result || result.isDone || !result.continueCursor) {
-            return;
-          }
-
-          cursor = result.continueCursor;
-        } catch (error) {
-          log.error("repo-stats.local-scheduler.failed", {
-            error: error instanceof Error ? error : new Error(String(error)),
-          });
-          return;
+        pages += 1;
+        if (!result || result.isDone || !result.continueCursor) {
+          return { workId };
         }
-      }
-    })();
 
-    return Promise.resolve({ workId });
+        cursor = result.continueCursor;
+      } catch (error) {
+        logHandledError({
+          component: "repo-stats.local-scheduler",
+          error,
+          event: "repo-stats.local-scheduler.failed",
+          fields: {
+            workId,
+          },
+          logger: log,
+        });
+        return { workId };
+      }
+    }
+
+    return { workId };
   },
 });
 

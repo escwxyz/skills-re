@@ -6,6 +6,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createServerContext } from "./context";
 import { createDownloadMetricsRecorder } from "./download-metrics";
+import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
@@ -15,7 +16,6 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
-import { createWorkerLogger } from "./worker-logger";
 import type { WorkerLogger } from "./worker-logger";
 
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
@@ -29,9 +29,6 @@ export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-w
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
-
-const normalizeUnknownError = (error: unknown) =>
-  error instanceof Error ? error : new Error(String(error));
 
 const getCompletedStatus = (error?: unknown, responseStatus = 500) => {
   if (error && typeof error === "object") {
@@ -60,8 +57,7 @@ const app = new Hono<{
 app.use("/*", async (c, next) => {
   const startedAt = Date.now();
   const requestUrl = new URL(c.req.url);
-  const logger = createWorkerLogger({
-    component: "http",
+  const logger = createHttpRequestLogger({
     method: c.req.method,
     path: requestUrl.pathname,
     requestId: c.req.header("cf-ray") ?? crypto.randomUUID(),
@@ -78,6 +74,16 @@ app.use("/*", async (c, next) => {
     completedStatus = c.res.status;
   } catch (error) {
     completedStatus = getCompletedStatus(error, c.res.status);
+    logHandledError({
+      component: "http",
+      error,
+      event: "http.request.failed",
+      fields: {
+        durationMs: Date.now() - startedAt,
+        status: completedStatus,
+      },
+      logger,
+    });
     throw error;
   } finally {
     logger.info("http.request.completed", {
@@ -116,6 +122,7 @@ app.get("/api/skills/download", async (c) => {
         c.env as {
           DOWNLOAD_EVENTS?: { writeDataPoint(dataPoint: { blobs: [string, string] }): void };
         },
+        c.get("workerLogger"),
       ),
     },
   );
@@ -136,8 +143,11 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
   ],
   interceptors: [
     onError((error, options) => {
-      options.context.workerLogger?.error("orpc.error", {
-        error: normalizeUnknownError(error),
+      logHandledError({
+        component: "http",
+        error,
+        event: "orpc.error",
+        logger: options.context.workerLogger,
       });
     }),
   ],
@@ -146,8 +156,11 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 export const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
     onError((error, options) => {
-      options.context.workerLogger?.error("orpc.error", {
-        error: normalizeUnknownError(error),
+      logHandledError({
+        component: "http",
+        error,
+        event: "orpc.error",
+        logger: options.context.workerLogger,
       });
     }),
   ],
@@ -190,7 +203,7 @@ const server = {
   fetch: (request: Request, workerEnv: Env, executionContext: ExecutionContext) =>
     app.fetch(request, workerEnv, executionContext),
   async queue(batch: MessageBatch<unknown>, workerEnv: Env) {
-    const logger = createWorkerLogger({ component: "workflow.queue" });
+    const logger = createWorkflowQueueLogger();
     await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv, logger);
   },
 };
