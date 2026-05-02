@@ -123,17 +123,19 @@ export const generateSkillCategoriesBatch = async (
       });
 
       const returnedKeys = new Set(output.items.map((item) => item.key));
-      if (output.items.length !== input.items.length || returnedKeys.size !== expectedKeys.size) {
-        lastError = new Error("Categorization output must contain exactly one result per input item.");
+      const missingKey = [...expectedKeys].find((key) => !returnedKeys.has(key));
+      if (
+        output.items.length !== input.items.length ||
+        returnedKeys.size !== expectedKeys.size ||
+        missingKey !== undefined
+      ) {
+        lastError = new Error(
+          missingKey === undefined
+            ? "Categorization output must contain exactly one result per input item."
+            : `Categorization output is missing key: ${missingKey}`,
+        );
         continue;
       }
-      for (const key of expectedKeys) {
-        if (!returnedKeys.has(key)) {
-          lastError = new Error(`Categorization output is missing key: ${key}`);
-          break;
-        }
-      }
-      if (lastError) continue;
 
       return {
         items: output.items.map(

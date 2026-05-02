@@ -329,7 +329,11 @@ const normalizeFiles = (directoryPath: string, files: { content: string; path: s
     const isRooted = trimmed.startsWith("/");
     const normalizedFilePath = normalizeSnapshotPath(file.path);
 
-    if (isRooted && normalizedFilePath !== normalizedRoot && !normalizedFilePath.startsWith(`${normalizedRoot}/`)) {
+    if (
+      isRooted &&
+      normalizedFilePath !== normalizedRoot &&
+      !normalizedFilePath.startsWith(`${normalizedRoot}/`)
+    ) {
       throw new Error(`File path is outside the snapshot root: ${file.path}`);
     }
 
