@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 
 import { feedbackTable } from "@skills-re/db/schema/feedback";
 import { asFeedbackId, asUserId } from "@skills-re/db/utils";
@@ -19,6 +19,21 @@ export interface FeedbackRow {
   type: FeedbackType;
   updatedAt: number;
   userId: string | null;
+}
+
+export async function countFeedbackByUser(
+  input: { userId: UserId; status?: FeedbackStatus },
+  database = db,
+) {
+  const [row] = await database
+    .select({ count: count() })
+    .from(feedbackTable)
+    .where(
+      input.status
+        ? and(eq(feedbackTable.userId, input.userId), eq(feedbackTable.status, input.status))
+        : eq(feedbackTable.userId, input.userId),
+    );
+  return row?.count ?? 0;
 }
 
 export async function createFeedback(

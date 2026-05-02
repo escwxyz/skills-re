@@ -38,6 +38,21 @@ const feedbackCreateResultSchema = z.object({
 });
 
 export const feedbackContract = {
+  countMine: baseContract
+    .route({
+      description: "Returns the authenticated user's total and pending feedback counts.",
+      method: "GET",
+      path: "/feedback/mine/count",
+      tags: ["Feedback"],
+      successDescription: "Feedback counts",
+      summary: "Count my feedback",
+    })
+    .output(
+      z.object({
+        pending: z.number().int().nonnegative(),
+        total: z.number().int().nonnegative(),
+      }),
+    ),
   create: baseContract
     .route({
       description: "Creates a feedback entry for the authenticated user.",

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 
 import { asReviewId } from "@skills-re/db/utils";
 import type { ReviewId, SkillId, UserId } from "@skills-re/db/utils";
@@ -90,6 +90,14 @@ export async function listReviewsByUserId(
     .where(eq(reviewsTable.userId, input.userId))
     .orderBy(desc(reviewsTable.createdAt))
     .limit(limit);
+}
+
+export async function countReviewsByUserId(input: { userId: UserId }, database = db) {
+  const [row] = await database
+    .select({ count: count() })
+    .from(reviewsTable)
+    .where(eq(reviewsTable.userId, input.userId));
+  return row?.count ?? 0;
 }
 
 export async function createReview(

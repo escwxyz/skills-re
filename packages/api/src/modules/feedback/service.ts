@@ -2,6 +2,7 @@ import { asFeedbackId, asUserId } from "@skills-re/db/utils";
 import { createDepGetter } from "../shared/deps";
 
 import type {
+  countFeedbackByUser,
   createFeedback,
   FeedbackRow,
   FeedbackStatus,
@@ -26,6 +27,7 @@ const toOutputItem = (row: FeedbackRow) => ({
 });
 
 interface FeedbackServiceDeps {
+  countFeedbackByUser: typeof countFeedbackByUser;
   createFeedback: typeof createFeedback;
   getFeedbackById: typeof getFeedbackById;
   getFeedbackByIdAndUser: typeof getFeedbackByIdAndUser;
@@ -38,6 +40,7 @@ interface FeedbackServiceDeps {
 const createDefaultFeedbackDeps = async (): Promise<FeedbackServiceDeps> => {
   const repo = await import("./repo");
   return {
+    countFeedbackByUser: repo.countFeedbackByUser,
     createFeedback: repo.createFeedback,
     getFeedbackById: repo.getFeedbackById,
     getFeedbackByIdAndUser: repo.getFeedbackByIdAndUser,
@@ -96,6 +99,16 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
       return rows.map((row) => toOutputItem(row));
     },
 
+    async countMine(input: { userId: string }) {
+      const countFn = await getDep("countFeedbackByUser");
+      const userId = asUserId(input.userId);
+      const [total, pending] = await Promise.all([
+        countFn({ userId }),
+        countFn({ userId, status: "pending" }),
+      ]);
+      return { pending, total };
+    },
+
     async listMine(input: { userId: string; limit?: number }) {
       const listFeedbackByUserFn = await getDep("listFeedbackByUser");
       const rows = await listFeedbackByUserFn({
@@ -150,6 +163,10 @@ export async function listFeedbackPublic(input?: { status?: FeedbackStatus; limi
 
 export async function listMineFeedback(input: { userId: string; limit?: number }) {
   return await feedbackService.listMine(input);
+}
+
+export async function countMineFeedback(input: { userId: string }) {
+  return await feedbackService.countMine(input);
 }
 
 export async function updateFeedbackResponsePublic(input: {
