@@ -1,6 +1,7 @@
 export {
   createSnapshotsService,
   createHistoricalSnapshot,
+  createHistoricalSnapshotRunner,
   createHistoricalSnapshots,
   getSnapshotArchiveDownloadObject,
   getBySkillAndVersion,

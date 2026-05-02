@@ -62,6 +62,7 @@ export {
   createSnapshotArchiveStaging,
   createHistoricalSnapshots,
   createHistoricalSnapshot,
+  createHistoricalSnapshotRunner,
   getSnapshotArchiveDownloadObject,
   getSnapshotDownloadManifest,
   getSnapshotFileSignedUrl,

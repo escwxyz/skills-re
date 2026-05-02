@@ -43,7 +43,7 @@ describe("snapshot shared schemas", () => {
   test("accepts a snapshot metadata payload from persistence", () => {
     expect(
       snapshotItemSchema.parse({
-        archiveR2Key: "archives/snapshot.tar.gz",
+        archiveR2Key: "snapshot.tar.gz",
         description: "Snapshot description",
         directoryPath: "skills/example/",
         entryPath: "skill.md",
