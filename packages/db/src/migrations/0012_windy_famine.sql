@@ -1,0 +1,1 @@
+CREATE INDEX `skills_ai_search_item_id_idx` ON `skills` (`ai_search_item_id`);

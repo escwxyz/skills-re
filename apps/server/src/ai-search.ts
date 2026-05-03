@@ -1,4 +1,8 @@
-import type { AiSearchRuntime, AiSearchRuntimeResult } from "@skills-re/api/types";
+import type {
+  AiSearchItemsRuntime,
+  AiSearchRuntime,
+  AiSearchRuntimeResult,
+} from "@skills-re/api/types";
 
 interface AiSearchQueryRewriteOptions {
   enabled?: boolean;
@@ -22,7 +26,15 @@ interface AiSearchRetrievalOptions {
   }[];
 }
 
-interface AiSearchInstance {
+interface AiSearchBinding {
+  items: {
+    delete(itemId: string): Promise<void>;
+    upload(
+      filename: string,
+      content: string,
+      options?: { metadata?: Record<string, string> },
+    ): Promise<{ id: string }>;
+  };
   search(input: {
     ai_search_options?: {
       query_rewrite?: AiSearchQueryRewriteOptions;
@@ -32,26 +44,15 @@ interface AiSearchInstance {
   }): Promise<unknown>;
 }
 
-interface AiSearchNamespaceBinding {
-  autorag(instanceName: string): AiSearchInstance;
-  get?(instanceName: string): AiSearchInstance;
-  search?: AiSearchInstance["search"];
+interface AiSearchRuntimeEnv {
+  AI_SEARCH?: AiSearchBinding;
+  AI_SEARCH_MODEL?: string;
 }
 
 export interface AiSearchRuntimeInput {
   query: string;
   rewriteQuery?: boolean;
 }
-
-const DEFAULT_AI_SEARCH_INSTANCE = "curly-voice-daf4";
-interface AiSearchRuntimeEnv {
-  AI?: AiSearchNamespaceBinding;
-  AI_SEARCH_INSTANCE?: string;
-  AI_SEARCH_MODEL?: string;
-  RAG_ID?: string;
-}
-
-const getAiSearchBinding = (env: AiSearchRuntimeEnv & Env) => env.AI ?? null;
 
 const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
   query_rewrite: {
@@ -68,34 +69,36 @@ const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
 export function createAiSearchRuntime(env: AiSearchRuntimeEnv & Env): AiSearchRuntime {
   return {
     async search(input: AiSearchRuntimeInput) {
-      const instanceName =
-        env.RAG_ID?.trim() || env.AI_SEARCH_INSTANCE?.trim() || DEFAULT_AI_SEARCH_INSTANCE;
+      const binding = env.AI_SEARCH ?? null;
+      if (!binding) {
+        throw new Error("AI_SEARCH binding is not configured.");
+      }
+
       const rewriteQuery = input.rewriteQuery ?? true;
       const model = env.AI_SEARCH_MODEL?.trim() || undefined;
-      const binding = getAiSearchBinding(env);
 
-      if (binding?.autorag) {
-        return (await binding.autorag(instanceName).search({
-          ai_search_options: buildSearchOptions(rewriteQuery, model),
-          query: input.query,
-        })) as AiSearchRuntimeResult;
-      }
+      return (await binding.search({
+        ai_search_options: buildSearchOptions(rewriteQuery, model),
+        query: input.query,
+      })) as AiSearchRuntimeResult;
+    },
+  };
+}
 
-      if (binding?.get) {
-        return (await binding.get(instanceName).search({
-          ai_search_options: buildSearchOptions(rewriteQuery, model),
-          query: input.query,
-        })) as AiSearchRuntimeResult;
-      }
+export function createAiSearchItemsRuntime(
+  env: AiSearchRuntimeEnv & Env,
+): AiSearchItemsRuntime | null {
+  const binding = env.AI_SEARCH ?? null;
+  if (!binding) {
+    return null;
+  }
 
-      if (binding?.search) {
-        return (await binding.search({
-          ai_search_options: buildSearchOptions(rewriteQuery, model),
-          query: input.query,
-        })) as AiSearchRuntimeResult;
-      }
-
-      throw new Error(`AI Search binding is not configured for instance "${instanceName}".`);
+  return {
+    async deleteItem(itemId) {
+      await binding.items.delete(itemId);
+    },
+    async uploadItem(key, content, metadata) {
+      return await binding.items.upload(key, content, { metadata });
     },
   };
 }
