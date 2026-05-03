@@ -40,6 +40,11 @@ export const workflowStepRetryPolicy = {
     limit: 3,
     timeout: "2 minutes",
   }),
+  aiSearchBackfillBatch: buildStepConfig({
+    delay: "10 seconds",
+    limit: 3,
+    timeout: "5 minutes",
+  }),
   staticAuditBackfillDispatch: buildStepConfig({
     delay: "10 seconds",
     limit: 3,

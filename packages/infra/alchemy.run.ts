@@ -1,7 +1,6 @@
 // oxlint-disable typescript/no-non-null-assertion
 import alchemy from "alchemy";
 import {
-  Ai,
   AiSearch,
   AnalyticsEngineDataset,
   Astro,
@@ -34,7 +33,7 @@ const db = await D1Database("database", {
   adopt: true,
 });
 
-const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
+const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
   name: "skills-re-snapshots",
   adopt: true,
   dev: {
@@ -42,17 +41,14 @@ const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
   },
 });
 
-const aiSearch = await AiSearch("AI_SEARCH", {
+// Built-in Storage instance — items are uploaded directly via the Items API,
+// indexed immediately, and keyed by skillId so updates are idempotent upserts.
+const aiSearch = await AiSearch("ai-search", {
+  name: "ai-search",
   adopt: true,
-  source: {
-    bucket: snapshotFilesBucket,
-    includePaths: ["**/SKILL.md"],
-    excludePaths: ["skills-upload/staging/**", "snapshot-archive/staging/**", "**/*.tar.gz"],
-    type: "r2",
-  },
 });
 
-const archiveFilesBucket = await R2Bucket("ARCHIVE_FILES", {
+const archiveFilesBucket = await R2Bucket("skills-re-archives", {
   name: "skills-re-archives",
   adopt: true,
   dev: {
@@ -72,12 +68,6 @@ const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limit
   className: "SearchRateLimiter",
 });
 
-// Legacy queues – owned by the skills.re worker; kept here so Alchemy does not delete them.
-// DO NOT add these as eventSources for the server worker below.
-// const _legacyEvaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE", {
-//   name: "skills-re-evaluation-workflow",
-//   adopt: true,
-// });
 await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
   name: "skills-re-repo-sync-workflow",
   adopt: true,
@@ -118,11 +108,6 @@ await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
   name: "skills-re-snapshot-archive-upload-workflow",
   adopt: true,
 });
-
-// New queues for this worker (skills-re-server-prod). Fresh Cloudflare IDs, no consumer conflicts.
-// const evaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE_V1", {
-//   name: "skills-re-v1-evaluation-workflow",
-// });
 
 const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-sync-workflow",
@@ -248,10 +233,10 @@ const workflowQueueEventSources = [
 ];
 
 const workflowBindings = {
-  // EVALUATION_WORKFLOW: Workflow("EVALUATION_WORKFLOW", {
-  //   className: "EvaluationWorkflow",
-  //   workflowName: "skills-re-evaluation",
-  // }),
+  AI_SEARCH_BACKFILL_WORKFLOW: Workflow("AI_SEARCH_BACKFILL_WORKFLOW", {
+    className: "AiSearchBackfillWorkflow",
+    workflowName: "skills-re-v1-ai-search-backfill",
+  }),
   REPO_SNAPSHOT_SYNC_WORKFLOW: Workflow("REPO_SNAPSHOT_SYNC_WORKFLOW", {
     className: "RepoSnapshotSyncWorkflow",
     workflowName: "skills-re-v1-repo-snapshot-sync",
@@ -287,7 +272,6 @@ const workflowBindings = {
 } as const;
 
 const workflowQueueBindings = {
-  // EVALUATION_WORKFLOW_QUEUE: evaluationWorkflowQueue,
   REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSnapshotSyncWorkflowQueue,
   REPO_STATS_SYNC_WORKFLOW_QUEUE: repoStatsSyncWorkflowQueue,
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE: snapshotsArchiveUploadWorkflowQueue,
@@ -319,7 +303,7 @@ export const server = await Worker("server", {
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
-    AI: Ai(),
+    AI_SEARCH: aiSearch,
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
     SNAPSHOT_FILES: snapshotFilesBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
@@ -328,7 +312,6 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
-    RAG_ID: aiSearch.id,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,

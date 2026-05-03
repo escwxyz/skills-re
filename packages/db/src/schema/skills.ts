@@ -35,6 +35,7 @@ export const skillsTable = sqliteTable(
     latestCommitUrl: text("latest_commit_url"),
     latestCommitDate: integer("latest_commit_date"),
     latestCommitMessage: text("latest_commit_message"),
+    aiSearchItemId: text("ai_search_item_id"),
     slug: text("slug").notNull(),
     stargazerCount: integer("stargazer_count").default(0).notNull(),
     syncTime: integer("sync_time").default(currentTimestampMs).notNull(),

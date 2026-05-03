@@ -1,8 +1,8 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { reposTable } from "@skills-re/db/schema/repos";
 import { skillsTable } from "@skills-re/db/schema/skills";
-import { snapshotsTable } from "@skills-re/db/schema/snapshots";
+import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
 import { skillsTagsTable, tagsTable } from "@skills-re/db/schema";
 import { asRepoId, asSkillId, asUserId, createId } from "@skills-re/db/utils";
 import type { RepoId, SkillId, SnapshotId } from "@skills-re/db/utils";
@@ -184,6 +184,22 @@ export async function countSkills() {
   return rows[0]?.value ?? 0;
 }
 
+export async function findSkillById(id: string) {
+  const rows = await db
+    .select({
+      description: skillsTable.description,
+      id: skillsTable.id,
+      slug: skillsTable.slug,
+      syncTime: skillsTable.syncTime,
+      title: skillsTable.title,
+    })
+    .from(skillsTable)
+    .where(and(eq(skillsTable.id, id as SkillId), eq(skillsTable.visibility, "public")))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
 export async function findSkillBySlug(slug: string) {
   const rows = await db
     .select({
@@ -327,6 +343,16 @@ export async function claimSkillById(input: { skillId: string; userId: string })
       syncTime: Date.now(),
       userId: asUserId(input.userId),
     })
+    .where(eq(skillsTable.id, input.skillId as SkillId));
+}
+
+export async function updateSkillAiSearchItemId(input: {
+  aiSearchItemId: string;
+  skillId: string;
+}) {
+  await db
+    .update(skillsTable)
+    .set({ aiSearchItemId: input.aiSearchItemId })
     .where(eq(skillsTable.id, input.skillId as SkillId));
 }
 
@@ -751,4 +777,57 @@ export async function getSnapshotBySkillAndCommit(input: {
     .limit(1);
 
   return rows[0] ?? null;
+}
+
+export interface AiSearchBackfillRow {
+  aiSearchItemId: string | null;
+  authorHandle: string;
+  repoName: string;
+  skillId: string;
+  skillMdR2Key: string | null;
+  skillSlug: string;
+  snapshotId: string | null;
+  version: string | null;
+}
+
+export async function listSkillsForAiSearchBackfill(input: {
+  batchSize: number;
+  offset: number;
+}): Promise<AiSearchBackfillRow[]> {
+  const rows = await db
+    .select({
+      aiSearchItemId: skillsTable.aiSearchItemId,
+      authorHandle: reposTable.ownerHandle,
+      repoName: reposTable.name,
+      skillId: skillsTable.id,
+      skillMdR2Key: snapshotFilesTable.r2Key,
+      skillSlug: skillsTable.slug,
+      snapshotId: snapshotsTable.id,
+      version: snapshotsTable.version,
+    })
+    .from(skillsTable)
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(snapshotsTable, eq(snapshotsTable.id, skillsTable.latestSnapshotId))
+    .leftJoin(
+      snapshotFilesTable,
+      and(
+        eq(snapshotFilesTable.snapshotId, snapshotsTable.id),
+        sql`lower(${snapshotFilesTable.path}) like '%skill.md'`,
+      ),
+    )
+    .where(and(isNull(skillsTable.aiSearchItemId), eq(skillsTable.visibility, "public")))
+    .orderBy(asc(skillsTable.id))
+    .limit(input.batchSize)
+    .offset(input.offset);
+
+  return rows.map((r) => ({
+    aiSearchItemId: r.aiSearchItemId,
+    authorHandle: r.authorHandle,
+    repoName: r.repoName,
+    skillId: String(r.skillId),
+    skillMdR2Key: r.skillMdR2Key,
+    skillSlug: r.skillSlug,
+    snapshotId: r.snapshotId ? String(r.snapshotId) : null,
+    version: r.version,
+  }));
 }

@@ -193,6 +193,15 @@ export interface AiSearchRuntime {
   search(input: { query: string; rewriteQuery?: boolean }): Promise<AiSearchRuntimeResult>;
 }
 
+export interface AiSearchItemsRuntime {
+  deleteItem(itemId: string): Promise<void>;
+  uploadItem(
+    key: string,
+    content: string,
+    metadata: Record<string, string>,
+  ): Promise<{ id: string }>;
+}
+
 export interface SnapshotHistoryRuntime {
   createHistoricalSnapshots(input: {
     commits: {
@@ -260,6 +269,7 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   aiTasks?: AiTaskRuntime;
+  aiSearchItems?: AiSearchItemsRuntime;
   session: AuthSession;
   aiSearch?: AiSearchRuntime;
   githubHistory?: GithubSnapshotHistoryHelpers;

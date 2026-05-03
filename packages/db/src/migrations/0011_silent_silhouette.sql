@@ -1,0 +1,1 @@
+ALTER TABLE `skills` ADD `ai_search_item_id` text;

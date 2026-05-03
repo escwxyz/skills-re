@@ -22,6 +22,7 @@ interface AiSearchRow {
   key: string | null;
   repoName: string | null;
   score: number | null;
+  skillId: string | null;
   skillSlug: string | null;
   sourcePath: string | null;
   version: string | null;
@@ -450,6 +451,8 @@ const extractAiRow = (row: unknown): AiSearchRow => {
     item_key?: unknown;
     key?: unknown;
     metadata?: {
+      skillId?: unknown;
+      skill_id?: unknown;
       skillSlug?: unknown;
       skill_slug?: unknown;
       slug?: unknown;
@@ -465,6 +468,10 @@ const extractAiRow = (row: unknown): AiSearchRow => {
     key: getAiRowKey(item),
     repoName: directPathDetails?.repoName ?? null,
     score: coerceFiniteNumber(item.score),
+    skillId:
+      coerceNonEmptyString(item.metadata?.skillId) ??
+      coerceNonEmptyString(item.metadata?.skill_id) ??
+      null,
     skillSlug: getAiRowSkillSlug(item, directPathDetails),
     sourcePath: directPathDetails?.sourcePath ?? null,
     version: directPathDetails?.version ?? null,
@@ -578,24 +585,41 @@ const toAiSearchPageItem = (skill: AiSearchResolvedSkillRow, aiRows: AiSearchRow
 
 export async function buildAiSearchResult(input: {
   raw: unknown;
+  resolveSkillById?: (id: string) => Promise<AiSearchResolvedSkillRow | null>;
   resolveSkillByPath: (candidate: SkillPathCandidate) => Promise<SearchSkillRow | null>;
   resolveSkillBySlug: (slug: string) => Promise<AiSearchResolvedSkillRow | null>;
 }): Promise<AiSearchResult> {
   const { pathCandidates, slugCandidates } = collectSkillResolutionCandidates(input.raw);
   const aiRows = extractAiRows(input.raw);
+
+  // Primary: resolve by skillId from item metadata (built-in storage items carry this).
+  const skillIdCandidates = [...new Set(aiRows.map((r) => r.skillId).filter(isDefined))];
+  const resolvedByIdResults = input.resolveSkillById
+    ? await Promise.all(skillIdCandidates.map((id) => input.resolveSkillById?.(id)))
+    : [];
+  const resolvedById = resolvedByIdResults.filter(isDefined);
+
+  // Fallback: resolve by path / slug (legacy R2-sourced items, transition period).
+  const seenSkillIds = new Set(resolvedById.map((skill) => skill.id));
+
   const resolvedByPathResults = await Promise.all(
     pathCandidates.slice(0, 40).map(async (candidate) => await input.resolveSkillByPath(candidate)),
   );
-  const resolvedByPath = resolvedByPathResults.filter(isDefined);
+  const resolvedByPath = resolvedByPathResults
+    .filter(isDefined)
+    .filter((skill) => !seenSkillIds.has(skill.id));
+  for (const s of resolvedByPath) {
+    seenSkillIds.add(s.id);
+  }
 
-  const seenSkillIds = new Set(resolvedByPath.map((skill) => skill.id));
   const resolvedBySlugResults = await Promise.all(
     slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)),
   );
   const resolvedBySlug = resolvedBySlugResults
     .filter(isDefined)
     .filter((skill): skill is AiSearchResolvedSkillRow => !seenSkillIds.has(skill.id));
-  const resolvedSkills = [...resolvedByPath, ...resolvedBySlug].slice(0, 24);
+
+  const resolvedSkills = [...resolvedById, ...resolvedByPath, ...resolvedBySlug].slice(0, 24);
 
   return {
     ai: {

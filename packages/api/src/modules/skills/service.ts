@@ -1,4 +1,5 @@
 import type {
+  AiSearchItemsRuntime,
   AiSearchRuntime,
   AiSearchRuntimeResult,
   GithubSubmitRuntime,
@@ -9,8 +10,8 @@ import type {
   SnapshotUploadScheduler,
 } from "../../types";
 
-import { buildAiSearchResult } from "./ai-search";
-import type { AiSearchResult } from "./ai-search";
+import { buildAiSearchResult } from "../ai-search";
+import type { AiSearchResult } from "../ai-search";
 import { normalizeSkillTags } from "../tags/ai-tagging";
 import { toSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
@@ -160,6 +161,7 @@ export interface SkillsServiceDeps {
     version: string;
   }) => Promise<string>;
   findAuthorByHandle: (handle: string) => Promise<AuthorRow | null>;
+  findSkillById: (id: string) => Promise<SkillListRow | null>;
   findSkillClaimContextBySlug: (slug: string) => Promise<SkillClaimContextRow | null>;
   findSkillByPath: (input: {
     authorHandle: string;
@@ -241,6 +243,7 @@ export interface SkillsServiceDeps {
     skillSlug: string;
   } | null>;
   syncSkillTags: (input: { skillId: string; tags: string[] }) => Promise<unknown>;
+  updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
   uploadSnapshotFiles: (
     input: {
       files: {
@@ -277,6 +280,10 @@ const defaultDeps: SkillsServiceDeps = {
   findAuthorByHandle: async (handle) => {
     const { findAuthorByHandle } = await import("./repo");
     return await findAuthorByHandle(handle);
+  },
+  findSkillById: async (id) => {
+    const { findSkillById } = await import("./repo");
+    return await findSkillById(id);
   },
   findSkillClaimContextBySlug: async (slug) => {
     const { findSkillClaimContextBySlug } = await import("./repo");
@@ -341,6 +348,10 @@ const defaultDeps: SkillsServiceDeps = {
   syncSkillTags: async (input) => {
     const { syncSkillTags } = await import("../tags/service");
     return await syncSkillTags(input);
+  },
+  updateSkillAiSearchItemId: async (input) => {
+    const { updateSkillAiSearchItemId } = await import("./repo");
+    return await updateSkillAiSearchItemId(input);
   },
   uploadSnapshotFiles: async (input, scheduler) => {
     const { uploadSnapshotFiles } = await import("../snapshots/service");
@@ -516,6 +527,10 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
       return await buildAiSearchResult({
         raw,
+        resolveSkillById: async (id) => {
+          const row = await deps.findSkillById(id);
+          return row || null;
+        },
         resolveSkillByPath: async (candidate) => {
           const row = await deps.findSkillByPath(candidate);
           return row || null;
@@ -553,10 +568,12 @@ type UploadSkillsPipelineDeps = Pick<
   | "ensureRepo"
   | "setSkillLatestSnapshot"
   | "syncSkillTags"
+  | "updateSkillAiSearchItemId"
   | "uploadSnapshotFiles"
 >;
 
 interface UploadRuntimeDeps {
+  aiSearchItems?: AiSearchItemsRuntime | null;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
   snapshotUploadScheduler?: SnapshotUploadScheduler | null;
@@ -622,14 +639,16 @@ type PreparedSkill = Awaited<ReturnType<typeof prepareUploadSkills>>[number];
 const uploadSingleSkill = async (
   skill: PreparedSkill,
   context: {
+    authorHandle: string;
     deps: UploadSkillsPipelineDeps;
     now: number;
     repoId: string;
+    repoName: string;
     runtimeDeps: UploadRuntimeDeps;
     usedSlugs: Set<string>;
   },
 ) => {
-  const { deps, now, repoId, runtimeDeps, usedSlugs } = context;
+  const { authorHandle, deps, now, repoId, repoName, runtimeDeps, usedSlugs } = context;
 
   const slug = await resolveUploadSkillSlug({
     checkSkillExistingBySlug: deps.checkSkillExistingBySlug,
@@ -682,6 +701,24 @@ const uploadSingleSkill = async (
   await deps.syncSkillTags({ skillId, tags: normalizeSkillTags(skill.tags ?? []) });
   await deps.deprecateSnapshotsBeyondLimit({ keepLatest: 3, skillId });
 
+  if (runtimeDeps.aiSearchItems) {
+    const skillMdContent =
+      skill.initialSnapshot.files.find((f) => /skill\.md$/i.test(f.path))?.content ?? "";
+    const version = skill.preferredVersion ?? "0.0.1";
+    try {
+      const { id } = await runtimeDeps.aiSearchItems.uploadItem(`${skillId}.md`, skillMdContent, {
+        authorHandle,
+        repoName,
+        skillId,
+        skillSlug: slug,
+        version,
+      });
+      await deps.updateSkillAiSearchItemId({ aiSearchItemId: id, skillId });
+    } catch {
+      // Non-fatal: search index update failure must not block the upload pipeline.
+    }
+  }
+
   if (runtimeDeps.scheduleSkillsTagging) {
     await runtimeDeps.scheduleSkillsTagging.enqueue({
       skillIds: [skillId],
@@ -720,9 +757,20 @@ const runUploadSkillsPipelineImpl = async (
   const preparedSkills = await prepareUploadSkills(input.skills);
   const usedSlugs = new Set<string>();
   const results: { skillId: string; workId: string }[] = [];
+  const [authorHandle = "", repoName = ""] = input.repo.nameWithOwner.split("/");
 
   for (const skill of preparedSkills) {
-    results.push(await uploadSingleSkill(skill, { deps, now, repoId, runtimeDeps, usedSlugs }));
+    results.push(
+      await uploadSingleSkill(skill, {
+        authorHandle,
+        deps,
+        now,
+        repoId,
+        repoName,
+        runtimeDeps,
+        usedSlugs,
+      }),
+    );
   }
 
   const createdIds = results.map((r) => r.skillId);
@@ -732,17 +780,15 @@ const runUploadSkillsPipelineImpl = async (
     input.recentCommits &&
     input.recentCommits.length > 1 &&
     createdIds.length > 0 &&
-    input.repo.nameWithOwner.includes("/")
+    authorHandle &&
+    repoName
   ) {
-    const [repoOwner, repoName] = input.repo.nameWithOwner.split("/");
-    if (repoOwner && repoName) {
-      await runtimeDeps.snapshotHistory.createHistoricalSnapshots({
-        commits: input.recentCommits,
-        repoName,
-        repoOwner,
-        skillIds: createdIds,
-      });
-    }
+    await runtimeDeps.snapshotHistory.createHistoricalSnapshots({
+      commits: input.recentCommits,
+      repoName,
+      repoOwner: authorHandle,
+      skillIds: createdIds,
+    });
   }
 
   return {
@@ -848,6 +894,15 @@ export async function listMineSkills(input: { userId: string; limit?: number }) 
 
 export async function resolvePathBySlug(input: { slug: string }) {
   return await skillsService.resolvePathBySlug(input);
+}
+
+// Called when a skill is permanently deleted (no delete endpoint exists yet).
+// When one is added, fetch skill.aiSearchItemId from the DB and pass it here.
+export async function removeSkillFromAiSearch(
+  input: { aiSearchItemId: string },
+  aiSearchItems: AiSearchItemsRuntime,
+): Promise<void> {
+  await aiSearchItems.deleteItem(input.aiSearchItemId);
 }
 
 export async function uploadSkills(

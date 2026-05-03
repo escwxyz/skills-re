@@ -3,7 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { SearchSkillRow } from "../shared/search-skill";
-import { buildAiSearchResult } from "./ai-search";
+import { buildAiSearchResult } from ".";
 
 describe("buildAiSearchResult", () => {
   test("uses the skills folder slug for path candidates", async () => {

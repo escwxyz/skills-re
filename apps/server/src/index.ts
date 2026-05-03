@@ -11,7 +11,6 @@ import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
-import { env } from "@skills-re/env/server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
@@ -20,6 +19,7 @@ import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
 
+export { AiSearchBackfillWorkflow } from "./workflows/ai-search-backfill-workflow";
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
@@ -33,6 +33,21 @@ export { SearchRateLimiter } from "./dos/search-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
+
+const getAllowedCorsOrigin = (requestOrigin: string | null, env: Env) => {
+  if (!requestOrigin) {
+    return env.PUBLIC_SITE_URL;
+  }
+
+  const allowedOrigins = new Set([
+    env.PUBLIC_SITE_URL,
+    env.PUBLIC_SERVER_URL,
+    "http://localhost:4321",
+    "http://127.0.0.1:4321",
+  ]);
+
+  return allowedOrigins.has(requestOrigin) ? requestOrigin : env.PUBLIC_SITE_URL;
+};
 
 const getCompletedStatus = (error?: unknown, responseStatus = 500) => {
   if (error && typeof error === "object") {
@@ -96,14 +111,13 @@ app.use("/*", async (c, next) => {
     });
   }
 });
-app.use(
-  "/*",
+app.use("/*", (c, next) =>
   cors({
-    origin: env.PUBLIC_SITE_URL,
+    origin: (requestOrigin) => getAllowedCorsOrigin(requestOrigin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "x-api-key"],
     credentials: true,
-  }),
+  })(c, next),
 );
 // Better Auth is exposed on the platform API origin at /auth/*.
 app.on(["POST", "GET"], `${AUTH_PREFIX}/*`, (c) => createRuntimeAuth().handler(c.req.raw));

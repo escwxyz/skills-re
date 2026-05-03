@@ -2,7 +2,7 @@ import type { Context as ApiContext } from "@skills-re/api/types";
 import { asSkillId } from "@skills-re/db/utils";
 import type { Context as HonoContext } from "hono";
 
-import { createAiSearchRuntime } from "./ai-search";
+import { createAiSearchItemsRuntime, createAiSearchRuntime } from "./ai-search";
 import { createGithubFetchRuntime } from "./github-fetch";
 import { createGithubSubmitRuntime } from "./github-submit";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
@@ -31,6 +31,7 @@ export interface CreateServerContextOptions {
 export interface CreateServerRuntimeDeps {
   aiTasks?: ApiContext["aiTasks"];
   aiSearch?: ApiContext["aiSearch"];
+  aiSearchItems?: ApiContext["aiSearchItems"];
   githubHistory?: ApiContext["githubHistory"];
   githubFetch?: ApiContext["githubFetch"];
   githubSubmit?: ApiContext["githubSubmit"];
@@ -55,6 +56,7 @@ export function createServerContextFromBase(
     ...baseContext,
     aiTasks: runtimeDeps.aiTasks,
     aiSearch: runtimeDeps.aiSearch,
+    aiSearchItems: runtimeDeps.aiSearchItems,
     githubHistory: runtimeDeps.githubHistory,
     githubFetch: runtimeDeps.githubFetch,
     githubSubmit: runtimeDeps.githubSubmit,
@@ -72,6 +74,7 @@ async function createServerRuntime(
   const { createAiTasksRuntime } = await import("./ai-tasks");
   const aiTasks = createAiTasksRuntime(env);
   const aiSearch = createAiSearchRuntime(env);
+  const aiSearchItems = createAiSearchItemsRuntime(env) ?? undefined;
   const githubHistory = createGithubSnapshotHistoryHelpers(env, {
     logger: options.logger,
   });
@@ -100,6 +103,7 @@ async function createServerRuntime(
   return {
     aiTasks,
     aiSearch,
+    aiSearchItems,
     githubHistory,
     githubFetch,
     githubSubmit,
