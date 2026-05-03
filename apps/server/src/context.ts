@@ -73,8 +73,8 @@ async function createServerRuntime(
 ): Promise<CreateServerRuntimeDeps> {
   const { createAiTasksRuntime } = await import("./ai-tasks");
   const aiTasks = createAiTasksRuntime(env);
-  const aiSearch = createAiSearchRuntime(env);
-  const aiSearchItems = createAiSearchItemsRuntime(env) ?? undefined;
+  const aiSearch = createAiSearchRuntime(env as never);
+  const aiSearchItems = createAiSearchItemsRuntime(env as never) ?? undefined;
   const githubHistory = createGithubSnapshotHistoryHelpers(env, {
     logger: options.logger,
   });

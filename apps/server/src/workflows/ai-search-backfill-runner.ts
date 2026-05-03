@@ -57,7 +57,11 @@ export const runAiSearchBackfillWorkflow = async (
       `ai-search-backfill-upload-${skill.skillId}`,
       workflowStepRetryPolicy.aiSearchBackfillBatch,
       async () => {
-        const obj = await deps.snapshotStorage.getSnapshotFileObject(skill.skillMdR2Key);
+        const r2Key = skill.skillMdR2Key;
+        if (!r2Key) {
+          return;
+        }
+        const obj = await deps.snapshotStorage.getSnapshotFileObject(r2Key);
         if (!obj) {
           return;
         }

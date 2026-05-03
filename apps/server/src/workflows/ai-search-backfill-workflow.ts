@@ -12,7 +12,7 @@ export class AiSearchBackfillWorkflow extends WorkflowEntrypoint<
   AiSearchBackfillWorkflowPayload
 > {
   async run(event: Readonly<WorkflowEvent<AiSearchBackfillWorkflowPayload>>, step: WorkflowStep) {
-    const aiSearchItems = createAiSearchItemsRuntime(this.env);
+    const aiSearchItems = createAiSearchItemsRuntime(this.env as never);
     if (!aiSearchItems) {
       throw new Error("AI_SEARCH binding is not configured.");
     }
