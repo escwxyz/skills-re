@@ -1,7 +1,7 @@
 import type { AppRouterClient } from "@skills-re/api/routers/index";
 
 import { formatInteger, toBrowseSkillItem } from "./registry-data";
-import type { BrowseSkillItem } from "./registry-data";
+import type { AiMatch, BrowseSkillItem } from "./registry-data";
 
 export interface SearchSkillListItem {
   author?: {
@@ -9,13 +9,7 @@ export interface SearchSkillListItem {
     name?: string | null;
   };
   authorHandle?: string;
-  aiMatch?: {
-    itemKey?: string;
-    score?: number;
-    snippet?: string;
-    sourcePath?: string;
-    version?: string;
-  };
+  aiMatch?: AiMatch;
   description: string;
   downloadsAllTime?: number;
   id: string;

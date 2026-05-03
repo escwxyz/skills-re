@@ -133,8 +133,15 @@ const resolveTaggingDeps = (deps?: {
 
 const extractJsonLikeFromValue = (value: unknown): unknown => {
   if (typeof value === "string") {
+    let cleaned = value.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim();
+    }
     try {
-      return JSON.parse(value);
+      return JSON.parse(cleaned);
     } catch {
       return value;
     }
@@ -202,8 +209,9 @@ const unwrapTaggingPayload = (value: unknown): unknown => {
 
   if (value && typeof value === "object") {
     const { json } = value as Record<string, unknown>;
-    if (hasItemsArray(json)) {
-      return json;
+    const parsedJson = extractJsonLikeFromValue(json);
+    if (hasItemsArray(parsedJson)) {
+      return parsedJson;
     }
   }
 

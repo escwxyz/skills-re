@@ -101,7 +101,7 @@ export const SemanticSearchPanel = ({ initialData }: Props) => {
   const debounceTimer = useRef<number | null>(null);
   const requestId = useRef(0);
   const didSkipInitialSearch = useRef(false);
-  const committedQuery = useRef(initialData.mode === "search" ? initialData.query.trim() : "");
+  const committedQuery = useRef(initialData.query.trim());
   const currentQuery = draftQuery.trim();
   const isPendingSearch = currentQuery.length > 0 && currentQuery !== committedQuery.current;
 
@@ -191,6 +191,7 @@ export const SemanticSearchPanel = ({ initialData }: Props) => {
             return;
           }
 
+          setPageData(getEmptySearchPageData());
           setSearchState("error");
           setErrorMessage(
             error instanceof Error ? error.message : "The semantic search request failed.",
@@ -270,6 +271,7 @@ export const SemanticSearchPanel = ({ initialData }: Props) => {
           return;
         }
 
+        setPageData(getEmptySearchPageData());
         setSearchState("error");
         setErrorMessage(
           error instanceof Error ? error.message : "The semantic search request failed.",

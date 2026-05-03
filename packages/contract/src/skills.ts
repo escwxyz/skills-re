@@ -65,8 +65,16 @@ const skillHistoryInfoInputSchema = z.object({
 });
 
 const searchSkillsInputSchema = z.object({
-  query: z.string().trim().min(1),
+  authorHandle: z.string().min(1).optional(),
+  categories: z.array(z.string().min(1)).optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  query: z.string().trim().min(1).optional(),
   rewriteQuery: z.boolean().optional(),
+  sort: z
+    .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
+    .optional(),
+  tags: z.array(z.string().min(1)).optional(),
 });
 
 const searchSkillsResultSchema = z.object({

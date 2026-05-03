@@ -25,7 +25,13 @@ export const isAiQuotaOrRateLimitError = (error: unknown) => {
     return true;
   }
 
-  const text = [maybe?.message, JSON.stringify(error)].filter(Boolean).join(" ").toLowerCase();
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(error);
+  } catch {
+    serialized = String(error);
+  }
+  const text = [maybe?.message, serialized].filter(Boolean).join(" ").toLowerCase();
   return RATE_LIMIT_ERROR_HINTS.some((hint) => text.includes(hint));
 };
 

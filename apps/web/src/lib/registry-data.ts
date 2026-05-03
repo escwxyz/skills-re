@@ -4,6 +4,14 @@ import {
   getCategoryPresentation,
 } from "./category-taxonomy";
 
+export interface AiMatch {
+  itemKey?: string;
+  score?: number;
+  snippet?: string;
+  sourcePath?: string;
+  version?: string;
+}
+
 interface SearchSkillListItem {
   author?: {
     githubUrl?: string;
@@ -11,13 +19,7 @@ interface SearchSkillListItem {
     name?: string | null;
   };
   authorHandle?: string;
-  aiMatch?: {
-    itemKey?: string;
-    score?: number;
-    snippet?: string;
-    sourcePath?: string;
-    version?: string;
-  };
+  aiMatch?: AiMatch;
   description: string;
   downloadsAllTime?: number;
   downloadsTrending?: number;
@@ -155,13 +157,7 @@ export interface BrowseTagItem {
 export interface BrowseSkillItem extends SkillCardItem {
   downloadsLabel: string;
   latestVersionLabel: string;
-  aiMatch?: {
-    itemKey?: string;
-    score?: number;
-    snippet?: string;
-    sourcePath?: string;
-    version?: string;
-  };
+  aiMatch?: AiMatch;
 }
 
 export interface SkillsBrowseFilters {

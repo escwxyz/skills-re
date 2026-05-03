@@ -487,14 +487,24 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     },
 
     async search(
-      input: { query: string; rewriteQuery?: boolean },
+      input: SearchSkillsPageInput,
       aiSearchRuntime?: AiSearchRuntime,
-    ): Promise<AiSearchResult> {
+    ): Promise<
+      | { continueCursor: string; isDone: boolean; page: ReturnType<typeof toSearchSkillItem>[] }
+      | AiSearchResult
+    > {
+      const browseSearch = async () => {
+        const result = await deps.searchSkillsPageByFilters(input);
+        return { ...result, page: result.page.map(toSearchSkillItem) };
+      };
+
+      if (!input.query) {
+        return await browseSearch();
+      }
+
       const runtime = aiSearchRuntime;
       if (!runtime) {
-        throw new Error(
-          "AI search runtime is unavailable. Configure the server AI search binding.",
-        );
+        return await browseSearch();
       }
 
       const raw = await runtime.search({
@@ -801,7 +811,7 @@ export async function getSkillsHistoryInfo(input: { skillIds: string[] }) {
 }
 
 export async function searchSkills(
-  input: { query: string; rewriteQuery?: boolean },
+  input: SearchSkillsPageInput,
   aiSearchRuntime?: AiSearchRuntime,
 ) {
   return await skillsService.search(input, aiSearchRuntime);
