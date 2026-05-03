@@ -30,6 +30,9 @@ export const submitPublicRateLimiter: MiddlewareHandler<{
   const result = (await response.json()) as RateLimitResult;
 
   if (!result.allowed) {
+    if (result.reason === "window_limit") {
+      c.header("Retry-After", String(result.retryAfterSeconds));
+    }
     const message =
       result.reason === "window_limit"
         ? `Rate limit exceeded. Please try again in ${result.retryAfterSeconds} seconds.`
