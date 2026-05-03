@@ -17,6 +17,7 @@ import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
 import type { WorkerLogger } from "./worker-logger";
+import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
@@ -26,6 +27,7 @@ export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization"
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
+export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -171,6 +173,9 @@ export const rpcHandler = new RPCHandler(appRouter, {
 //   await mcpServer.connect(transport);
 //   return transport.handleRequest(c);
 // });
+
+app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
+app.use("/skills/submit", submitPublicRateLimiter);
 
 app.use("/*", async (c, next) => {
   const context = await createServerContext({ context: c });
