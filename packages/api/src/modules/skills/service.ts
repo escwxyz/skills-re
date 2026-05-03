@@ -504,7 +504,9 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
       const runtime = aiSearchRuntime;
       if (!runtime) {
-        return await browseSearch();
+        throw new Error(
+          "AI search runtime is unavailable. Configure the server AI search binding.",
+        );
       }
 
       const raw = await runtime.search({
