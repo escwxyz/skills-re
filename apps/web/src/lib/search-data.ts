@@ -3,12 +3,19 @@ import type { AppRouterClient } from "@skills-re/api/routers/index";
 import { formatInteger, toBrowseSkillItem } from "./registry-data";
 import type { BrowseSkillItem } from "./registry-data";
 
-interface SearchSkillListItem {
+export interface SearchSkillListItem {
   author?: {
     handle?: string;
     name?: string | null;
   };
   authorHandle?: string;
+  aiMatch?: {
+    itemKey?: string;
+    score?: number;
+    snippet?: string;
+    sourcePath?: string;
+    version?: string;
+  };
   description: string;
   downloadsAllTime?: number;
   id: string;
@@ -32,6 +39,37 @@ export interface SearchPageData {
   titleLabel: string;
 }
 
+export const getEmptySearchPageData = (): SearchPageData => ({
+  items: [],
+  mode: "browse",
+  note: "Describe what you're looking for and the semantic index will find the closest skills.",
+  query: "",
+  resultLabel: "",
+  titleLabel: "Search skills",
+});
+
+export const getSearchUnavailablePageData = (query: string): SearchPageData => ({
+  items: [],
+  mode: "browse",
+  note: "The semantic search backend is unavailable right now. Try again in a moment.",
+  query,
+  resultLabel: "",
+  titleLabel: query || "Search skills",
+});
+
+export const buildSearchPageData = (query: string, page: SearchSkillListItem[]): SearchPageData => {
+  const items = page.map(toBrowseSkillItem);
+
+  return {
+    items,
+    mode: "search",
+    note: "",
+    query,
+    resultLabel: `${formatInteger(items.length)} AI matches`,
+    titleLabel: query,
+  };
+};
+
 const isRateLimitError = (err: unknown): boolean => {
   if (!err || typeof err !== "object") {
     return false;
@@ -47,14 +85,7 @@ export const getSearchPageData = async (
   const query = searchParams.get("q")?.trim() ?? "";
 
   if (!query) {
-    return {
-      items: [],
-      mode: "browse",
-      note: "Enter a query to search skills with semantic AI search.",
-      query: "",
-      resultLabel: "",
-      titleLabel: "Search skills",
-    };
+    return getEmptySearchPageData();
   }
 
   let result: Awaited<ReturnType<typeof client.skills.search>>;
@@ -71,16 +102,8 @@ export const getSearchPageData = async (
         titleLabel: query,
       };
     }
-    throw error;
+    return getSearchUnavailablePageData(query);
   }
-  const items = (result.page as SearchSkillListItem[]).map(toBrowseSkillItem);
 
-  return {
-    items,
-    mode: "search",
-    note: "",
-    query,
-    resultLabel: `${formatInteger(items.length)} AI matches`,
-    titleLabel: query,
-  };
+  return buildSearchPageData(query, result.page as SearchSkillListItem[]);
 };

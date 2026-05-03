@@ -11,6 +11,13 @@ interface SearchSkillListItem {
     name?: string | null;
   };
   authorHandle?: string;
+  aiMatch?: {
+    itemKey?: string;
+    score?: number;
+    snippet?: string;
+    sourcePath?: string;
+    version?: string;
+  };
   description: string;
   downloadsAllTime?: number;
   downloadsTrending?: number;
@@ -148,6 +155,13 @@ export interface BrowseTagItem {
 export interface BrowseSkillItem extends SkillCardItem {
   downloadsLabel: string;
   latestVersionLabel: string;
+  aiMatch?: {
+    itemKey?: string;
+    score?: number;
+    snippet?: string;
+    sourcePath?: string;
+    version?: string;
+  };
 }
 
 export interface SkillsBrowseFilters {
@@ -325,6 +339,15 @@ export const toSkillCardItem = (skill: SearchSkillListItem): SkillCardItem => ({
 
 export const toBrowseSkillItem = (skill: SearchSkillListItem): BrowseSkillItem => ({
   ...toSkillCardItem(skill),
+  aiMatch: skill.aiMatch
+    ? {
+        itemKey: skill.aiMatch.itemKey,
+        score: skill.aiMatch.score,
+        snippet: skill.aiMatch.snippet,
+        sourcePath: skill.aiMatch.sourcePath,
+        version: skill.aiMatch.version,
+      }
+    : undefined,
   downloadsLabel: formatCompactNumber(skill.downloadsAllTime ?? 0),
   latestVersionLabel: skill.latestVersion ? `v${skill.latestVersion}` : "latest",
 });

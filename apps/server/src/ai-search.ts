@@ -33,7 +33,8 @@ interface AiSearchInstance {
 }
 
 interface AiSearchNamespaceBinding {
-  get(instanceName: string): AiSearchInstance;
+  autorag(instanceName: string): AiSearchInstance;
+  get?(instanceName: string): AiSearchInstance;
   search?: AiSearchInstance["search"];
 }
 
@@ -42,18 +43,15 @@ export interface AiSearchRuntimeInput {
   rewriteQuery?: boolean;
 }
 
-interface CreateAiSearchRuntimeOptions {
-  fetch?: typeof fetch;
-}
-
 const DEFAULT_AI_SEARCH_INSTANCE = "curly-voice-daf4";
-type AiSearchRuntimeEnv = Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN"> & {
+interface AiSearchRuntimeEnv {
+  AI?: AiSearchNamespaceBinding;
   AI_SEARCH_INSTANCE?: string;
   AI_SEARCH_MODEL?: string;
-};
+  RAG_ID?: string;
+}
 
-const getAiSearchBinding = (env: Env) =>
-  (env as Env & { AI_SEARCH?: AiSearchNamespaceBinding }).AI_SEARCH ?? null;
+const getAiSearchBinding = (env: AiSearchRuntimeEnv & Env) => env.AI ?? null;
 
 const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
   query_rewrite: {
@@ -67,32 +65,21 @@ const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
   },
 });
 
-const buildFallbackEndpoint = (accountId: string, instanceName: string) =>
-  `https://api.cloudflare.com/client/v4/accounts/${accountId}/autorag/rags/${instanceName}/search`;
-
-const getJson = async (response: Response) => {
-  if (!response.ok) {
-    const statusText = response.statusText.trim();
-    throw new Error(
-      `AI Search request failed with ${response.status}${statusText ? ` ${statusText}` : ""}`,
-    );
-  }
-
-  return (await response.json()) as unknown;
-};
-
-export function createAiSearchRuntime(
-  env: AiSearchRuntimeEnv & Env,
-  options: CreateAiSearchRuntimeOptions = {},
-): AiSearchRuntime {
-  const fetchImpl = options.fetch ?? fetch;
-
+export function createAiSearchRuntime(env: AiSearchRuntimeEnv & Env): AiSearchRuntime {
   return {
     async search(input: AiSearchRuntimeInput) {
-      const instanceName = env.AI_SEARCH_INSTANCE?.trim() || DEFAULT_AI_SEARCH_INSTANCE;
+      const instanceName =
+        env.RAG_ID?.trim() || env.AI_SEARCH_INSTANCE?.trim() || DEFAULT_AI_SEARCH_INSTANCE;
       const rewriteQuery = input.rewriteQuery ?? true;
       const model = env.AI_SEARCH_MODEL?.trim() || undefined;
       const binding = getAiSearchBinding(env);
+
+      if (binding?.autorag) {
+        return (await binding.autorag(instanceName).search({
+          ai_search_options: buildSearchOptions(rewriteQuery, model),
+          query: input.query,
+        })) as AiSearchRuntimeResult;
+      }
 
       if (binding?.get) {
         return (await binding.get(instanceName).search({
@@ -108,23 +95,7 @@ export function createAiSearchRuntime(
         })) as AiSearchRuntimeResult;
       }
 
-      const response = await fetchImpl(
-        buildFallbackEndpoint(env.CLOUDFLARE_ACCOUNT_ID, instanceName),
-        {
-          body: JSON.stringify({
-            query: input.query,
-            rewrite_query: rewriteQuery,
-            ...(model ? { model } : {}),
-          }),
-          headers: {
-            authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
-            "content-type": "application/json",
-          },
-          method: "POST",
-        },
-      );
-
-      return (await getJson(response)) as AiSearchRuntimeResult;
+      throw new Error(`AI Search binding is not configured for instance "${instanceName}".`);
     },
   };
 }

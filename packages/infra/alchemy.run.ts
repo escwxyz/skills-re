@@ -1,6 +1,8 @@
 // oxlint-disable typescript/no-non-null-assertion
 import alchemy from "alchemy";
 import {
+  Ai,
+  AiSearch,
   AnalyticsEngineDataset,
   Astro,
   D1Database,
@@ -37,6 +39,16 @@ const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
   adopt: true,
   dev: {
     remote: true,
+  },
+});
+
+const aiSearch = await AiSearch("AI_SEARCH", {
+  adopt: true,
+  source: {
+    bucket: snapshotFilesBucket,
+    includePaths: ["**/SKILL.md"],
+    excludePaths: ["skills-upload/staging/**", "snapshot-archive/staging/**", "**/*.tar.gz"],
+    type: "r2",
   },
 });
 
@@ -307,6 +319,7 @@ export const server = await Worker("server", {
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
+    AI: Ai(),
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
     SNAPSHOT_FILES: snapshotFilesBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
@@ -315,6 +328,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    RAG_ID: aiSearch.id,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,
