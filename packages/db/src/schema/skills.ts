@@ -57,6 +57,7 @@ export const skillsTable = sqliteTable(
     index("skills_latest_evaluation_id_idx").on(table.latestEvaluationId),
     index("skills_latest_snapshot_id_idx").on(table.latestSnapshotId),
     index("skills_latest_commit_date_idx").on(table.latestCommitDate),
+    index("skills_ai_search_item_id_idx").on(table.aiSearchItemId),
     index("skills_visibility_syncTime_id_idx").on(table.visibility, table.syncTime, table.id),
     index("skills_slug_idx").on(table.slug),
     index("skills_syncTime_idx").on(table.syncTime),
