@@ -16,8 +16,12 @@ export const searchRateLimiter: MiddlewareHandler<{
 
   const ip =
     c.req.header("CF-Connecting-IP") ??
-    c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ??
-    "unknown";
+    c.req.header("X-Forwarded-For")?.split(",")[0]?.trim();
+
+  if (!ip) {
+    c.get("workerLogger")?.warn("search-rate-limiter: missing client IP");
+    return next();
+  }
 
   let result: RateLimitResult | null = null;
   try {
