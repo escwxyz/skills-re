@@ -43,8 +43,8 @@ const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
 
 // Built-in Storage instance — items are uploaded directly via the Items API,
 // indexed immediately, and keyed by skillId so updates are idempotent upserts.
-const aiSearch = await AiSearch("ai-search", {
-  name: "ai-search",
+const aiSearch = await AiSearch("skills-re-ai-search", {
+  name: "skills-re-ai-search",
   adopt: true,
 });
 
