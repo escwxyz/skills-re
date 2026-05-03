@@ -545,6 +545,125 @@ describe("createGithubFetchRuntime", () => {
     ).toBe(true);
   });
 
+  test("fetches organization owner names from the organization profile", async () => {
+    const requests: Request[] = [];
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/degausai/wonda-skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  default_branch: "main",
+                  forks_count: 1,
+                  full_name: "degausai/wonda-skills",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "degausai",
+                    type: "Organization",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.endsWith("/orgs/degausai")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  login: "degausai",
+                  name: "DegausAI",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/degausai/wonda-skills/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/degausai/wonda-skills/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/degausai/wonda-skills/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "skills/example/skill.md",
+                      sha: "blob-1",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/degausai/wonda-skills/git/blobs/blob-1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(
+                    `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
+                  ),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.fetchRepo({
+        githubUrl: "https://github.com/degausai/wonda-skills",
+      }),
+    ).resolves.toMatchObject({
+      ownerHandle: "degausai",
+      ownerName: "DegausAI",
+      nameWithOwner: "degausai/wonda-skills",
+      skills: [
+        {
+          skillTitle: "example-skill",
+        },
+      ],
+    });
+
+    expect(requests.some((request) => request.url.endsWith("/orgs/degausai"))).toBe(true);
+  });
+
   test("rejects invalid github urls", async () => {
     const logs: CapturedLog[] = [];
     const runtime = createGithubFetchRuntime(

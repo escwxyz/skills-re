@@ -1,3 +1,4 @@
+import type { SkillsUploadContentPayload as ApiSkillsUploadContentPayload } from "@skills-re/api/types";
 import { z } from "zod/v4";
 
 const skillsUploadContentPayloadSchema = z.object({
@@ -118,7 +119,7 @@ const buildStagingKey = () => {
  */
 export const stageSkillsUploadPayload = async (
   bucket: SkillsStagingBucket,
-  payload: SkillsUploadContentPayload,
+  payload: ApiSkillsUploadContentPayload,
 ): Promise<SkillsUploadWorkflowStagingPayload> => {
   const key = buildStagingKey();
   await bucket.put(key, JSON.stringify(payload), {

@@ -344,6 +344,53 @@ describe("repos service", () => {
     });
   });
 
+  test("persists the github owner name when creating a repo", async () => {
+    const calls: {
+      createdAt: number;
+      defaultBranch: string;
+      forks: number;
+      license?: string | null;
+      name: string;
+      nameWithOwner: string;
+      ownerAvatarUrl?: string | null;
+      ownerHandle: string;
+      ownerName?: string | null;
+      stars: number;
+      syncTime: number;
+      updatedAt: number;
+      url: string;
+    }[] = [];
+
+    const service = createReposService({
+      createRepo: (input) => {
+        calls.push(input);
+        return "repo-11";
+      },
+      findRepoByNameWithOwner: () => null,
+    });
+
+    await expect(
+      service.ensureRepo({
+        createdAt: 100,
+        defaultBranch: "main",
+        forks: 1,
+        nameWithOwner: "acme/widget",
+        owner: {
+          handle: "acme",
+          name: "Acme",
+          avatarUrl: null,
+        },
+        stars: 2,
+        updatedAt: 200,
+      }),
+    ).resolves.toEqual("repo-11");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      ownerName: "Acme",
+    });
+  });
+
   test("syncs repo snapshots through the snapshot pipeline", async () => {
     const createSnapshotCalls: {
       description: string;

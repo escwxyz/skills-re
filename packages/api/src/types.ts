@@ -70,7 +70,7 @@ export interface SkillsUploadContentPayload {
     updatedAt: number;
   };
   skills: {
-    description: string;
+    description?: string;
     directoryPath: string;
     entryPath: string;
     frontmatterHash?: string;
@@ -104,6 +104,10 @@ export interface SkillsUploadContentPayload {
 
 export interface SkillsUploadScheduler {
   enqueue(input: SkillsUploadContentPayload): Promise<{ workId: string }>;
+}
+
+export interface SkillSummaryScheduler {
+  enqueue(input: { snapshotId: string }): Promise<{ workId: string }>;
 }
 
 export interface SkillsTaggingScheduler {
@@ -285,6 +289,7 @@ export interface Context {
     repoStatsSync?: RepoStatsSyncScheduler;
     repoSnapshotSync?: RepoSnapshotSyncScheduler;
     skillsUpload?: SkillsUploadScheduler;
+    skillSummary?: SkillSummaryScheduler;
     skillsTagging?: SkillsTaggingScheduler;
   };
 }

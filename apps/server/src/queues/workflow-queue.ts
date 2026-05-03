@@ -57,7 +57,7 @@ export type SkillsUploadWorkflowPayload =
         updatedAt: number;
       };
       skills: {
-        description: string;
+        description?: string;
         directoryPath: string;
         entryPath: string;
         frontmatterHash?: string;
@@ -130,6 +130,11 @@ export type WorkflowQueueMessage =
       workflowId: string;
     }
   | {
+      kind: "skill-summary";
+      payload: { snapshotId: string };
+      workflowId: string;
+    }
+  | {
       kind: "skills-upload";
       payload: SkillsUploadWorkflowPayload;
       workflowId: string;
@@ -143,6 +148,7 @@ export type WorkflowQueueEnv = Env & {
   SNAPSHOT_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotUploadWorkflowPayload>;
   SKILLS_CATEGORIZATION_WORKFLOW?: WorkflowCreateBinding<SkillsCategorizationWorkflowPayload>;
   SKILLS_TAGGING_WORKFLOW?: WorkflowCreateBinding<SkillsTaggingWorkflowPayload>;
+  SKILL_SUMMARY_WORKFLOW?: WorkflowCreateBinding<{ snapshotId: string }>;
   SKILLS_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SkillsUploadWorkflowPayload>;
 };
 
@@ -200,6 +206,7 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
       value.kind === "snapshot-archive-upload" ||
       value.kind === "snapshot-upload" ||
       value.kind === "skills-categorization" ||
+      value.kind === "skill-summary" ||
       value.kind === "skills-tagging" ||
       value.kind === "skills-upload")
   );
@@ -231,6 +238,9 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
     }
     case "skills-categorization": {
       return "skills-re-v1-skills-categorization";
+    }
+    case "skill-summary": {
+      return "skills-re-v1-skill-summary";
     }
     case "skills-tagging": {
       return "skills-re-v1-skills-tagging";
@@ -310,6 +320,13 @@ const startWorkflowFromQueueMessage = async (
         env,
         "SKILLS_CATEGORIZATION_WORKFLOW",
       ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
+    case "skill-summary": {
+      await getWorkflowBinding<{ snapshotId: string }>(env, "SKILL_SUMMARY_WORKFLOW").create({
         id: message.workflowId,
         params: message.payload,
       });

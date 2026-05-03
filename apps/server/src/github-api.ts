@@ -24,6 +24,7 @@ export interface GithubRepoResponse {
     avatar_url?: string | null;
     login?: string | null;
     name?: string | null;
+    type?: string | null;
   } | null;
   private?: boolean;
   stargazers_count: number;
@@ -72,6 +73,13 @@ export interface GithubRepoOverview {
     name: string | null;
   };
   repo: GithubRepoOverviewRepo;
+}
+
+interface GithubAccountProfileResponse {
+  avatar_url?: string | null;
+  login?: string | null;
+  name?: string | null;
+  type?: string | null;
 }
 
 export const getGithubToken = (env: GithubTokenEnv) => env.GH_PAT || null;
@@ -188,11 +196,32 @@ const mapGithubCommits = (commitsResponse: GithubCommitResponse[]): GithubCommit
 const mapGithubOwner = (
   repoResponse: GithubRepoResponse,
   owner: string,
+  ownerName?: string | null,
 ): GithubRepoOverview["owner"] => ({
   avatarUrl: repoResponse.owner?.avatar_url ?? null,
   handle: repoResponse.owner?.login ?? owner,
-  name: toOwnerName(repoResponse.owner?.name),
+  name: toOwnerName(repoResponse.owner?.name ?? ownerName),
 });
+
+const fetchGithubOwnerProfile = async (
+  fetchImpl: typeof fetch,
+  headers: Headers,
+  owner: string,
+  ownerType: string | null | undefined,
+  logger?: WorkerLogger,
+) => {
+  const accountType = ownerType === "Organization" ? "orgs" : "users";
+  return await fetchGithubJson<GithubAccountProfileResponse>(
+    fetchImpl,
+    `${GITHUB_API_ROOT}/${accountType}/${owner}`,
+    { headers },
+    {
+      includeResponseMessage: true,
+      logger,
+      logContext: { operation: "owner-profile", owner },
+    },
+  );
+};
 
 const mapGithubRepoOverview = (
   repoResponse: GithubRepoResponse,
@@ -235,6 +264,12 @@ export const buildGithubRepoOverview = async (
       logContext: { operation: "repo-overview", owner, repo },
     },
   );
+  const ownerLogin = repoResponse.owner?.login ?? owner;
+  const ownerType = repoResponse.owner?.type ?? null;
+  const ownerProfile =
+    (repoResponse.owner?.name ?? null)
+      ? null
+      : await fetchGithubOwnerProfile(fetchImpl, headers, ownerLogin, ownerType, options.logger);
   const commitsResponse = await fetchGithubJson<GithubCommitResponse[]>(
     fetchImpl,
     `${GITHUB_API_ROOT}/repos/${owner}/${repo}/commits?per_page=2${
@@ -253,7 +288,7 @@ export const buildGithubRepoOverview = async (
     commits: mapGithubCommits(commitsResponse),
     defaultBranch,
     headSha: commitsResponse[0]?.sha ?? null,
-    owner: mapGithubOwner(repoResponse, owner),
+    owner: mapGithubOwner(repoResponse, owner, ownerProfile?.name ?? null),
     repo: mapGithubRepoOverview(repoResponse, owner, repo, options.includeLifecycleFlags ?? false),
   };
 };

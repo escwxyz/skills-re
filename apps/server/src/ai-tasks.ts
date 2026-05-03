@@ -35,6 +35,12 @@ const getTaskAdapters = (clients: {
   createWorkersAiAdapter: (model: WorkersAiTaskModel) => AiTaskAdapter;
 }) =>
   ({
+    "skill-summary": [
+      clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),
+      clients.createGroqAdapter("openai/gpt-oss-120b"),
+      clients.createWorkersAiAdapter("@cf/meta/llama-4-scout-17b-16e-instruct"),
+      clients.createWorkersAiAdapter("@cf/openai/gpt-oss-120b"),
+    ],
     "skill-categorization": [
       clients.createGroqAdapter("openai/gpt-oss-120b"),
       clients.createGroqAdapter("meta-llama/llama-4-scout-17b-16e-instruct"),

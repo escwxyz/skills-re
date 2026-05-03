@@ -223,6 +223,21 @@ export async function upsertSnapshotFiles(
   }
 }
 
+export async function setSnapshotDescription(
+  input: {
+    snapshotId: string;
+    description: string;
+  },
+  database = db,
+) {
+  await database
+    .update(snapshotsTable)
+    .set({
+      description: input.description,
+    })
+    .where(eq(snapshotsTable.id, asSnapshotId(input.snapshotId)));
+}
+
 export async function setSnapshotArchiveR2Key(
   input: {
     archiveR2Key: string;
