@@ -2,6 +2,8 @@ import { chat } from "@tanstack/ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
+import { parseJsonFromModelText } from "../ai/model-output";
+import { retryAiTaskCall } from "../ai/retry";
 import { tagSlugSchema } from "@skills-re/contract/common/slugs";
 
 const MAX_TAGGING_CONTENT_CHARS = 6000;
@@ -31,6 +33,32 @@ const taggingOutputSchema = z.object({
     }),
   ),
 });
+
+const rawDimensionEntrySchema = z.union([
+  z.string(),
+  z.object({
+    matchScore: z.number().min(0).max(1).optional(),
+    source: z.enum(["existing", "new"]).optional(),
+    tag: z.string(),
+  }),
+]);
+
+const rawTaggingOutputSchema = z.object({
+  items: z.array(
+    z.object({
+      confidence: z.number().min(0).max(1),
+      dimensions: z.object({
+        domain: z.array(rawDimensionEntrySchema),
+        skillType: z.array(rawDimensionEntrySchema),
+        techStack: z.array(rawDimensionEntrySchema),
+      }),
+      key: z.string(),
+      reason: z.string(),
+    }),
+  ),
+});
+type RawTaggingOutput = z.infer<typeof rawTaggingOutputSchema>;
+type RawDimensionEntries = RawTaggingOutput["items"][number]["dimensions"]["techStack"];
 
 export interface SkillTaggingInputItem {
   key: string;
@@ -103,6 +131,140 @@ const resolveTaggingDeps = (deps?: {
   };
 };
 
+const extractJsonLikeFromValue = (value: unknown): unknown => {
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
+
+const hasItemsArray = (value: unknown): value is { items: unknown[] } =>
+  Boolean(value) &&
+  typeof value === "object" &&
+  Array.isArray((value as { items?: unknown }).items);
+
+const extractFromChoiceContentParts = (content: unknown): unknown => {
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+
+  for (const part of content) {
+    if (!(part && typeof part === "object")) {
+      continue;
+    }
+    const { text } = part as Record<string, unknown>;
+    const parsedText = extractJsonLikeFromValue(text);
+    if (hasItemsArray(parsedText)) {
+      return parsedText;
+    }
+  }
+
+  return undefined;
+};
+
+const extractFromChoices = (value: unknown): unknown => {
+  if (!(value && typeof value === "object")) {
+    return undefined;
+  }
+
+  const { choices } = value as Record<string, unknown>;
+  if (!Array.isArray(choices) || choices.length === 0) {
+    return undefined;
+  }
+
+  const [firstChoice] = choices;
+  if (!(firstChoice && typeof firstChoice === "object")) {
+    return undefined;
+  }
+
+  const { message } = firstChoice as Record<string, unknown>;
+  if (!(message && typeof message === "object")) {
+    return undefined;
+  }
+
+  const { content } = message as Record<string, unknown>;
+  const parsedContent = extractJsonLikeFromValue(content);
+  if (hasItemsArray(parsedContent)) {
+    return parsedContent;
+  }
+
+  return extractFromChoiceContentParts(content);
+};
+
+const unwrapTaggingPayload = (value: unknown): unknown => {
+  if (hasItemsArray(value)) {
+    return value;
+  }
+
+  if (value && typeof value === "object") {
+    const { json } = value as Record<string, unknown>;
+    if (hasItemsArray(json)) {
+      return json;
+    }
+  }
+
+  const extractedFromChoices = extractFromChoices(value);
+  if (hasItemsArray(extractedFromChoices)) {
+    return extractedFromChoices;
+  }
+
+  return value;
+};
+
+const parseTaggingOutput = (text: string) => {
+  const parsedJson = unwrapTaggingPayload(parseJsonFromModelText(text));
+  const parsedRaw = rawTaggingOutputSchema.safeParse(parsedJson);
+  if (!parsedRaw.success) {
+    throw new Error(`Tagging model returned invalid schema: ${parsedRaw.error.message}`);
+  }
+
+  const normalized = {
+    items: parsedRaw.data.items.map((item) => {
+      const fallbackScore = Math.max(0, Math.min(1, item.confidence));
+      const normalizeEntries = (entries: RawDimensionEntries) =>
+        entries.map((entry) => {
+          if (typeof entry === "string") {
+            return {
+              matchScore: fallbackScore,
+              source: "new" as const,
+              tag: entry,
+            };
+          }
+
+          return {
+            matchScore: entry.matchScore ?? fallbackScore,
+            source: entry.source ?? ("new" as const),
+            tag: entry.tag,
+          };
+        });
+
+      return {
+        confidence: item.confidence,
+        dimensions: {
+          domain: normalizeEntries(item.dimensions.domain),
+          skillType: normalizeEntries(item.dimensions.skillType),
+          techStack: normalizeEntries(item.dimensions.techStack),
+        },
+        key: item.key,
+        reason: item.reason,
+      };
+    }),
+  };
+
+  const parsedNormalized = taggingOutputSchema.safeParse(normalized);
+  if (!parsedNormalized.success) {
+    throw new Error(
+      `Tagging model returned invalid normalized schema: ${parsedNormalized.error.message}`,
+    );
+  }
+
+  return parsedNormalized.data;
+};
+
 export const generateSkillTagsBatch = async (
   input: {
     items: SkillTaggingInputItem[];
@@ -159,13 +321,17 @@ export const generateSkillTagsBatch = async (
   let lastError: unknown = null;
   for (const adapter of adapters) {
     try {
-      const output = await resolvedDeps.chat({
-        adapter,
-        maxTokens: 4096,
-        messages: [{ content: userPrompt, role: "user" }],
-        outputSchema: taggingOutputSchema,
-        systemPrompts: [systemPrompt],
-      });
+      const text = await retryAiTaskCall(
+        async () =>
+          await resolvedDeps.chat({
+            adapter,
+            maxTokens: 4096,
+            messages: [{ content: userPrompt, role: "user" }],
+            stream: false,
+            systemPrompts: [systemPrompt],
+          }),
+      );
+      const output = parseTaggingOutput(text);
 
       const expectedKeys = new Set(input.items.map((item) => item.key));
       const returnedKeys = output.items.map((item) => item.key);
