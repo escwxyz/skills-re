@@ -34,19 +34,24 @@ export { SearchRateLimiter } from "./dos/search-rate-limiter";
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
 
-const getAllowedCorsOrigin = (requestOrigin: string | null, env: Env) => {
+const LOCAL_DEV_ORIGINS = ["http://localhost:4321", "http://127.0.0.1:4321"] as const;
+
+const toOrigin = (value: string): string => new URL(value).origin;
+
+const getAllowedCorsOrigin = (requestOrigin: string | null, env: Env): string => {
+  const publicSiteOrigin = toOrigin(env.PUBLIC_SITE_URL);
+
   if (!requestOrigin) {
-    return env.PUBLIC_SITE_URL;
+    return publicSiteOrigin;
   }
 
   const allowedOrigins = new Set([
-    env.PUBLIC_SITE_URL,
-    env.PUBLIC_SERVER_URL,
-    "http://localhost:4321",
-    "http://127.0.0.1:4321",
+    publicSiteOrigin,
+    toOrigin(env.PUBLIC_SERVER_URL),
+    ...LOCAL_DEV_ORIGINS,
   ]);
 
-  return allowedOrigins.has(requestOrigin) ? requestOrigin : env.PUBLIC_SITE_URL;
+  return allowedOrigins.has(requestOrigin) ? requestOrigin : publicSiteOrigin;
 };
 
 const getCompletedStatus = (error?: unknown, responseStatus = 500) => {
