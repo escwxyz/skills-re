@@ -3,7 +3,6 @@ import { m } from "@/paraglide/messages"
 import { localizeHref } from "@/paraglide/runtime"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { AgentLogoCloud } from "@/components/agent-logo-cloud"
-
 ---
 
 <section
@@ -55,15 +54,14 @@ import { AgentLogoCloud } from "@/components/agent-logo-cloud"
       <p
         class="text-muted-foreground mt-1.5 font-serif text-[13.5px] leading-normal italic"
       >
-        Stay current with new skill releases, curated collections, and
-        dispatches from the agent ecosystem. No noise — pure signal.
+        {m.home_hero_newsletter_signal({})}
       </p>
     </div>
 
     <div
       class="text-muted-foreground/60 font-mono text-[10px] tracking-[.12em] uppercase"
     >
-      Vol. 1 // Issue 01 &mdash; EST. 2025
+      {m.home_hero_newsletter_vol({})}
     </div>
 
     <hr class="border-border" />
@@ -72,12 +70,12 @@ import { AgentLogoCloud } from "@/components/agent-logo-cloud"
       <div
         class="text-muted-foreground mb-3 font-mono text-[10.5px] tracking-[.2em] uppercase"
       >
-        Circulation
+        {m.home_hero_newsletter_circulation({})}
       </div>
       <h3
         class="font-display mb-4 text-[28px] leading-[1.05] font-normal tracking-[-0.01em]"
       >
-        Join the registry
+        {m.home_hero_newsletter_join({})}
       </h3>
       <NewsletterForm client:load />
     </div>
@@ -91,7 +89,7 @@ import { AgentLogoCloud } from "@/components/agent-logo-cloud"
         <p
           class="text-muted-foreground mt-1 font-serif text-[12px] leading-[1.4] italic"
         >
-          Dispatched twice a month. Unsubscribe any time.
+          {m.home_hero_newsletter_frequency({})}
         </p>
       </div>
       <div>
@@ -102,7 +100,16 @@ import { AgentLogoCloud } from "@/components/agent-logo-cloud"
         <p
           class="text-muted-foreground mt-1 font-serif text-[12px] leading-[1.4] italic"
         >
-          By practitioners, for practitioners building with agents.
+          {m.home_hero_newsletter_terms_prefix({})}
+          <a href={localizeHref("/terms")} class="underline underline-offset-2"
+            >{m.login_dialog_terms()}</a
+          >
+          {m.login_dialog_and()}
+          <a
+            href={localizeHref("/privacy")}
+            class="underline underline-offset-2"
+            >{m.login_dialog_privacy_policy()}</a
+          >.
         </p>
       </div>
     </div>

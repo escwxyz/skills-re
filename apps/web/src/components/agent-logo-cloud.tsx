@@ -75,6 +75,7 @@ export const AgentLogoCloud = () => (
       {AGENTS.map(({ Icon, label, href }) => (
         <motion.a
           key={label}
+          aria-label={label}
           className="opacity-20 transition-opacity duration-200 hover:opacity-80"
           href={href}
           rel="noopener noreferrer"

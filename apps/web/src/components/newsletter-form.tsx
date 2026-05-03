@@ -71,6 +71,7 @@ export const NewsletterForm = ({ className }: NewsletterFormProps) => {
                 <form.AppField name="email">
                   {(field) => (
                     <Field className="w-full">
+                      <field.Label className="sr-only">Email address</field.Label>
                       <Input
                         autoComplete="email"
                         className="h-9 border-none bg-transparent px-0 font-serif text-[15px] italic placeholder:text-muted-foreground/60 focus-visible:ring-0 dark:bg-transparent"
@@ -85,7 +86,7 @@ export const NewsletterForm = ({ className }: NewsletterFormProps) => {
 
                 <Button
                   className="shrink-0 cursor-pointer rounded-none border-none bg-transparent p-0 font-mono text-[10.5px] tracking-[.14em] uppercase text-foreground hover:text-muted-foreground"
-                  disabled={isSubmitted || !canSubmit}
+                  disabled={isSubmitted || isSubmitting || !canSubmit}
                   type="submit"
                 >
                   <SubmitLabel isSubmitted={!!isSubmitted} isSubmitting={!!isSubmitting} />
