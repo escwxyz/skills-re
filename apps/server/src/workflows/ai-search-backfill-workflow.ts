@@ -19,19 +19,20 @@ export class AiSearchBackfillWorkflow extends WorkflowEntrypoint<
 
     const snapshotStorage = createSnapshotArchiveStorageRuntime(this.env);
 
-    const { listSkillsForAiSearchBackfill, updateSkillAiSearchItemId } =
-      await import("@skills-re/api/modules/skills/repo");
-
-    return runWorkflowWithFailureLog({
+    return await runWorkflowWithFailureLog({
       entrypoint: "AiSearchBackfillWorkflow",
       instanceId: event.instanceId,
-      run: () =>
+      run: async () => {
+        const { listSkillsForAiSearchBackfill, updateSkillAiSearchItemId } =
+          await import("@skills-re/api/modules/skills/repo");
+
         runAiSearchBackfillWorkflow(event, step, {
           aiSearchItems,
           listSkillsForAiSearchBackfill,
           snapshotStorage,
           updateSkillAiSearchItemId,
-        }),
+        });
+      },
       workflowName: "skills-re-v1-ai-search-backfill",
     });
   }
