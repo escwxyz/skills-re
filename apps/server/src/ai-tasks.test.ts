@@ -104,9 +104,9 @@ describe("createAiTasksRuntime", () => {
 
     expect(runtimeB.getAdapters("skill-tagging")).toHaveLength(6);
 
-    expect(createGroqTextCalls).toHaveLength(8);
+    expect(createGroqTextCalls).toHaveLength(12);
     expect(createGeminiChatCalls).toHaveLength(8);
-    expect(createWorkersAiChatCalls).toHaveLength(8);
+    expect(createWorkersAiChatCalls).toHaveLength(12);
 
     const groqCalls = createGroqTextCalls;
     const geminiCalls = createGeminiChatCalls.map(parseCall);
@@ -119,12 +119,12 @@ describe("createAiTasksRuntime", () => {
     const workersAiCallsA = callsForEnv(workersAiCalls, "account-a");
     const workersAiCallsB = callsForEnv(workersAiCalls, "account-b");
 
-    expect(groqCallsA).toHaveLength(4);
-    expect(groqCallsB).toHaveLength(4);
+    expect(groqCallsA).toHaveLength(6);
+    expect(groqCallsB).toHaveLength(6);
     expect(geminiCallsA).toHaveLength(4);
     expect(geminiCallsB).toHaveLength(4);
-    expect(workersAiCallsA).toHaveLength(4);
-    expect(workersAiCallsB).toHaveLength(4);
+    expect(workersAiCallsA).toHaveLength(6);
+    expect(workersAiCallsB).toHaveLength(6);
 
     for (const call of [...groqCallsA, ...groqCallsB]) {
       expect(call.apiKey).toBe("unused");
