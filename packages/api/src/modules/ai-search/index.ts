@@ -85,7 +85,6 @@ export interface AiSearchPageItem {
 
 export interface AiSearchResult {
   ai: {
-    mode: "ai";
     raw: {
       resolution: {
         pathCandidatesCount: number;
@@ -598,13 +597,18 @@ export async function buildAiSearchResult(input: {
     ? await Promise.all(skillIdCandidates.map((id) => input.resolveSkillById?.(id)))
     : [];
   const resolvedById = resolvedByIdResults.filter(isDefined);
+  const shouldRunFallback = resolvedById.length < Math.min(24, getAiSearchResultCount(input.raw));
 
   // Fallback: resolve by path / slug (legacy R2-sourced items, transition period).
   const seenSkillIds = new Set(resolvedById.map((skill) => skill.id));
 
-  const resolvedByPathResults = await Promise.all(
-    pathCandidates.slice(0, 40).map(async (candidate) => await input.resolveSkillByPath(candidate)),
-  );
+  const resolvedByPathResults = shouldRunFallback
+    ? await Promise.all(
+        pathCandidates
+          .slice(0, 10)
+          .map(async (candidate) => await input.resolveSkillByPath(candidate)),
+      )
+    : [];
   const resolvedByPath = resolvedByPathResults
     .filter(isDefined)
     .filter((skill) => !seenSkillIds.has(skill.id));
@@ -612,9 +616,12 @@ export async function buildAiSearchResult(input: {
     seenSkillIds.add(s.id);
   }
 
-  const resolvedBySlugResults = await Promise.all(
-    slugCandidates.slice(0, 40).map(async (slug) => await input.resolveSkillBySlug(slug)),
-  );
+  const resolvedBySlugResults = shouldRunFallback
+    ? await Promise.all(
+        slugCandidates.slice(0, 10).map(async (slug) => await input.resolveSkillBySlug(slug)),
+      )
+    : [];
+
   const resolvedBySlug = resolvedBySlugResults
     .filter(isDefined)
     .filter((skill): skill is AiSearchResolvedSkillRow => !seenSkillIds.has(skill.id));
@@ -623,7 +630,6 @@ export async function buildAiSearchResult(input: {
 
   return {
     ai: {
-      mode: "ai",
       raw: {
         resolution: {
           pathCandidatesCount: pathCandidates.length,
