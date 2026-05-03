@@ -812,7 +812,7 @@ export async function listSkillsForAiSearchBackfill(input: {
       snapshotFilesTable,
       and(
         eq(snapshotFilesTable.snapshotId, snapshotsTable.id),
-        sql`lower(${snapshotFilesTable.path}) like '%skill.md'`,
+        sql`lower(${snapshotFilesTable.path}) = 'skill.md' or lower(${snapshotFilesTable.path}) like '%/skill.md'`,
       ),
     )
     .where(and(isNull(skillsTable.aiSearchItemId), eq(skillsTable.visibility, "public")))

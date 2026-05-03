@@ -702,20 +702,21 @@ const uploadSingleSkill = async (
   await deps.deprecateSnapshotsBeyondLimit({ keepLatest: 3, skillId });
 
   if (runtimeDeps.aiSearchItems) {
-    const skillMdContent =
-      skill.initialSnapshot.files.find((f) => /skill\.md$/i.test(f.path))?.content ?? "";
-    const version = skill.preferredVersion ?? "0.0.1";
-    try {
-      const { id } = await runtimeDeps.aiSearchItems.uploadItem(`${skillId}.md`, skillMdContent, {
-        authorHandle,
-        repoName,
-        skillId,
-        skillSlug: slug,
-        version,
-      });
-      await deps.updateSkillAiSearchItemId({ aiSearchItemId: id, skillId });
-    } catch {
-      // Non-fatal: search index update failure must not block the upload pipeline.
+    const skillMdFile = skill.initialSnapshot.files.find(
+      (f) => f.path.split("/").at(-1)?.toLowerCase() === "skill.md",
+    );
+    if (skillMdFile) {
+      const version = skill.preferredVersion ?? "0.0.1";
+      try {
+        const { id } = await runtimeDeps.aiSearchItems.uploadItem(
+          `${skillId}.md`,
+          skillMdFile.content,
+          { authorHandle, repoName, skillId, skillSlug: slug, version },
+        );
+        await deps.updateSkillAiSearchItemId({ aiSearchItemId: id, skillId });
+      } catch {
+        // Non-fatal: search index update failure must not block the upload pipeline.
+      }
     }
   }
 
