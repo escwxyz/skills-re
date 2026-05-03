@@ -2,6 +2,7 @@
 import Layout from "@/layouts/main.astro"
 import PageHero from "@/components/page-hero.astro"
 import { SkillList } from "@/components/skill-list"
+import { SearchRateLimitPrompt } from "@/components/search-rate-limit-prompt"
 import { createServerClient } from "@/lib/server-orpc"
 import { getSearchPageData } from "@/lib/search-data"
 
@@ -16,13 +17,15 @@ const pageData = await getSearchPageData(client, Astro.url.searchParams)
 >
   <PageHero
     eyebrow={pageData.mode === "search"
-      ? "§ Search · Public Skill Index"
-      : "§ Search · Popular Skills"}
+      ? "§ Search · Semantic AI"
+      : "§ Search · Skill Registry"}
     description={pageData.note}
     descriptionItalic
     stats={[
-      { label: "Scope", value: "Skills only", accent: "red" },
-      { label: "Results", value: pageData.resultLabel },
+      { label: "Mode", value: "Semantic AI", accent: "blue" },
+      ...(pageData.mode === "search"
+        ? [{ label: "Results", value: pageData.resultLabel }]
+        : []),
     ]}
   >
     {
@@ -51,7 +54,7 @@ const pageData = await getSearchPageData(client, Astro.url.searchParams)
           type="search"
           name="q"
           value={pageData.query}
-          placeholder="search skills by title or description…"
+          placeholder="describe what you're looking for…"
           class="font-display border-0 px-0 py-5 text-[28px] tracking-[-0.01em] focus:outline-none"
         />
       </div>
@@ -64,28 +67,36 @@ const pageData = await getSearchPageData(client, Astro.url.searchParams)
     </form>
   </section>
 
-  <section
-    class="border-rule bg-paper-2 text-muted-text border-b px-6 py-3 font-mono text-[10px] tracking-[.14em] uppercase"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <span>{pageData.resultLabel}</span>
-      <span
-        >Authors and collections will appear once the unified search contract
-        exists.</span
-      >
-    </div>
-  </section>
+  {
+    pageData.mode === "search" && (
+      <section class="border-rule bg-paper-2 text-muted-text border-b px-6 py-3 font-mono text-[10px] tracking-[.14em] uppercase">
+        <span>{pageData.resultLabel}</span>
+      </section>
+    )
+  }
 
   <section>
     {
-      pageData.items.length > 0 ? (
+      pageData.mode === "rate_limited" ? (
+        <SearchRateLimitPrompt client:load />
+      ) : pageData.items.length > 0 ? (
         <SkillList skills={pageData.items} />
-      ) : (
+      ) : pageData.mode === "search" ? (
         <div class="px-6 py-12">
           <div class="border-rule bg-paper-2 max-w-120 border px-5 py-6">
             <div class="eyebrow text-editorial-red mb-2">§ Search</div>
             <p class="text-ink-2 m-0">
-              No public skill matches were found for this query.
+              No skills matched your semantic search. Try rephrasing your query.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div class="px-6 py-12">
+          <div class="border-rule bg-paper-2 max-w-120 border px-5 py-6">
+            <div class="eyebrow text-editorial-blue mb-2">§ Semantic AI</div>
+            <p class="text-ink-2 m-0">
+              Describe what you're looking for and the AI will find the most
+              relevant skills from the registry.
             </p>
           </div>
         </div>

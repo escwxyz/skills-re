@@ -192,99 +192,6 @@ describe("skills service", () => {
     ).rejects.toThrow("Your account must be linked to GitHub before claiming.");
   });
 
-  test("forwards search filters to the search repo helper", async () => {
-    const calls: unknown[] = [];
-    const service = createSkillsService({
-      searchSkillsPageByFilters: (input) => {
-        calls.push(input);
-        return Promise.resolve({
-          continueCursor: "cursor-2",
-          isDone: false,
-          page: [
-            {
-              authorHandle: "acme",
-              createdAt: 1,
-              description: "Widget skill",
-              downloadsAllTime: 2,
-              downloadsTrending: 3,
-              forkCount: 4,
-              id: "skill-1",
-              isVerified: true,
-              latestVersion: "1.0.0",
-              license: "MIT",
-              primaryCategory: "productivity",
-              repoName: "skills",
-              repoUrl: "https://github.com/acme/skills",
-              slug: "widget",
-              stargazerCount: 5,
-              syncTime: 6,
-              title: "Widget",
-              updatedAt: 7,
-              viewsAllTime: 8,
-            },
-          ],
-        });
-      },
-    });
-
-    await expect(
-      service.search({
-        authorHandle: "acme",
-        categories: ["productivity"],
-        cursor: "cursor-1",
-        limit: 10,
-        minAuditScore: 80,
-        minScore: 90,
-        query: "widget",
-        sort: "stars",
-        tags: ["featured"],
-      }),
-    ).resolves.toEqual({
-      continueCursor: "cursor-2",
-      isDone: false,
-      page: [
-        {
-          author: {
-            githubUrl: "https://github.com/acme",
-            handle: "acme",
-          },
-          authorHandle: "acme",
-          createdAt: 1,
-          description: "Widget skill",
-          downloadsAllTime: 2,
-          downloadsTrending: 3,
-          forkCount: 4,
-          id: "skill-1",
-          isVerified: true,
-          latestVersion: "1.0.0",
-          license: "MIT",
-          primaryCategory: "productivity",
-          repoName: "skills",
-          repoUrl: "https://github.com/acme/skills",
-          slug: "widget",
-          stargazerCount: 5,
-          syncTime: 6,
-          title: "Widget",
-          updatedAt: 7,
-          viewsAllTime: 8,
-        },
-      ],
-    });
-    expect(calls).toEqual([
-      {
-        authorHandle: "acme",
-        categories: ["productivity"],
-        cursor: "cursor-1",
-        limit: 10,
-        minAuditScore: 80,
-        minScore: 90,
-        query: "widget",
-        sort: "stars",
-        tags: ["featured"],
-      },
-    ]);
-  });
-
   test("resolves ai search results into the public search shape", async () => {
     const service = createSkillsService({
       findSkillByPath: (input) =>
@@ -318,7 +225,6 @@ describe("skills service", () => {
 
     const result = await service.search(
       {
-        mode: "ai",
         query: "widget",
         rewriteQuery: false,
       },

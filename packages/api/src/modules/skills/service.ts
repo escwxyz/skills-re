@@ -133,13 +133,6 @@ interface SearchSkillsPageInput {
   tags?: string[];
 }
 
-interface NormalSearchResult {
-  ai?: undefined;
-  continueCursor: string;
-  isDone: boolean;
-  page: ReturnType<typeof toSearchSkillItem>[];
-}
-
 export interface SkillsServiceDeps {
   checkDuplicatedRepo: (input: {
     directoryPath?: string;
@@ -494,46 +487,32 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     },
 
     async search(
-      input?: SearchSkillsPageInput,
+      input: { query: string; rewriteQuery?: boolean },
       aiSearchRuntime?: AiSearchRuntime,
-    ): Promise<AiSearchResult | NormalSearchResult> {
-      if (input?.mode === "ai") {
-        const query = input.query?.trim() ?? "";
-        if (!query) {
-          throw new Error("query is required for ai mode.");
-        }
-
-        const runtime = aiSearchRuntime;
-        if (!runtime) {
-          throw new Error(
-            "AI search runtime is unavailable. Configure the server AI search binding.",
-          );
-        }
-
-        const raw = await runtime.search({
-          query,
-          rewriteQuery: input.rewriteQuery,
-        });
-
-        return await buildAiSearchResult({
-          raw,
-          resolveSkillByPath: async (candidate) => {
-            const row = await deps.findSkillByPath(candidate);
-            return row || null;
-          },
-          resolveSkillBySlug: async (slug) => {
-            const row = await deps.findSkillBySlug(slug);
-            return row || null;
-          },
-        });
+    ): Promise<AiSearchResult> {
+      const runtime = aiSearchRuntime;
+      if (!runtime) {
+        throw new Error(
+          "AI search runtime is unavailable. Configure the server AI search binding.",
+        );
       }
 
-      const page = await deps.searchSkillsPageByFilters(input);
-      return {
-        continueCursor: page.continueCursor,
-        isDone: page.isDone,
-        page: page.page.map((row) => toSearchSkillItem(row)),
-      } satisfies NormalSearchResult;
+      const raw = await runtime.search({
+        query: input.query,
+        rewriteQuery: input.rewriteQuery ?? true,
+      });
+
+      return await buildAiSearchResult({
+        raw,
+        resolveSkillByPath: async (candidate) => {
+          const row = await deps.findSkillByPath(candidate);
+          return row || null;
+        },
+        resolveSkillBySlug: async (slug) => {
+          const row = await deps.findSkillBySlug(slug);
+          return row || null;
+        },
+      });
     },
 
     async listReposPage(input?: { cursor?: string; limit?: number }) {
@@ -822,7 +801,7 @@ export async function getSkillsHistoryInfo(input: { skillIds: string[] }) {
 }
 
 export async function searchSkills(
-  input?: SearchSkillsPageInput,
+  input: { query: string; rewriteQuery?: boolean },
   aiSearchRuntime?: AiSearchRuntime,
 ) {
   return await skillsService.search(input, aiSearchRuntime);

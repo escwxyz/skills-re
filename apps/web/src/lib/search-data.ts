@@ -25,36 +25,62 @@ interface SearchSkillListItem {
 
 export interface SearchPageData {
   items: BrowseSkillItem[];
-  mode: "browse" | "search";
+  mode: "browse" | "search" | "rate_limited";
   note: string;
   query: string;
   resultLabel: string;
   titleLabel: string;
 }
 
+const isRateLimitError = (err: unknown): boolean => {
+  if (!err || typeof err !== "object") {
+    return false;
+  }
+  const e = err as { status?: unknown; code?: unknown };
+  return e.status === 429 || e.code === "RATE_LIMITED" || e.code === "TOO_MANY_REQUESTS";
+};
+
 export const getSearchPageData = async (
   client: AppRouterClient,
   searchParams: URLSearchParams,
 ): Promise<SearchPageData> => {
   const query = searchParams.get("q")?.trim() ?? "";
-  const result = await client.skills.search({
-    limit: 12,
-    query: query || undefined,
-    sort: "downloads-all-time",
-  });
+
+  if (!query) {
+    return {
+      items: [],
+      mode: "browse",
+      note: "Enter a query to search skills with semantic AI search.",
+      query: "",
+      resultLabel: "",
+      titleLabel: "Search skills",
+    };
+  }
+
+  let result: Awaited<ReturnType<typeof client.skills.search>>;
+  try {
+    result = await client.skills.search({ query, rewriteQuery: true });
+  } catch (error) {
+    if (isRateLimitError(error)) {
+      return {
+        items: [],
+        mode: "rate_limited",
+        note: "",
+        query,
+        resultLabel: "",
+        titleLabel: query,
+      };
+    }
+    throw error;
+  }
   const items = (result.page as SearchSkillListItem[]).map(toBrowseSkillItem);
-  const mode = query ? "search" : "browse";
 
   return {
     items,
-    mode,
-    note: query
-      ? "Search currently returns skills only. Authors and collections need a unified public search contract."
-      : "Popular skills shown from the live public index. Enter a query to search skills by title and description.",
+    mode: "search",
+    note: "",
     query,
-    resultLabel: query
-      ? `${formatInteger(items.length)} live skill matches`
-      : `${formatInteger(items.length)} popular skills`,
-    titleLabel: query || "Popular skills",
+    resultLabel: `${formatInteger(items.length)} AI matches`,
+    titleLabel: query,
   };
 };

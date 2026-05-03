@@ -32,27 +32,17 @@ describe("search-data", () => {
 
     expect(data.mode).toBe("search");
     expect(data.query).toBe("review");
-    expect(data.resultLabel).toBe("1 live skill matches");
-    expect(data.note).toContain("skills only");
+    expect(data.resultLabel).toBe("1 AI matches");
+    expect(data.note).toBe("");
     expect(data.items).toHaveLength(1);
   });
 
   test("returns browse mode labels when the query is empty", async () => {
-    const data = await getSearchPageData(
-      {
-        skills: {
-          search: () => ({
-            continueCursor: "",
-            isDone: true,
-            page: [],
-          }),
-        },
-      } as never,
-      new URLSearchParams(),
-    );
+    const data = await getSearchPageData({} as never, new URLSearchParams());
 
     expect(data.mode).toBe("browse");
-    expect(data.titleLabel).toBe("Popular skills");
-    expect(data.resultLabel).toBe("0 popular skills");
+    expect(data.titleLabel).toBe("Search skills");
+    expect(data.resultLabel).toBe("");
+    expect(data.items).toHaveLength(0);
   });
 });

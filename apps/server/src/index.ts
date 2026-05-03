@@ -18,6 +18,7 @@ import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
 import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
+import { searchRateLimiter } from "./middlewares/search-rate-limiter";
 
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
@@ -28,6 +29,7 @@ export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
+export { SearchRateLimiter } from "./dos/search-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -176,6 +178,8 @@ export const rpcHandler = new RPCHandler(appRouter, {
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
 app.use("/skills/submit", submitPublicRateLimiter);
+app.use("/rpc/skills/search", searchRateLimiter);
+app.use("/skills/search", searchRateLimiter);
 
 app.use("/*", async (c, next) => {
   const context = await createServerContext({ context: c });

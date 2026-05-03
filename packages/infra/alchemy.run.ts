@@ -56,6 +56,10 @@ const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limit
   className: "SubmitRateLimiter",
 });
 
+const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limiter", {
+  className: "SearchRateLimiter",
+});
+
 // Legacy queues – owned by the skills.re worker; kept here so Alchemy does not delete them.
 // DO NOT add these as eventSources for the server worker below.
 // const _legacyEvaluationWorkflowQueue = await Queue("EVALUATION_WORKFLOW_QUEUE", {
@@ -312,6 +316,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
+    SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,
     ...workflowQueueBindings,
   },
