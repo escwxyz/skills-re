@@ -10,12 +10,7 @@ import {
   skillListItemSchema,
   skillPathSchema,
 } from "./common/content";
-import {
-  githubOwnerSchema,
-  githubRepoSchema,
-  skillSlugSchema,
-  tagSlugSchema,
-} from "./common/slugs";
+import { githubOwnerSchema, githubRepoSchema, skillSlugSchema } from "./common/slugs";
 
 const skillLookupInputSchema = z.object({
   slug: skillSlugSchema,
@@ -69,23 +64,18 @@ const skillHistoryInfoInputSchema = z.object({
   skillIds: z.array(z.string().min(1)),
 });
 
-const searchSkillsInputSchema = z
-  .object({
-    authorHandle: z.string().optional(),
-    categories: z.array(tagSlugSchema).optional(),
-    cursor: z.string().optional(),
-    mode: z.enum(["ai", "normal"]).optional(),
-    limit: z.number().int().min(1).max(100).optional(),
-    minAuditScore: z.number().int().min(0).max(100).optional(),
-    minScore: z.number().int().min(0).max(100).optional(),
-    query: z.string().optional(),
-    rewriteQuery: z.boolean().optional(),
-    sort: z
-      .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
-      .optional(),
-    tags: z.array(tagSlugSchema).optional(),
-  })
-  .optional();
+const searchSkillsInputSchema = z.object({
+  authorHandle: z.string().min(1).optional(),
+  categories: z.array(z.string().min(1)).optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  query: z.string().trim().min(1).optional(),
+  rewriteQuery: z.boolean().optional(),
+  sort: z
+    .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
+    .optional(),
+  tags: z.array(z.string().min(1)).optional(),
+});
 
 const searchSkillsResultSchema = z.object({
   ai: z
@@ -267,7 +257,7 @@ export const skillsContract = {
     .output(z.array(skillHistoryInfoItemSchema)),
   search: baseContract
     .route({
-      description: "Searches public skills with legacy browse filters and sort options.",
+      description: "Searches public skills using semantic AI search.",
       method: "POST",
       path: "/skills/search",
       tags: ["Skills"],

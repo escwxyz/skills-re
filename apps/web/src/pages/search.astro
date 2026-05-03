@@ -1,9 +1,9 @@
 ---
 import Layout from "@/layouts/main.astro"
 import PageHero from "@/components/page-hero.astro"
-import { SkillList } from "@/components/skill-list"
-import { createServerClient } from "@/lib/server-orpc"
+import { SemanticSearchPanel } from "@/components/semantic-search-panel"
 import { getSearchPageData } from "@/lib/search-data"
+import { createServerClient } from "@/lib/server-orpc"
 
 const client = createServerClient(Astro.request)
 const pageData = await getSearchPageData(client, Astro.url.searchParams)
@@ -11,85 +11,17 @@ const pageData = await getSearchPageData(client, Astro.url.searchParams)
 
 <Layout
   title={pageData.query
-    ? `"${pageData.query}" — Search — skills.re`
-    : "Search — skills.re"}
+    ? `"${pageData.query}" - Search - skills.re`
+    : "Search - skills.re"}
 >
   <PageHero
-    eyebrow={pageData.mode === "search"
-      ? "§ Search · Public Skill Index"
-      : "§ Search · Popular Skills"}
-    description={pageData.note}
+    eyebrow="§ Search · Semantic AI"
+    description="Ask the registry in natural language. Cloudflare RAG resolves the best matches, and the page shows loading skeletons while results are still in flight."
     descriptionItalic
-    stats={[
-      { label: "Scope", value: "Skills only", accent: "red" },
-      { label: "Results", value: pageData.resultLabel },
-    ]}
+    stats={[{ label: "Mode", value: "Cloudflare RAG", accent: "blue" }]}
   >
-    {
-      pageData.mode === "search" ? (
-        <>
-          Results for{" "}
-          <em class="text-editorial-red">"{pageData.titleLabel}"</em>
-        </>
-      ) : (
-        <>
-          Search the <em class="text-editorial-blue">registry.</em>
-        </>
-      )
-    }
+    Search the <em class="text-editorial-blue">registry.</em>
   </PageHero>
 
-  <section class="border-rule border-b">
-    <form
-      method="GET"
-      action="/search"
-      class="grid grid-cols-1 md:grid-cols-[1fr_auto]"
-    >
-      <div class="flex items-center">
-        <span class="text-editorial-red px-6 font-mono text-[18px]">›</span>
-        <input
-          type="search"
-          name="q"
-          value={pageData.query}
-          placeholder="search skills by title or description…"
-          class="font-display border-0 px-0 py-5 text-[28px] tracking-[-0.01em] focus:outline-none"
-        />
-      </div>
-      <button
-        type="submit"
-        class="border-rule bg-ink text-paper border-t px-6 py-5 font-mono text-[11px] tracking-[.14em] uppercase md:border-t-0 md:border-l"
-      >
-        Search →
-      </button>
-    </form>
-  </section>
-
-  <section
-    class="border-rule bg-paper-2 text-muted-text border-b px-6 py-3 font-mono text-[10px] tracking-[.14em] uppercase"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <span>{pageData.resultLabel}</span>
-      <span
-        >Authors and collections will appear once the unified search contract
-        exists.</span
-      >
-    </div>
-  </section>
-
-  <section>
-    {
-      pageData.items.length > 0 ? (
-        <SkillList skills={pageData.items} />
-      ) : (
-        <div class="px-6 py-12">
-          <div class="border-rule bg-paper-2 max-w-120 border px-5 py-6">
-            <div class="eyebrow text-editorial-red mb-2">§ Search</div>
-            <p class="text-ink-2 m-0">
-              No public skill matches were found for this query.
-            </p>
-          </div>
-        </div>
-      )
-    }
-  </section>
+  <SemanticSearchPanel client:load initialData={pageData} />
 </Layout>

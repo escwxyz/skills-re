@@ -14,6 +14,11 @@ describe("search-data", () => {
             isDone: true,
             page: [
               {
+                aiMatch: {
+                  score: 0.91,
+                  snippet: "Widget docs",
+                  sourcePath: "acme/skills/skills/widget/skill.md",
+                },
                 authorHandle: "hallie",
                 description: "Diff-first review.",
                 downloadsAllTime: 412_000,
@@ -32,27 +37,41 @@ describe("search-data", () => {
 
     expect(data.mode).toBe("search");
     expect(data.query).toBe("review");
-    expect(data.resultLabel).toBe("1 live skill matches");
-    expect(data.note).toContain("skills only");
+    expect(data.resultLabel).toBe("1 AI matches");
+    expect(data.note).toBe("");
     expect(data.items).toHaveLength(1);
+    expect(data.items[0]?.aiMatch).toMatchObject({
+      score: 0.91,
+      snippet: "Widget docs",
+      sourcePath: "acme/skills/skills/widget/skill.md",
+    });
   });
 
   test("returns browse mode labels when the query is empty", async () => {
+    const data = await getSearchPageData({} as never, new URLSearchParams());
+
+    expect(data.mode).toBe("browse");
+    expect(data.titleLabel).toBe("Search skills");
+    expect(data.resultLabel).toBe("");
+    expect(data.items).toHaveLength(0);
+  });
+
+  test("falls back to a browse state when semantic search is unavailable", async () => {
     const data = await getSearchPageData(
       {
         skills: {
-          search: () => ({
-            continueCursor: "",
-            isDone: true,
-            page: [],
-          }),
+          search: () => {
+            throw new Error("backend unavailable");
+          },
         },
       } as never,
-      new URLSearchParams(),
+      new URLSearchParams("q=review"),
     );
 
     expect(data.mode).toBe("browse");
-    expect(data.titleLabel).toBe("Popular skills");
-    expect(data.resultLabel).toBe("0 popular skills");
+    expect(data.query).toBe("review");
+    expect(data.titleLabel).toBe("review");
+    expect(data.note).toContain("unavailable");
+    expect(data.items).toHaveLength(0);
   });
 });

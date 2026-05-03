@@ -14,10 +14,19 @@ interface LegacySkillCard {
   version: string;
 }
 
-type SkillCardProps = LegacySkillCard | SkillCardItem;
+interface SkillMatch {
+  itemKey?: string;
+  score?: number;
+  snippet?: string;
+  sourcePath?: string;
+  version?: string;
+}
 
-const isCatalogSkillCard = (skill: SkillCardProps): skill is SkillCardItem =>
-  "categoryLabel" in skill;
+type SkillCardProps = LegacySkillCard | (SkillCardItem & { aiMatch?: SkillMatch });
+
+const isCatalogSkillCard = (
+  skill: SkillCardProps,
+): skill is SkillCardItem & { aiMatch?: SkillMatch } => "categoryLabel" in skill;
 
 interface Props {
   skill: SkillCardProps;
@@ -30,6 +39,10 @@ export const SkillCard = ({ skill }: Props) => {
   const starsLabel = isCatalogSkillCard(skill) ? skill.starsLabel : String(skill.stars);
   const { auditScore } = skill;
   const initial = authorLabel.charAt(0).toUpperCase();
+  const aiScore =
+    isCatalogSkillCard(skill) && typeof skill.aiMatch?.score === "number"
+      ? `${Math.round(skill.aiMatch.score * 100)}%`
+      : null;
 
   return (
     <a
@@ -49,6 +62,29 @@ export const SkillCard = ({ skill }: Props) => {
       <p className="font-serif text-[13px] leading-normal text-ink-2 mb-4 line-clamp-3">
         {skill.description}
       </p>
+
+      {isCatalogSkillCard(skill) && skill.aiMatch ? (
+        <div className="mb-4 rounded-none border border-rule bg-paper-2 px-3 py-2">
+          <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[9px] tracking-[.16em] uppercase text-muted-text">
+            <span>Semantic match</span>
+            {aiScore ? <span>{aiScore}</span> : null}
+          </div>
+          {skill.aiMatch.snippet ? (
+            <p className="line-clamp-3 font-serif text-[12px] leading-normal text-ink-2">
+              {skill.aiMatch.snippet}
+            </p>
+          ) : (
+            <p className="m-0 font-serif text-[12px] leading-normal text-ink-2">
+              Search result matched this skill semantically.
+            </p>
+          )}
+          {skill.aiMatch.sourcePath ? (
+            <p className="mt-2 line-clamp-1 font-mono text-[9px] tracking-[.12em] uppercase text-muted-text">
+              {skill.aiMatch.sourcePath}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Tags */}
       <div className="flex flex-wrap gap-1 mb-4 mt-auto">

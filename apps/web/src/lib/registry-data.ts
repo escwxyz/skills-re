@@ -4,6 +4,14 @@ import {
   getCategoryPresentation,
 } from "./category-taxonomy";
 
+export interface AiMatch {
+  itemKey?: string;
+  score?: number;
+  snippet?: string;
+  sourcePath?: string;
+  version?: string;
+}
+
 interface SearchSkillListItem {
   author?: {
     githubUrl?: string;
@@ -11,6 +19,7 @@ interface SearchSkillListItem {
     name?: string | null;
   };
   authorHandle?: string;
+  aiMatch?: AiMatch;
   description: string;
   downloadsAllTime?: number;
   downloadsTrending?: number;
@@ -148,6 +157,7 @@ export interface BrowseTagItem {
 export interface BrowseSkillItem extends SkillCardItem {
   downloadsLabel: string;
   latestVersionLabel: string;
+  aiMatch?: AiMatch;
 }
 
 export interface SkillsBrowseFilters {
@@ -325,6 +335,15 @@ export const toSkillCardItem = (skill: SearchSkillListItem): SkillCardItem => ({
 
 export const toBrowseSkillItem = (skill: SearchSkillListItem): BrowseSkillItem => ({
   ...toSkillCardItem(skill),
+  aiMatch: skill.aiMatch
+    ? {
+        itemKey: skill.aiMatch.itemKey,
+        score: skill.aiMatch.score,
+        snippet: skill.aiMatch.snippet,
+        sourcePath: skill.aiMatch.sourcePath,
+        version: skill.aiMatch.version,
+      }
+    : undefined,
   downloadsLabel: formatCompactNumber(skill.downloadsAllTime ?? 0),
   latestVersionLabel: skill.latestVersion ? `v${skill.latestVersion}` : "latest",
 });

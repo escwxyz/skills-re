@@ -1,6 +1,8 @@
 // oxlint-disable typescript/no-non-null-assertion
 import alchemy from "alchemy";
 import {
+  Ai,
+  AiSearch,
   AnalyticsEngineDataset,
   Astro,
   D1Database,
@@ -40,6 +42,16 @@ const snapshotFilesBucket = await R2Bucket("SNAPSHOT_FILES", {
   },
 });
 
+const aiSearch = await AiSearch("AI_SEARCH", {
+  adopt: true,
+  source: {
+    bucket: snapshotFilesBucket,
+    includePaths: ["**/SKILL.md"],
+    excludePaths: ["skills-upload/staging/**", "snapshot-archive/staging/**", "**/*.tar.gz"],
+    type: "r2",
+  },
+});
+
 const archiveFilesBucket = await R2Bucket("ARCHIVE_FILES", {
   name: "skills-re-archives",
   adopt: true,
@@ -54,6 +66,10 @@ const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
 
 const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limiter", {
   className: "SubmitRateLimiter",
+});
+
+const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limiter", {
+  className: "SearchRateLimiter",
 });
 
 // Legacy queues – owned by the skills.re worker; kept here so Alchemy does not delete them.
@@ -303,6 +319,7 @@ export const server = await Worker("server", {
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
+    AI: Ai(),
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
     SNAPSHOT_FILES: snapshotFilesBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
@@ -311,7 +328,9 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    RAG_ID: aiSearch.id,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
+    SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,
     ...workflowQueueBindings,
   },

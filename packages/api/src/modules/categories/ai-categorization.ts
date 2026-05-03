@@ -2,6 +2,8 @@ import { chat } from "@tanstack/ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
+import { parseJsonFromModelText } from "../ai/model-output";
+import { retryAiTaskCall } from "../ai/retry";
 import { CATEGORY_SLUGS } from "./taxonomy";
 import type { CategoryDefinition } from "./taxonomy";
 
@@ -114,13 +116,18 @@ export const generateSkillCategoriesBatch = async (
   let lastError: unknown = null;
   for (const adapter of adapters) {
     try {
-      const output = await resolvedDeps.chat({
-        adapter,
-        maxTokens: 4096,
-        messages: [{ content: userPrompt, role: "user" }],
-        outputSchema: categorizationOutputSchema,
-        systemPrompts: [systemPrompt],
-      });
+      const text = await retryAiTaskCall(
+        async () =>
+          await resolvedDeps.chat({
+            adapter,
+            maxTokens: 4096,
+            messages: [{ content: userPrompt, role: "user" }],
+            stream: false,
+            systemPrompts: [systemPrompt],
+          }),
+      );
+
+      const output = categorizationOutputSchema.parse(parseJsonFromModelText(text));
 
       const returnedKeys = new Set(output.items.map((item) => item.key));
       const missingKey = [...expectedKeys].find((key) => !returnedKeys.has(key));
