@@ -1,6 +1,7 @@
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { AiSearchItemsRuntime, SnapshotStorageRuntime } from "@skills-re/api/types";
 import type { AiSearchBackfillWorkflowPayload } from "./ai-search-backfill";
+import type { AiSearchBackfillRow } from "@skills-re/api/modules/skills/repo";
 
 const DEFAULT_BATCH_SIZE = 50;
 
@@ -14,18 +15,10 @@ export interface WorkflowStep {
 
 export interface AiSearchBackfillWorkflowDeps {
   aiSearchItems: AiSearchItemsRuntime;
-  listSkillsForAiSearchBackfill: (input: { batchSize: number; offset: number }) => Promise<
-    {
-      aiSearchItemId: string | null;
-      authorHandle: string;
-      repoName: string;
-      skillId: string;
-      skillMdR2Key: string | null;
-      skillSlug: string;
-      snapshotId: string | null;
-      version: string | null;
-    }[]
-  >;
+  listSkillsForAiSearchBackfill: (input: {
+    batchSize: number;
+    offset: number;
+  }) => Promise<AiSearchBackfillRow[]>;
   snapshotStorage: SnapshotStorageRuntime;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
 }
