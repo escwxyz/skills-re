@@ -85,6 +85,7 @@ export interface AiSearchPageItem {
 
 export interface AiSearchResult {
   ai: {
+    mode: "ai";
     raw: {
       resolution: {
         pathCandidatesCount: number;
@@ -630,6 +631,7 @@ export async function buildAiSearchResult(input: {
 
   return {
     ai: {
+      mode: "ai",
       raw: {
         resolution: {
           pathCandidatesCount: pathCandidates.length,

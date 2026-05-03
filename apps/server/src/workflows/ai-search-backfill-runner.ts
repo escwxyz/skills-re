@@ -17,7 +17,7 @@ export interface AiSearchBackfillWorkflowDeps {
   aiSearchItems: AiSearchItemsRuntime;
   listSkillsForAiSearchBackfill: (input: {
     batchSize: number;
-    offset: number;
+    lastSeenId?: string;
   }) => Promise<AiSearchBackfillRow[]>;
   snapshotStorage: SnapshotStorageRuntime;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
@@ -29,17 +29,19 @@ export const runAiSearchBackfillWorkflow = async (
   deps: AiSearchBackfillWorkflowDeps,
 ) => {
   const batchSize = event.payload.batchSize ?? DEFAULT_BATCH_SIZE;
-  const offset = event.payload.offset ?? 0;
+  const { lastSeenId } = event.payload;
 
   const skills = await step.do(
-    `ai-search-backfill-fetch-batch-offset-${offset}`,
+    `ai-search-backfill-fetch-batch-lastSeenId-${lastSeenId ?? "start"}`,
     workflowStepRetryPolicy.aiSearchBackfillBatch,
     async () =>
       await deps.listSkillsForAiSearchBackfill({
         batchSize,
-        offset,
+        lastSeenId,
       }),
   );
+
+  const nextLastSeenId = skills.at(-1)?.skillId ?? null;
 
   for (const skill of skills) {
     if (!skill.skillMdR2Key) {
@@ -78,5 +80,5 @@ export const runAiSearchBackfillWorkflow = async (
     );
   }
 
-  return { processed: skills.length };
+  return { nextLastSeenId, processed: skills.length };
 };

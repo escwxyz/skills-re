@@ -2,7 +2,7 @@ import { enqueueWorkflow, getWorkflowBinding } from "@/lib/cloudflare/workflows"
 
 export interface AiSearchBackfillWorkflowPayload {
   batchSize?: number;
-  offset?: number;
+  lastSeenId?: string;
 }
 
 export interface AiSearchBackfillWorkflowScheduler {

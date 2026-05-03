@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 
 import { reposTable } from "@skills-re/db/schema/repos";
 import { skillsTable } from "@skills-re/db/schema/skills";
@@ -792,8 +792,13 @@ export interface AiSearchBackfillRow {
 
 export async function listSkillsForAiSearchBackfill(input: {
   batchSize: number;
-  offset: number;
+  lastSeenId?: string;
 }): Promise<AiSearchBackfillRow[]> {
+  const conditions = [isNull(skillsTable.aiSearchItemId), eq(skillsTable.visibility, "public")];
+  if (input.lastSeenId !== undefined) {
+    conditions.push(gt(skillsTable.id, asSkillId(input.lastSeenId)));
+  }
+
   const rows = await db
     .select({
       aiSearchItemId: skillsTable.aiSearchItemId,
@@ -815,10 +820,9 @@ export async function listSkillsForAiSearchBackfill(input: {
         sql`lower(${snapshotFilesTable.path}) = 'skill.md' or lower(${snapshotFilesTable.path}) like '%/skill.md'`,
       ),
     )
-    .where(and(isNull(skillsTable.aiSearchItemId), eq(skillsTable.visibility, "public")))
+    .where(and(...conditions))
     .orderBy(asc(skillsTable.id))
-    .limit(input.batchSize)
-    .offset(input.offset);
+    .limit(input.batchSize);
 
   return rows.map((r) => ({
     aiSearchItemId: r.aiSearchItemId,

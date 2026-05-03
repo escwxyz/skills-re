@@ -25,13 +25,37 @@ export class AiSearchBackfillWorkflow extends WorkflowEntrypoint<
       run: async () => {
         const { listSkillsForAiSearchBackfill, updateSkillAiSearchItemId } =
           await import("@skills-re/api/modules/skills/repo");
+        const initialPayload: AiSearchBackfillWorkflowPayload = {
+          batchSize: event.payload.batchSize,
+          lastSeenId: event.payload.lastSeenId,
+        };
+        let payload: AiSearchBackfillWorkflowPayload = initialPayload;
+        let totalProcessed = 0;
 
-        runAiSearchBackfillWorkflow(event, step, {
-          aiSearchItems,
-          listSkillsForAiSearchBackfill,
-          snapshotStorage,
-          updateSkillAiSearchItemId,
-        });
+        for (;;) {
+          const result = await runAiSearchBackfillWorkflow(
+            {
+              payload,
+            },
+            step,
+            {
+              aiSearchItems,
+              listSkillsForAiSearchBackfill,
+              snapshotStorage,
+              updateSkillAiSearchItemId,
+            },
+          );
+
+          totalProcessed += result.processed;
+          if (result.nextLastSeenId === null) {
+            return { processed: totalProcessed };
+          }
+
+          payload = {
+            batchSize: payload.batchSize,
+            lastSeenId: result.nextLastSeenId,
+          };
+        }
       },
       workflowName: "skills-re-v1-ai-search-backfill",
     });
