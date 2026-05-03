@@ -30,50 +30,26 @@ function SubmitLabel({
 
 const formSchema = z.object({
   email: z.email(),
-  city: z.string().nullable().optional(),
-  country: z.string().nullable().optional(),
-  device: z.enum(["mobile", "desktop"]).nullable().optional(),
-  ip: z.string().nullable().optional(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 interface NewsletterFormProps {
   className?: string;
-  initialIp?: string | null;
-  initialCountry?: string | null;
-  initialCity?: string | null;
-  initialDevice?: "mobile" | "desktop" | null;
 }
 
-export const NewsletterForm = ({
-  className,
-  initialIp,
-  initialCountry,
-  initialCity,
-  initialDevice,
-}: NewsletterFormProps) => {
+export const NewsletterForm = ({ className }: NewsletterFormProps) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useAppForm({
     defaultValues: {
       email: "",
-      ip: initialIp ?? null,
-      country: initialCountry ?? null,
-      city: initialCity ?? null,
-      device: initialDevice ?? null,
     } as FormSchema,
 
     onSubmit: async ({ value }) => {
       setSubmitError(null);
       try {
-        await orpc.newsletter.create({
-          email: value.email,
-          ip: value.ip,
-          country: value.country,
-          city: value.city,
-          device: value.device,
-        });
+        await orpc.newsletter.create({ email: value.email });
       } catch {
         setSubmitError("Couldn't file your subscription — please try again.");
       }

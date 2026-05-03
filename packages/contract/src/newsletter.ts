@@ -3,11 +3,7 @@ import { z } from "zod";
 import { baseContract } from "./common/base";
 
 const newsletterCreateInputSchema = z.object({
-  city: z.string().nullable().optional(),
-  country: z.string().nullable().optional(),
-  device: z.enum(["mobile", "desktop"]).nullable().optional(),
   email: z.email("Please input valid email"),
-  ip: z.string().nullable().optional(),
 });
 
 export const newsletterContract = {

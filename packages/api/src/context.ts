@@ -20,6 +20,7 @@ export async function createContext<
   });
   return {
     auth: null,
+    requestHeaders: context.req.raw.headers,
     session,
   };
 }

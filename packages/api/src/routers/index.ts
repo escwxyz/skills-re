@@ -295,9 +295,16 @@ export const appRouter = {
     ),
   },
   newsletter: {
-    create: publicProcedure.newsletter.create.handler(({ input }) =>
-      newsletterService.create(input),
-    ),
+    create: publicProcedure.newsletter.create.handler(({ input, context }) => {
+      const h = context.requestHeaders;
+      const ip =
+        h?.get("cf-connecting-ip") ?? h?.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+      const country = h?.get("cf-ipcountry") ?? null;
+      const city = h?.get("cf-ipcity") ?? null;
+      const ua = h?.get("user-agent") ?? "";
+      const device: "mobile" | "desktop" = /mobile/i.test(ua) ? "mobile" : "desktop";
+      return newsletterService.create({ email: input.email, ip, country, city, device });
+    }),
   },
   github: {
     fetchRepo: publicProcedure.github.fetchRepo.handler(({ input, context }) => {

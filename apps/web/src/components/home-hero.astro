@@ -4,15 +4,6 @@ import { localizeHref } from "@/paraglide/runtime"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { AgentLogoCloud } from "@/components/agent-logo-cloud"
 
-const req = Astro.request
-const ip =
-  req.headers.get("cf-connecting-ip") ??
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  null
-const country = req.headers.get("cf-ipcountry") ?? null
-const city = req.headers.get("cf-ipcity") ?? null
-const ua = req.headers.get("user-agent") ?? ""
-const device: "mobile" | "desktop" = /mobile/i.test(ua) ? "mobile" : "desktop"
 ---
 
 <section
@@ -88,13 +79,7 @@ const device: "mobile" | "desktop" = /mobile/i.test(ua) ? "mobile" : "desktop"
       >
         Join the registry
       </h3>
-      <NewsletterForm
-        client:load
-        initialIp={ip}
-        initialCountry={country}
-        initialCity={city}
-        initialDevice={device}
-      />
+      <NewsletterForm client:load />
     </div>
 
     <div class="grid grid-cols-2 gap-x-4 gap-y-3 pt-1">
