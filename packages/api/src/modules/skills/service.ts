@@ -124,7 +124,6 @@ interface SearchSkillsPageInput {
   authorHandle?: string;
   categories?: string[];
   cursor?: string;
-  mode?: "ai" | "normal";
   limit?: number;
   minAuditScore?: number;
   minScore?: number;

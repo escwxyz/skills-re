@@ -14,6 +14,16 @@ export const searchRateLimiter: MiddlewareHandler<{
     return next();
   }
 
+  // Only rate-limit actual search queries — filter-only calls (authorHandle, sort, etc.)
+  // are used for SSR page rendering and should not be throttled.
+  try {
+    const body = await c.req.raw.clone().json();
+    const query = body?.json?.query ?? body?.query; // oRPC: body.json.query, OpenAPI: body.query
+    if (!query) {return next();}
+  } catch {
+    return next();
+  }
+
   const ip =
     c.req.header("CF-Connecting-IP") ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim();
 

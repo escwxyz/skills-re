@@ -249,7 +249,6 @@ describe("skills service", () => {
     );
 
     expect(result.ai).toMatchObject({
-      mode: "ai",
       raw: {
         resolution: {
           pathCandidatesCount: 1,

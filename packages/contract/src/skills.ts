@@ -80,7 +80,6 @@ const searchSkillsInputSchema = z.object({
 const searchSkillsResultSchema = z.object({
   ai: z
     .object({
-      mode: z.literal("ai"),
       raw: z.unknown().optional(),
       resolvedSkillsCount: z.number().int().nonnegative(),
       resultCount: z.number().int().nonnegative(),
