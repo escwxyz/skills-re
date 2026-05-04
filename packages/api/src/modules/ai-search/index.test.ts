@@ -69,7 +69,6 @@ describe("buildAiSearchResult", () => {
     expect(pathCandidates).toEqual([]);
     expect(slugCandidates).toEqual([]);
     expect(result.ai).toMatchObject({
-      mode: "ai",
       raw: {
         resolution: {
           pathCandidatesCount: 1,

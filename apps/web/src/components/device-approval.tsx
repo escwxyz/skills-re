@@ -8,7 +8,7 @@ import { localizeHref } from "@/paraglide/runtime";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldError } from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/form";
 import {
   InputOTP,
   InputOTPGroup,
@@ -84,9 +84,9 @@ export function DeviceApproval({ currentUser, userCode = "" }: Props) {
             >
               {(field) => (
                 <Field className="space-y-2">
-                  <label className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+                  <FieldLabel className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
                     User code
-                  </label>
+                  </FieldLabel>
                   <InputOTP maxLength={8} value={field.state.value} onChange={field.handleChange}>
                     <InputOTPGroup>
                       <InputOTPSlot index={0} />
