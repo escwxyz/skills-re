@@ -10,7 +10,9 @@ async function requestHasQuery(req: Request): Promise<boolean> {
     const body = (await req.clone().json()) as any;
     return !!(body?.json?.query ?? body?.query);
   } catch {
-    return false;
+    // Non-JSON body (e.g. crafted FormData oRPC request) — fail closed to
+    // prevent throttle bypass via alternative oRPC encodings.
+    return true;
   }
 }
 
