@@ -152,11 +152,14 @@ export default function SearchPage({ initialQuery = "" }: { initialQuery?: strin
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<FilterType>("all");
 
-  const typeMap: Record<Exclude<FilterType, "all">, ResultType> = {
-    skills: "skill",
-    collections: "collection",
-    authors: "author",
-  };
+  const typeMap: Record<Exclude<FilterType, "all">, ResultType> = useMemo(
+    () => ({
+      skills: "skill",
+      collections: "collection",
+      authors: "author",
+    }),
+    [],
+  );
 
   const filtered = useMemo(() => {
     let results = MOCK_RESULTS;
@@ -170,7 +173,7 @@ export default function SearchPage({ initialQuery = "" }: { initialQuery?: strin
       );
     }
     return results;
-  }, [query, filter]);
+  }, [query, filter, typeMap]);
 
   const counts = useMemo(
     () => ({
