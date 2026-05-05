@@ -44,6 +44,10 @@ const docs = defineCollection({
     order: z.number().default(99),
     updatedAt: z.coerce.date().optional(),
   }),
+  transform: async (document, context) => {
+    const html = await compileMarkdown(context, document);
+    return { ...document, html };
+  },
 });
 
 /**
