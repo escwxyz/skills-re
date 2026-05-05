@@ -60,6 +60,10 @@ const faqs = defineCollection({
     question: z.string(),
     order: z.number(),
   }),
+  transform: async (document, context) => {
+    const html = await compileMarkdown(context, document);
+    return { ...document, html };
+  },
 });
 
 /**
@@ -88,6 +92,10 @@ const changelogs = defineCollection({
     date: z.coerce.date(),
     changes: z.array(z.string()),
   }),
+  transform: async (document, context) => {
+    const html = await compileMarkdown(context, document);
+    return { ...document, html };
+  },
 });
 
 export default defineConfig({

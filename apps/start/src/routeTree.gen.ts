@@ -14,6 +14,7 @@ import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ImprintRouteImport } from './routes/imprint'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ChangelogsRouteImport } from './routes/changelogs'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
@@ -60,6 +61,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ImprintRoute = ImprintRouteImport.update({
   id: '/imprint',
   path: '/imprint',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/changelogs': typeof ChangelogsRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/imprint': typeof ImprintRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/changelogs': typeof ChangelogsRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/imprint': typeof ImprintRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/changelogs': typeof ChangelogsRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
   '/imprint': typeof ImprintRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/changelogs'
     | '/cookies'
+    | '/faq'
     | '/imprint'
     | '/privacy'
     | '/search'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/'
     | '/changelogs'
     | '/cookies'
+    | '/faq'
     | '/imprint'
     | '/privacy'
     | '/search'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/changelogs'
     | '/cookies'
+    | '/faq'
     | '/imprint'
     | '/privacy'
     | '/search'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   ChangelogsRoute: typeof ChangelogsRoute
   CookiesRoute: typeof CookiesRoute
+  FaqRoute: typeof FaqRoute
   ImprintRoute: typeof ImprintRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/imprint'
       fullPath: '/imprint'
       preLoaderRoute: typeof ImprintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cookies': {
@@ -620,6 +640,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   ChangelogsRoute: ChangelogsRoute,
   CookiesRoute: CookiesRoute,
+  FaqRoute: FaqRoute,
   ImprintRoute: ImprintRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
