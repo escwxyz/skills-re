@@ -59,6 +59,6 @@ describe("github-submit", () => {
     const parsed = githubSubmitUrlSchema.safeParse("https://github.com/openai");
 
     expect(parsed.success).toBe(false);
-    expect(parsed.error?.issues[0]?.message).toContain("valid GitHub repository URL");
+    expect(parsed.error?.issues[0]?.message).toBe("Could not parse repository URL.");
   });
 });
