@@ -46,11 +46,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      - name: Create alchemy local config
+      - name: Create alchemy local config for web
         run: |
           mkdir -p apps/web/.alchemy/local
-          printf '{"name":"skills-re-web","compatibility_date":"2026-03-10","compatibility_flags":["nodejs_compat","nodejs_compat_populate_process_env"]}' \
+          printf '{"name":"skills-re-web","compatibility_date":"2026-03-20","compatibility_flags":["nodejs_compat","nodejs_compat_populate_process_env", "global_fetch_strictly_public"]}' \
             > apps/web/.alchemy/local/wrangler.jsonc
+
+      - name: Create alchemy local config for start
+        run: |
+          mkdir -p apps/start/.alchemy/local
+          printf '{"name":"skills-re-start","compatibility_date":"2026-03-20","compatibility_flags":["nodejs_compat","nodejs_compat_populate_process_env", "global_fetch_strictly_public"]}' \
+            > apps/start/.alchemy/local/wrangler.jsonc
 
       - name: Build
         run: bun run build
