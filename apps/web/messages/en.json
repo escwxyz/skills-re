@@ -66,6 +66,7 @@
   "input_help": "Supports github.com/org/repo and github.com/org/repo/tree/branch/path URLs.",
   "input_fetch": "Fetch →",
   "input_fetching": "Fetching…",
+  "input_url_required": "Repository URL is required.",
   "logs_invalid_url_error": "Could not parse repository URL.",
   "logs_validating_url": "Validating GitHub URL...",
   "logs_normalized_url": "Normalized URL: {githubUrl}",

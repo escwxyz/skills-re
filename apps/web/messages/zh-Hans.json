@@ -66,6 +66,7 @@
   "input_help": "支持 github.com/org/repo 以及 github.com/org/repo/tree/branch/path 形式的地址。",
   "input_fetch": "获取 →",
   "input_fetching": "正在获取…",
+  "input_url_required": "仓库地址不能为空。",
   "logs_invalid_url_error": "无法解析仓库地址。",
   "logs_validating_url": "正在验证 GitHub 地址…",
   "logs_normalized_url": "规范化后的地址：{githubUrl}",

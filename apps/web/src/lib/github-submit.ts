@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { m } from "@/paraglide/messages";
+
 const GIT_SUFFIX_REGEX = /\.git$/i;
 const REPO_SHORT_REGEX = /^([\w.-]+)\/([\w.-]+)(?:\/(?:tree|blob)\/([^/]+)(?:\/(.*))?)?$/;
 
@@ -164,15 +166,16 @@ export function parseGithubSubmitUrl(url: string): GithubSubmitTarget | null {
 export const githubSubmitUrlSchema = z
   .string()
   .trim()
-  .min(1, "Repository URL is required")
   .transform((value, ctx) => {
+    if (!value) {
+      ctx.addIssue({ code: "custom", message: m.input_url_required({}) });
+      return z.NEVER;
+    }
+
     const parsed = parseGithubSubmitUrl(value);
 
     if (!parsed) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be a valid GitHub repository URL (e.g. https://github.com/org/repo)",
-      });
+      ctx.addIssue({ code: "custom", message: m.logs_invalid_url_error({}) });
       return z.NEVER;
     }
 

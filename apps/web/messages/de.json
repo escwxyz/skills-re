@@ -66,6 +66,7 @@
   "input_help": "Unterstützt github.com/org/repo- und github.com/org/repo/tree/branch/path-URLs.",
   "input_fetch": "Abrufen →",
   "input_fetching": "Wird abgerufen…",
+  "input_url_required": "Repository-URL ist erforderlich.",
   "logs_invalid_url_error": "Die Repository-URL konnte nicht verarbeitet werden.",
   "logs_validating_url": "GitHub-URL wird geprüft...",
   "logs_normalized_url": "Normalisierte URL: {githubUrl}",

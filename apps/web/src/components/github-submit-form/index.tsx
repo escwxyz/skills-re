@@ -3,13 +3,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { useForm } from "@tanstack/react-form";
 
 import type { GithubSubmitInput } from "@/lib/github-submit";
-import { githubSubmitUrlSchema } from "@/lib/github-submit";
+import { githubSubmitUrlSchema, parseGithubSubmitUrl } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
+
+import { Confetti } from "@/components/ui/confetti";
+import type { ConfettiRef } from "@/components/ui/confetti";
+import { Field, FieldDescription, FieldError, FieldLabel, Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useAppForm } from "@/hooks/form-hook";
 
 import { GithubSubmitFormFooter } from "./github-submit-form-footer";
 import { GithubSubmitFormHeader } from "./github-submit-form-header";
@@ -29,8 +34,14 @@ export function GithubSubmitForm() {
   const [submitLocked, setSubmitLocked] = useState(false);
   const logBoxRef = useRef<HTMLDivElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiRef = useRef<ConfettiRef>(null);
 
-  const form = useForm({ defaultValues: { repoUrl: "" } });
+  const form = useAppForm({
+    defaultValues: { repoUrl: "" },
+    onSubmit: async () => {
+      await fetchRepo();
+    },
+  });
 
   const addLogs = (...lines: string[]) => setLogs((prev) => [...prev, ...lines.filter(Boolean)]);
 
@@ -67,21 +78,25 @@ export function GithubSubmitForm() {
   };
 
   const fetchRepo = async () => {
-    const parsed = githubSubmitUrlSchema.safeParse(form.state.values.repoUrl);
+    form.setFieldMeta("repoUrl", (prev) => ({ ...prev, isTouched: true }));
+    const errors = await form.validateField("repoUrl", "change");
+    const firstError = errors.find(Boolean);
 
-    if (!parsed.success) {
+    if (firstError) {
       setFetchStatus("error");
       setSubmitStatus("idle");
       setRepoTarget(null);
       setRepoPreview(null);
       setSelectedSkillRootPaths([]);
-      setLogs([
-        `> ${m.logs_error_prefix({})} ${parsed.error.issues[0]?.message ?? m.logs_invalid_url_error({})}`,
-      ]);
+      setLogs([`> ${m.logs_error_prefix({})} ${firstError}`]);
       return;
     }
 
-    const target = parsed.data;
+    const target = parseGithubSubmitUrl(form.state.values.repoUrl);
+    if (!target) {
+      return;
+    }
+
     form.setFieldValue("repoUrl", target.githubUrl);
     setRepoTarget(target);
     setFetchStatus("fetching");
@@ -167,6 +182,7 @@ export function GithubSubmitForm() {
           `> ${m.logs_skills_being_processed({})}`,
         );
         setSubmitStatus("submitted");
+        confettiRef.current?.fire();
         scheduleReset();
         return;
       }
@@ -254,59 +270,74 @@ export function GithubSubmitForm() {
 
   return (
     <div className="px-6 py-10 lg:px-8">
+      <Confetti
+        ref={confettiRef}
+        manualstart
+        className="pointer-events-none fixed inset-0 z-10 size-full"
+      />
       <GithubSubmitFormHeader description={m.page_description({})} title={m.page_title({})} />
 
-      <div className="mb-6">
-        <label className="mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
-          {m.input_label({})}
-        </label>
-        <form.Field name="repoUrl">
-          {(field) => (
-            <div className="flex flex-wrap gap-2.5">
-              <input
-                className={cn(
-                  "min-w-0 flex-1 border border-rule bg-paper px-3 py-2.5 font-mono text-[13px] text-ink outline-none",
-                  "placeholder:text-muted-text/60 disabled:opacity-60",
-                )}
-                type="url"
-                placeholder={m.input_placeholder({})}
-                value={field.state.value}
-                onChange={(event) => {
-                  field.handleChange(event.target.value);
-                  setLogs([]);
-                  setFetchStatus("idle");
-                  setSubmitStatus("idle");
-                  setRepoTarget(null);
-                  setRepoPreview(null);
-                  setSelectedSkillRootPaths([]);
-                  setSubmitLocked(false);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && fetchStatus !== "fetching") {
-                    event.preventDefault();
-                    fetchRepo();
-                  }
-                }}
-                disabled={fetchStatus === "fetching" || submitStatus === "submitting"}
-              />
-              <button
-                type="button"
-                onClick={fetchRepo}
-                disabled={fetchStatus === "fetching" || submitStatus === "submitting"}
-                className={cn(
-                  "cursor-pointer whitespace-nowrap border border-rule px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
-                  fetchStatus === "fetching" || submitStatus === "submitting"
-                    ? "cursor-not-allowed text-muted-text"
-                    : "text-ink hover:bg-paper-2",
-                )}
-              >
-                {fetchStatus === "fetching" ? m.input_fetching({}) : m.input_fetch({})}
-              </button>
-            </div>
-          )}
-        </form.Field>
-        <p className="font-serif mt-1.5 text-[12px] italic text-muted-text">{m.input_help({})}</p>
-      </div>
+      <form.AppForm>
+        <Form autoComplete="on" className="space-y-5">
+          <form.AppField
+            name="repoUrl"
+            validators={{
+              onChange: ({ value }) => {
+                if (!value.trim()) {
+                  return;
+                }
+                const result = githubSubmitUrlSchema.safeParse(value);
+                return result.success
+                  ? undefined
+                  : (result.error.issues[0]?.message ?? m.logs_invalid_url_error({}));
+              },
+            }}
+          >
+            {(field) => (
+              <Field className="mb-6 gap-1.5">
+                <FieldLabel className="font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+                  {m.input_label({})}
+                </FieldLabel>
+                <div className="flex flex-wrap gap-2.5">
+                  <Input
+                    type="url"
+                    className="min-w-0 flex-1 rounded-none border-rule bg-paper py-2.5 font-mono text-[13px] text-ink placeholder:text-muted-text/60 disabled:opacity-60"
+                    placeholder={m.input_placeholder({})}
+                    value={field.state.value}
+                    onChange={(event) => {
+                      field.handleChange(event.target.value);
+                      setLogs([]);
+                      setFetchStatus("idle");
+                      setSubmitStatus("idle");
+                      setRepoTarget(null);
+                      setRepoPreview(null);
+                      setSelectedSkillRootPaths([]);
+                      setSubmitLocked(false);
+                    }}
+                    disabled={fetchStatus === "fetching" || submitStatus === "submitting"}
+                  />
+                  <button
+                    type="submit"
+                    disabled={fetchStatus === "fetching" || submitStatus === "submitting"}
+                    className={cn(
+                      "cursor-pointer whitespace-nowrap border border-rule px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
+                      fetchStatus === "fetching" || submitStatus === "submitting"
+                        ? "cursor-not-allowed text-muted-text"
+                        : "text-ink hover:bg-paper-2",
+                    )}
+                  >
+                    {fetchStatus === "fetching" ? m.input_fetching({}) : m.input_fetch({})}
+                  </button>
+                </div>
+                <FieldDescription className="font-serif text-[12px] italic text-muted-text">
+                  {m.input_help({})}
+                </FieldDescription>
+                <FieldError />
+              </Field>
+            )}
+          </form.AppField>
+        </Form>
+      </form.AppForm>
 
       {logs.length > 0 && (
         <div
