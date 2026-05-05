@@ -23,7 +23,7 @@ export const queryClient = new QueryClient({
 
 const rpcUrl = new URL("/rpc", "http://localhost:3000").toString();
 
-const createServerORPCClient = () => {
+export const createServerORPCClient = () => {
   const link = new RPCLink({
     url: rpcUrl,
     fetch(input, init) {

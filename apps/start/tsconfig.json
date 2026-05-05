@@ -2,10 +2,10 @@
   "extends": "@skills-re/config/tsconfig.base.json",
   "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js", "vite.config.js"],
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ESNext",
     "jsx": "react-jsx",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
 
     /* Bundler mode */

@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@content-collections/core": "^0.15.0",
+    "@content-collections/markdown": "^0.1.4",
     "@content-collections/vite": "^0.3.0",
     "@inlang/paraglide-js": "^2.18.0",
     "@skills-re/config": "workspace:*",

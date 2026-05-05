@@ -1,4 +1,5 @@
 import { defineCollection, defineConfig } from "@content-collections/core";
+import { compileMarkdown } from "@content-collections/markdown";
 import { z } from "zod/v4";
 
 /**
@@ -18,7 +19,12 @@ const pages = defineCollection({
     title: z.string(),
     description: z.string().optional(),
     updatedAt: z.coerce.date(),
+    content: z.string(),
   }),
+  transform: async (document, context) => {
+    const html = await compileMarkdown(context, document);
+    return { ...document, html };
+  },
 });
 
 /**

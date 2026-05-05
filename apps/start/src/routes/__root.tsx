@@ -6,7 +6,6 @@ import appCss from "../styles.css?url";
 import type { orpc } from "@/lib/orpc";
 import type { QueryClient } from "@tanstack/react-query";
 import { getLocale } from "@/paraglide/runtime";
-import { CookieConsent } from "@/components/cookie-consent";
 import { Header } from "@/components/header";
 import { getUser } from "@/functions/get-user";
 import { Provider } from "jotai";
@@ -70,7 +69,6 @@ function RootComponent() {
       <main>
         <Outlet />
       </main>
-      <CookieConsent />
     </Provider>
   );
 }
