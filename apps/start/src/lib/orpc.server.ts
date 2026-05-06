@@ -2,8 +2,9 @@ import type { AppRouterClient } from "@skills-re/api";
 import { RPCLink } from "@orpc/client/fetch";
 import { createORPCClient } from "@orpc/client";
 import { getRequestHeaders } from "@tanstack/react-start/server";
+import { env } from "@skills-re/env/start";
 
-const rpcUrl = new URL("/rpc", "http://localhost:3000").toString();
+const rpcUrl = new URL("/rpc", env.VITE_SERVER_URL).toString();
 
 export const createServerORPCClient = () => {
   const link = new RPCLink({
