@@ -49,6 +49,9 @@ export const resolveUploadSkillSlug = async (input: {
   usedSlugs: Set<string>;
 }) => {
   const baseSlug = input.preferredSlug.trim();
+  if (!baseSlug) {
+    throw new Error("preferredSlug must not be empty.");
+  }
   let suffix = 0;
   while (true) {
     const candidate = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
