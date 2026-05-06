@@ -56,6 +56,13 @@ export interface RunSkillsUploadWorkflowDeps {
   uploadSnapshotFiles?: typeof uploadSnapshotFiles;
 }
 
+const normalizeAiSearchFilePath = (value: string) =>
+  value
+    .replaceAll("\\", "/")
+    .trim()
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+
 export const runSkillsUploadWorkflow = async (
   event: Readonly<WorkflowEvent<SkillsUploadWorkflowPayload>>,
   step: WorkflowStep,
@@ -212,9 +219,18 @@ export const runSkillsUploadWorkflow = async (
           }),
       );
 
-      const skillMdFile = skill.initialSnapshot.files.find(
-        (file) => file.path.split("/").at(-1)?.toLowerCase() === "skill.md",
-      );
+      const skillMdFile = skill.entryPath
+        ? skill.initialSnapshot.files.find((file) => {
+            const normalizedFilePath = normalizeAiSearchFilePath(file.path);
+            const normalizedEntryPath = normalizeAiSearchFilePath(skill.entryPath);
+            return (
+              normalizedFilePath === normalizedEntryPath ||
+              normalizedFilePath.endsWith(`/${normalizedEntryPath}`)
+            );
+          })
+        : skill.initialSnapshot.files.find(
+            (file) => file.path.split("/").at(-1)?.toLowerCase() === "skill.md",
+          );
 
       const aiSearchItemId = await step.do(
         `upload-skill-ai-search-${index}`,

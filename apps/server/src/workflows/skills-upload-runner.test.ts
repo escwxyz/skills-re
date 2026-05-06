@@ -359,4 +359,89 @@ describe("runSkillsUploadWorkflow", () => {
       workId: "snapshot-upload-1",
     });
   });
+
+  test("prefers the declared entry path for ai search file selection", async () => {
+    const aiSearchUploads: { content: string; key: string }[] = [];
+
+    await runSkillsUploadWorkflow(
+      {
+        payload: {
+          repo: {
+            createdAt: 1,
+            defaultBranch: "main",
+            forks: 1,
+            license: "MIT",
+            nameWithOwner: "acme/skills",
+            owner: {
+              handle: "acme",
+            },
+            stars: 2,
+            updatedAt: 2,
+          },
+          skills: [
+            {
+              description: "Widget skill",
+              directoryPath: "skills/acme/widget",
+              entryPath: "skills/acme/widget/docs/skill.md",
+              initialSnapshot: {
+                files: [
+                  {
+                    content: "# Wrong file",
+                    path: "skills/acme/widget/skill.md",
+                  },
+                  {
+                    content: "# Right file",
+                    path: "skills/acme/widget/docs/skill.md",
+                  },
+                ],
+                sourceCommitDate: 1,
+                sourceCommitSha: "commit-1",
+                sourceRef: "main",
+                tree: [
+                  {
+                    path: "skills/acme/widget/docs/skill.md",
+                    sha: "sha-1",
+                    type: "blob",
+                  },
+                ],
+              },
+              slug: "widget",
+              sourceLocator: "github:acme/skills/skills/acme/widget/docs/skill.md",
+              sourceType: "github",
+              title: "Widget",
+            },
+          ],
+        },
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        aiSearchItems: {
+          deleteItem: (_itemId: string) => Promise.resolve(),
+          uploadItem: (key: string, content: string) => {
+            aiSearchUploads.push({ content, key });
+            return Promise.resolve({ id: "ai-search-1" });
+          },
+        },
+        checkSkillExistingBySlug: () => Promise.resolve(false),
+        createSkill: () => Promise.resolve("skill-1"),
+        createSnapshot: () => Promise.resolve("snapshot-1"),
+        deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+        ensureRepo: () => Promise.resolve("repo-1"),
+        scheduleSkillsTagging: {
+          enqueue: () => Promise.resolve({ workId: "tagging-1" }),
+        },
+        setSkillLatestSnapshot: () => Promise.resolve(),
+        syncSkillTags: () => Promise.resolve([]),
+        updateSkillAiSearchItemId: () => Promise.resolve(),
+        uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+      } as never,
+    );
+
+    expect(aiSearchUploads).toEqual([
+      {
+        content: "# Right file",
+        key: "skill-1.md",
+      },
+    ]);
+  });
 });
