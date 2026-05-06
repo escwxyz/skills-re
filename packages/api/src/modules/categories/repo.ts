@@ -49,6 +49,25 @@ const mergeRuntimeCategory = (row: { count: number; slug: string }) => {
   };
 };
 
+export const compareCategoriesForDisplay = (
+  left: { count: number; slug: string },
+  right: { count: number; slug: string },
+) => {
+  if (left.slug === "other" && right.slug !== "other") {
+    return 1;
+  }
+
+  if (right.slug === "other" && left.slug !== "other") {
+    return -1;
+  }
+
+  if (right.count !== left.count) {
+    return right.count - left.count;
+  }
+
+  return left.slug.localeCompare(right.slug);
+};
+
 export function countCategories() {
   return CATEGORY_DEFINITIONS.length;
 }
@@ -84,14 +103,7 @@ export async function listCategories(input?: { all?: boolean; limit?: number }) 
     );
   }).filter((category): category is NonNullable<typeof category> => category !== null);
 
-  return categories
-    .toSorted((left, right) => {
-      if (right.count !== left.count) {
-        return right.count - left.count;
-      }
-      return left.slug.localeCompare(right.slug);
-    })
-    .slice(0, input?.all ? undefined : limit);
+  return categories.toSorted(compareCategoriesForDisplay).slice(0, input?.all ? undefined : limit);
 }
 
 export async function findCategoryBySlug(slug: string) {
