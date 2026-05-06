@@ -242,11 +242,16 @@ export const runSkillsUploadWorkflow = async (
       await step.do(
         `link-skill-ai-search-${index}`,
         workflowStepRetryPolicy.skillsUploadPipeline,
-        async () =>
-          await (deps.updateSkillAiSearchItemId ?? updateSkillAiSearchItemId)({
-            aiSearchItemId,
-            skillId,
-          }),
+        async () => {
+          try {
+            await (deps.updateSkillAiSearchItemId ?? updateSkillAiSearchItemId)({
+              aiSearchItemId,
+              skillId,
+            });
+          } catch {
+            // Non-fatal: AI-search item linking is advisory and must not fail the upload.
+          }
+        },
       );
     }
 

@@ -284,4 +284,79 @@ describe("runSkillsUploadWorkflow", () => {
       },
     ]);
   });
+
+  test("keeps ai search linking failures non-blocking", async () => {
+    const result = await runSkillsUploadWorkflow(
+      {
+        payload: {
+          repo: {
+            createdAt: 1,
+            defaultBranch: "main",
+            forks: 1,
+            license: "MIT",
+            nameWithOwner: "acme/skills",
+            owner: {
+              handle: "acme",
+            },
+            stars: 2,
+            updatedAt: 2,
+          },
+          skills: [
+            {
+              description: "Widget skill",
+              directoryPath: "skills/acme/widget",
+              entryPath: "skills/acme/widget/skill.md",
+              initialSnapshot: {
+                files: [
+                  {
+                    content: "---\nname: widget\n---\n# Widget",
+                    path: "skills/acme/widget/skill.md",
+                  },
+                ],
+                sourceCommitDate: 1,
+                sourceCommitSha: "commit-1",
+                sourceRef: "main",
+                tree: [
+                  {
+                    path: "skills/acme/widget/skill.md",
+                    sha: "sha-1",
+                    type: "blob",
+                  },
+                ],
+              },
+              slug: "widget",
+              sourceLocator: "github:acme/skills/skills/acme/widget/skill.md",
+              sourceType: "github",
+              title: "Widget",
+            },
+          ],
+        },
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        aiSearchItems: {
+          deleteItem: (_itemId: string) => Promise.resolve(),
+          uploadItem: (_key: string, _content: string, _metadata: Record<string, string>) =>
+            Promise.resolve({ id: "ai-search-1" }),
+        },
+        checkSkillExistingBySlug: () => Promise.resolve(false),
+        createSkill: () => Promise.resolve("skill-1"),
+        createSnapshot: () => Promise.resolve("snapshot-1"),
+        deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+        ensureRepo: () => Promise.resolve("repo-1"),
+        scheduleSkillsTagging: {
+          enqueue: () => Promise.resolve({ workId: "tagging-1" }),
+        },
+        setSkillLatestSnapshot: () => Promise.resolve(),
+        syncSkillTags: () => Promise.resolve([]),
+        updateSkillAiSearchItemId: () => Promise.reject(new Error("transient db failure")),
+        uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+      } as never,
+    );
+
+    expect(result).toEqual({
+      ids: ["skill-1"],
+      workId: "snapshot-upload-1",
+    });
+  });
 });
