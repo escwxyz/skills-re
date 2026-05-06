@@ -10,6 +10,8 @@ export default defineConfig({
     "packages/db/src/schema/auth-schema.ts",
     "packages/env/env.d.ts",
     "apps/start/src/routeTree.gen.ts",
+    ".agents/**",
+    ".claude/**",
   ],
   rules: {
     "sort-keys": "off",
