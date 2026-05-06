@@ -6,7 +6,11 @@ import react from "ultracite/oxlint/react";
 
 export default defineConfig({
   extends: [core, astro, react],
-  ignorePatterns: ["packages/db/src/schema/auth-schema.ts", "packages/env/env.d.ts"],
+  ignorePatterns: [
+    "packages/db/src/schema/auth-schema.ts",
+    "packages/env/env.d.ts",
+    "apps/start/src/routeTree.gen.ts",
+  ],
   rules: {
     "sort-keys": "off",
     "eslint/no-use-before-define": "off",

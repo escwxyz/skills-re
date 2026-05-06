@@ -10,6 +10,8 @@ import {
   R2Bucket,
   Workflow,
   Worker,
+  // New
+  TanStackStart,
 } from "alchemy/cloudflare";
 
 import { GitHubComment } from "alchemy/github";
@@ -20,6 +22,8 @@ import { config } from "dotenv";
 
 config({ path: "./.env" });
 config({ path: "../../apps/web/.env" });
+// New
+config({ path: "../../apps/start/.env" });
 config({ path: "../../apps/server/.env" });
 
 const app = await alchemy("skills-re", {
@@ -335,6 +339,20 @@ export const web = await Astro("web", {
   },
 });
 
+// New
+export const start = await TanStackStart("start", {
+  cwd: "../../apps/start",
+  compatibility: "node",
+  compatibilityFlags: ["global_fetch_strictly_public"],
+  compatibilityDate: "2026-03-10",
+  bindings: {
+    VITE_SERVER_URL: server.url!,
+    // DB: db,
+    // BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
+  },
+});
+
+console.log(`Start => ${start.url}`);
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
 
