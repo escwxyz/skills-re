@@ -3,7 +3,7 @@ import alchemy from "alchemy";
 import {
   AiSearch,
   AnalyticsEngineDataset,
-  Astro,
+  // Astro,
   D1Database,
   DurableObjectNamespace,
   Queue,
@@ -21,7 +21,7 @@ import { CloudflareStateStore } from "alchemy/state";
 import { config } from "dotenv";
 
 config({ path: "./.env" });
-config({ path: "../../apps/web/.env" });
+// config({ path: "../../apps/web/.env" });
 // New
 config({ path: "../../apps/start/.env" });
 config({ path: "../../apps/server/.env" });
@@ -327,17 +327,17 @@ export const server = await Worker("server", {
   },
 });
 
-export const web = await Astro("web", {
-  cwd: "../../apps/web",
-  entrypoint: "dist/server/entry.mjs",
-  assets: "dist/client",
-  compatibility: "node",
-  compatibilityFlags: ["global_fetch_strictly_public"],
-  compatibilityDate: "2026-03-10",
-  bindings: {
-    SERVER_URL: server.url!,
-  },
-});
+// export const web = await Astro("web", {
+//   cwd: "../../apps/web",
+//   entrypoint: "dist/server/entry.mjs",
+//   assets: "dist/client",
+//   compatibility: "node",
+//   compatibilityFlags: ["global_fetch_strictly_public"],
+//   compatibilityDate: "2026-03-10",
+//   bindings: {
+//     SERVER_URL: server.url!,
+//   },
+// });
 
 // New
 export const start = await TanStackStart("start", {
@@ -347,13 +347,12 @@ export const start = await TanStackStart("start", {
   compatibilityDate: "2026-03-10",
   bindings: {
     VITE_SERVER_URL: server.url!,
-    // DB: db,
-    // BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
+    VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
   },
 });
 
 console.log(`Start => ${start.url}`);
-console.log(`Web    -> ${web.url}`);
+// console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
 
 if (process.env.PULL_REQUEST) {
@@ -367,7 +366,7 @@ if (process.env.PULL_REQUEST) {
 
 Your changes have been deployed to a preview environment:
 
-**🌐 Website:** ${web.url}
+**🌐 Website:** ${start.url}
 
 Built from commit ${process.env.GITHUB_SHA?.slice(0, 7)}
 

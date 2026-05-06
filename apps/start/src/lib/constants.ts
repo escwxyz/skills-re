@@ -1,3 +1,5 @@
+import { env } from "@skills-re/env/start";
+
 export const SITE_NAME = "skills.re";
 export const SITE_TAGLINE = "The registry for AI agent skills.";
 export const SITE_DESCRIPTION =
@@ -12,6 +14,6 @@ export const SITE_KEYWORDS = [
   "ai tools",
 ];
 
-export const SITE_URL = "http://localhost:3005";
+export const SITE_URL = env.VITE_SITE_URL;
 
 export const OG_IMAGE_DEFAULT = "/og.png";
