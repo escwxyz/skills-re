@@ -6,7 +6,7 @@ import { locales } from "@/paraglide/runtime";
 export const getDocData = createServerFn({ method: "GET" })
   .inputValidator(
     z.object({
-      locale: z.enum([...locales] as [string, ...string[]]),
+      locale: z.enum([...locales]),
       slug: z.string(),
     }),
   )

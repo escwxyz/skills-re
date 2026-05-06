@@ -4,7 +4,7 @@ import { allChangelogs } from "content-collections";
 import { locales } from "@/paraglide/runtime";
 
 export const getChangelogData = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ locale: z.enum([...locales] as [string, ...string[]]) }))
+  .inputValidator(z.object({ locale: z.enum([...locales]) }))
   .handler(({ data }) => {
     const { locale } = data;
 
