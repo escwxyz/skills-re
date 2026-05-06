@@ -21,7 +21,6 @@ export {
   newsletterService,
   refreshDailySkillsSnapshots,
   searchSkills,
-  runUploadSkillsPipeline,
   updateFeedbackResponse,
   updateFeedbackStatus,
   reviewsService,

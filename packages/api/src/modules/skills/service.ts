@@ -5,14 +5,10 @@ import type {
   GithubSubmitRuntime,
   SkillsUploadContentPayload,
   SkillsUploadScheduler,
-  SkillsTaggingScheduler,
-  SnapshotHistoryRuntime,
-  SnapshotUploadScheduler,
 } from "../../types";
 
 import { buildAiSearchResult } from "../ai-search";
 import type { AiSearchResult } from "../ai-search";
-import { normalizeSkillTags } from "../tags/ai-tagging";
 import { toSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
 
@@ -142,23 +138,6 @@ export interface SkillsServiceDeps {
   checkReposExistingByOwner: (repoOwner: string) => Promise<boolean>;
   checkSkillExistingBySlug: (slug: string) => Promise<boolean>;
   countSkills: () => Promise<number>;
-  createSnapshot: (input: {
-    description: string;
-    directoryPath: string;
-    entryPath: string;
-    frontmatterHash?: string | null;
-    hash: string;
-    isDeprecated?: boolean;
-    name: string;
-    skillContentHash?: string | null;
-    skillId: string;
-    sourceCommitDate?: number;
-    sourceCommitMessage?: string | null;
-    sourceCommitSha?: string | null;
-    sourceCommitUrl?: string | null;
-    syncTime: number;
-    version: string;
-  }) => Promise<string>;
   findAuthorByHandle: (handle: string) => Promise<AuthorRow | null>;
   findSkillById: (id: string) => Promise<SkillListRow | null>;
   findSkillClaimContextBySlug: (slug: string) => Promise<SkillClaimContextRow | null>;
@@ -180,30 +159,6 @@ export interface SkillsServiceDeps {
   findSkillBySlug: (slug: string) => Promise<SkillListRow | null>;
   listAuthors: () => Promise<AuthorRow[]>;
   listSkillsHistoryInfoByIds: (skillIds: string[]) => Promise<SkillHistoryInfoRow[]>;
-  deprecateSnapshotsBeyondLimit: (input: { keepLatest: number; skillId: string }) => Promise<void>;
-  ensureRepo: (input: {
-    createdAt: number;
-    defaultBranch: string;
-    forks: number;
-    license?: string | null;
-    nameWithOwner: string;
-    owner: {
-      avatarUrl?: string | null;
-      handle: string;
-      name?: string | null;
-    };
-    stars: number;
-    updatedAt: number;
-  }) => Promise<string>;
-  setSkillLatestSnapshot: (input: {
-    latestCommitDate?: number | null;
-    latestCommitMessage?: string | null;
-    latestCommitSha?: string | null;
-    latestCommitUrl?: string | null;
-    skillId: string;
-    snapshotId: string;
-    syncTime?: number;
-  }) => Promise<void>;
   searchSkillsPageByFilters: (input?: SearchSkillsPageInput) => Promise<{
     continueCursor: string;
     isDone: boolean;
@@ -241,18 +196,6 @@ export interface SkillsServiceDeps {
     repoName: string;
     skillSlug: string;
   } | null>;
-  syncSkillTags: (input: { skillId: string; tags: string[] }) => Promise<unknown>;
-  updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
-  uploadSnapshotFiles: (
-    input: {
-      files: {
-        content: string;
-        path: string;
-      }[];
-      snapshotId: string;
-    },
-    scheduler?: SnapshotUploadScheduler | null,
-  ) => Promise<{ workId: string }>;
 }
 
 const defaultDeps: SkillsServiceDeps = {
@@ -267,10 +210,6 @@ const defaultDeps: SkillsServiceDeps = {
   checkSkillExistingBySlug: async (slug) => {
     const { checkSkillExistingBySlug } = await import("./repo");
     return await checkSkillExistingBySlug(slug);
-  },
-  createSnapshot: async (input) => {
-    const { createSnapshot } = await import("../snapshots/repo");
-    return await createSnapshot(input);
   },
   countSkills: async () => {
     const { countSkills } = await import("./repo");
@@ -312,18 +251,6 @@ const defaultDeps: SkillsServiceDeps = {
     const { listSkillsHistoryInfoByIds } = await import("./repo");
     return await listSkillsHistoryInfoByIds(skillIds);
   },
-  deprecateSnapshotsBeyondLimit: async (input) => {
-    const { deprecateSnapshotsBeyondLimit } = await import("../snapshots/repo");
-    await deprecateSnapshotsBeyondLimit(input);
-  },
-  ensureRepo: async (input) => {
-    const { ensureRepo } = await import("../repos/service");
-    return await ensureRepo(input);
-  },
-  setSkillLatestSnapshot: async (input) => {
-    const { setSkillLatestSnapshot } = await import("../snapshots/repo");
-    await setSkillLatestSnapshot(input);
-  },
   searchSkillsPageByFilters: async (input) => {
     const { searchSkillsPageByFilters } = await import("./repo");
     return await searchSkillsPageByFilters(input);
@@ -343,18 +270,6 @@ const defaultDeps: SkillsServiceDeps = {
   resolveSkillPathBySlug: async (slug) => {
     const { resolveSkillPathBySlug } = await import("./repo");
     return await resolveSkillPathBySlug(slug);
-  },
-  syncSkillTags: async (input) => {
-    const { syncSkillTags } = await import("../tags/service");
-    return await syncSkillTags(input);
-  },
-  updateSkillAiSearchItemId: async (input) => {
-    const { updateSkillAiSearchItemId } = await import("./repo");
-    return await updateSkillAiSearchItemId(input);
-  },
-  uploadSnapshotFiles: async (input, scheduler) => {
-    const { uploadSnapshotFiles } = await import("../snapshots/service");
-    return await uploadSnapshotFiles(input, scheduler);
   },
 };
 
@@ -548,263 +463,10 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     async resolvePathBySlug(input: { slug: string }) {
       return await deps.resolveSkillPathBySlug(input.slug);
     },
-
-    async runUploadSkillsPipeline(
-      input: SkillsUploadContentPayload,
-      runtimeDeps: UploadRuntimeDeps = {},
-    ) {
-      return await runUploadSkillsPipelineImpl(input, deps, runtimeDeps);
-    },
-  };
-};
-
-type UploadSkillsPipelineDeps = Pick<
-  SkillsServiceDeps,
-  | "checkSkillExistingBySlug"
-  | "createSkill"
-  | "createSnapshot"
-  | "deprecateSnapshotsBeyondLimit"
-  | "ensureRepo"
-  | "setSkillLatestSnapshot"
-  | "syncSkillTags"
-  | "updateSkillAiSearchItemId"
-  | "uploadSnapshotFiles"
->;
-
-interface UploadRuntimeDeps {
-  aiSearchItems?: AiSearchItemsRuntime | null;
-  scheduleSkillsTagging?: SkillsTaggingScheduler | null;
-  snapshotHistory?: SnapshotHistoryRuntime | null;
-  snapshotUploadScheduler?: SnapshotUploadScheduler | null;
-}
-
-const truncateUploadCommitMessage = (value: string | null | undefined) => {
-  const normalized = value?.trim();
-  if (!normalized) {
-    return null;
-  }
-  if (normalized.length <= 280) {
-    return normalized;
-  }
-  return `${normalized.slice(0, 279)}…`;
-};
-
-const normalizeUploadDirectoryPath = (value: string) =>
-  normalizeDirectoryPath(value).replaceAll(/\/+/g, "/");
-
-const normalizeUploadEntryPath = (value: string) => value.trim();
-
-const hashSnapshotFiles = async (files: { content: string; path: string }[]) => {
-  const serialized = JSON.stringify(
-    [...files]
-      .map((file) => ({
-        content: file.content,
-        path: file.path,
-      }))
-      .toSorted((left, right) => left.path.localeCompare(right.path)),
-  );
-  const encoded = new TextEncoder().encode(serialized);
-  const digest = await crypto.subtle.digest("SHA-256", encoded);
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-};
-
-const prepareUploadSkills = async (skills: SkillsUploadContentPayload["skills"]) =>
-  await Promise.all(
-    skills.map(async (skill) => ({
-      ...skill,
-      snapshotHash: await hashSnapshotFiles(skill.initialSnapshot.files),
-    })),
-  );
-
-const resolveUploadSkillSlug = async (input: {
-  checkSkillExistingBySlug: UploadSkillsPipelineDeps["checkSkillExistingBySlug"];
-  preferredSlug: string;
-  usedSlugs: Set<string>;
-}) => {
-  const baseSlug = input.preferredSlug.trim();
-  let suffix = 0;
-  while (true) {
-    const candidate = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
-    if (!(input.usedSlugs.has(candidate) || (await input.checkSkillExistingBySlug(candidate)))) {
-      input.usedSlugs.add(candidate);
-      return candidate;
-    }
-    suffix += 1;
-  }
-};
-
-type PreparedSkill = Awaited<ReturnType<typeof prepareUploadSkills>>[number];
-
-const uploadSingleSkill = async (
-  skill: PreparedSkill,
-  context: {
-    authorHandle: string;
-    deps: UploadSkillsPipelineDeps;
-    now: number;
-    repoId: string;
-    repoName: string;
-    runtimeDeps: UploadRuntimeDeps;
-    usedSlugs: Set<string>;
-  },
-) => {
-  const { authorHandle, deps, now, repoId, repoName, runtimeDeps, usedSlugs } = context;
-
-  const slug = await resolveUploadSkillSlug({
-    checkSkillExistingBySlug: deps.checkSkillExistingBySlug,
-    preferredSlug: skill.slug,
-    usedSlugs,
-  });
-
-  const skillId = await deps.createSkill({
-    description: skill.description,
-    repoId,
-    slug,
-    syncTime: now,
-    title: skill.title,
-    userId: null,
-    visibility: "public",
-  });
-
-  const snapshotId = await deps.createSnapshot({
-    description: skill.description,
-    directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
-    entryPath: normalizeUploadEntryPath(skill.entryPath),
-    frontmatterHash: skill.frontmatterHash ?? null,
-    hash: skill.snapshotHash,
-    name: skill.title,
-    skillContentHash: skill.skillContentHash ?? null,
-    skillId,
-    sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
-    sourceCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
-    sourceCommitSha: skill.initialSnapshot.sourceCommitSha,
-    sourceCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
-    syncTime: now,
-    version: skill.preferredVersion ?? "0.0.1",
-  });
-
-  const upload = await deps.uploadSnapshotFiles(
-    { files: skill.initialSnapshot.files, snapshotId },
-    runtimeDeps.snapshotUploadScheduler ?? null,
-  );
-
-  await deps.setSkillLatestSnapshot({
-    latestCommitDate: skill.initialSnapshot.sourceCommitDate,
-    latestCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
-    latestCommitSha: skill.initialSnapshot.sourceCommitSha,
-    latestCommitUrl: skill.initialSnapshot.sourceCommitUrl ?? null,
-    skillId,
-    snapshotId,
-    syncTime: now,
-  });
-
-  await deps.syncSkillTags({ skillId, tags: normalizeSkillTags(skill.tags ?? []) });
-  await deps.deprecateSnapshotsBeyondLimit({ keepLatest: 3, skillId });
-
-  if (runtimeDeps.aiSearchItems) {
-    const skillMdFile = skill.initialSnapshot.files.find(
-      (f) => f.path.split("/").at(-1)?.toLowerCase() === "skill.md",
-    );
-    if (skillMdFile) {
-      const version = skill.preferredVersion ?? "0.0.1";
-      try {
-        const { id } = await runtimeDeps.aiSearchItems.uploadItem(
-          `${skillId}.md`,
-          skillMdFile.content,
-          { authorHandle, repoName, skillId, skillSlug: slug, version },
-        );
-        await deps.updateSkillAiSearchItemId({ aiSearchItemId: id, skillId });
-      } catch {
-        // Non-fatal: search index update failure must not block the upload pipeline.
-      }
-    }
-  }
-
-  if (runtimeDeps.scheduleSkillsTagging) {
-    await runtimeDeps.scheduleSkillsTagging.enqueue({
-      skillIds: [skillId],
-      triggerCategorizationAfterTagging: true,
-    });
-  }
-
-  return { skillId, workId: upload.workId };
-};
-
-const runUploadSkillsPipelineImpl = async (
-  input: SkillsUploadContentPayload,
-  deps: UploadSkillsPipelineDeps,
-  runtimeDeps: UploadRuntimeDeps = {},
-) => {
-  if (!input.repo) {
-    throw new Error("Repo metadata is required for skill upload.");
-  }
-
-  const repoId = await deps.ensureRepo({
-    createdAt: input.repo.createdAt,
-    defaultBranch: input.repo.defaultBranch,
-    forks: input.repo.forks,
-    license: input.repo.license,
-    nameWithOwner: input.repo.nameWithOwner,
-    owner: {
-      avatarUrl: input.repo.owner.avatarUrl ?? null,
-      handle: input.repo.owner.handle,
-      name: input.repo.owner.name ?? null,
-    },
-    stars: input.repo.stars,
-    updatedAt: input.repo.updatedAt,
-  });
-
-  const now = Date.now();
-  const preparedSkills = await prepareUploadSkills(input.skills);
-  const usedSlugs = new Set<string>();
-  const results: { skillId: string; workId: string }[] = [];
-  const [authorHandle = "", repoName = ""] = input.repo.nameWithOwner.split("/");
-
-  for (const skill of preparedSkills) {
-    results.push(
-      await uploadSingleSkill(skill, {
-        authorHandle,
-        deps,
-        now,
-        repoId,
-        repoName,
-        runtimeDeps,
-        usedSlugs,
-      }),
-    );
-  }
-
-  const createdIds = results.map((r) => r.skillId);
-
-  if (
-    runtimeDeps.snapshotHistory &&
-    input.recentCommits &&
-    input.recentCommits.length > 1 &&
-    createdIds.length > 0 &&
-    authorHandle &&
-    repoName
-  ) {
-    await runtimeDeps.snapshotHistory.createHistoricalSnapshots({
-      commits: input.recentCommits,
-      repoName,
-      repoOwner: authorHandle,
-      skillIds: createdIds,
-    });
-  }
-
-  return {
-    ids: createdIds,
-    workId: results[0]?.workId ?? `upload-${crypto.randomUUID()}`,
   };
 };
 
 export const skillsService = createSkillsService();
-
-export async function runUploadSkillsPipeline(
-  input: SkillsUploadContentPayload,
-  runtimeDeps: UploadRuntimeDeps = {},
-) {
-  return await skillsService.runUploadSkillsPipeline(input, runtimeDeps);
-}
 
 export async function checkDuplicatedRepository(input: {
   directoryPath?: string;
