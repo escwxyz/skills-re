@@ -40,6 +40,7 @@
     "jotai": "^2.19.1",
     "markdown-it-async": "^2.2.0",
     "motion": "^12.38.0",
+    "nanoid": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "shadcn": "^4.6.0",
@@ -70,7 +71,7 @@
     "jsdom": "^27.4.0",
     "schema-dts": "^2.0.0",
     "typescript": "catalog:",
-    "vite": "7.1.2",
+    "vite": "catalog:",
     "web-vitals": "^5.1.0",
     "wrangler": "catalog:"
   }

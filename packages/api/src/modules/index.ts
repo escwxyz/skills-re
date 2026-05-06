@@ -13,7 +13,6 @@ export {
   searchSkills,
   resolvePathBySlug,
   submitGithubRepoPublic,
-  runUploadSkillsPipeline,
   uploadSkills,
 } from "./skills/service";
 export { listSkillsHistoryInfoByIds } from "./skills/repo";

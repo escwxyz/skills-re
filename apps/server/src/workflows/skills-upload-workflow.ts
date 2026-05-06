@@ -2,6 +2,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 
 import { asSkillId } from "@skills-re/db/utils";
+import { createAiSearchItemsRuntime } from "../ai-search";
 import { createGithubSnapshotHistoryHelpers } from "../github-history";
 import { createSnapshotsHistoryRuntime } from "../snapshots-history";
 import { getSnapshotUploadWorkflowScheduler } from "./snapshot-upload";
@@ -26,6 +27,7 @@ type HistoricalUploadSnapshotFilesInput = Parameters<
 
 export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
   run(event: Readonly<WorkflowEvent<SkillsUploadWorkflowPayload>>, step: WorkflowStep) {
+    const aiSearchItems = createAiSearchItemsRuntime(this.env as never) ?? undefined;
     const githubHistory = createGithubSnapshotHistoryHelpers(this.env);
     const snapshotUploadScheduler = getSnapshotUploadWorkflowScheduler(this.env);
     const snapshotHistory = createSnapshotsHistoryRuntime({
@@ -52,6 +54,7 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
       instanceId: event.instanceId,
       run: () =>
         runSkillsUploadWorkflow(event, step, {
+          aiSearchItems,
           scheduleSkillsTagging: getSkillsTaggingWorkflowScheduler(this.env),
           snapshotFilesBucket: this.env.SNAPSHOT_FILES,
           snapshotHistory,
