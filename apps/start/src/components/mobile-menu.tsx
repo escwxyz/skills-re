@@ -7,6 +7,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { isMobileMenuOpenAtom } from "@/atoms/app";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -14,12 +15,15 @@ import { m } from "@/paraglide/messages";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CloudArrowUpIcon } from "@phosphor-icons/react";
+import { buttonVariants } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { label: m.mobile_menu_skills(), to: "/skills" },
-  { label: m.mobile_menu_collections(), to: "/collections/" },
-  { label: m.mobile_menu_authors(), to: "/authors/" },
-  { label: m.mobile_menu_search(), to: "/search" },
+  { label: m.mobile_menu_categories(), to: "/categories" },
+  { label: m.mobile_menu_collections(), to: "/collections" },
+  { label: m.mobile_menu_tags(), to: "/tags" },
+  { label: m.mobile_menu_authors(), to: "/authors" },
 ];
 
 export const MobileMenu = () => {
@@ -27,45 +31,39 @@ export const MobileMenu = () => {
 
   return (
     <Drawer direction="top" open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
-      <button
-        type="button"
-        aria-label="Open navigation menu"
-        className="cursor-pointer p-1 md:hidden"
-        onClick={(e) => {
-          (e.currentTarget as HTMLButtonElement).blur();
-          setIsOpen(!isOpen);
-        }}
-      >
-        <span className="relative block size-5" aria-hidden>
-          <span
-            className={cn(
-              "absolute inset-x-0 h-px origin-center bg-current transition-all duration-200",
-              {
-                "top-1/2 rotate-45": isOpen,
-                "top-1": !isOpen,
-              },
-            )}
-          />
-          <span
-            className={cn(
-              "absolute inset-x-0 top-1/2 h-px bg-current transition-opacity duration-200",
-              {
-                "opacity-0": isOpen,
-                "opacity-100": !isOpen,
-              },
-            )}
-          />
-          <span
-            className={cn(
-              "absolute inset-x-0 h-px origin-center bg-current transition-all duration-200",
-              {
-                "top-1/2 -rotate-45": isOpen,
-                "top-4": !isOpen,
-              },
-            )}
-          />
-        </span>
-      </button>
+      <DrawerTrigger asChild>
+        <button type="button" aria-label="Open navigation menu" className="p-1 md:hidden">
+          <span className="relative block size-5" aria-hidden>
+            <span
+              className={cn(
+                "absolute inset-x-0 h-px origin-center bg-current transition-all duration-200",
+                {
+                  "top-1/2 rotate-45": isOpen,
+                  "top-1": !isOpen,
+                },
+              )}
+            />
+            <span
+              className={cn(
+                "absolute inset-x-0 top-1/2 h-px bg-current transition-opacity duration-200",
+                {
+                  "opacity-0": isOpen,
+                  "opacity-100": !isOpen,
+                },
+              )}
+            />
+            <span
+              className={cn(
+                "absolute inset-x-0 h-px origin-center bg-current transition-all duration-200",
+                {
+                  "top-1/2 -rotate-45": isOpen,
+                  "top-4": !isOpen,
+                },
+              )}
+            />
+          </span>
+        </button>
+      </DrawerTrigger>
 
       <DrawerContent className="border-b border-border bg-paper data-[vaul-drawer-direction=top]:mb-0 data-[vaul-drawer-direction=top]:h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:max-h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:mt-(--header-height)">
         <DrawerHeader className="border-b border-border px-6 py-4">
@@ -105,8 +103,18 @@ export const MobileMenu = () => {
           </ul>
         </nav>
         <DrawerFooter>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2.5">
             <ThemeToggle />
+            <Link
+              to="/submit"
+              className={cn(
+                "no-underline! inline-flex font-mono",
+                buttonVariants({ variant: "link", size: "lg" }),
+              )}
+            >
+              <CloudArrowUpIcon />
+              <span className="uppercase">{m.header_submit()}</span>
+            </Link>
             <LanguageSwitcher />
           </div>
         </DrawerFooter>

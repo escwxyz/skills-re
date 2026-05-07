@@ -4,19 +4,12 @@ import { MobileMenu } from "@/components/mobile-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { CloudArrowUpIcon } from "@phosphor-icons/react";
+import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useSetAtom } from "jotai";
 import { LoginDialog } from "@/components/login-dialog";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const MENUS = [
-  { label: m.header_skills(), path: "/skills" },
-  { label: m.header_categories(), path: "/categories" },
-  { label: m.header_collections(), path: "/collections" },
-  { label: m.header_authors(), path: "/authors" },
-  { label: m.header_docs(), path: "/docs" },
-];
+import { DesktopMenu } from "@/components/desktop-menu";
 
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
@@ -24,23 +17,10 @@ export const Header = () => {
   const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
 
   return (
-    <header className="h-(--header-height) bg-background/80 sticky top-0 z-100 grid place-items-center border-b pr-3 pl-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm">
+    <header className="h-(--header-height) bg-background/80 sticky top-0 z-100 grid place-items-center border-b px-4 md:px-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm">
       <nav className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
-        <div className="hidden items-center gap-4.5 md:flex">
-          {MENUS.map((menu) => (
-            <Link
-              to={menu.path}
-              key={menu.path}
-              inactiveProps={{ className: "text-muted-foreground" }}
-              activeProps={{ className: "underline" }}
-            >
-              {menu.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex items-center md:hidden">
-          <MobileMenu />
-        </div>
+        <DesktopMenu />
+        <MobileMenu />
         <Link
           to="/"
           className="font-display text-foreground text-center text-[22px] tracking-normal normal-case italic"
@@ -48,15 +28,24 @@ export const Header = () => {
           <b className="font-serif not-italic">skills</b>
           <i>.re</i>
         </Link>
-        <div className="flex items-center justify-end gap-4.5">
-          <ThemeToggle />
+        <div className="flex items-center justify-end gap-2 md:gap-4.5">
+          <ThemeToggle className="hidden md:block" />
           <LanguageSwitcher className="hidden md:flex" />
           <Link
             to="/submit"
-            className={cn("no-underline", buttonVariants({ variant: "secondary" }))}
+            className={cn(
+              "no-underline hidden! md:inline-flex!",
+              buttonVariants({ variant: "secondary" }),
+            )}
           >
             <CloudArrowUpIcon />
-            <span className="hidden md:inline">{m.header_submit()}</span>
+            <span className="normal-case">{m.header_submit()}</span>
+          </Link>
+          <Link
+            to="/skills"
+            className={cn("no-underline md:hidden", buttonVariants({ variant: "link" }))}
+          >
+            <MagnifyingGlassIcon />
           </Link>
           {currentUser ? (
             <Link to="/dashboard">{currentUser.name}</Link>
