@@ -60,7 +60,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
           email: value.email,
           fetchOptions: {
             onSuccess: () => {
-              window.location.href = localizeHref("/account");
+              window.location.href = localizeHref("/dashboard");
             },
           },
           otp: value.otp,

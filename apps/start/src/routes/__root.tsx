@@ -1,4 +1,10 @@
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  ScriptOnce,
+  Scripts,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
@@ -6,9 +12,10 @@ import appCss from "../styles.css?url";
 import type { orpc } from "@/lib/orpc";
 import type { QueryClient } from "@tanstack/react-query";
 import { getLocale } from "@/paraglide/runtime";
-import { Header } from "@/components/header";
 import { getUser } from "@/functions/get-user";
 import { Provider } from "jotai";
+import { getTheme } from "@/functions/get-theme";
+import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -23,15 +30,18 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       return {
         currentUser: null,
         isAdmin: false,
-        token: null,
       };
     }
     return {
       currentUser: data.user || null,
       isAdmin: data.user.role === "admin",
-      token: data.session.token || null,
     };
   },
+
+  loader: async () => ({
+    themeState: await getTheme(),
+  }),
+
   head: () => ({
     meta: [
       {
@@ -52,12 +62,6 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       },
     ],
   }),
-  notFoundComponent: () => (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>404</h1>
-      <p>The requested page could not be found.</p>
-    </main>
-  ),
   shellComponent: RootDocument,
   component: RootComponent,
 });
@@ -65,29 +69,31 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 function RootComponent() {
   return (
     <Provider>
-      <Header />
-      <main>
-        <Outlet />
-      </main>
+      <Outlet />
     </Provider>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { themeState } = Route.useLoaderData();
   return (
     <html
       lang={getLocale()}
       suppressHydrationWarning={!import.meta.env.DEV}
       data-scroll-behavior="smooth"
+      {...registerTheme(themeState)}
     >
       <head>
         {import.meta.env.DEV ? (
           <script src="https://unpkg.com/react-scan/dist/auto.global.js" />
         ) : null}
+        <ScriptOnce>{themeScript()}</ScriptOnce>
         <HeadContent />
       </head>
       <body>
-        {children}
+        <ThemeProvider initial={themeState} disableTransition={false}>
+          {children}
+        </ThemeProvider>
         <TanStackDevtools
           config={{
             position: "bottom-right",
@@ -99,6 +105,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
+
         <Scripts />
       </body>
     </html>

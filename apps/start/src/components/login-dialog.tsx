@@ -55,7 +55,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     callbackUrl ??
     (() => {
       if (typeof window === "undefined") {
-        return "/account";
+        return "/dashboard";
       }
 
       return `${window.location.pathname}${window.location.search}`;
@@ -70,7 +70,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
       callbackURL: resolvedCallbackUrl,
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = localizeHref("/account");
+          window.location.href = localizeHref("/dashboard");
         },
       },
       provider,

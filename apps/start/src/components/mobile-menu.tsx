@@ -9,11 +9,11 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { isMobileMenuOpenAtom } from "@/atoms/app";
-// import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { m } from "@/paraglide/messages";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_LINKS = [
   { label: m.mobile_menu_skills(), to: "/skills" },
@@ -106,7 +106,7 @@ export const MobileMenu = () => {
         </nav>
         <DrawerFooter>
           <div className="flex items-center justify-between">
-            {/* <ThemeToggle /> */}
+            <ThemeToggle />
             <LanguageSwitcher />
           </div>
         </DrawerFooter>

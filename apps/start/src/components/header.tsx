@@ -8,6 +8,7 @@ import { CloudArrowUpIcon } from "@phosphor-icons/react";
 import { useSetAtom } from "jotai";
 import { LoginDialog } from "@/components/login-dialog";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const MENUS = [
   { label: m.header_skills(), path: "/skills" },
@@ -48,6 +49,7 @@ export const Header = () => {
           <i>.re</i>
         </Link>
         <div className="flex items-center justify-end gap-4.5">
+          <ThemeToggle />
           <LanguageSwitcher className="hidden md:flex" />
           <Link
             to="/submit"
@@ -57,7 +59,7 @@ export const Header = () => {
             <span className="hidden md:inline">{m.header_submit()}</span>
           </Link>
           {currentUser ? (
-            <Link to="/account">{currentUser.name}</Link>
+            <Link to="/dashboard">{currentUser.name}</Link>
           ) : (
             <LoginDialog onOpenChange={(open) => !open && setLoginDialogOpen(false)} />
           )}
