@@ -1,7 +1,5 @@
 import { m } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
-import { Link, useLocation, useRouteContext } from "@tanstack/react-router";
-import { isActiveLocalizedPath } from "@/lib/navigation";
+import { Link, useRouteContext } from "@tanstack/react-router";
 import { MobileMenu } from "@/components/mobile-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
@@ -22,12 +20,6 @@ const MENUS = [
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
 
-  const getLocalizedHref = (path: string) => localizeHref(path);
-
-  const location = useLocation();
-
-  const isActive = (href: string) => isActiveLocalizedPath(location.pathname, href);
-
   const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
 
   return (
@@ -38,19 +30,18 @@ export const Header = () => {
             <Link
               to={menu.path}
               key={menu.path}
-              className={
-                isActive(getLocalizedHref(menu.path)) ? "underline" : "text-muted-foreground"
-              }
+              inactiveProps={{ className: "text-muted-foreground" }}
+              activeProps={{ className: "underline" }}
             >
               {menu.label}
             </Link>
           ))}
         </div>
         <div className="flex items-center md:hidden">
-          <MobileMenu currentPathname={location.pathname} />
+          <MobileMenu />
         </div>
         <Link
-          to={getLocalizedHref("/")}
+          to="/"
           className="font-display text-foreground text-center text-[22px] tracking-normal normal-case italic"
         >
           <b className="font-serif not-italic">skills</b>
@@ -59,14 +50,14 @@ export const Header = () => {
         <div className="flex items-center justify-end gap-4.5">
           <LanguageSwitcher className="hidden md:flex" />
           <Link
-            to={getLocalizedHref("/submit")}
+            to="/submit"
             className={cn("no-underline", buttonVariants({ variant: "secondary" }))}
           >
             <CloudArrowUpIcon />
             <span className="hidden md:inline">{m.header_submit()}</span>
           </Link>
           {currentUser ? (
-            <Link to={getLocalizedHref("/account")}>{currentUser.name}</Link>
+            <Link to="/account">{currentUser.name}</Link>
           ) : (
             <LoginDialog onOpenChange={(open) => !open && setLoginDialogOpen(false)} />
           )}

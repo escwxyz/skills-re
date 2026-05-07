@@ -1,5 +1,3 @@
-"use client";
-
 import { AtIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";

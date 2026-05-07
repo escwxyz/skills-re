@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -15,7 +13,7 @@ import type { CookieConsentChoice } from "@/lib/cookie-consent";
 import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
 
-function CookieConsentInner() {
+export const CookieConsent = () => {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<CookieConsentChoice>("essential");
 
@@ -61,7 +59,7 @@ function CookieConsentInner() {
           </DialogHeader>
 
           <div className="text-ink-2 space-y-3 text-xs leading-relaxed">
-            <div className="border-rule bg-paper-2 border px-3 py-2">
+            <div className="border-border bg-paper-2 border px-3 py-2">
               <div className="text-muted-foreground font-mono text-[10px] tracking-[0.14em] uppercase">
                 {m.cookie_consent_current_choice()}
               </div>
@@ -95,7 +93,7 @@ function CookieConsentInner() {
             </div>
           </DialogFooter>
 
-          <div className="border-rule text-muted-foreground flex items-center justify-between border-t pt-3 font-mono text-[10px] tracking-[0.14em] uppercase">
+          <div className="border-border text-muted-foreground flex items-center justify-between border-t pt-3 font-mono text-[10px] tracking-[0.14em] uppercase">
             <a href={localizeHref("/cookies")} className="hover:text-ink">
               {m.cookie_consent_policy()}
             </a>
@@ -107,6 +105,4 @@ function CookieConsentInner() {
       </Dialog>
     </>
   );
-}
-
-export const CookieConsent = () => <CookieConsentInner />;
+};

@@ -1,6 +1,4 @@
 /** biome-ignore-all lint/style/noNestedTernary: <ignore> */
-"use client";
-
 import { useAtom } from "jotai";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
@@ -48,11 +46,20 @@ interface LoginDialogProps {
   onlyGitHub?: boolean;
 }
 
-const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
+export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
   const [isOpen, setIsOpen] = useAtom(isLoginDialogOpenAtom);
   const [isGithubOnlyMode, setGithubOnlyMode] = useAtom(loginDialogOnlyGithubAtom);
   const [view, setView] = useState<"options" | "email">("options");
   const resolvedOnlyGitHub = onlyGitHub ?? isGithubOnlyMode;
+  const resolvedCallbackUrl =
+    callbackUrl ??
+    (() => {
+      if (typeof window === "undefined") {
+        return "/account";
+      }
+
+      return `${window.location.pathname}${window.location.search}`;
+    })();
 
   const closeDialog = () => {
     setIsOpen(false);
@@ -60,10 +67,10 @@ const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
 
   const handleLogin = async (provider: "github" | "google") => {
     await authClient.signIn.social({
-      callbackURL: callbackUrl,
+      callbackURL: resolvedCallbackUrl,
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = localizeHref("/dashboard");
+          window.location.href = localizeHref("/account");
         },
       },
       provider,
@@ -121,5 +128,3 @@ const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     </Dialog>
   );
 };
-
-export const LoginDialog = (props: LoginDialogProps) => <LoginDialogContent {...props} />;

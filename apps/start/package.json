@@ -38,6 +38,7 @@
     "dotenv": "catalog:",
     "input-otp": "^1.4.2",
     "jotai": "^2.19.1",
+    "markdown-it-anchor": "^9.2.0",
     "markdown-it-async": "^2.2.0",
     "motion": "^12.38.0",
     "nanoid": "catalog:",

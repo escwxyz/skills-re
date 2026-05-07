@@ -1,7 +1,5 @@
 // oxlint-disable no-nested-ternary
 /** biome-ignore-all lint/style/noNestedTernary: <ignore> */
-"use client";
-
 import { useEffect, useState } from "react";
 import { z } from "zod/v4";
 
@@ -62,7 +60,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
           email: value.email,
           fetchOptions: {
             onSuccess: () => {
-              window.location.href = localizeHref("/dashboard");
+              window.location.href = localizeHref("/account");
             },
           },
           otp: value.otp,
