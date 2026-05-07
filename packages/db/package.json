@@ -23,7 +23,9 @@
   },
   "scripts": {
     "db:push": "drizzle-kit push",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:seed": "bun run src/seed.ts",
+    "db:seed:reset": "bun run src/seed.ts --reset"
   },
   "dependencies": {
     "@libsql/client": "catalog:",

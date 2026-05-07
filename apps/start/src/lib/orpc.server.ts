@@ -10,14 +10,15 @@ export const createServerORPCClient = () => {
   const link = new RPCLink({
     url: rpcUrl,
     fetch(input, init) {
-      const headers = getRequestHeaders();
-      const cookie = headers.get("cookie");
+      const incomingHeaders = getRequestHeaders();
+      const headers = new Headers(init?.headers);
+      const cookie = incomingHeaders.get("cookie");
 
       if (cookie) {
         headers.set("cookie", cookie);
       }
 
-      const authorization = headers.get("authorization");
+      const authorization = incomingHeaders.get("authorization");
 
       if (authorization) {
         headers.set("authorization", authorization);
@@ -25,6 +26,7 @@ export const createServerORPCClient = () => {
 
       return fetch(input, {
         ...init,
+        headers,
         credentials: "include",
       });
     },

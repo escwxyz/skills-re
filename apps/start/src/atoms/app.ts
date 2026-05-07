@@ -6,8 +6,6 @@ export const loginDialogOnlyGithubAtom = atom(false);
 export const isMobileMenuOpenAtom = atom(false);
 export const isHeroSearchInViewAtom = atom(false);
 
-export const skillsFiltersSidebarOpenAtom = atom(false);
-
 export const skillsViewModeAtom = atomWithStorage<"grid" | "list">("skills-view-mode", "grid");
 
 export interface MaybeAuthUser {
