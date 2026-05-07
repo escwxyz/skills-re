@@ -76,6 +76,7 @@ export {
   getTagBySlug,
   listIndexableTagsPublic as listIndexableTags,
   listTagsForSeoPublic as listTagsForSeo,
+  listTagsPagePublic as listTagsPage,
   listTagsPublic as listTags,
 } from "./tags/service";
 export {

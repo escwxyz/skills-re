@@ -4,7 +4,7 @@ import { getChangelogData } from "@/functions/get-changelog-data";
 import { createSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/changelogs")({
+export const Route = createFileRoute("/_publicLayout/changelogs")({
   loader: () => getChangelogData({ data: { locale: getLocale() } }),
   head: () =>
     createSeo({

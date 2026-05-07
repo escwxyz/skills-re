@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getLocale, localizeHref } from "@/paraglide/runtime";
+import { getLocale } from "@/paraglide/runtime";
 import { getDocsList } from "@/functions/get-docs-list";
 import { createSeo } from "@/lib/seo";
 
-export const Route = createFileRoute("/docs/")({
+export const Route = createFileRoute("/_publicLayout/docs/")({
   loader: () => getDocsList({ data: { locale: getLocale() } }),
   head: () =>
     createSeo({
@@ -32,7 +32,8 @@ function RouteComponent() {
         {docs.map((doc) => (
           <Link
             key={doc.slug}
-            to={localizeHref(`/docs/${doc.slug}`)}
+            to="/docs/$slug"
+            params={{ slug: doc.slug }}
             className="hover:bg-muted block border p-6 transition-colors"
           >
             {doc.category && (

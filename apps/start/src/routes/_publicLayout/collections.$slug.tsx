@@ -21,9 +21,10 @@ import {
   collections_page_total_file_size,
   collections_page_working_collection,
 } from "@/paraglide/messages";
-import { getLocale, localizeHref } from "@/paraglide/runtime";
+import { getLocale } from "@/paraglide/runtime";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 
-export const Route = createFileRoute("/collections/$slug")({
+export const Route = createFileRoute("/_publicLayout/collections/$slug")({
   loader: ({ params }) => getCollectionDetail({ data: { locale: getLocale(), slug: params.slug } }),
   head: ({ loaderData }) =>
     createSeo({
@@ -144,10 +145,10 @@ function RouteComponent() {
         </div>
         <div className="mt-6 flex justify-center">
           <Link
-            to={localizeHref("/collections")}
+            to="/collections"
             className="border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
           >
-            ← {collections_page_all_collections()}
+            <ArrowLeftIcon /> {collections_page_all_collections()}
           </Link>
         </div>
       </div>

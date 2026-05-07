@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { baseContract } from "./common/base";
+import { cursorPaginationInputSchema, paginatedResponseSchema } from "./common/pagination";
 import { tagDetailSchema, tagListItemSchema } from "./common/content";
 import { tagSlugSchema } from "./common/slugs";
 
@@ -17,6 +18,8 @@ const listIndexableTagsInputSchema = z
     minCount: z.number().int().min(1).max(100).optional(),
   })
   .optional();
+
+const listTagsPageInputSchema = cursorPaginationInputSchema;
 
 const tagLookupInputSchema = z.object({
   slug: tagSlugSchema,
@@ -81,10 +84,24 @@ const listIndexableTagsContract = baseContract
   .input(listIndexableTagsInputSchema)
   .output(z.array(tagListItemSchema));
 
+const listTagsPageContract = baseContract
+  .route({
+    description:
+      "Returns a paginated public tag list for the tags aggregate page, including skill counts.",
+    method: "GET",
+    path: "/tags/page",
+    tags: ["Tags"],
+    successDescription: "Paginated public tag list",
+    summary: "List public tags page",
+  })
+  .input(listTagsPageInputSchema)
+  .output(paginatedResponseSchema(tagListItemSchema));
+
 export const tagsContract = {
   count: tagsCountContract,
   getBySlug: tagBySlugContract,
   list: tagsListContract,
   listForSeo: listTagsForSeoContract,
   listIndexable: listIndexableTagsContract,
+  listPage: listTagsPageContract,
 } as const;

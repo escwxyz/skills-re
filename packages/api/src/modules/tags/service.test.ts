@@ -175,6 +175,42 @@ describe("tags service", () => {
     ]);
   });
 
+  test("returns a paginated public tag page with total count", async () => {
+    const calls: { cursor?: string; limit?: number }[] = [];
+    const service = createTagsService({
+      countTags: () => 42,
+      listTagsPage: (input) => {
+        calls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "next-cursor",
+          isDone: false,
+          page: [
+            {
+              count: 12,
+              id: "tag-1",
+              slug: "automation",
+              status: "active",
+            },
+          ],
+        });
+      },
+    });
+
+    await expect(service.listPage({ cursor: "cursor-1", limit: 10 })).resolves.toEqual({
+      items: [
+        {
+          count: 12,
+          id: "tag-1",
+          slug: "automation",
+          status: "active",
+        },
+      ],
+      nextCursor: "next-cursor",
+      totalCount: 42,
+    });
+    expect(calls).toEqual([{ cursor: "cursor-1", limit: 10 }]);
+  });
+
   test("passes through seo tag slugs", async () => {
     const calls: { limit?: number }[] = [];
     const service = createTagsService({

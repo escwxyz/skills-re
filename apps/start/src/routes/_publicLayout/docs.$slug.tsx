@@ -1,11 +1,11 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
-import { getLocale, localizeHref } from "@/paraglide/runtime";
+import { getLocale } from "@/paraglide/runtime";
 import { getDocData } from "@/functions/get-doc-data";
 import { createSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/docs/$slug")({
+export const Route = createFileRoute("/_publicLayout/docs/$slug")({
   loader: ({ params }) => getDocData({ data: { locale: getLocale(), slug: params.slug } }),
   head: ({ loaderData }) =>
     createSeo({
@@ -42,7 +42,8 @@ function RouteComponent() {
                 return (
                   <li key={doc.slug}>
                     <Link
-                      to={localizeHref(`/docs/${doc.slug}`)}
+                      to="/docs/$slug"
+                      params={{ slug: doc.slug }}
                       className={cn(
                         "block border-l-2 py-1.5 pl-3 font-mono text-[11px] tracking-[.04em] transition-colors",
                         isCurrent
@@ -89,7 +90,8 @@ function RouteComponent() {
           <nav className="mt-12 flex justify-between border-t pt-6 lg:hidden">
             {prev ? (
               <Link
-                to={localizeHref(`/docs/${prev.slug}`)}
+                to="/docs/$slug"
+                params={{ slug: prev.slug }}
                 className="text-muted-foreground hover:text-foreground font-mono text-[11px] tracking-[.04em]"
               >
                 ← {prev.title}
@@ -99,7 +101,8 @@ function RouteComponent() {
             )}
             {next && (
               <Link
-                to={localizeHref(`/docs/${next.slug}`)}
+                to="/docs/$slug"
+                params={{ slug: next.slug }}
                 className="text-muted-foreground hover:text-foreground font-mono text-[11px] tracking-[.04em]"
               >
                 {next.title} →

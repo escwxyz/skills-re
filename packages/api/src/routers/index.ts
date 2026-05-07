@@ -51,6 +51,7 @@ import {
   listSkills,
   listTags,
   listTagsForSeo,
+  listTagsPage,
   fetchGithubRepo,
   dailySkillsSnapshots,
   refreshDailySkillsSnapshots,
@@ -490,6 +491,9 @@ export const appRouter = {
     ),
     listIndexable: publicProcedure.tags.listIndexable.handler(({ input }) =>
       listIndexableTags(input as { limit?: number; minCount?: number } | undefined),
+    ),
+    listPage: publicProcedure.tags.listPage.handler(({ input }) =>
+      listTagsPage(input as { cursor?: string; limit?: number } | undefined),
     ),
   },
 };

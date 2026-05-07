@@ -4,7 +4,7 @@ import { m } from "@/paraglide/messages";
 import { getFaqData } from "@/functions/get-faq-data";
 import { createSeo } from "@/lib/seo";
 
-export const Route = createFileRoute("/faq")({
+export const Route = createFileRoute("/_publicLayout/faq")({
   loader: () => getFaqData({ data: { locale: getLocale() } }),
   head: () =>
     createSeo({

@@ -4,11 +4,11 @@ import { LegalPage } from "@/components/legal-page";
 import { getPageData } from "@/functions/get-page-data";
 import { createSeo } from "@/lib/seo";
 
-export const Route = createFileRoute("/imprint")({
-  loader: () => getPageData({ data: { locale: getLocale(), slug: "imprint" } }),
+export const Route = createFileRoute("/_publicLayout/terms")({
+  loader: () => getPageData({ data: { locale: getLocale(), slug: "terms" } }),
   head: ({ loaderData }) =>
     createSeo({
-      canonicalPath: "/imprint",
+      canonicalPath: "/terms",
       description: loaderData?.description ?? undefined,
       title: loaderData?.title,
     }),

@@ -99,5 +99,6 @@ describe("tags contract", () => {
     expect(tagsContract.getBySlug).toBeDefined();
     expect(tagsContract.listForSeo).toBeDefined();
     expect(tagsContract.listIndexable).toBeDefined();
+    expect(tagsContract.listPage).toBeDefined();
   });
 });

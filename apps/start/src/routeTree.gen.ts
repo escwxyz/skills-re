@@ -9,275 +9,428 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SubmitRouteImport } from './routes/submit'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ImprintRouteImport } from './routes/imprint'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as CookiesRouteImport } from './routes/cookies'
-import { Route as ChangelogsRouteImport } from './routes/changelogs'
-import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
-import { Route as AccountRouteRouteImport } from './routes/account/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SkillsIndexRouteImport } from './routes/skills/index'
-import { Route as DocsIndexRouteImport } from './routes/docs.index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
-import { Route as CategoriesIndexRouteImport } from './routes/categories.index'
-import { Route as AuthorsIndexRouteImport } from './routes/authors.index'
-import { Route as AccountIndexRouteImport } from './routes/account/index'
-import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
-import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
-import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
-import { Route as AuthorsHandleRouteImport } from './routes/authors.$handle'
-import { Route as SkillsAuthorRepoSlugRouteRouteImport } from './routes/skills/$author.$repo.$slug.route'
-import { Route as SkillsAuthorRepoSlugIndexRouteImport } from './routes/skills/$author.$repo.$slug.index'
-import { Route as SkillsAuthorRepoSlugReviewsRouteImport } from './routes/skills/$author.$repo.$slug.reviews'
-import { Route as SkillsAuthorRepoSlugFileTreeRouteImport } from './routes/skills/$author.$repo.$slug.file-tree'
-import { Route as SkillsAuthorRepoSlugChangelogRouteImport } from './routes/skills/$author.$repo.$slug.changelog'
-import { Route as SkillsAuthorRepoSlugAuditRouteImport } from './routes/skills/$author.$repo.$slug.audit'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PublicLayoutRouteImport } from './routes/_publicLayout'
+import { Route as AuthedLayoutRouteImport } from './routes/_authedLayout'
+import { Route as R500RouteImport } from './routes/500'
+import { Route as R404RouteImport } from './routes/404'
+import { Route as PublicLayoutIndexRouteImport } from './routes/_publicLayout/index'
+import { Route as SitemapTaxonomyDotxmlRouteImport } from './routes/sitemap.taxonomy[.]xml'
+import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static[.]xml'
+import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
+import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
+import { Route as ApiRenderRouteImport } from './routes/api/render'
+import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
+import { Route as PublicLayoutSubmitRouteImport } from './routes/_publicLayout/submit'
+import { Route as PublicLayoutSearchRouteImport } from './routes/_publicLayout/search'
+import { Route as PublicLayoutPrivacyRouteImport } from './routes/_publicLayout/privacy'
+import { Route as PublicLayoutImprintRouteImport } from './routes/_publicLayout/imprint'
+import { Route as PublicLayoutFaqRouteImport } from './routes/_publicLayout/faq'
+import { Route as PublicLayoutCookiesRouteImport } from './routes/_publicLayout/cookies'
+import { Route as PublicLayoutChangelogsRouteImport } from './routes/_publicLayout/changelogs'
+import { Route as AuthedLayoutDashboardRouteRouteImport } from './routes/_authedLayout/dashboard/route'
+import { Route as PublicLayoutTagsIndexRouteImport } from './routes/_publicLayout/tags.index'
+import { Route as PublicLayoutSkillsIndexRouteImport } from './routes/_publicLayout/skills/index'
+import { Route as PublicLayoutDocsIndexRouteImport } from './routes/_publicLayout/docs.index'
+import { Route as PublicLayoutCollectionsIndexRouteImport } from './routes/_publicLayout/collections.index'
+import { Route as PublicLayoutCategoriesIndexRouteImport } from './routes/_publicLayout/categories.index'
+import { Route as PublicLayoutAuthorsIndexRouteImport } from './routes/_publicLayout/authors.index'
+import { Route as AuthedLayoutDashboardIndexRouteImport } from './routes/_authedLayout/dashboard/index'
+import { Route as SitemapSkillsPageRouteImport } from './routes/sitemap.skills.$page'
+import { Route as PublicLayoutTagsSlugRouteImport } from './routes/_publicLayout/tags.$slug'
+import { Route as PublicLayoutTagSlugRouteImport } from './routes/_publicLayout/tag.$slug'
+import { Route as PublicLayoutDocsSlugRouteImport } from './routes/_publicLayout/docs.$slug'
+import { Route as PublicLayoutCollectionsSlugRouteImport } from './routes/_publicLayout/collections.$slug'
+import { Route as PublicLayoutCategorySlugRouteImport } from './routes/_publicLayout/category.$slug'
+import { Route as PublicLayoutCategoriesSlugRouteImport } from './routes/_publicLayout/categories.$slug'
+import { Route as PublicLayoutAuthorsHandleRouteImport } from './routes/_publicLayout/authors.$handle'
+import { Route as PublicLayoutAuthorHandleRouteImport } from './routes/_publicLayout/author.$handle'
+import { Route as AuthedLayoutDeviceCapabilitiesRouteImport } from './routes/_authedLayout/device/capabilities'
+import { Route as PublicLayoutSkillAuthorRepoSlugRouteImport } from './routes/_publicLayout/skill.$author.$repo.$slug'
+import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.route'
+import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.index'
+import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.reviews'
+import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.file-tree'
+import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.changelog'
+import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.audit'
 
-const TermsRoute = TermsRouteImport.update({
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLayoutRoute = PublicLayoutRouteImport.update({
+  id: '/_publicLayout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedLayoutRoute = AuthedLayoutRouteImport.update({
+  id: '/_authedLayout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R500Route = R500RouteImport.update({
+  id: '/500',
+  path: '/500',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R404Route = R404RouteImport.update({
+  id: '/404',
+  path: '/404',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLayoutIndexRoute = PublicLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicLayoutRoute,
+} as any)
+const SitemapTaxonomyDotxmlRoute = SitemapTaxonomyDotxmlRouteImport.update({
+  id: '/sitemap/taxonomy.xml',
+  path: '/sitemap/taxonomy.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapStaticDotxmlRoute = SitemapStaticDotxmlRouteImport.update({
+  id: '/sitemap/static.xml',
+  path: '/sitemap/static.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
+  id: '/sitemap/authors.xml',
+  path: '/sitemap/authors.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsTxtRoute = RobotsTxtRouteImport.update({
+  id: '/robots/txt',
+  path: '/robots/txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRenderRoute = ApiRenderRouteImport.update({
+  id: '/api/render',
+  path: '/api/render',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLayoutTermsRoute = PublicLayoutTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const SubmitRoute = SubmitRouteImport.update({
+const PublicLayoutSubmitRoute = PublicLayoutSubmitRouteImport.update({
   id: '/submit',
   path: '/submit',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const SearchRoute = SearchRouteImport.update({
+const PublicLayoutSearchRoute = PublicLayoutSearchRouteImport.update({
   id: '/search',
   path: '/search',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const PrivacyRoute = PrivacyRouteImport.update({
+const PublicLayoutPrivacyRoute = PublicLayoutPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const ImprintRoute = ImprintRouteImport.update({
+const PublicLayoutImprintRoute = PublicLayoutImprintRouteImport.update({
   id: '/imprint',
   path: '/imprint',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const FaqRoute = FaqRouteImport.update({
+const PublicLayoutFaqRoute = PublicLayoutFaqRouteImport.update({
   id: '/faq',
   path: '/faq',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const CookiesRoute = CookiesRouteImport.update({
+const PublicLayoutCookiesRoute = PublicLayoutCookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const ChangelogsRoute = ChangelogsRouteImport.update({
+const PublicLayoutChangelogsRoute = PublicLayoutChangelogsRouteImport.update({
   id: '/changelogs',
   path: '/changelogs',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const DashboardRouteRoute = DashboardRouteRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
+const AuthedLayoutDashboardRouteRoute =
+  AuthedLayoutDashboardRouteRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthedLayoutRoute,
+  } as any)
+const PublicLayoutTagsIndexRoute = PublicLayoutTagsIndexRouteImport.update({
+  id: '/tags/',
+  path: '/tags/',
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const AccountRouteRoute = AccountRouteRouteImport.update({
-  id: '/account',
-  path: '/account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SkillsIndexRoute = SkillsIndexRouteImport.update({
+const PublicLayoutSkillsIndexRoute = PublicLayoutSkillsIndexRouteImport.update({
   id: '/skills/',
   path: '/skills/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const DocsIndexRoute = DocsIndexRouteImport.update({
+const PublicLayoutDocsIndexRoute = PublicLayoutDocsIndexRouteImport.update({
   id: '/docs/',
   path: '/docs/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicLayoutRoute,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
-  id: '/collections/',
-  path: '/collections/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriesIndexRoute = CategoriesIndexRouteImport.update({
-  id: '/categories/',
-  path: '/categories/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthorsIndexRoute = AuthorsIndexRouteImport.update({
-  id: '/authors/',
-  path: '/authors/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountIndexRoute = AccountIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AccountRouteRoute,
-} as any)
-const DocsSlugRoute = DocsSlugRouteImport.update({
-  id: '/docs/$slug',
-  path: '/docs/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
-  id: '/collections/$slug',
-  path: '/collections/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
-  id: '/categories/$slug',
-  path: '/categories/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthorsHandleRoute = AuthorsHandleRouteImport.update({
-  id: '/authors/$handle',
-  path: '/authors/$handle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SkillsAuthorRepoSlugRouteRoute =
-  SkillsAuthorRepoSlugRouteRouteImport.update({
-    id: '/skills/$author/$repo/$slug',
-    path: '/skills/$author/$repo/$slug',
-    getParentRoute: () => rootRouteImport,
+const PublicLayoutCollectionsIndexRoute =
+  PublicLayoutCollectionsIndexRouteImport.update({
+    id: '/collections/',
+    path: '/collections/',
+    getParentRoute: () => PublicLayoutRoute,
   } as any)
-const SkillsAuthorRepoSlugIndexRoute =
-  SkillsAuthorRepoSlugIndexRouteImport.update({
+const PublicLayoutCategoriesIndexRoute =
+  PublicLayoutCategoriesIndexRouteImport.update({
+    id: '/categories/',
+    path: '/categories/',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutAuthorsIndexRoute =
+  PublicLayoutAuthorsIndexRouteImport.update({
+    id: '/authors/',
+    path: '/authors/',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const AuthedLayoutDashboardIndexRoute =
+  AuthedLayoutDashboardIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => SkillsAuthorRepoSlugRouteRoute,
+    getParentRoute: () => AuthedLayoutDashboardRouteRoute,
   } as any)
-const SkillsAuthorRepoSlugReviewsRoute =
-  SkillsAuthorRepoSlugReviewsRouteImport.update({
+const SitemapSkillsPageRoute = SitemapSkillsPageRouteImport.update({
+  id: '/sitemap/skills/$page',
+  path: '/sitemap/skills/$page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicLayoutTagsSlugRoute = PublicLayoutTagsSlugRouteImport.update({
+  id: '/tags/$slug',
+  path: '/tags/$slug',
+  getParentRoute: () => PublicLayoutRoute,
+} as any)
+const PublicLayoutTagSlugRoute = PublicLayoutTagSlugRouteImport.update({
+  id: '/tag/$slug',
+  path: '/tag/$slug',
+  getParentRoute: () => PublicLayoutRoute,
+} as any)
+const PublicLayoutDocsSlugRoute = PublicLayoutDocsSlugRouteImport.update({
+  id: '/docs/$slug',
+  path: '/docs/$slug',
+  getParentRoute: () => PublicLayoutRoute,
+} as any)
+const PublicLayoutCollectionsSlugRoute =
+  PublicLayoutCollectionsSlugRouteImport.update({
+    id: '/collections/$slug',
+    path: '/collections/$slug',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutCategorySlugRoute =
+  PublicLayoutCategorySlugRouteImport.update({
+    id: '/category/$slug',
+    path: '/category/$slug',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutCategoriesSlugRoute =
+  PublicLayoutCategoriesSlugRouteImport.update({
+    id: '/categories/$slug',
+    path: '/categories/$slug',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutAuthorsHandleRoute =
+  PublicLayoutAuthorsHandleRouteImport.update({
+    id: '/authors/$handle',
+    path: '/authors/$handle',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutAuthorHandleRoute =
+  PublicLayoutAuthorHandleRouteImport.update({
+    id: '/author/$handle',
+    path: '/author/$handle',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const AuthedLayoutDeviceCapabilitiesRoute =
+  AuthedLayoutDeviceCapabilitiesRouteImport.update({
+    id: '/device/capabilities',
+    path: '/device/capabilities',
+    getParentRoute: () => AuthedLayoutRoute,
+  } as any)
+const PublicLayoutSkillAuthorRepoSlugRoute =
+  PublicLayoutSkillAuthorRepoSlugRouteImport.update({
+    id: '/skill/$author/$repo/$slug',
+    path: '/skill/$author/$repo/$slug',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutSkillsAuthorRepoSlugRouteRoute =
+  PublicLayoutSkillsAuthorRepoSlugRouteRouteImport.update({
+    id: '/skills/$author/$repo/$slug',
+    path: '/skills/$author/$repo/$slug',
+    getParentRoute: () => PublicLayoutRoute,
+  } as any)
+const PublicLayoutSkillsAuthorRepoSlugIndexRoute =
+  PublicLayoutSkillsAuthorRepoSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
+  } as any)
+const PublicLayoutSkillsAuthorRepoSlugReviewsRoute =
+  PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport.update({
     id: '/reviews',
     path: '/reviews',
-    getParentRoute: () => SkillsAuthorRepoSlugRouteRoute,
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
-const SkillsAuthorRepoSlugFileTreeRoute =
-  SkillsAuthorRepoSlugFileTreeRouteImport.update({
+const PublicLayoutSkillsAuthorRepoSlugFileTreeRoute =
+  PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport.update({
     id: '/file-tree',
     path: '/file-tree',
-    getParentRoute: () => SkillsAuthorRepoSlugRouteRoute,
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
-const SkillsAuthorRepoSlugChangelogRoute =
-  SkillsAuthorRepoSlugChangelogRouteImport.update({
+const PublicLayoutSkillsAuthorRepoSlugChangelogRoute =
+  PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport.update({
     id: '/changelog',
     path: '/changelog',
-    getParentRoute: () => SkillsAuthorRepoSlugRouteRoute,
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
-const SkillsAuthorRepoSlugAuditRoute =
-  SkillsAuthorRepoSlugAuditRouteImport.update({
+const PublicLayoutSkillsAuthorRepoSlugAuditRoute =
+  PublicLayoutSkillsAuthorRepoSlugAuditRouteImport.update({
     id: '/audit',
     path: '/audit',
-    getParentRoute: () => SkillsAuthorRepoSlugRouteRoute,
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/account': typeof AccountRouteRouteWithChildren
-  '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/changelogs': typeof ChangelogsRoute
-  '/cookies': typeof CookiesRoute
-  '/faq': typeof FaqRoute
-  '/imprint': typeof ImprintRoute
-  '/privacy': typeof PrivacyRoute
-  '/search': typeof SearchRoute
-  '/submit': typeof SubmitRoute
-  '/terms': typeof TermsRoute
-  '/authors/$handle': typeof AuthorsHandleRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/collections/$slug': typeof CollectionsSlugRoute
-  '/docs/$slug': typeof DocsSlugRoute
-  '/account/': typeof AccountIndexRoute
-  '/authors/': typeof AuthorsIndexRoute
-  '/categories/': typeof CategoriesIndexRoute
-  '/collections/': typeof CollectionsIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
-  '/docs/': typeof DocsIndexRoute
-  '/skills/': typeof SkillsIndexRoute
-  '/skills/$author/$repo/$slug': typeof SkillsAuthorRepoSlugRouteRouteWithChildren
-  '/skills/$author/$repo/$slug/audit': typeof SkillsAuthorRepoSlugAuditRoute
-  '/skills/$author/$repo/$slug/changelog': typeof SkillsAuthorRepoSlugChangelogRoute
-  '/skills/$author/$repo/$slug/file-tree': typeof SkillsAuthorRepoSlugFileTreeRoute
-  '/skills/$author/$repo/$slug/reviews': typeof SkillsAuthorRepoSlugReviewsRoute
-  '/skills/$author/$repo/$slug/': typeof SkillsAuthorRepoSlugIndexRoute
+  '/404': typeof R404Route
+  '/500': typeof R500Route
+  '/': typeof PublicLayoutIndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
+  '/changelogs': typeof PublicLayoutChangelogsRoute
+  '/cookies': typeof PublicLayoutCookiesRoute
+  '/faq': typeof PublicLayoutFaqRoute
+  '/imprint': typeof PublicLayoutImprintRoute
+  '/privacy': typeof PublicLayoutPrivacyRoute
+  '/search': typeof PublicLayoutSearchRoute
+  '/submit': typeof PublicLayoutSubmitRoute
+  '/terms': typeof PublicLayoutTermsRoute
+  '/api/render': typeof ApiRenderRoute
+  '/robots/txt': typeof RobotsTxtRoute
+  '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
+  '/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
+  '/author/$handle': typeof PublicLayoutAuthorHandleRoute
+  '/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
+  '/categories/$slug': typeof PublicLayoutCategoriesSlugRoute
+  '/category/$slug': typeof PublicLayoutCategorySlugRoute
+  '/collections/$slug': typeof PublicLayoutCollectionsSlugRoute
+  '/docs/$slug': typeof PublicLayoutDocsSlugRoute
+  '/tag/$slug': typeof PublicLayoutTagSlugRoute
+  '/tags/$slug': typeof PublicLayoutTagsSlugRoute
+  '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
+  '/dashboard/': typeof AuthedLayoutDashboardIndexRoute
+  '/authors/': typeof PublicLayoutAuthorsIndexRoute
+  '/categories/': typeof PublicLayoutCategoriesIndexRoute
+  '/collections/': typeof PublicLayoutCollectionsIndexRoute
+  '/docs/': typeof PublicLayoutDocsIndexRoute
+  '/skills/': typeof PublicLayoutSkillsIndexRoute
+  '/tags/': typeof PublicLayoutTagsIndexRoute
+  '/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
+  '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
+  '/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
+  '/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
+  '/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/skills/$author/$repo/$slug/': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/changelogs': typeof ChangelogsRoute
-  '/cookies': typeof CookiesRoute
-  '/faq': typeof FaqRoute
-  '/imprint': typeof ImprintRoute
-  '/privacy': typeof PrivacyRoute
-  '/search': typeof SearchRoute
-  '/submit': typeof SubmitRoute
-  '/terms': typeof TermsRoute
-  '/authors/$handle': typeof AuthorsHandleRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/collections/$slug': typeof CollectionsSlugRoute
-  '/docs/$slug': typeof DocsSlugRoute
-  '/account': typeof AccountIndexRoute
-  '/authors': typeof AuthorsIndexRoute
-  '/categories': typeof CategoriesIndexRoute
-  '/collections': typeof CollectionsIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
-  '/docs': typeof DocsIndexRoute
-  '/skills': typeof SkillsIndexRoute
-  '/skills/$author/$repo/$slug/audit': typeof SkillsAuthorRepoSlugAuditRoute
-  '/skills/$author/$repo/$slug/changelog': typeof SkillsAuthorRepoSlugChangelogRoute
-  '/skills/$author/$repo/$slug/file-tree': typeof SkillsAuthorRepoSlugFileTreeRoute
-  '/skills/$author/$repo/$slug/reviews': typeof SkillsAuthorRepoSlugReviewsRoute
-  '/skills/$author/$repo/$slug': typeof SkillsAuthorRepoSlugIndexRoute
+  '/404': typeof R404Route
+  '/500': typeof R500Route
+  '/': typeof PublicLayoutIndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/changelogs': typeof PublicLayoutChangelogsRoute
+  '/cookies': typeof PublicLayoutCookiesRoute
+  '/faq': typeof PublicLayoutFaqRoute
+  '/imprint': typeof PublicLayoutImprintRoute
+  '/privacy': typeof PublicLayoutPrivacyRoute
+  '/search': typeof PublicLayoutSearchRoute
+  '/submit': typeof PublicLayoutSubmitRoute
+  '/terms': typeof PublicLayoutTermsRoute
+  '/api/render': typeof ApiRenderRoute
+  '/robots/txt': typeof RobotsTxtRoute
+  '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
+  '/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
+  '/author/$handle': typeof PublicLayoutAuthorHandleRoute
+  '/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
+  '/categories/$slug': typeof PublicLayoutCategoriesSlugRoute
+  '/category/$slug': typeof PublicLayoutCategorySlugRoute
+  '/collections/$slug': typeof PublicLayoutCollectionsSlugRoute
+  '/docs/$slug': typeof PublicLayoutDocsSlugRoute
+  '/tag/$slug': typeof PublicLayoutTagSlugRoute
+  '/tags/$slug': typeof PublicLayoutTagsSlugRoute
+  '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
+  '/dashboard': typeof AuthedLayoutDashboardIndexRoute
+  '/authors': typeof PublicLayoutAuthorsIndexRoute
+  '/categories': typeof PublicLayoutCategoriesIndexRoute
+  '/collections': typeof PublicLayoutCollectionsIndexRoute
+  '/docs': typeof PublicLayoutDocsIndexRoute
+  '/skills': typeof PublicLayoutSkillsIndexRoute
+  '/tags': typeof PublicLayoutTagsIndexRoute
+  '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
+  '/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
+  '/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
+  '/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/account': typeof AccountRouteRouteWithChildren
-  '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/changelogs': typeof ChangelogsRoute
-  '/cookies': typeof CookiesRoute
-  '/faq': typeof FaqRoute
-  '/imprint': typeof ImprintRoute
-  '/privacy': typeof PrivacyRoute
-  '/search': typeof SearchRoute
-  '/submit': typeof SubmitRoute
-  '/terms': typeof TermsRoute
-  '/authors/$handle': typeof AuthorsHandleRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/collections/$slug': typeof CollectionsSlugRoute
-  '/docs/$slug': typeof DocsSlugRoute
-  '/account/': typeof AccountIndexRoute
-  '/authors/': typeof AuthorsIndexRoute
-  '/categories/': typeof CategoriesIndexRoute
-  '/collections/': typeof CollectionsIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
-  '/docs/': typeof DocsIndexRoute
-  '/skills/': typeof SkillsIndexRoute
-  '/skills/$author/$repo/$slug': typeof SkillsAuthorRepoSlugRouteRouteWithChildren
-  '/skills/$author/$repo/$slug/audit': typeof SkillsAuthorRepoSlugAuditRoute
-  '/skills/$author/$repo/$slug/changelog': typeof SkillsAuthorRepoSlugChangelogRoute
-  '/skills/$author/$repo/$slug/file-tree': typeof SkillsAuthorRepoSlugFileTreeRoute
-  '/skills/$author/$repo/$slug/reviews': typeof SkillsAuthorRepoSlugReviewsRoute
-  '/skills/$author/$repo/$slug/': typeof SkillsAuthorRepoSlugIndexRoute
+  '/404': typeof R404Route
+  '/500': typeof R500Route
+  '/_authedLayout': typeof AuthedLayoutRouteWithChildren
+  '/_publicLayout': typeof PublicLayoutRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authedLayout/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
+  '/_publicLayout/changelogs': typeof PublicLayoutChangelogsRoute
+  '/_publicLayout/cookies': typeof PublicLayoutCookiesRoute
+  '/_publicLayout/faq': typeof PublicLayoutFaqRoute
+  '/_publicLayout/imprint': typeof PublicLayoutImprintRoute
+  '/_publicLayout/privacy': typeof PublicLayoutPrivacyRoute
+  '/_publicLayout/search': typeof PublicLayoutSearchRoute
+  '/_publicLayout/submit': typeof PublicLayoutSubmitRoute
+  '/_publicLayout/terms': typeof PublicLayoutTermsRoute
+  '/api/render': typeof ApiRenderRoute
+  '/robots/txt': typeof RobotsTxtRoute
+  '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
+  '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
+  '/_publicLayout/': typeof PublicLayoutIndexRoute
+  '/_authedLayout/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
+  '/_publicLayout/author/$handle': typeof PublicLayoutAuthorHandleRoute
+  '/_publicLayout/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
+  '/_publicLayout/categories/$slug': typeof PublicLayoutCategoriesSlugRoute
+  '/_publicLayout/category/$slug': typeof PublicLayoutCategorySlugRoute
+  '/_publicLayout/collections/$slug': typeof PublicLayoutCollectionsSlugRoute
+  '/_publicLayout/docs/$slug': typeof PublicLayoutDocsSlugRoute
+  '/_publicLayout/tag/$slug': typeof PublicLayoutTagSlugRoute
+  '/_publicLayout/tags/$slug': typeof PublicLayoutTagsSlugRoute
+  '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
+  '/_authedLayout/dashboard/': typeof AuthedLayoutDashboardIndexRoute
+  '/_publicLayout/authors/': typeof PublicLayoutAuthorsIndexRoute
+  '/_publicLayout/categories/': typeof PublicLayoutCategoriesIndexRoute
+  '/_publicLayout/collections/': typeof PublicLayoutCollectionsIndexRoute
+  '/_publicLayout/docs/': typeof PublicLayoutDocsIndexRoute
+  '/_publicLayout/skills/': typeof PublicLayoutSkillsIndexRoute
+  '/_publicLayout/tags/': typeof PublicLayoutTagsIndexRoute
+  '/_publicLayout/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
+  '/_publicLayout/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
+  '/_publicLayout/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
+  '/_publicLayout/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/_publicLayout/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
+  '/_publicLayout/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/_publicLayout/skills/$author/$repo/$slug/': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/404'
+    | '/500'
     | '/'
-    | '/account'
+    | '/sitemap.xml'
     | '/dashboard'
     | '/changelogs'
     | '/cookies'
@@ -287,18 +440,30 @@ export interface FileRouteTypes {
     | '/search'
     | '/submit'
     | '/terms'
+    | '/api/render'
+    | '/robots/txt'
+    | '/sitemap/authors.xml'
+    | '/sitemap/static.xml'
+    | '/sitemap/taxonomy.xml'
+    | '/device/capabilities'
+    | '/author/$handle'
     | '/authors/$handle'
     | '/categories/$slug'
+    | '/category/$slug'
     | '/collections/$slug'
     | '/docs/$slug'
-    | '/account/'
+    | '/tag/$slug'
+    | '/tags/$slug'
+    | '/sitemap/skills/$page'
+    | '/dashboard/'
     | '/authors/'
     | '/categories/'
     | '/collections/'
-    | '/dashboard/'
     | '/docs/'
     | '/skills/'
+    | '/tags/'
     | '/skills/$author/$repo/$slug'
+    | '/skill/$author/$repo/$slug'
     | '/skills/$author/$repo/$slug/audit'
     | '/skills/$author/$repo/$slug/changelog'
     | '/skills/$author/$repo/$slug/file-tree'
@@ -306,7 +471,10 @@ export interface FileRouteTypes {
     | '/skills/$author/$repo/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/404'
+    | '/500'
     | '/'
+    | '/sitemap.xml'
     | '/changelogs'
     | '/cookies'
     | '/faq'
@@ -315,17 +483,29 @@ export interface FileRouteTypes {
     | '/search'
     | '/submit'
     | '/terms'
+    | '/api/render'
+    | '/robots/txt'
+    | '/sitemap/authors.xml'
+    | '/sitemap/static.xml'
+    | '/sitemap/taxonomy.xml'
+    | '/device/capabilities'
+    | '/author/$handle'
     | '/authors/$handle'
     | '/categories/$slug'
+    | '/category/$slug'
     | '/collections/$slug'
     | '/docs/$slug'
-    | '/account'
+    | '/tag/$slug'
+    | '/tags/$slug'
+    | '/sitemap/skills/$page'
+    | '/dashboard'
     | '/authors'
     | '/categories'
     | '/collections'
-    | '/dashboard'
     | '/docs'
     | '/skills'
+    | '/tags'
+    | '/skill/$author/$repo/$slug'
     | '/skills/$author/$repo/$slug/audit'
     | '/skills/$author/$repo/$slug/changelog'
     | '/skills/$author/$repo/$slug/file-tree'
@@ -333,329 +513,507 @@ export interface FileRouteTypes {
     | '/skills/$author/$repo/$slug'
   id:
     | '__root__'
-    | '/'
-    | '/account'
-    | '/dashboard'
-    | '/changelogs'
-    | '/cookies'
-    | '/faq'
-    | '/imprint'
-    | '/privacy'
-    | '/search'
-    | '/submit'
-    | '/terms'
-    | '/authors/$handle'
-    | '/categories/$slug'
-    | '/collections/$slug'
-    | '/docs/$slug'
-    | '/account/'
-    | '/authors/'
-    | '/categories/'
-    | '/collections/'
-    | '/dashboard/'
-    | '/docs/'
-    | '/skills/'
-    | '/skills/$author/$repo/$slug'
-    | '/skills/$author/$repo/$slug/audit'
-    | '/skills/$author/$repo/$slug/changelog'
-    | '/skills/$author/$repo/$slug/file-tree'
-    | '/skills/$author/$repo/$slug/reviews'
-    | '/skills/$author/$repo/$slug/'
+    | '/404'
+    | '/500'
+    | '/_authedLayout'
+    | '/_publicLayout'
+    | '/sitemap.xml'
+    | '/_authedLayout/dashboard'
+    | '/_publicLayout/changelogs'
+    | '/_publicLayout/cookies'
+    | '/_publicLayout/faq'
+    | '/_publicLayout/imprint'
+    | '/_publicLayout/privacy'
+    | '/_publicLayout/search'
+    | '/_publicLayout/submit'
+    | '/_publicLayout/terms'
+    | '/api/render'
+    | '/robots/txt'
+    | '/sitemap/authors.xml'
+    | '/sitemap/static.xml'
+    | '/sitemap/taxonomy.xml'
+    | '/_publicLayout/'
+    | '/_authedLayout/device/capabilities'
+    | '/_publicLayout/author/$handle'
+    | '/_publicLayout/authors/$handle'
+    | '/_publicLayout/categories/$slug'
+    | '/_publicLayout/category/$slug'
+    | '/_publicLayout/collections/$slug'
+    | '/_publicLayout/docs/$slug'
+    | '/_publicLayout/tag/$slug'
+    | '/_publicLayout/tags/$slug'
+    | '/sitemap/skills/$page'
+    | '/_authedLayout/dashboard/'
+    | '/_publicLayout/authors/'
+    | '/_publicLayout/categories/'
+    | '/_publicLayout/collections/'
+    | '/_publicLayout/docs/'
+    | '/_publicLayout/skills/'
+    | '/_publicLayout/tags/'
+    | '/_publicLayout/skills/$author/$repo/$slug'
+    | '/_publicLayout/skill/$author/$repo/$slug'
+    | '/_publicLayout/skills/$author/$repo/$slug/audit'
+    | '/_publicLayout/skills/$author/$repo/$slug/changelog'
+    | '/_publicLayout/skills/$author/$repo/$slug/file-tree'
+    | '/_publicLayout/skills/$author/$repo/$slug/reviews'
+    | '/_publicLayout/skills/$author/$repo/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AccountRouteRoute: typeof AccountRouteRouteWithChildren
-  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
-  ChangelogsRoute: typeof ChangelogsRoute
-  CookiesRoute: typeof CookiesRoute
-  FaqRoute: typeof FaqRoute
-  ImprintRoute: typeof ImprintRoute
-  PrivacyRoute: typeof PrivacyRoute
-  SearchRoute: typeof SearchRoute
-  SubmitRoute: typeof SubmitRoute
-  TermsRoute: typeof TermsRoute
-  AuthorsHandleRoute: typeof AuthorsHandleRoute
-  CategoriesSlugRoute: typeof CategoriesSlugRoute
-  CollectionsSlugRoute: typeof CollectionsSlugRoute
-  DocsSlugRoute: typeof DocsSlugRoute
-  AuthorsIndexRoute: typeof AuthorsIndexRoute
-  CategoriesIndexRoute: typeof CategoriesIndexRoute
-  CollectionsIndexRoute: typeof CollectionsIndexRoute
-  DocsIndexRoute: typeof DocsIndexRoute
-  SkillsIndexRoute: typeof SkillsIndexRoute
-  SkillsAuthorRepoSlugRouteRoute: typeof SkillsAuthorRepoSlugRouteRouteWithChildren
+  R404Route: typeof R404Route
+  R500Route: typeof R500Route
+  AuthedLayoutRoute: typeof AuthedLayoutRouteWithChildren
+  PublicLayoutRoute: typeof PublicLayoutRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiRenderRoute: typeof ApiRenderRoute
+  RobotsTxtRoute: typeof RobotsTxtRoute
+  SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
+  SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
+  SitemapTaxonomyDotxmlRoute: typeof SitemapTaxonomyDotxmlRoute
+  SitemapSkillsPageRoute: typeof SitemapSkillsPageRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/submit': {
-      id: '/submit'
-      path: '/submit'
-      fullPath: '/submit'
-      preLoaderRoute: typeof SubmitRouteImport
+    '/_publicLayout': {
+      id: '/_publicLayout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
+    '/_authedLayout': {
+      id: '/_authedLayout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
+    '/500': {
+      id: '/500'
+      path: '/500'
+      fullPath: '/500'
+      preLoaderRoute: typeof R500RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/imprint': {
-      id: '/imprint'
-      path: '/imprint'
-      fullPath: '/imprint'
-      preLoaderRoute: typeof ImprintRouteImport
+    '/404': {
+      id: '/404'
+      path: '/404'
+      fullPath: '/404'
+      preLoaderRoute: typeof R404RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cookies': {
-      id: '/cookies'
-      path: '/cookies'
-      fullPath: '/cookies'
-      preLoaderRoute: typeof CookiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/changelogs': {
-      id: '/changelogs'
-      path: '/changelogs'
-      fullPath: '/changelogs'
-      preLoaderRoute: typeof ChangelogsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account': {
-      id: '/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_publicLayout/': {
+      id: '/_publicLayout/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof PublicLayoutIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/sitemap/taxonomy.xml': {
+      id: '/sitemap/taxonomy.xml'
+      path: '/sitemap/taxonomy.xml'
+      fullPath: '/sitemap/taxonomy.xml'
+      preLoaderRoute: typeof SitemapTaxonomyDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/skills/': {
-      id: '/skills/'
+    '/sitemap/static.xml': {
+      id: '/sitemap/static.xml'
+      path: '/sitemap/static.xml'
+      fullPath: '/sitemap/static.xml'
+      preLoaderRoute: typeof SitemapStaticDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/authors.xml': {
+      id: '/sitemap/authors.xml'
+      path: '/sitemap/authors.xml'
+      fullPath: '/sitemap/authors.xml'
+      preLoaderRoute: typeof SitemapAuthorsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots/txt': {
+      id: '/robots/txt'
+      path: '/robots/txt'
+      fullPath: '/robots/txt'
+      preLoaderRoute: typeof RobotsTxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/render': {
+      id: '/api/render'
+      path: '/api/render'
+      fullPath: '/api/render'
+      preLoaderRoute: typeof ApiRenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_publicLayout/terms': {
+      id: '/_publicLayout/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof PublicLayoutTermsRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/submit': {
+      id: '/_publicLayout/submit'
+      path: '/submit'
+      fullPath: '/submit'
+      preLoaderRoute: typeof PublicLayoutSubmitRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/search': {
+      id: '/_publicLayout/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof PublicLayoutSearchRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/privacy': {
+      id: '/_publicLayout/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PublicLayoutPrivacyRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/imprint': {
+      id: '/_publicLayout/imprint'
+      path: '/imprint'
+      fullPath: '/imprint'
+      preLoaderRoute: typeof PublicLayoutImprintRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/faq': {
+      id: '/_publicLayout/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof PublicLayoutFaqRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/cookies': {
+      id: '/_publicLayout/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof PublicLayoutCookiesRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/changelogs': {
+      id: '/_publicLayout/changelogs'
+      path: '/changelogs'
+      fullPath: '/changelogs'
+      preLoaderRoute: typeof PublicLayoutChangelogsRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_authedLayout/dashboard': {
+      id: '/_authedLayout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedLayoutDashboardRouteRouteImport
+      parentRoute: typeof AuthedLayoutRoute
+    }
+    '/_publicLayout/tags/': {
+      id: '/_publicLayout/tags/'
+      path: '/tags'
+      fullPath: '/tags/'
+      preLoaderRoute: typeof PublicLayoutTagsIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/skills/': {
+      id: '/_publicLayout/skills/'
       path: '/skills'
       fullPath: '/skills/'
-      preLoaderRoute: typeof SkillsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutSkillsIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/docs/': {
-      id: '/docs/'
+    '/_publicLayout/docs/': {
+      id: '/_publicLayout/docs/'
       path: '/docs'
       fullPath: '/docs/'
-      preLoaderRoute: typeof DocsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutDocsIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/collections/': {
-      id: '/collections/'
+    '/_publicLayout/collections/': {
+      id: '/_publicLayout/collections/'
       path: '/collections'
       fullPath: '/collections/'
-      preLoaderRoute: typeof CollectionsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutCollectionsIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/categories/': {
-      id: '/categories/'
+    '/_publicLayout/categories/': {
+      id: '/_publicLayout/categories/'
       path: '/categories'
       fullPath: '/categories/'
-      preLoaderRoute: typeof CategoriesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutCategoriesIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/authors/': {
-      id: '/authors/'
+    '/_publicLayout/authors/': {
+      id: '/_publicLayout/authors/'
       path: '/authors'
       fullPath: '/authors/'
-      preLoaderRoute: typeof AuthorsIndexRouteImport
+      preLoaderRoute: typeof PublicLayoutAuthorsIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_authedLayout/dashboard/': {
+      id: '/_authedLayout/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthedLayoutDashboardIndexRouteImport
+      parentRoute: typeof AuthedLayoutDashboardRouteRoute
+    }
+    '/sitemap/skills/$page': {
+      id: '/sitemap/skills/$page'
+      path: '/sitemap/skills/$page'
+      fullPath: '/sitemap/skills/$page'
+      preLoaderRoute: typeof SitemapSkillsPageRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/account/': {
-      id: '/account/'
-      path: '/'
-      fullPath: '/account/'
-      preLoaderRoute: typeof AccountIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
+    '/_publicLayout/tags/$slug': {
+      id: '/_publicLayout/tags/$slug'
+      path: '/tags/$slug'
+      fullPath: '/tags/$slug'
+      preLoaderRoute: typeof PublicLayoutTagsSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/docs/$slug': {
-      id: '/docs/$slug'
+    '/_publicLayout/tag/$slug': {
+      id: '/_publicLayout/tag/$slug'
+      path: '/tag/$slug'
+      fullPath: '/tag/$slug'
+      preLoaderRoute: typeof PublicLayoutTagSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/docs/$slug': {
+      id: '/_publicLayout/docs/$slug'
       path: '/docs/$slug'
       fullPath: '/docs/$slug'
-      preLoaderRoute: typeof DocsSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutDocsSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/collections/$slug': {
-      id: '/collections/$slug'
+    '/_publicLayout/collections/$slug': {
+      id: '/_publicLayout/collections/$slug'
       path: '/collections/$slug'
       fullPath: '/collections/$slug'
-      preLoaderRoute: typeof CollectionsSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutCollectionsSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/categories/$slug': {
-      id: '/categories/$slug'
+    '/_publicLayout/category/$slug': {
+      id: '/_publicLayout/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof PublicLayoutCategorySlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/categories/$slug': {
+      id: '/_publicLayout/categories/$slug'
       path: '/categories/$slug'
       fullPath: '/categories/$slug'
-      preLoaderRoute: typeof CategoriesSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutCategoriesSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/authors/$handle': {
-      id: '/authors/$handle'
+    '/_publicLayout/authors/$handle': {
+      id: '/_publicLayout/authors/$handle'
       path: '/authors/$handle'
       fullPath: '/authors/$handle'
-      preLoaderRoute: typeof AuthorsHandleRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutAuthorsHandleRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/skills/$author/$repo/$slug': {
-      id: '/skills/$author/$repo/$slug'
+    '/_publicLayout/author/$handle': {
+      id: '/_publicLayout/author/$handle'
+      path: '/author/$handle'
+      fullPath: '/author/$handle'
+      preLoaderRoute: typeof PublicLayoutAuthorHandleRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_authedLayout/device/capabilities': {
+      id: '/_authedLayout/device/capabilities'
+      path: '/device/capabilities'
+      fullPath: '/device/capabilities'
+      preLoaderRoute: typeof AuthedLayoutDeviceCapabilitiesRouteImport
+      parentRoute: typeof AuthedLayoutRoute
+    }
+    '/_publicLayout/skill/$author/$repo/$slug': {
+      id: '/_publicLayout/skill/$author/$repo/$slug'
+      path: '/skill/$author/$repo/$slug'
+      fullPath: '/skill/$author/$repo/$slug'
+      preLoaderRoute: typeof PublicLayoutSkillAuthorRepoSlugRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/skills/$author/$repo/$slug': {
+      id: '/_publicLayout/skills/$author/$repo/$slug'
       path: '/skills/$author/$repo/$slug'
       fullPath: '/skills/$author/$repo/$slug'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugRouteRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteImport
+      parentRoute: typeof PublicLayoutRoute
     }
-    '/skills/$author/$repo/$slug/': {
-      id: '/skills/$author/$repo/$slug/'
+    '/_publicLayout/skills/$author/$repo/$slug/': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/'
       path: '/'
       fullPath: '/skills/$author/$repo/$slug/'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugIndexRouteImport
-      parentRoute: typeof SkillsAuthorRepoSlugRouteRoute
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugIndexRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
-    '/skills/$author/$repo/$slug/reviews': {
-      id: '/skills/$author/$repo/$slug/reviews'
+    '/_publicLayout/skills/$author/$repo/$slug/reviews': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/reviews'
       path: '/reviews'
       fullPath: '/skills/$author/$repo/$slug/reviews'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugReviewsRouteImport
-      parentRoute: typeof SkillsAuthorRepoSlugRouteRoute
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
-    '/skills/$author/$repo/$slug/file-tree': {
-      id: '/skills/$author/$repo/$slug/file-tree'
+    '/_publicLayout/skills/$author/$repo/$slug/file-tree': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/file-tree'
       path: '/file-tree'
       fullPath: '/skills/$author/$repo/$slug/file-tree'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugFileTreeRouteImport
-      parentRoute: typeof SkillsAuthorRepoSlugRouteRoute
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
-    '/skills/$author/$repo/$slug/changelog': {
-      id: '/skills/$author/$repo/$slug/changelog'
+    '/_publicLayout/skills/$author/$repo/$slug/changelog': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/changelog'
       path: '/changelog'
       fullPath: '/skills/$author/$repo/$slug/changelog'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugChangelogRouteImport
-      parentRoute: typeof SkillsAuthorRepoSlugRouteRoute
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
-    '/skills/$author/$repo/$slug/audit': {
-      id: '/skills/$author/$repo/$slug/audit'
+    '/_publicLayout/skills/$author/$repo/$slug/audit': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/audit'
       path: '/audit'
       fullPath: '/skills/$author/$repo/$slug/audit'
-      preLoaderRoute: typeof SkillsAuthorRepoSlugAuditRouteImport
-      parentRoute: typeof SkillsAuthorRepoSlugRouteRoute
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugAuditRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
   }
 }
 
-interface AccountRouteRouteChildren {
-  AccountIndexRoute: typeof AccountIndexRoute
+interface AuthedLayoutDashboardRouteRouteChildren {
+  AuthedLayoutDashboardIndexRoute: typeof AuthedLayoutDashboardIndexRoute
 }
 
-const AccountRouteRouteChildren: AccountRouteRouteChildren = {
-  AccountIndexRoute: AccountIndexRoute,
-}
-
-const AccountRouteRouteWithChildren = AccountRouteRoute._addFileChildren(
-  AccountRouteRouteChildren,
-)
-
-interface DashboardRouteRouteChildren {
-  DashboardIndexRoute: typeof DashboardIndexRoute
-}
-
-const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardIndexRoute: DashboardIndexRoute,
-}
-
-const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
-  DashboardRouteRouteChildren,
-)
-
-interface SkillsAuthorRepoSlugRouteRouteChildren {
-  SkillsAuthorRepoSlugAuditRoute: typeof SkillsAuthorRepoSlugAuditRoute
-  SkillsAuthorRepoSlugChangelogRoute: typeof SkillsAuthorRepoSlugChangelogRoute
-  SkillsAuthorRepoSlugFileTreeRoute: typeof SkillsAuthorRepoSlugFileTreeRoute
-  SkillsAuthorRepoSlugReviewsRoute: typeof SkillsAuthorRepoSlugReviewsRoute
-  SkillsAuthorRepoSlugIndexRoute: typeof SkillsAuthorRepoSlugIndexRoute
-}
-
-const SkillsAuthorRepoSlugRouteRouteChildren: SkillsAuthorRepoSlugRouteRouteChildren =
+const AuthedLayoutDashboardRouteRouteChildren: AuthedLayoutDashboardRouteRouteChildren =
   {
-    SkillsAuthorRepoSlugAuditRoute: SkillsAuthorRepoSlugAuditRoute,
-    SkillsAuthorRepoSlugChangelogRoute: SkillsAuthorRepoSlugChangelogRoute,
-    SkillsAuthorRepoSlugFileTreeRoute: SkillsAuthorRepoSlugFileTreeRoute,
-    SkillsAuthorRepoSlugReviewsRoute: SkillsAuthorRepoSlugReviewsRoute,
-    SkillsAuthorRepoSlugIndexRoute: SkillsAuthorRepoSlugIndexRoute,
+    AuthedLayoutDashboardIndexRoute: AuthedLayoutDashboardIndexRoute,
   }
 
-const SkillsAuthorRepoSlugRouteRouteWithChildren =
-  SkillsAuthorRepoSlugRouteRoute._addFileChildren(
-    SkillsAuthorRepoSlugRouteRouteChildren,
+const AuthedLayoutDashboardRouteRouteWithChildren =
+  AuthedLayoutDashboardRouteRoute._addFileChildren(
+    AuthedLayoutDashboardRouteRouteChildren,
   )
 
+interface AuthedLayoutRouteChildren {
+  AuthedLayoutDashboardRouteRoute: typeof AuthedLayoutDashboardRouteRouteWithChildren
+  AuthedLayoutDeviceCapabilitiesRoute: typeof AuthedLayoutDeviceCapabilitiesRoute
+}
+
+const AuthedLayoutRouteChildren: AuthedLayoutRouteChildren = {
+  AuthedLayoutDashboardRouteRoute: AuthedLayoutDashboardRouteRouteWithChildren,
+  AuthedLayoutDeviceCapabilitiesRoute: AuthedLayoutDeviceCapabilitiesRoute,
+}
+
+const AuthedLayoutRouteWithChildren = AuthedLayoutRoute._addFileChildren(
+  AuthedLayoutRouteChildren,
+)
+
+interface PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren {
+  PublicLayoutSkillsAuthorRepoSlugAuditRoute: typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
+  PublicLayoutSkillsAuthorRepoSlugChangelogRoute: typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  PublicLayoutSkillsAuthorRepoSlugFileTreeRoute: typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
+  PublicLayoutSkillsAuthorRepoSlugReviewsRoute: typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  PublicLayoutSkillsAuthorRepoSlugIndexRoute: typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
+}
+
+const PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren: PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren =
+  {
+    PublicLayoutSkillsAuthorRepoSlugAuditRoute:
+      PublicLayoutSkillsAuthorRepoSlugAuditRoute,
+    PublicLayoutSkillsAuthorRepoSlugChangelogRoute:
+      PublicLayoutSkillsAuthorRepoSlugChangelogRoute,
+    PublicLayoutSkillsAuthorRepoSlugFileTreeRoute:
+      PublicLayoutSkillsAuthorRepoSlugFileTreeRoute,
+    PublicLayoutSkillsAuthorRepoSlugReviewsRoute:
+      PublicLayoutSkillsAuthorRepoSlugReviewsRoute,
+    PublicLayoutSkillsAuthorRepoSlugIndexRoute:
+      PublicLayoutSkillsAuthorRepoSlugIndexRoute,
+  }
+
+const PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren =
+  PublicLayoutSkillsAuthorRepoSlugRouteRoute._addFileChildren(
+    PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren,
+  )
+
+interface PublicLayoutRouteChildren {
+  PublicLayoutChangelogsRoute: typeof PublicLayoutChangelogsRoute
+  PublicLayoutCookiesRoute: typeof PublicLayoutCookiesRoute
+  PublicLayoutFaqRoute: typeof PublicLayoutFaqRoute
+  PublicLayoutImprintRoute: typeof PublicLayoutImprintRoute
+  PublicLayoutPrivacyRoute: typeof PublicLayoutPrivacyRoute
+  PublicLayoutSearchRoute: typeof PublicLayoutSearchRoute
+  PublicLayoutSubmitRoute: typeof PublicLayoutSubmitRoute
+  PublicLayoutTermsRoute: typeof PublicLayoutTermsRoute
+  PublicLayoutIndexRoute: typeof PublicLayoutIndexRoute
+  PublicLayoutAuthorHandleRoute: typeof PublicLayoutAuthorHandleRoute
+  PublicLayoutAuthorsHandleRoute: typeof PublicLayoutAuthorsHandleRoute
+  PublicLayoutCategoriesSlugRoute: typeof PublicLayoutCategoriesSlugRoute
+  PublicLayoutCategorySlugRoute: typeof PublicLayoutCategorySlugRoute
+  PublicLayoutCollectionsSlugRoute: typeof PublicLayoutCollectionsSlugRoute
+  PublicLayoutDocsSlugRoute: typeof PublicLayoutDocsSlugRoute
+  PublicLayoutTagSlugRoute: typeof PublicLayoutTagSlugRoute
+  PublicLayoutTagsSlugRoute: typeof PublicLayoutTagsSlugRoute
+  PublicLayoutAuthorsIndexRoute: typeof PublicLayoutAuthorsIndexRoute
+  PublicLayoutCategoriesIndexRoute: typeof PublicLayoutCategoriesIndexRoute
+  PublicLayoutCollectionsIndexRoute: typeof PublicLayoutCollectionsIndexRoute
+  PublicLayoutDocsIndexRoute: typeof PublicLayoutDocsIndexRoute
+  PublicLayoutSkillsIndexRoute: typeof PublicLayoutSkillsIndexRoute
+  PublicLayoutTagsIndexRoute: typeof PublicLayoutTagsIndexRoute
+  PublicLayoutSkillsAuthorRepoSlugRouteRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
+  PublicLayoutSkillAuthorRepoSlugRoute: typeof PublicLayoutSkillAuthorRepoSlugRoute
+}
+
+const PublicLayoutRouteChildren: PublicLayoutRouteChildren = {
+  PublicLayoutChangelogsRoute: PublicLayoutChangelogsRoute,
+  PublicLayoutCookiesRoute: PublicLayoutCookiesRoute,
+  PublicLayoutFaqRoute: PublicLayoutFaqRoute,
+  PublicLayoutImprintRoute: PublicLayoutImprintRoute,
+  PublicLayoutPrivacyRoute: PublicLayoutPrivacyRoute,
+  PublicLayoutSearchRoute: PublicLayoutSearchRoute,
+  PublicLayoutSubmitRoute: PublicLayoutSubmitRoute,
+  PublicLayoutTermsRoute: PublicLayoutTermsRoute,
+  PublicLayoutIndexRoute: PublicLayoutIndexRoute,
+  PublicLayoutAuthorHandleRoute: PublicLayoutAuthorHandleRoute,
+  PublicLayoutAuthorsHandleRoute: PublicLayoutAuthorsHandleRoute,
+  PublicLayoutCategoriesSlugRoute: PublicLayoutCategoriesSlugRoute,
+  PublicLayoutCategorySlugRoute: PublicLayoutCategorySlugRoute,
+  PublicLayoutCollectionsSlugRoute: PublicLayoutCollectionsSlugRoute,
+  PublicLayoutDocsSlugRoute: PublicLayoutDocsSlugRoute,
+  PublicLayoutTagSlugRoute: PublicLayoutTagSlugRoute,
+  PublicLayoutTagsSlugRoute: PublicLayoutTagsSlugRoute,
+  PublicLayoutAuthorsIndexRoute: PublicLayoutAuthorsIndexRoute,
+  PublicLayoutCategoriesIndexRoute: PublicLayoutCategoriesIndexRoute,
+  PublicLayoutCollectionsIndexRoute: PublicLayoutCollectionsIndexRoute,
+  PublicLayoutDocsIndexRoute: PublicLayoutDocsIndexRoute,
+  PublicLayoutSkillsIndexRoute: PublicLayoutSkillsIndexRoute,
+  PublicLayoutTagsIndexRoute: PublicLayoutTagsIndexRoute,
+  PublicLayoutSkillsAuthorRepoSlugRouteRoute:
+    PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren,
+  PublicLayoutSkillAuthorRepoSlugRoute: PublicLayoutSkillAuthorRepoSlugRoute,
+}
+
+const PublicLayoutRouteWithChildren = PublicLayoutRoute._addFileChildren(
+  PublicLayoutRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AccountRouteRoute: AccountRouteRouteWithChildren,
-  DashboardRouteRoute: DashboardRouteRouteWithChildren,
-  ChangelogsRoute: ChangelogsRoute,
-  CookiesRoute: CookiesRoute,
-  FaqRoute: FaqRoute,
-  ImprintRoute: ImprintRoute,
-  PrivacyRoute: PrivacyRoute,
-  SearchRoute: SearchRoute,
-  SubmitRoute: SubmitRoute,
-  TermsRoute: TermsRoute,
-  AuthorsHandleRoute: AuthorsHandleRoute,
-  CategoriesSlugRoute: CategoriesSlugRoute,
-  CollectionsSlugRoute: CollectionsSlugRoute,
-  DocsSlugRoute: DocsSlugRoute,
-  AuthorsIndexRoute: AuthorsIndexRoute,
-  CategoriesIndexRoute: CategoriesIndexRoute,
-  CollectionsIndexRoute: CollectionsIndexRoute,
-  DocsIndexRoute: DocsIndexRoute,
-  SkillsIndexRoute: SkillsIndexRoute,
-  SkillsAuthorRepoSlugRouteRoute: SkillsAuthorRepoSlugRouteRouteWithChildren,
+  R404Route: R404Route,
+  R500Route: R500Route,
+  AuthedLayoutRoute: AuthedLayoutRouteWithChildren,
+  PublicLayoutRoute: PublicLayoutRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiRenderRoute: ApiRenderRoute,
+  RobotsTxtRoute: RobotsTxtRoute,
+  SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
+  SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
+  SitemapTaxonomyDotxmlRoute: SitemapTaxonomyDotxmlRoute,
+  SitemapSkillsPageRoute: SitemapSkillsPageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

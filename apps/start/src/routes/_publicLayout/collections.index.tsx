@@ -5,7 +5,7 @@ import { PageHero } from "@/components/page-hero";
 import { getCollectionsList } from "@/functions/collections/get-collections-list";
 import { createSeo } from "@/lib/seo";
 
-export const Route = createFileRoute("/collections/")({
+export const Route = createFileRoute("/_publicLayout/collections/")({
   loader: () => getCollectionsList(),
   head: () =>
     createSeo({

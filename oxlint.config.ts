@@ -20,5 +20,7 @@ export default defineConfig({
     "import/no-relative-parent-imports": "off",
     "eslint/no-warning-comments": "warn",
     "unicorn/prefer-module": "off",
+    "unicorn/filename-case": "warn",
+    "eslint/no-inline-comments": "warn",
   },
 });
