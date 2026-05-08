@@ -42,7 +42,6 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
-    "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
     "db:push": "turbo -F @skills-re/db db:push",
     "db:generate": "turbo -F @skills-re/db db:generate",

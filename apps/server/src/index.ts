@@ -34,12 +34,7 @@ export { SearchRateLimiter } from "./dos/search-rate-limiter";
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
 
-const LOCAL_DEV_ORIGINS = [
-  "http://localhost:4321",
-  "http://127.0.0.1:4321",
-  "http://localhost:3001",
-  "http://127.0.0.1:3001",
-] as const;
+const LOCAL_DEV_ORIGINS = ["http://localhost:4321", "http://127.0.0.1:4321"] as const;
 
 const toOrigin = (value: string): string => new URL(value).origin;
 

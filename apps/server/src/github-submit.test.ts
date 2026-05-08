@@ -86,6 +86,11 @@ describe("createGithubSubmitRuntime", () => {
                       sha: "blob-1",
                       type: "blob",
                     },
+                    {
+                      path: "skills/.vendor/skill.md",
+                      sha: "blob-hidden",
+                      type: "blob",
+                    },
                   ],
                 },
                 { status: 200 },
@@ -146,6 +151,7 @@ describe("createGithubSubmitRuntime", () => {
             description: "Example skill",
             directoryPath: "skills/example/",
             entryPath: "skills/example/skill.md",
+            frontmatterHash: expect.any(String),
             initialSnapshot: {
               files: [
                 {
@@ -171,6 +177,7 @@ describe("createGithubSubmitRuntime", () => {
             slug: "example-skill",
             sourceLocator: "github:acme/skills/skills/example/skill.md",
             sourceType: "github",
+            skillContentHash: expect.any(String),
             title: "example-skill",
           },
         ],

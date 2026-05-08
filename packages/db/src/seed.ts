@@ -14,7 +14,17 @@ import { join } from "node:path";
 import { nanoid } from "nanoid";
 
 import * as schema from "./schema/index";
-import type { RepoId, SkillId, SnapshotId, StaticAuditId, TagId } from "./utils/id";
+import type {
+  FeedbackId,
+  RepoId,
+  ReviewId,
+  SavedSkillId,
+  SkillId,
+  SnapshotId,
+  StaticAuditId,
+  TagId,
+  UserId,
+} from "./utils/id";
 
 // ---------------------------------------------------------------------------
 // DB connection
@@ -151,11 +161,17 @@ interface CategoryDef {
 
 type CategoryCountInsert = typeof schema.categoryCountsTable.$inferInsert;
 type DailyMetricInsert = typeof schema.dailyMetricsTable.$inferInsert;
+type FeedbackInsert = typeof schema.feedbackTable.$inferInsert;
 type RepoInsert = typeof schema.reposTable.$inferInsert;
+type ReviewInsert = typeof schema.reviewsTable.$inferInsert;
+type SavedSkillInsert = typeof schema.savedSkillsTable.$inferInsert;
 type SnapshotInsert = typeof schema.snapshotsTable.$inferInsert;
 type SkillInsert = typeof schema.skillsTable.$inferInsert;
 type StaticAuditInsert = typeof schema.staticAuditsTable.$inferInsert;
 type TagInsert = typeof schema.tagsTable.$inferInsert;
+type UserInsert = typeof schema.usersTable.$inferInsert;
+
+const TEST_USER_ID = "test-user" as UserId;
 
 const CATEGORIES: CategoryDef[] = [
   {
@@ -303,6 +319,7 @@ interface SkillDef {
   downloadsTrending: number;
   viewsAllTime: number;
   createdDaysAgo: number;
+  ownedByTestUser?: boolean;
 }
 
 const findCategory = (slug: string) => {
@@ -338,6 +355,7 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 920,
     viewsAllTime: 54_000,
     createdDaysAgo: 180,
+    ownedByTestUser: true,
   },
   {
     id: nid() as SkillId,
@@ -354,6 +372,7 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 810,
     viewsAllTime: 47_200,
     createdDaysAgo: 120,
+    ownedByTestUser: true,
   },
   {
     id: nid() as SkillId,
@@ -370,6 +389,7 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 650,
     viewsAllTime: 38_900,
     createdDaysAgo: 90,
+    ownedByTestUser: true,
   },
   {
     id: nid() as SkillId,
@@ -813,6 +833,77 @@ const SKILLS: SkillDef[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Test-user owned data (feedback, saved skills, reviews)
+// ---------------------------------------------------------------------------
+
+const TEST_FEEDBACKS: FeedbackInsert[] = [
+  {
+    id: nid() as FeedbackId,
+    title: "Search results occasionally return irrelevant skills",
+    content:
+      "When I search for 'typescript testing', the top results sometimes include unrelated skills like data-analysis prompts. Seems like the ranking weights aren't tuned for tag relevance.",
+    type: "bug",
+    status: "in_review",
+    userId: TEST_USER_ID,
+    createdAt: daysAgo(12),
+    updatedAt: daysAgo(10),
+    response:
+      "Thanks for the report! We've identified the issue with the ranking algorithm and a fix is in progress.",
+  },
+  {
+    id: nid() as FeedbackId,
+    title: "Add a 'collections' feature to group skills",
+    content:
+      "It would be great to create personal collections of skills — similar to GitHub stars but organised into named lists. Would make it much easier to manage the skills I use regularly.",
+    type: "request",
+    status: "pending",
+    userId: TEST_USER_ID,
+    createdAt: daysAgo(8),
+    updatedAt: daysAgo(8),
+    response: null,
+  },
+  {
+    id: nid() as FeedbackId,
+    title: "Skill detail page loads slowly on first visit",
+    content:
+      "The skill detail page takes ~3 s to render on first load (cold cache). The snapshot file fetch seems to be the bottleneck — would be great to see the static metadata render instantly while the content streams in.",
+    type: "bug",
+    status: "resolved",
+    userId: TEST_USER_ID,
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(5),
+    response: "Fixed in the latest deploy — detail pages now SSR the static metadata immediately.",
+  },
+];
+
+const TEST_SAVED_SKILL_IDS = SKILLS.slice(3, 7).map((s) => s.id);
+
+const TEST_REVIEWS: ReviewInsert[] = [
+  {
+    id: nid() as ReviewId,
+    skillId: SKILLS[3]!.id,
+    userId: TEST_USER_ID,
+    rating: 5,
+    title: "Saved hours on our PR process",
+    content:
+      "We integrated this into our GitHub Actions workflow and it catches most style/logic issues before human review. The output format is exactly what our team uses.",
+    createdAt: new Date(daysAgo(14)),
+    updatedAt: new Date(daysAgo(14)),
+  },
+  {
+    id: nid() as ReviewId,
+    skillId: SKILLS[4]!.id,
+    userId: TEST_USER_ID,
+    rating: 4,
+    title: "Solid test coverage, minor edge cases missed",
+    content:
+      "Generates thorough happy-path and error tests. Occasionally misses async boundary edge cases but the output is a great starting point that I iterate on.",
+    createdAt: new Date(daysAgo(7)),
+    updatedAt: new Date(daysAgo(7)),
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Daily metrics (last 30 days)
 // ---------------------------------------------------------------------------
 
@@ -845,6 +936,9 @@ async function main() {
 
   if (RESET) {
     console.log("Clearing existing data…");
+    await db.delete(schema.reviewsTable);
+    await db.delete(schema.savedSkillsTable);
+    await db.delete(schema.feedbackTable);
     await db.delete(schema.staticAuditsTable);
     await db.delete(schema.snapshotFilesTable);
     await db.delete(schema.snapshotsTable);
@@ -854,8 +948,22 @@ async function main() {
     await db.delete(schema.tagsTable);
     await db.delete(schema.categoryCountsTable);
     await db.delete(schema.dailyMetricsTable);
+    await db.delete(schema.usersTable);
     console.log("Cleared.");
   }
+
+  // 0. Test user (required for FK constraints on savedSkills / reviews)
+  console.log("Inserting test user…");
+  const testUserRow: UserInsert = {
+    id: TEST_USER_ID,
+    email: "test@skills.re",
+    emailVerified: true,
+    name: "Test User",
+    role: "admin",
+    createdAt: new Date(daysAgo(365)),
+    updatedAt: new Date(daysAgo(365)),
+  };
+  await db.insert(schema.usersTable).values(testUserRow);
 
   // 1. Categories
   console.log("Inserting category counts…");
@@ -915,6 +1023,7 @@ async function main() {
       stargazerCount: repo.stars,
       isVerified: false,
       visibility: "public",
+      userId: skill.ownedByTestUser ? TEST_USER_ID : null,
       createdAt: skillCreatedAt,
       updatedAt: skillCreatedAt,
       syncTime: skillCreatedAt,
@@ -1003,6 +1112,25 @@ async function main() {
   console.log("Inserting daily metrics…");
   const dailyMetricRows: DailyMetricInsert[] = DAILY_METRICS;
   await db.insert(schema.dailyMetricsTable).values(dailyMetricRows);
+
+  // 8. Test-user feedback
+  console.log("Inserting test-user feedback…");
+  await db.insert(schema.feedbackTable).values(TEST_FEEDBACKS);
+
+  // 9. Test-user saved skills
+  console.log("Inserting test-user saved skills…");
+  const savedSkillRows: SavedSkillInsert[] = TEST_SAVED_SKILL_IDS.map((skillId) => ({
+    id: nid() as SavedSkillId,
+    skillId,
+    userId: TEST_USER_ID,
+    createdAt: new Date(daysAgo(5)),
+    updatedAt: new Date(daysAgo(5)),
+  }));
+  await db.insert(schema.savedSkillsTable).values(savedSkillRows);
+
+  // 10. Test-user reviews
+  console.log("Inserting test-user reviews…");
+  await db.insert(schema.reviewsTable).values(TEST_REVIEWS);
 
   console.log(
     `\nSeed complete — ${SKILLS.length} skills, ${CATEGORIES.length} categories, ${TAGS.length} tags.`,

@@ -137,6 +137,11 @@ describe("createGithubFetchRuntime", () => {
                       type: "blob",
                     },
                     {
+                      path: "skills/.vendor/skill.md",
+                      sha: "blob-hidden",
+                      type: "blob",
+                    },
+                    {
                       path: "skills/beta/skill.md",
                       sha: "blob-b",
                       type: "blob",

@@ -4,6 +4,7 @@ import { buildGithubRepoOverview, createGithubHeaders } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import {
+  buildSkillDuplicateFingerprint,
   SKILL_FILENAME,
   discoverSkillRoots,
   normalizeSkillRootPath,
@@ -78,11 +79,14 @@ const buildSubmitSkill = async (
     return null;
   }
 
+  const fingerprint = await buildSkillDuplicateFingerprint(frontmatter, skillMd.content);
+
   const normalizedRoot = normalizeSkillRootPath(root.skillRootPath);
   return {
     description: frontmatter.description,
     directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : normalizedRoot,
     entryPath: root.skillMdPath,
+    frontmatterHash: fingerprint.frontmatterHash,
     initialSnapshot: {
       files: filesResponse.files,
       sourceCommitDate: Date.parse(overview.commits[0]?.committedDate ?? "") || Date.now(),
@@ -96,6 +100,7 @@ const buildSubmitSkill = async (
     slug: frontmatter.name,
     sourceLocator: `github:${input.owner}/${input.repo}/${root.skillMdPath}`,
     sourceType: "github" as const,
+    skillContentHash: fingerprint.skillContentHash,
     title: frontmatter.name,
   };
 };

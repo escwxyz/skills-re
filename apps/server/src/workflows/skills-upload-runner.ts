@@ -31,6 +31,11 @@ import {
   truncateUploadCommitMessage,
 } from "@skills-re/api/modules/skills/upload-pipeline";
 
+import {
+  buildSkillDuplicateFingerprintFromSkillMd,
+  normalizeSkillRootPath,
+} from "../github-skill-utils";
+
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
 }
@@ -62,6 +67,40 @@ const normalizeAiSearchFilePath = (value: string) =>
     .trim()
     .replace(/^\.\/+/, "")
     .replace(/^\/+/, "");
+
+const normalizeUploadFilePath = (value: string) =>
+  value
+    .replaceAll("\\", "/")
+    .trim()
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+
+const findSkillMdContent = (
+  skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number],
+): string | null => {
+  const normalizedEntryPath = normalizeUploadFilePath(skill.entryPath);
+
+  const directMatch = skill.initialSnapshot.files.find(
+    (file) => normalizeUploadFilePath(file.path) === normalizedEntryPath,
+  );
+  if (directMatch) {
+    return directMatch.content;
+  }
+
+  const normalizedRootPath = normalizeSkillRootPath(skill.directoryPath);
+  const candidate = skill.initialSnapshot.files.find((file) => {
+    const normalizedPath = normalizeUploadFilePath(file.path);
+    if (normalizedPath === normalizedEntryPath) {
+      return true;
+    }
+    return normalizedRootPath.length > 0
+      ? normalizedPath.endsWith(`/${normalizedEntryPath}`) ||
+          normalizedPath === `${normalizedRootPath}/${normalizedEntryPath}`
+      : normalizedPath === normalizedEntryPath;
+  });
+
+  return candidate?.content ?? null;
+};
 
 export const runSkillsUploadWorkflow = async (
   event: Readonly<WorkflowEvent<SkillsUploadWorkflowPayload>>,
@@ -113,6 +152,11 @@ export const runSkillsUploadWorkflow = async (
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
+      const skillMdContent = findSkillMdContent(skill);
+      const computedFingerprint = skillMdContent
+        ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdContent)
+        : null;
+
       const slug = await step.do(
         `resolve-upload-skill-slug-${index}`,
         workflowStepRetryPolicy.skillsUploadPipeline,
@@ -149,10 +193,11 @@ export const runSkillsUploadWorkflow = async (
             description: skill.description,
             directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
             entryPath: normalizeUploadEntryPath(skill.entryPath),
-            frontmatterHash: skill.frontmatterHash ?? null,
+            frontmatterHash: skill.frontmatterHash ?? computedFingerprint?.frontmatterHash ?? null,
             hash: skill.snapshotHash,
             name: skill.title,
-            skillContentHash: skill.skillContentHash ?? null,
+            skillContentHash:
+              skill.skillContentHash ?? computedFingerprint?.skillContentHash ?? null,
             skillId,
             sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
             sourceCommitMessage: truncateUploadCommitMessage(

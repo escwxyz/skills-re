@@ -25,7 +25,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "bun run src/seed.ts",
-    "db:seed:reset": "bun run src/seed.ts --reset"
+    "db:seed:reset": "bun run src/seed.ts --reset",
+    "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@libsql/client": "catalog:",

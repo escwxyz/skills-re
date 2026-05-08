@@ -10,7 +10,8 @@
     }
   },
   "scripts": {
-    "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/generate.ts --output ../db/src/schema/auth-schema.ts --yes"
+    "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/generate.ts --output ../db/src/schema/auth-schema.ts --yes",
+    "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@better-auth/agent-auth": "^0.4.5",
