@@ -6,6 +6,7 @@ import {
   // Astro,
   D1Database,
   DurableObjectNamespace,
+  KVNamespace,
   Queue,
   R2Bucket,
   Workflow,
@@ -61,7 +62,15 @@ const archiveFilesBucket = await R2Bucket("skills-re-archives", {
 });
 
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
-  dataset: "skills_re_download_events",
+  dataset: "skills-re-download-events",
+});
+
+const viewEventsDataset = AnalyticsEngineDataset("VIEW_EVENTS", {
+  dataset: "skills-re-skill-view-events",
+});
+
+const metricsCache = await KVNamespace("METRICS_CACHE", {
+  title: "skills-re-metrics-cache",
 });
 
 const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limiter", {
@@ -309,6 +318,7 @@ export const server = await Worker("server", {
     DOWNLOAD_EVENTS: downloadEventsDataset,
     AI_SEARCH: aiSearch,
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
+    METRICS_CACHE: metricsCache,
     SNAPSHOT_FILES: snapshotFilesBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
     CLOUDFLARE_API_TOKEN: alchemy.secret.env.CLOUDFLARE_API_TOKEN!,
@@ -316,6 +326,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    VIEW_EVENTS: viewEventsDataset,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,

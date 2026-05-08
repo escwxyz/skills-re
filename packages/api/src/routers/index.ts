@@ -53,8 +53,6 @@ import {
   listTagsForSeo,
   listTagsPage,
   fetchGithubRepo,
-  dailySkillsSnapshots,
-  refreshDailySkillsSnapshots,
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
@@ -71,6 +69,7 @@ import {
   uploadSkills,
   searchSkills,
 } from "../modules";
+import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
 
@@ -317,14 +316,7 @@ export const appRouter = {
       return fetchGithubRepo(input, runtime);
     }),
   },
-  metrics: {
-    dailySkillsSnapshots: publicProcedure.metrics.dailySkillsSnapshots.handler(({ input }) =>
-      dailySkillsSnapshots(input),
-    ),
-    refreshDailySkillsSnapshots: adminProcedure.metrics.refreshDailySkillsSnapshots.handler(
-      ({ input }) => refreshDailySkillsSnapshots(input),
-    ),
-  },
+  metrics: metricsRouter,
   staticAudits: {
     getReportBySnapshot: publicProcedure.staticAudits.getReportBySnapshot.handler(({ input }) =>
       getStaticAuditReportBySnapshot(input.snapshotId),

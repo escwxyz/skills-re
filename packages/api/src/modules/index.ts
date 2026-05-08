@@ -23,7 +23,19 @@ export {
   savedSkillsService,
 } from "./saved-skills/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
-export { dailySkillsSnapshots, refreshDailySkillsSnapshots } from "./metrics/service";
+export {
+  createDownloadMetricsRecorder,
+  createDownloadMetricsService,
+  createMetricsService,
+  createViewMetricsService,
+  dailySkillsSnapshots,
+  getSkillDownloadMetrics,
+  getSkillViewMetrics,
+  recordSuccessfulSkillDownload,
+  recordSkillView,
+  refreshDailySkillsSnapshots,
+} from "./metrics";
+export type { SkillDownloadMetrics, SkillViewMetrics } from "./metrics";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
 export {
   countMineFeedback,

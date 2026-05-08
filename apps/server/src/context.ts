@@ -35,6 +35,7 @@ export interface CreateServerRuntimeDeps {
   githubHistory?: ApiContext["githubHistory"];
   githubFetch?: ApiContext["githubFetch"];
   githubSubmit?: ApiContext["githubSubmit"];
+  metrics?: ApiContext["metrics"];
   snapshotHistory?: ApiContext["snapshotHistory"];
   snapshotStorage?: ApiContext["snapshotStorage"];
   workflowSchedulers?: ApiContext["workflowSchedulers"];
@@ -60,6 +61,7 @@ export function createServerContextFromBase(
     githubHistory: runtimeDeps.githubHistory,
     githubFetch: runtimeDeps.githubFetch,
     githubSubmit: runtimeDeps.githubSubmit,
+    metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
     snapshotStorage: runtimeDeps.snapshotStorage,
     workerLogger,
@@ -107,6 +109,11 @@ async function createServerRuntime(
     githubHistory,
     githubFetch,
     githubSubmit,
+    metrics: {
+      DOWNLOAD_EVENTS: env.DOWNLOAD_EVENTS,
+      METRICS_CACHE: env.METRICS_CACHE,
+      VIEW_EVENTS: env.VIEW_EVENTS,
+    },
     snapshotHistory: createSnapshotsHistoryRuntime({
       createHistoricalSnapshot,
       githubHistory,

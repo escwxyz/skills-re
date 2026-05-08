@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { baseContract } from "./common/base";
 
+const skillMetricsInputSchema = z.object({
+  skillId: z.string().min(1),
+});
+
 const dailyMetricsQueryInputSchema = z
   .object({
     fromDay: z
@@ -23,6 +27,13 @@ const dailyMetricPointSchema = z.object({
   updatedAtMs: z.number().int().nonnegative(),
 });
 
+const skillMetricsResponseSchema = z.object({
+  allTime: z.number().int().nonnegative(),
+  daily: z.number().int().nonnegative(),
+  updatedAt: z.iso.datetime({ offset: true }),
+  weekly: z.number().int().nonnegative(),
+});
+
 const refreshDailyMetricsInputSchema = z
   .object({
     backfillDays: z.number().int().min(1).max(365).optional(),
@@ -34,6 +45,11 @@ const refreshDailyMetricsResultSchema = z.object({
   fromDay: z.string(),
   toDay: z.string(),
   updatedAtMs: z.number().int().nonnegative(),
+});
+
+const recordSkillViewInputSchema = z.object({
+  path: z.string().min(1).optional(),
+  skillId: z.string().min(1),
 });
 
 export const metricsContract = {
@@ -59,6 +75,39 @@ export const metricsContract = {
     })
     .input(refreshDailyMetricsInputSchema)
     .output(refreshDailyMetricsResultSchema),
+  getSkillDownloadMetrics: baseContract
+    .route({
+      description: "Returns aggregated download metrics for a public skill.",
+      method: "GET",
+      path: "/metrics/skills/download",
+      tags: ["Metrics"],
+      successDescription: "Skill download metrics",
+      summary: "Read skill download metrics",
+    })
+    .input(skillMetricsInputSchema)
+    .output(skillMetricsResponseSchema),
+  getSkillViewMetrics: baseContract
+    .route({
+      description: "Returns aggregated view metrics for a public skill.",
+      method: "GET",
+      path: "/metrics/skills/view",
+      tags: ["Metrics"],
+      successDescription: "Skill view metrics",
+      summary: "Read skill view metrics",
+    })
+    .input(skillMetricsInputSchema)
+    .output(skillMetricsResponseSchema),
+  recordSkillView: baseContract
+    .route({
+      description: "Records a view event for a public skill.",
+      method: "POST",
+      path: "/metrics/skills/view/record",
+      tags: ["Metrics"],
+      successDescription: "Skill view recorded",
+      summary: "Record a skill view",
+    })
+    .input(recordSkillViewInputSchema)
+    .output(z.object({ ok: z.literal(true) })),
 };
 
 export type MetricsContract = typeof metricsContract;

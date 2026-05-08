@@ -2,9 +2,15 @@ import { createContext } from "./context";
 
 export {
   aiSearch,
+  createDownloadMetricsRecorder,
+  createDownloadMetricsService,
+  createMetricsService,
+  createViewMetricsService,
   dailySkillsSnapshots,
   fetchGithubRepo,
   getBySkillAndVersion,
+  getSkillDownloadMetrics,
+  getSkillViewMetrics,
   getStaticAuditReportBySnapshot,
   getSnapshotArchiveDownloadObject,
   claimAsAuthor,
@@ -20,11 +26,14 @@ export {
   listReviewsBySkill,
   newsletterService,
   refreshDailySkillsSnapshots,
+  recordSuccessfulSkillDownload,
+  recordSkillView,
   searchSkills,
   updateFeedbackResponse,
   updateFeedbackStatus,
   reviewsService,
 } from "./modules";
+export type { SkillDownloadMetrics, SkillViewMetrics } from "./modules";
 
 export { createContext };
 export type { Context } from "./types";
