@@ -10,7 +10,7 @@ import contentCollections from "@content-collections/vite";
 
 const config = defineConfig({
   server: {
-    port: 3001,
+    port: 4321,
   },
   plugins: [
     contentCollections(),
@@ -22,11 +22,11 @@ const config = defineConfig({
       urlPatterns: [
         {
           localized: [
-            ["de", "/.well-knwon/agent-configuration"],
-            ["zh-Hans", "/.well-knwon/agent-configuration"],
-            ["en", "/.well-knwon/agent-configuration"],
+            ["de", "/.well-known/agent-configuration"],
+            ["zh-Hans", "/.well-known/agent-configuration"],
+            ["en", "/.well-known/agent-configuration"],
           ],
-          pattern: "/.well-knwon/agent-configuration",
+          pattern: "/.well-known/agent-configuration",
         },
         // Localized home route
         {

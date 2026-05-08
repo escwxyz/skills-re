@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "check-types": "tsc -b"
+    "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@orpc/client": "catalog:",
@@ -35,6 +35,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@skills-re/config": "workspace:*",
     "hono": "catalog:",
     "typescript": "catalog:"

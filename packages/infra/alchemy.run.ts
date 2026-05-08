@@ -3,7 +3,6 @@ import alchemy from "alchemy";
 import {
   AiSearch,
   AnalyticsEngineDataset,
-  // Astro,
   D1Database,
   DurableObjectNamespace,
   KVNamespace,
@@ -11,7 +10,6 @@ import {
   R2Bucket,
   Workflow,
   Worker,
-  // New
   TanStackStart,
 } from "alchemy/cloudflare";
 
@@ -22,8 +20,6 @@ import { CloudflareStateStore } from "alchemy/state";
 import { config } from "dotenv";
 
 config({ path: "./.env" });
-// config({ path: "../../apps/web/.env" });
-// New
 config({ path: "../../apps/start/.env" });
 config({ path: "../../apps/server/.env" });
 
@@ -326,6 +322,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    TEST_USER: alchemy.env.TEST_USER ?? "false",
     VIEW_EVENTS: viewEventsDataset,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
@@ -338,19 +335,6 @@ export const server = await Worker("server", {
   },
 });
 
-// export const web = await Astro("web", {
-//   cwd: "../../apps/web",
-//   entrypoint: "dist/server/entry.mjs",
-//   assets: "dist/client",
-//   compatibility: "node",
-//   compatibilityFlags: ["global_fetch_strictly_public"],
-//   compatibilityDate: "2026-03-10",
-//   bindings: {
-//     SERVER_URL: server.url!,
-//   },
-// });
-
-// New
 export const start = await TanStackStart("start", {
   cwd: "../../apps/start",
   compatibility: "node",
@@ -362,8 +346,7 @@ export const start = await TanStackStart("start", {
   },
 });
 
-console.log(`Start => ${start.url}`);
-// console.log(`Web    -> ${web.url}`);
+console.log(`Start -> ${start.url}`);
 console.log(`Server -> ${server.url}`);
 
 if (process.env.PULL_REQUEST) {
