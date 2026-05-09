@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { parseGithubSubmitUrl } from "@/lib/github-submit";
+import { githubSubmitUrlSchema } from "@/lib/github-submit";
+import type { GithubSubmitInput } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -18,7 +19,6 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
-import z from "zod/v4";
 import { Input } from "./ui/input";
 
 const RESET_DELAY_MS = 5000;
@@ -63,26 +63,6 @@ function dotClass(status: FetchStatus | SubmitStatus): string {
 
   return "bg-rule";
 }
-
-export const githubSubmitUrlSchema = z
-  .string()
-  .trim()
-  .min(1, { error: m.github_submit_url_required() })
-  .transform((value, ctx) => {
-    const parsed = parseGithubSubmitUrl(value);
-
-    if (!parsed) {
-      ctx.addIssue({
-        code: "custom",
-        message: m.github_submit_url_invalid(),
-      });
-      return z.NEVER;
-    }
-
-    return parsed;
-  });
-
-export type GithubSubmitInput = z.infer<typeof githubSubmitUrlSchema>;
 
 export const GithubSubmitForm = () => {
   const [logs, setLogs] = useState<string[]>([]);
@@ -373,7 +353,7 @@ export const GithubSubmitForm = () => {
                   />
                   <Button
                     className={cn(
-                      "cursor-pointer whitespace-nowrap border border-border px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
+                      "whitespace-nowrap border border-border px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
                       fetchStatus === "fetching" || submitStatus === "submitting"
                         ? "cursor-not-allowed text-muted-text"
                         : "text-ink hover:bg-paper-2",
@@ -457,14 +437,14 @@ export const GithubSubmitForm = () => {
                         onClick={() =>
                           field.handleChange(repoPreview.skills.map((skill) => skill.skillRootPath))
                         }
-                        className="cursor-pointer border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
+                        className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
                       >
                         {m.preview_select_all()}
                       </button>
                       <button
                         type="button"
                         onClick={() => field.handleChange([])}
-                        className="cursor-pointer border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
+                        className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
                       >
                         {m.preview_clear()}
                       </button>
@@ -552,7 +532,7 @@ export const GithubSubmitForm = () => {
                 className={cn(
                   "border px-6 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
                   canSubmit
-                    ? "cursor-pointer border-ink bg-ink text-paper hover:opacity-85"
+                    ? "border-ink bg-ink text-paper hover:opacity-85"
                     : "cursor-not-allowed border-border bg-paper-2 text-muted-text",
                 )}
               >

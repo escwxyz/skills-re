@@ -1,8 +1,7 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
-import { githubSubmitUrlSchema } from "@/components/github-submit-form";
-import { parseGithubSubmitUrl } from "./github-submit";
+import { githubSubmitUrlSchema, parseGithubSubmitUrl } from "./github-submit";
 
 describe("github-submit", () => {
   test("parses a repository root URL", () => {
