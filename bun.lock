@@ -219,6 +219,7 @@
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
         "@skills-re/config": "workspace:*",
+        "@skills-re/infra": "workspace:*",
         "@types/node": "catalog:",
         "typescript": "catalog:",
       },
