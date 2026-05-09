@@ -233,17 +233,6 @@
         "typescript": "catalog:",
       },
     },
-    "packages/utils": {
-      "name": "@skills-re/utils",
-      "dependencies": {
-        "dotenv": "catalog:",
-        "zod": "catalog:",
-      },
-      "devDependencies": {
-        "@skills-re/config": "workspace:*",
-        "typescript": "catalog:",
-      },
-    },
   },
   "catalog": {
     "@better-auth/api-key": "1.6.9",
@@ -1287,8 +1276,6 @@
     "@skills-re/env": ["@skills-re/env@workspace:packages/env"],
 
     "@skills-re/infra": ["@skills-re/infra@workspace:packages/infra"],
-
-    "@skills-re/utils": ["@skills-re/utils@workspace:packages/utils"],
 
     "@smithy/config-resolver": ["@smithy/config-resolver@4.4.16", "", { "dependencies": { "@smithy/node-config-provider": "^4.3.14", "@smithy/types": "^4.14.1", "@smithy/util-config-provider": "^4.2.2", "@smithy/util-endpoints": "^3.4.1", "@smithy/util-middleware": "^4.2.14", "tslib": "^2.6.2" } }, "sha512-GFlGPNLZKrGfqWpqVb31z7hvYCA9ZscfX1buYnvvMGcRYsQQnhH+4uN6mWWflcD5jB4OXP/LBrdpukEdjl41tg=="],
 
