@@ -18,6 +18,7 @@ import { GitHubComment } from "alchemy/github";
 import { CloudflareStateStore } from "alchemy/state";
 
 import { config } from "dotenv";
+import { resolveDevTestUserEnabled } from "@skills-re/env/dev";
 
 config({ path: "./.env" });
 config({ path: "../../apps/start/.env" });
@@ -27,6 +28,12 @@ const app = await alchemy("skills-re", {
   adopt: process.env.NODE_ENV === "production",
   stateStore:
     process.env.NODE_ENV === "production" ? (scope) => new CloudflareStateStore(scope) : undefined,
+});
+
+const isProductionBuild = process.env.NODE_ENV === "production";
+const devTestUserEnabled = resolveDevTestUserEnabled({
+  configuredValue: alchemy.env.TEST_USER,
+  isProduction: isProductionBuild,
 });
 
 const db = await D1Database("database", {
@@ -322,7 +329,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
-    TEST_USER: alchemy.env.TEST_USER ?? "false",
+    TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
@@ -343,6 +350,7 @@ export const start = await TanStackStart("start", {
   bindings: {
     VITE_SERVER_URL: server.url!,
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
+    VITE_TEST_USER: devTestUserEnabled ? "true" : "false",
   },
 });
 

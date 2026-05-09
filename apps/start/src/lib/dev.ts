@@ -1,10 +1,12 @@
+import { env } from "@skills-re/env/start";
+import { resolveDevTestUserEnabled } from "@skills-re/env/dev";
+
 /**
  * Global test-mode switch for local development.
  *
- * When enabled the app authenticates as the hard-coded "test-user" instead of
- * requiring a real OAuth session. Flip by setting VITE_TEST_USER=false in
- * apps/start/.env, or by building for production (import.meta.env.DEV → false).
- *
- * TODO: remove before shipping.
+ * Enabled by default in local dev. Set VITE_TEST_USER=false to force real auth.
  */
-export const DEV_TEST_USER = import.meta.env.DEV && import.meta.env.VITE_TEST_USER !== "false";
+export const DEV_TEST_USER = resolveDevTestUserEnabled({
+  configuredValue: env.VITE_TEST_USER,
+  isProduction: !import.meta.env.DEV,
+});

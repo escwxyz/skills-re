@@ -224,6 +224,7 @@
     "packages/infra": {
       "name": "@skills-re/infra",
       "dependencies": {
+        "@skills-re/env": "workspace:*",
         "dotenv": "catalog:",
         "zod": "catalog:",
       },

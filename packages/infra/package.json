@@ -8,6 +8,7 @@
     "destroy": "alchemy destroy"
   },
   "dependencies": {
+    "@skills-re/env": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },

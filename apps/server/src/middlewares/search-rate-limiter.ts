@@ -30,6 +30,10 @@ export const searchRateLimiter: MiddlewareHandler<{
   Bindings: Env;
   Variables: { workerLogger?: WorkerLogger };
 }> = async (c, next) => {
+  if (c.env.TEST_USER === "true") {
+    return next();
+  }
+
   const session = await createRuntimeAuth().api.getSession({ headers: c.req.raw.headers });
   if (session?.user) {
     return next();
