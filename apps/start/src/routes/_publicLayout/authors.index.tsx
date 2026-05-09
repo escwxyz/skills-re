@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SealCheckIcon } from "@phosphor-icons/react";
 import { PageHero } from "@/components/page-hero";
 import { getAuthorsList } from "@/functions/authors/get-authors-list";
+import { OG_AUTHORS_IMAGE_PATH } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import {
   authors_index_alphabetical_title,
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_publicLayout/authors/")({
   head: () =>
     createSeo({
       canonicalPath: "/authors",
+      image: OG_AUTHORS_IMAGE_PATH,
       title: String(authors_index_title()),
       locale: getLocale(),
     }),
@@ -98,7 +100,7 @@ function RouteComponent() {
               </div>
 
               {i === 0 && (
-                <div className="bg-foreground text-background border-background font-display mb-5 flex size-30 items-center justify-center rounded-full border-4 border-double text-[64px] italic [outline:1px_solid_var(--foreground)]">
+                <div className="bg-foreground text-background border-background font-display mb-5 flex size-30 items-center justify-center border-4 border-double text-[64px] italic [outline:1px_solid_var(--foreground)]">
                   {author.avatarLabel}
                 </div>
               )}
@@ -155,7 +157,7 @@ function RouteComponent() {
               className="border-border grid grid-cols-[56px_1fr] items-start gap-3.5 border-r border-b p-5 no-underline transition-colors hover:bg-muted"
             >
               <div
-                className={`flex size-12 items-center justify-center rounded-full border font-display text-[24px] italic${author.isVerified ? " bg-foreground text-background border-foreground" : " bg-background text-foreground border-border"}`}
+                className={`flex size-12 items-center justify-center border font-display text-[24px] italic${author.isVerified ? " bg-foreground text-background border-foreground" : " bg-background text-foreground border-border"}`}
               >
                 {author.avatarLabel}
               </div>

@@ -3,6 +3,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { PageHero } from "@/components/page-hero";
 import { SkillCard } from "@/components/skill-card";
 import { getCategoryDetail } from "@/functions/categories/get-category-detail";
+import { buildCategoryOgImagePath } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import {
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_publicLayout/categories/$slug")({
     createSeo({
       canonicalPath: loaderData ? `/categories/${loaderData.slug}` : "/categories",
       description: loaderData ? getCategoryDescription(loaderData.slug, getLocale()) : undefined,
+      image: loaderData ? buildCategoryOgImagePath(loaderData.slug) : undefined,
       title: loaderData
         ? `${getCategoryLabel(loaderData.slug, getLocale())} — ${String(categories_page_title())}`
         : undefined,

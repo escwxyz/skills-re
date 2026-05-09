@@ -3,6 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageHero } from "@/components/page-hero";
 import { SkillCard } from "@/components/skill-card";
 import { buttonVariants } from "@/components/ui/button";
+import { buildTagOgImagePath } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import { buildTagSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
 import { getTagDetail } from "@/functions/tags/get-tag-detail";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_publicLayout/tags/$slug")({
     return createSeo({
       canonicalPath: loaderData ? `/tags/${loaderData.slug}` : "/tags",
       description: seo.description,
+      image: loaderData?.indexable ? buildTagOgImagePath(loaderData.slug) : undefined,
       noIndex: loaderData ? !loaderData.indexable : true,
       title: seo.title,
       locale: getLocale(),

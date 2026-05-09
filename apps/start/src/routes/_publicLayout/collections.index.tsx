@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CollectionsGrid } from "@/components/collections-grid";
 import { PageHero } from "@/components/page-hero";
 import { getCollectionsList } from "@/functions/collections/get-collections-list";
+import { OG_COLLECTIONS_IMAGE_PATH } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/_publicLayout/collections/")({
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/_publicLayout/collections/")({
   head: () =>
     createSeo({
       canonicalPath: "/collections",
+      image: OG_COLLECTIONS_IMAGE_PATH,
       title: "Collections",
     }),
   component: RouteComponent,

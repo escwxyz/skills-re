@@ -29,26 +29,33 @@ function RouteComponent() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {docs.map((doc) => (
-          <Link
-            key={doc.slug}
-            to="/docs/$slug"
-            params={{ slug: doc.slug }}
-            className="hover:bg-muted block border p-6 transition-colors"
-          >
-            {doc.category && (
-              <p className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[.14em] uppercase">
-                {doc.category}
-              </p>
-            )}
-            <h2 className="font-display text-xl font-normal">{doc.title}</h2>
-            {doc.description && (
-              <p className="text-muted-foreground mt-2 font-serif text-sm leading-relaxed">
-                {doc.description}
-              </p>
-            )}
-          </Link>
-        ))}
+        {docs.map((doc) => {
+          const { slug } = doc;
+
+          if (!slug) {
+            return null;
+          }
+          return (
+            <Link
+              key={slug}
+              to="/docs/$slug"
+              params={{ slug }}
+              className="hover:bg-muted block border p-6 transition-colors"
+            >
+              {doc.category && (
+                <p className="text-muted-foreground mb-2 font-mono text-[10px] tracking-[.14em] uppercase">
+                  {doc.category}
+                </p>
+              )}
+              <h2 className="font-display text-xl font-normal">{doc.title}</h2>
+              {doc.description && (
+                <p className="text-muted-foreground mt-2 font-serif text-sm leading-relaxed">
+                  {doc.description}
+                </p>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

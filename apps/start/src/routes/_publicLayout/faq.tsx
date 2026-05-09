@@ -41,7 +41,7 @@ function RouteComponent() {
       <div>
         {faqs.map((faq) => (
           <details key={faq.question} className="group border-b" name="faq">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 [&::-webkit-details-marker]:hidden">
+            <summary className="flex  list-none items-center justify-between gap-4 py-5 [&::-webkit-details-marker]:hidden">
               <h2 className="font-display text-xl font-normal sm:text-2xl">{faq.question}</h2>
               <span
                 className="text-muted-foreground shrink-0 font-mono text-2xl leading-none transition-transform group-open:rotate-45"

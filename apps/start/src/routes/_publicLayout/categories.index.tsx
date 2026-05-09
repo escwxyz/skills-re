@@ -3,6 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { CategoryCard } from "@/components/category-card";
 import { PageHero } from "@/components/page-hero";
 import { getCategoriesList } from "@/functions/categories/get-categories-list";
+import { OG_CATEGORIES_IMAGE_PATH } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import { formatInteger } from "@/utils/format";
 import { sumDailyMetrics } from "@/utils/stats";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_publicLayout/categories/")({
   head: () =>
     createSeo({
       canonicalPath: "/categories",
+      image: OG_CATEGORIES_IMAGE_PATH,
       title: String(categories_index_title()),
       locale: getLocale(),
     }),

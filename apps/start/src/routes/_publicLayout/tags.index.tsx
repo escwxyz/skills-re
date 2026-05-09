@@ -3,6 +3,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { LoadMore } from "@/components/load-more";
 
 import { PageHero } from "@/components/page-hero";
+import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import { buildTagsHubSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
 import { getTagsList } from "@/functions/tags/get-tags-list";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_publicLayout/tags/")({
     return createSeo({
       canonicalPath: "/tags",
       description: seo.description,
+      image: OG_TAGS_IMAGE_PATH,
       title: seo.title,
       locale: getLocale(),
     });

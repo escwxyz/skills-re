@@ -4,6 +4,7 @@ import { AuthorSkillList } from "@/components/author-skill-list";
 import { AuthorStats } from "@/components/author-stats";
 import { PageHero } from "@/components/page-hero";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
+import { buildAuthorOgImagePath } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import {
   author_page_description,
@@ -18,6 +19,10 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
   head: ({ loaderData }) =>
     createSeo({
       canonicalPath: loaderData ? `/authors/${loaderData.handle}` : "/authors",
+      description: loaderData
+        ? String(author_page_description({ handle: loaderData.handle }))
+        : undefined,
+      image: loaderData ? buildAuthorOgImagePath(loaderData.handle) : undefined,
       title: loaderData?.name,
       locale: getLocale(),
     }),
@@ -51,7 +56,7 @@ function RouteComponent() {
         description={String(author_page_description({ handle }))}
         media={
           <div className="flex flex-col items-center justify-center px-2">
-            <div className="bg-foreground text-background border-background font-display flex size-60 items-center justify-center rounded-full border-[6px] border-double text-[120px] italic [outline:1px_solid_var(--foreground)]">
+            <div className="bg-foreground text-background border-background font-display flex size-60 items-center justify-center border-[6px] border-double text-[120px] italic [outline:1px_solid_var(--foreground)]">
               {avatarLabel}
             </div>
             <div className="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.14em] uppercase">

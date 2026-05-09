@@ -2,6 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { CollectionItem } from "@/components/collection-item";
 import { getCollectionDetail } from "@/functions/collections/get-collection-detail";
+import { buildCollectionOgImagePath } from "@/lib/og-image";
 import { createSeo } from "@/lib/seo";
 import {
   collections_page_all_collections,
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/_publicLayout/collections/$slug")({
     createSeo({
       canonicalPath: loaderData ? `/collections/${loaderData.slug}` : "/collections",
       description: loaderData?.description,
+      image: loaderData ? buildCollectionOgImagePath(loaderData.slug) : undefined,
       title: loaderData?.title,
     }),
   component: RouteComponent,
