@@ -9,6 +9,13 @@ export const formatInteger = (value: number, locale?: Locale, compact?: boolean)
 export const formatCompactNumber = (value: number, locale?: Locale) =>
   formatInteger(value, locale, true);
 
+export const formatDate = (
+  value: number | Date,
+  locale?: Locale,
+  options: Intl.DateTimeFormatOptions = {},
+) =>
+  new Intl.DateTimeFormat(locale, options).format(value instanceof Date ? value : new Date(value));
+
 export const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) {
     return `${bytes} B`;

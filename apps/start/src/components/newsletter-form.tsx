@@ -104,7 +104,7 @@ export const NewsletterForm = ({ className }: NewsletterFormProps) => {
             <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
               {([canSubmit, isSubmitting]) => (
                 <Button
-                  className="shrink-0 cursor-pointer rounded-none border-none bg-transparent p-0 font-mono text-[10.5px] tracking-[.14em] uppercase text-foreground hover:text-muted-foreground"
+                  className="shrink-0 rounded-none border-none bg-transparent p-0 font-mono text-[10.5px] tracking-[.14em] uppercase text-foreground hover:text-muted-foreground"
                   disabled={
                     status === "submitted" || status === "submitting" || isSubmitting || !canSubmit
                   }

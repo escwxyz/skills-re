@@ -41,7 +41,7 @@ export const CookieConsent = () => {
       <Button
         aria-label={m.cookie_consent_toggle_aria_label()}
         aria-expanded={open}
-        className="h-6 cursor-pointer px-2 font-mono text-[10px] tracking-[0.12em] uppercase"
+        className="h-6 px-2 font-mono text-[10px] tracking-[0.12em] uppercase"
         onClick={() => setOpen((current) => !current)}
         size="xs"
         variant="outline"

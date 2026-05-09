@@ -15,7 +15,7 @@ export const SocialAuthButtons = ({
   <div className="space-y-4">
     {onlyGitHub ? null : (
       <Button
-        className="border-border/60 bg-background hover:bg-muted h-11 w-full cursor-pointer justify-center gap-3 border text-sm"
+        className="border-border/60 bg-background hover:bg-muted h-11 w-full justify-center gap-3 border text-sm"
         onClick={() => {
           onSocial("google");
         }}
@@ -45,7 +45,7 @@ export const SocialAuthButtons = ({
     )}
 
     <Button
-      className="border-border/60 bg-background hover:bg-muted h-11 w-full cursor-pointer justify-center gap-3 border text-sm"
+      className="border-border/60 bg-background hover:bg-muted h-11 w-full justify-center gap-3 border text-sm"
       onClick={() => {
         onSocial("github");
       }}
@@ -71,7 +71,7 @@ export const SocialAuthButtons = ({
 
     {!onlyGitHub && onEmail ? (
       <Button
-        className="h-11 w-full cursor-pointer justify-center gap-3 text-sm"
+        className="h-11 w-full justify-center gap-3 text-sm"
         onClick={onEmail}
         variant="secondary"
       >

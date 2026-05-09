@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LoginDialogFooterProps {
   onLinkClick: () => void;
@@ -50,6 +51,9 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
   const [isOpen, setIsOpen] = useAtom(isLoginDialogOpenAtom);
   const [isGithubOnlyMode, setGithubOnlyMode] = useAtom(loginDialogOnlyGithubAtom);
   const [view, setView] = useState<"options" | "email">("options");
+
+  const isMobile = useIsMobile();
+
   const resolvedOnlyGitHub = onlyGitHub ?? isGithubOnlyMode;
   const resolvedCallbackUrl =
     callbackUrl ??
@@ -95,7 +99,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     >
       <DialogTrigger
         render={
-          <Button className="text-primary-foreground hover:bg-primary flex cursor-pointer items-center gap-2">
+          <Button className="flex items-center gap-2" variant={isMobile ? "link" : "default"}>
             <SignInIcon />
             <span className="hidden md:block">{m.login_dialog_sign_in()}</span>
           </Button>

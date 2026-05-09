@@ -1,7 +1,6 @@
 import { MonitorIcon, MoonStarsIcon, SunDimIcon } from "@phosphor-icons/react";
 
 import { useTheme } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 
 const themeCycle = {
   dark: {
@@ -36,7 +35,7 @@ export const ThemeToggle = ({ className }: { className?: string }) => {
       aria-label={`Theme is ${label}. Click to switch to ${next}.`}
       title={`Theme: ${label}`}
       onClick={toggle}
-      className={cn("cursor-pointer", className)}
+      className={className}
     >
       <Icon aria-hidden="true" className="size-5" />
     </button>

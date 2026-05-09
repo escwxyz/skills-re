@@ -10,6 +10,7 @@ import { LoginDialog } from "@/components/login-dialog";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DesktopMenu } from "@/components/desktop-menu";
+import { NavUser } from "@/components/nav-user";
 
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
@@ -43,12 +44,13 @@ export const Header = () => {
           </Link>
           <Link
             to="/skills"
+            search={{ mode: "search" }}
             className={cn("no-underline md:hidden", buttonVariants({ variant: "link" }))}
           >
             <MagnifyingGlassIcon />
           </Link>
           {currentUser ? (
-            <Link to="/dashboard">{currentUser.name}</Link>
+            <NavUser currentUser={currentUser} />
           ) : (
             <LoginDialog onOpenChange={(open) => !open && setLoginDialogOpen(false)} />
           )}

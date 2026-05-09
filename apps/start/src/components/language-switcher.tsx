@@ -30,8 +30,8 @@ export function LanguageSwitcher({ className }: { className?: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         className={cn(
-          "text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
-          className ?? "",
+          "text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
+          className,
         )}
       >
         <TranslateIcon className="size-4 shrink-0" />
@@ -60,7 +60,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                     });
                   }}
                   className={cn(
-                    "hover:bg-paper-2 flex w-full cursor-pointer items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
+                    "hover:bg-paper-2 flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
                     {
                       "text-foreground": isActive,
                       "text-muted-foreground": !isActive,

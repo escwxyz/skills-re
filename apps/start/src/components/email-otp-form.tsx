@@ -198,7 +198,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
           <form.Subscribe selector={(state) => state.values.email}>
             {(emailValue) => (
               <Button
-                className="h-10 w-full cursor-pointer text-sm"
+                className="h-10 w-full text-sm"
                 disabled={isSending || !emailValue}
                 onClick={handleSendOtp}
                 type="button"
@@ -233,7 +233,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
 
           <div className="text-muted-foreground flex items-center justify-between text-xs">
             <button
-              className="hover:text-foreground underline underline-offset-4 cursor-pointer"
+              className="hover:text-foreground underline underline-offset-4"
               onClick={handleBack}
               type="button"
             >

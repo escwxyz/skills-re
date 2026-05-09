@@ -50,7 +50,16 @@ export const authorListItemSchema = authorSchema.extend({
   skillCount: z.number().int().nonnegative(),
 });
 
+const aiMatchSchema = z.object({
+  itemKey: z.string().optional(),
+  score: z.number().optional(),
+  snippet: z.string().optional(),
+  sourcePath: z.string().optional(),
+  version: z.string().optional(),
+});
+
 export const searchSkillListItemSchema = z.object({
+  aiMatch: aiMatchSchema.optional(),
   author: authorSchema.optional(),
   authorHandle: githubOwnerSchema.optional(),
   createdAt: z.number().int().nonnegative().optional(),
