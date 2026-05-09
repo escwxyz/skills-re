@@ -107,8 +107,8 @@ export const createCategoryOgImageResponse = async ({
     highlight: `skills.re/categories/${slug}`,
     identityHandle: `#${slug}`,
     metrics: [
-      { label: "Skills", value: data.categoryDetail.count },
-      { label: "Tags", value: data.categoryDetail.relatedTags.length },
+      { label: "Skills", value: data.count },
+      { label: "Tags", value: data.relatedTags.length },
     ],
     requestUrl,
     title,
