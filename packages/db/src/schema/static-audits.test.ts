@@ -25,7 +25,7 @@ describe("static audits schema", () => {
     );
     expect(builderKey).toBeDefined();
     const builders = (
-      (staticAuditsTable as Record<symbol, unknown>)[builderKey as symbol] as (
+      (staticAuditsTable as unknown as Record<symbol, unknown>)[builderKey as symbol] as (
         table: object,
       ) => unknown[]
     )(staticAuditsTable);

@@ -1,3 +1,4 @@
+// oxlint-disable typescript/no-non-null-assertion
 // oxlint-disable no-nested-ternary
 /**
  * Local dev seed — populates the Miniflare D1 SQLite with representative skill data.

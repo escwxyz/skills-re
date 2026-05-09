@@ -42,7 +42,9 @@ describe("skills schema", () => {
     );
     expect(builderKey).toBeDefined();
     const builders = (
-      (skillsTable as Record<symbol, unknown>)[builderKey as symbol] as (table: object) => unknown[]
+      (skillsTable as unknown as Record<symbol, unknown>)[builderKey as symbol] as (
+        table: object,
+      ) => unknown[]
     )(skillsTable);
     const names = builders
       .map((item) => {
