@@ -16,6 +16,7 @@ import { getUser } from "@/functions/get-user";
 import { Provider } from "jotai";
 import { getTheme } from "@/functions/get-theme";
 import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
+import { Toaster } from "@/components/ui/sonner";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -70,6 +71,7 @@ function RootComponent() {
   return (
     <Provider>
       <Outlet />
+      <Toaster />
     </Provider>
   );
 }
@@ -105,7 +107,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
-
         <Scripts />
       </body>
     </html>

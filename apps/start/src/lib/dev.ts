@@ -1,5 +1,5 @@
 import { env } from "@skills-re/env/start";
-import { resolveDevTestUserEnabled } from "@skills-re/env/dev";
+import { resolveDevTestUserEnabled } from "@skills-re/config/dev";
 
 /**
  * Global test-mode switch for local development.

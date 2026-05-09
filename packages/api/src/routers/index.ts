@@ -44,8 +44,10 @@ import {
   listIndexableTags,
   listReposPage,
   listMineReviews,
+  checkSavedSkillByUser,
   listMineSavedSkills,
   listReviewsBySkill,
+  unsaveSkill,
   listSnapshotsBySkill,
   listMineSkills,
   listSkills,
@@ -444,8 +446,26 @@ export const appRouter = {
       listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
     ),
     listMineSaved: protectedProcedure.skills.listMineSaved.handler(({ input, context }) =>
-      listMineSavedSkills({ limit: input?.limit, userId: context.session.user.id }),
+      listMineSavedSkills({
+        cursor: input?.cursor,
+        limit: input?.limit,
+        userId: context.session.user.id,
+      }),
     ),
+    checkSaved: protectedProcedure.skills.checkSaved.handler(({ input, context }) =>
+      checkSavedSkillByUser({ slug: input.slug, userId: context.session.user.id }),
+    ),
+    unsave: protectedProcedure.skills.unsave.handler(async ({ input, context }) => {
+      try {
+        return await unsaveSkill({ slug: input.slug, userId: context.session.user.id });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unsave failed.";
+        if (message === "Skill not found.") {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Unsave failed." });
+      }
+    }),
     aiSearch: publicProcedure.skills.aiSearch.handler(({ input, context }) =>
       aiSearch(input, context.aiSearch),
     ),

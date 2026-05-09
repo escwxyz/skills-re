@@ -452,7 +452,7 @@
   "dashboard_skills_saved_eyebrow": "Dashboard / Saved",
   "dashboard_skills_saved_title": "已保存的技能",
   "dashboard_skills_loading": "正在加载技能...",
-  "dashboard_skills_view_skill": "查看技能 →",
+  "dashboard_skills_view_skill": "查看技能",
   "dashboard_settings_notifications_label": "通知",
   "dashboard_settings_notifications_value": "会话事件 + 发布说明",
   "dashboard_settings_sync_label": "同步",

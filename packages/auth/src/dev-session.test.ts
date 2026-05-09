@@ -9,7 +9,7 @@ import {
   resolveDevTestSession,
   resolveDevTestSessionResponse,
 } from "./dev-session";
-import { resolveDevTestUserEnabled } from "@skills-re/env/dev";
+import { resolveDevTestUserEnabled } from "@skills-re/config/dev";
 
 describe("dev test session", () => {
   test("creates the canonical local test user session", () => {

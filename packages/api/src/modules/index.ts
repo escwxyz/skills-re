@@ -17,10 +17,12 @@ export {
 } from "./skills/service";
 export { listSkillsHistoryInfoByIds } from "./skills/repo";
 export {
+  checkSavedSkillByUser,
   createSavedSkillsService,
   listMineSavedSkills,
   saveSkill,
   savedSkillsService,
+  unsaveSkill,
 } from "./saved-skills/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
 export {

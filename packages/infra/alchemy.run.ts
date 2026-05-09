@@ -18,7 +18,7 @@ import { GitHubComment } from "alchemy/github";
 import { CloudflareStateStore } from "alchemy/state";
 
 import { config } from "dotenv";
-import { resolveDevTestUserEnabled } from "@skills-re/env/dev";
+import { resolveDevTestUserEnabled } from "@skills-re/config/dev";
 
 config({ path: "./.env" });
 config({ path: "../../apps/start/.env" });
