@@ -219,7 +219,6 @@
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
         "@skills-re/config": "workspace:*",
-        "@skills-re/infra": "workspace:*",
         "@types/node": "catalog:",
         "typescript": "catalog:",
       },
@@ -228,7 +227,6 @@
       "name": "@skills-re/infra",
       "dependencies": {
         "@skills-re/config": "workspace:*",
-        "@skills-re/env": "workspace:*",
         "dotenv": "catalog:",
         "zod": "catalog:",
       },

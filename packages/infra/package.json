@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@skills-re/config": "workspace:*",
-    "@skills-re/env": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
