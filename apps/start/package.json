@@ -58,6 +58,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.36.3",
     "@cloudflare/workers-types": "catalog:",
     "@content-collections/core": "^0.15.0",
     "@content-collections/markdown": "^0.1.4",
