@@ -8,7 +8,7 @@ interface Stat {
   accent?: "green" | "blue" | "red";
 }
 
-export interface PageHeroProps {
+interface PageHeroProps {
   eyebrow: string;
   description: string;
   descriptionItalic?: boolean;
@@ -20,7 +20,7 @@ export interface PageHeroProps {
   className?: string;
 }
 
-const accentClass = (accent?: Stat["accent"]) => {
+const accentClass = (accent?: "green" | "blue" | "red") => {
   if (accent === "green") {
     return "text-editorial-green";
   }

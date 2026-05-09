@@ -29,6 +29,13 @@ const skillListMineInputSchema = z
   })
   .optional();
 
+const skillListMineSavedInputSchema = z
+  .object({
+    cursor: z.string().optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .optional();
+
 const skillListMineItemSchema = z.object({
   authorHandle: z.string().optional(),
   createdAt: z.number().int().nonnegative().optional(),
@@ -41,6 +48,12 @@ const skillListMineItemSchema = z.object({
   updatedAt: z.number().int().nonnegative().optional(),
 });
 
+const skillListMineSavedResultSchema = z.object({
+  continueCursor: z.string(),
+  isDone: z.boolean(),
+  page: z.array(skillListMineItemSchema),
+});
+
 const saveSkillInputSchema = z.object({
   slug: skillSlugSchema,
 });
@@ -48,6 +61,14 @@ const saveSkillInputSchema = z.object({
 const saveSkillResultSchema = z.object({
   alreadySaved: z.boolean(),
   saved: z.boolean(),
+});
+
+const checkSavedResultSchema = z.object({
+  saved: z.boolean(),
+});
+
+const unsaveSkillResultSchema = z.object({
+  unsaved: z.boolean(),
 });
 
 const authorHandleInputSchema = z.object({
@@ -303,6 +324,28 @@ export const skillsContract = {
     })
     .input(saveSkillInputSchema)
     .output(saveSkillResultSchema),
+  checkSaved: baseContract
+    .route({
+      description: "Checks whether the authenticated user has saved a specific skill.",
+      method: "GET",
+      path: "/skills/check-saved",
+      tags: ["Skills"],
+      successDescription: "Saved status",
+      summary: "Check if a skill is saved",
+    })
+    .input(skillLookupInputSchema)
+    .output(checkSavedResultSchema),
+  unsave: baseContract
+    .route({
+      description: "Removes a saved skill from the authenticated user's dashboard.",
+      method: "POST",
+      path: "/skills/unsave",
+      tags: ["Skills"],
+      successDescription: "Unsave result",
+      summary: "Unsave a skill",
+    })
+    .input(saveSkillInputSchema)
+    .output(unsaveSkillResultSchema),
   list: skillListContract,
   listAuthors: listAuthorsContract,
   listMine: baseContract
@@ -325,8 +368,8 @@ export const skillsContract = {
       successDescription: "Saved skill list",
       summary: "List my saved skills",
     })
-    .input(skillListMineInputSchema)
-    .output(z.array(skillListMineItemSchema)),
+    .input(skillListMineSavedInputSchema)
+    .output(skillListMineSavedResultSchema),
   resolvePathBySlug: resolveSkillPathContract,
   uploadSkills: baseContract
     .route({

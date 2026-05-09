@@ -10,27 +10,9 @@ describe("createSkillArchiveDownloadResponse", () => {
     const recorded: { skillId: string; version: string }[] = [];
     const response = await createSkillArchiveDownloadResponse(
       {
-        skillId: "skill-1",
-        version: "1.0.0",
+        snapshotId: "snapshot-1",
       },
       {
-        getBySkillAndVersion: async () => ({
-          archiveR2Key: "acme/widget/skills.tar.gz",
-          description: "Widget skill snapshot",
-          directoryPath: "skills/acme/widget/",
-          entryPath: "skills/acme/widget/skill.md",
-          hash: "hash-1",
-          id: "snapshot-1",
-          isDeprecated: false,
-          name: "widget",
-          skillId: "skill-1",
-          sourceCommitDate: null,
-          sourceCommitMessage: null,
-          sourceCommitSha: null,
-          sourceCommitUrl: null,
-          syncTime: 123,
-          version: "1.0.0",
-        }),
         getSnapshotArchiveDownloadObject: async () => ({
           archiveKey: "acme/widget/skills.tar.gz",
           object: {
@@ -84,27 +66,9 @@ describe("createSkillArchiveDownloadResponse", () => {
   test("returns a 404 when the snapshot archive is missing", async () => {
     const response = await createSkillArchiveDownloadResponse(
       {
-        skillId: "skill-1",
-        version: "1.0.0",
+        snapshotId: "snapshot-1",
       },
       {
-        getBySkillAndVersion: async () => ({
-          archiveR2Key: null,
-          description: "Widget skill snapshot",
-          directoryPath: "skills/acme/widget/",
-          entryPath: "skills/acme/widget/skill.md",
-          hash: "hash-1",
-          id: "snapshot-1",
-          isDeprecated: false,
-          name: "widget",
-          skillId: "skill-1",
-          sourceCommitDate: null,
-          sourceCommitMessage: null,
-          sourceCommitSha: null,
-          sourceCommitUrl: null,
-          syncTime: 123,
-          version: "1.0.0",
-        }),
         getSnapshotArchiveDownloadObject: async () => null,
         // recordSuccessfulSkillDownload: async () => undefined,
       },
@@ -116,8 +80,7 @@ describe("createSkillArchiveDownloadResponse", () => {
 
   test("returns a 400 for invalid download params", async () => {
     const response = await createSkillArchiveDownloadResponse({
-      skillId: "",
-      version: "",
+      snapshotId: "",
     });
 
     expect(response.status).toBe(400);

@@ -31,7 +31,7 @@ interface TaggingTargetRow {
 type TagDetailRow = TagListRow;
 
 interface TagsServiceDeps {
-  countTags: () => Promise<number>;
+  countTags: () => Promise<number> | number;
   generateSkillTagsBatch: (
     input: {
       existingTagCandidates?: string[];
@@ -56,6 +56,11 @@ interface TagsServiceDeps {
   listSkillIdsWithoutTags: (input?: { limit?: number }) => Promise<string[]>;
   listSkillTaggingTargetsByIds: (skillIds: string[]) => Promise<TaggingTargetRow[]>;
   listIndexableTags: (limit?: number) => Promise<TagListRow[]>;
+  listTagsPage: (input?: { cursor?: string; limit?: number }) => Promise<{
+    continueCursor: string;
+    isDone: boolean;
+    page: TagListRow[];
+  }>;
   listTags: (input?: { all?: boolean; limit?: number }) => Promise<TagListRow[]>;
   listTagsForSeo: (limit?: number) => Promise<TagListRow[]>;
   computeSkillCountForTag: (tagId: TagId) => Promise<number>;
@@ -99,6 +104,7 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
     listSkillTaggingTargetsByIds: async (skillIds) =>
       await repo.listSkillTaggingTargetsByIds(skillIds.map((skillId) => asSkillId(skillId))),
     listIndexableTags: repo.listIndexableTags,
+    listTagsPage: repo.listTagsPage,
     listTags: repo.listTags,
     listTagsForSeo: repo.listTagsForSeo,
     readSnapshotFileContent: snapshots.readSnapshotFileContent,
@@ -258,6 +264,20 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
       return rows.filter((row) => row.status === "active");
     },
 
+    async listPage(input?: { cursor?: string; limit?: number }) {
+      const [countTags, listTagsPage] = await Promise.all([
+        getDep("countTags"),
+        getDep("listTagsPage"),
+      ]);
+      const [page, totalCount] = await Promise.all([listTagsPage(input), countTags()]);
+
+      return {
+        items: page.page,
+        nextCursor: page.isDone ? null : page.continueCursor || null,
+        totalCount,
+      };
+    },
+
     async listIndexable(input?: { limit?: number; minCount?: number }) {
       const listIndexableTags = await getDep("listIndexableTags");
       const minCount = input?.minCount ?? getIndexableTagMinCount();
@@ -403,6 +423,10 @@ export async function getTagBySlug(input: { slug: string }) {
 
 export async function listTagsForSeoPublic(input?: { limit?: number }) {
   return await createTagsService().listForSeo(input);
+}
+
+export async function listTagsPagePublic(input?: { cursor?: string; limit?: number }) {
+  return await createTagsService().listPage(input);
 }
 
 export async function listIndexableTagsPublic(input?: { limit?: number; minCount?: number }) {

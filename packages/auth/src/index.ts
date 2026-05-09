@@ -197,7 +197,8 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
               throw new Error("search_site requires a string query.");
             }
 
-            const searchUrl = new URL("/search", env.PUBLIC_SITE_URL);
+            const searchUrl = new URL("/skills", env.PUBLIC_SITE_URL);
+            searchUrl.searchParams.set("mode", "search");
             searchUrl.searchParams.set("q", args.query);
             return await fetchPublicContent(
               searchUrl.pathname + searchUrl.search,

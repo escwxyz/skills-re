@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
 import {
   reposTable,
@@ -13,6 +13,7 @@ import { db } from "../shared/db";
 import { defaultLimit } from "../shared/pagination";
 import { CATEGORY_DEFINITION_BY_SLUG } from "../categories/taxonomy";
 import type { CategorySlug } from "../categories/taxonomy";
+import { decodeTagCursor, encodeTagCursor } from "./cursor";
 
 const toTopSkillRows = () => ({
   authorHandle: reposTable.ownerHandle,
@@ -84,6 +85,50 @@ export async function listTagsForSeo(limit?: number) {
 
 export async function listIndexableTags(limit?: number) {
   return await listTags({ limit });
+}
+
+export async function listTagsPage(input?: { cursor?: string; limit?: number }) {
+  const limit = input?.limit ?? defaultLimit;
+  const cursor = decodeTagCursor(input?.cursor);
+
+  const query = db
+    .select({
+      count: tagsTable.count,
+      id: tagsTable.id,
+      status: tagsTable.status,
+      slug: tagsTable.slug,
+    })
+    .from(tagsTable)
+    .where(
+      cursor
+        ? and(
+            eq(tagsTable.status, "active"),
+            gt(tagsTable.count, 0),
+            or(
+              lt(tagsTable.count, cursor.count),
+              and(eq(tagsTable.count, cursor.count), gt(tagsTable.slug, cursor.slug)),
+            ),
+          )
+        : and(eq(tagsTable.status, "active"), gt(tagsTable.count, 0)),
+    )
+    .orderBy(desc(tagsTable.count), asc(tagsTable.slug));
+
+  const rows = await query.limit(limit + 1);
+  const page = rows.slice(0, limit);
+  const next = page.at(-1) ?? null;
+
+  return {
+    continueCursor: encodeTagCursor(
+      rows.length > limit && next
+        ? {
+            count: next.count,
+            slug: next.slug,
+          }
+        : null,
+    ),
+    isDone: rows.length <= limit,
+    page,
+  };
 }
 
 export async function getRelatedCategoriesByTagSlug(slug: string): Promise<

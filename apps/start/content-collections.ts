@@ -38,6 +38,7 @@ const docs = defineCollection({
   directory: "./contents/docs",
   include: "**/*.{md,mdx}",
   schema: z.object({
+    content: z.string(),
     title: z.string(),
     description: z.string().optional(),
     category: z.string().optional(),
@@ -61,6 +62,7 @@ const faqs = defineCollection({
   directory: "./contents/faqs",
   include: "**/*.{md,mdx}",
   schema: z.object({
+    content: z.string(),
     question: z.string(),
     order: z.number(),
   }),
@@ -85,6 +87,7 @@ const changelogs = defineCollection({
   directory: "./contents/changelogs",
   include: "**/*.{md,mdx}",
   schema: z.object({
+    content: z.string(),
     title: z.string(),
     description: z.string(),
     type: z.enum(["feature", "patch", "major"]),

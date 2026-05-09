@@ -5,8 +5,10 @@
   "type": "module",
   "exports": {
     "./server": "./src/server.ts",
-    "./web": "./src/web.ts",
     "./start": "./src/start.ts"
+  },
+  "scripts": {
+    "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.1",
@@ -14,6 +16,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@skills-re/config": "workspace:*",
     "@skills-re/infra": "workspace:*",
     "@types/node": "catalog:",

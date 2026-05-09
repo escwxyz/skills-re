@@ -44,16 +44,17 @@ import {
   listIndexableTags,
   listReposPage,
   listMineReviews,
+  checkSavedSkillByUser,
   listMineSavedSkills,
   listReviewsBySkill,
+  unsaveSkill,
   listSnapshotsBySkill,
   listMineSkills,
   listSkills,
   listTags,
   listTagsForSeo,
+  listTagsPage,
   fetchGithubRepo,
-  dailySkillsSnapshots,
-  refreshDailySkillsSnapshots,
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
@@ -70,6 +71,7 @@ import {
   uploadSkills,
   searchSkills,
 } from "../modules";
+import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
 
@@ -316,14 +318,7 @@ export const appRouter = {
       return fetchGithubRepo(input, runtime);
     }),
   },
-  metrics: {
-    dailySkillsSnapshots: publicProcedure.metrics.dailySkillsSnapshots.handler(({ input }) =>
-      dailySkillsSnapshots(input),
-    ),
-    refreshDailySkillsSnapshots: adminProcedure.metrics.refreshDailySkillsSnapshots.handler(
-      ({ input }) => refreshDailySkillsSnapshots(input),
-    ),
-  },
+  metrics: metricsRouter,
   staticAudits: {
     getReportBySnapshot: publicProcedure.staticAudits.getReportBySnapshot.handler(({ input }) =>
       getStaticAuditReportBySnapshot(input.snapshotId),
@@ -451,8 +446,26 @@ export const appRouter = {
       listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
     ),
     listMineSaved: protectedProcedure.skills.listMineSaved.handler(({ input, context }) =>
-      listMineSavedSkills({ limit: input?.limit, userId: context.session.user.id }),
+      listMineSavedSkills({
+        cursor: input?.cursor,
+        limit: input?.limit,
+        userId: context.session.user.id,
+      }),
     ),
+    checkSaved: protectedProcedure.skills.checkSaved.handler(({ input, context }) =>
+      checkSavedSkillByUser({ slug: input.slug, userId: context.session.user.id }),
+    ),
+    unsave: protectedProcedure.skills.unsave.handler(async ({ input, context }) => {
+      try {
+        return await unsaveSkill({ slug: input.slug, userId: context.session.user.id });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unsave failed.";
+        if (message === "Skill not found.") {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Unsave failed." });
+      }
+    }),
     aiSearch: publicProcedure.skills.aiSearch.handler(({ input, context }) =>
       aiSearch(input, context.aiSearch),
     ),
@@ -490,6 +503,9 @@ export const appRouter = {
     ),
     listIndexable: publicProcedure.tags.listIndexable.handler(({ input }) =>
       listIndexableTags(input as { limit?: number; minCount?: number } | undefined),
+    ),
+    listPage: publicProcedure.tags.listPage.handler(({ input }) =>
+      listTagsPage(input as { cursor?: string; limit?: number } | undefined),
     ),
   },
 };

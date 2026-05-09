@@ -26,6 +26,12 @@ export interface RepoStatsSyncScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface MetricsRuntime {
+  DOWNLOAD_EVENTS?: AnalyticsEngineDataset;
+  METRICS_CACHE?: KVNamespace;
+  VIEW_EVENTS?: AnalyticsEngineDataset;
+}
+
 export interface RepoSnapshotSyncScheduler {
   enqueue(input: {
     expectedUpdatedAt?: number;
@@ -276,6 +282,7 @@ export interface Context {
   githubHistory?: GithubSnapshotHistoryHelpers;
   githubFetch?: GithubFetchRuntime;
   githubSubmit?: GithubSubmitRuntime;
+  metrics?: MetricsRuntime;
   snapshotHistory?: SnapshotHistoryRuntime;
   snapshotStorage?: SnapshotStorageRuntime;
   workerLogger?: WorkerLogger;

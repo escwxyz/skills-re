@@ -17,13 +17,27 @@ export {
 } from "./skills/service";
 export { listSkillsHistoryInfoByIds } from "./skills/repo";
 export {
+  checkSavedSkillByUser,
   createSavedSkillsService,
   listMineSavedSkills,
   saveSkill,
   savedSkillsService,
+  unsaveSkill,
 } from "./saved-skills/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
-export { dailySkillsSnapshots, refreshDailySkillsSnapshots } from "./metrics/service";
+export {
+  createDownloadMetricsRecorder,
+  createDownloadMetricsService,
+  createMetricsService,
+  createViewMetricsService,
+  dailySkillsSnapshots,
+  getSkillDownloadMetrics,
+  getSkillViewMetrics,
+  recordSuccessfulSkillDownload,
+  recordSkillView,
+  refreshDailySkillsSnapshots,
+} from "./metrics";
+export type { SkillDownloadMetrics, SkillViewMetrics } from "./metrics";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
 export {
   countMineFeedback,
@@ -76,6 +90,7 @@ export {
   getTagBySlug,
   listIndexableTagsPublic as listIndexableTags,
   listTagsForSeoPublic as listTagsForSeo,
+  listTagsPagePublic as listTagsPage,
   listTagsPublic as listTags,
 } from "./tags/service";
 export {

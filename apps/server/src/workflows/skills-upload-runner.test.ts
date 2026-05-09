@@ -53,7 +53,7 @@ describe("runSkillsUploadWorkflow", () => {
               initialSnapshot: {
                 files: [
                   {
-                    content: "---\nname: widget\n---\n# Widget",
+                    content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
                     path: "skills/acme/widget/skill.md",
                   },
                 ],
@@ -196,10 +196,10 @@ describe("runSkillsUploadWorkflow", () => {
         description: "Widget skill",
         directoryPath: "skills/acme/widget",
         entryPath: "skills/acme/widget/skill.md",
-        frontmatterHash: null,
+        frontmatterHash: expect.any(String),
         hash: expect.any(String),
         name: "Widget",
-        skillContentHash: null,
+        skillContentHash: expect.any(String),
         skillId: "skill-1",
         sourceCommitDate: 1,
         sourceCommitMessage: "feat: add widget",
@@ -213,7 +213,7 @@ describe("runSkillsUploadWorkflow", () => {
       {
         files: [
           {
-            content: "---\nname: widget\n---\n# Widget",
+            content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
             path: "skills/acme/widget/skill.md",
           },
         ],
@@ -245,7 +245,7 @@ describe("runSkillsUploadWorkflow", () => {
     ]);
     expect(calls.aiSearchItemUpload).toEqual([
       {
-        content: "---\nname: widget\n---\n# Widget",
+        content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
         key: "skill-1.md",
         metadata: {
           authorHandle: "acme",
@@ -309,7 +309,7 @@ describe("runSkillsUploadWorkflow", () => {
               initialSnapshot: {
                 files: [
                   {
-                    content: "---\nname: widget\n---\n# Widget",
+                    content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
                     path: "skills/acme/widget/skill.md",
                   },
                 ],
@@ -386,11 +386,11 @@ describe("runSkillsUploadWorkflow", () => {
               initialSnapshot: {
                 files: [
                   {
-                    content: "# Wrong file",
+                    content: "---\nname: wrong\ndescription: Wrong file\n---\n# Wrong file",
                     path: "skills/acme/widget/skill.md",
                   },
                   {
-                    content: "# Right file",
+                    content: "---\nname: right\ndescription: Right file\n---\n# Right file",
                     path: "skills/acme/widget/docs/skill.md",
                   },
                 ],
@@ -439,7 +439,7 @@ describe("runSkillsUploadWorkflow", () => {
 
     expect(aiSearchUploads).toEqual([
       {
-        content: "# Right file",
+        content: "---\nname: right\ndescription: Right file\n---\n# Right file",
         key: "skill-1.md",
       },
     ]);

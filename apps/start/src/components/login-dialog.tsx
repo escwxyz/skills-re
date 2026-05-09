@@ -1,6 +1,4 @@
 /** biome-ignore-all lint/style/noNestedTernary: <ignore> */
-"use client";
-
 import { useAtom } from "jotai";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
@@ -21,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LoginDialogFooterProps {
   onLinkClick: () => void;
@@ -48,11 +47,23 @@ interface LoginDialogProps {
   onlyGitHub?: boolean;
 }
 
-const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
+export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
   const [isOpen, setIsOpen] = useAtom(isLoginDialogOpenAtom);
   const [isGithubOnlyMode, setGithubOnlyMode] = useAtom(loginDialogOnlyGithubAtom);
   const [view, setView] = useState<"options" | "email">("options");
+
+  const isMobile = useIsMobile();
+
   const resolvedOnlyGitHub = onlyGitHub ?? isGithubOnlyMode;
+  const resolvedCallbackUrl =
+    callbackUrl ??
+    (() => {
+      if (typeof window === "undefined") {
+        return "/dashboard";
+      }
+
+      return `${window.location.pathname}${window.location.search}`;
+    })();
 
   const closeDialog = () => {
     setIsOpen(false);
@@ -60,7 +71,7 @@ const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
 
   const handleLogin = async (provider: "github" | "google") => {
     await authClient.signIn.social({
-      callbackURL: callbackUrl,
+      callbackURL: resolvedCallbackUrl,
       fetchOptions: {
         onSuccess: () => {
           window.location.href = localizeHref("/dashboard");
@@ -88,7 +99,7 @@ const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     >
       <DialogTrigger
         render={
-          <Button className="text-primary-foreground hover:bg-primary flex cursor-pointer items-center gap-2">
+          <Button className="flex items-center gap-2" variant={isMobile ? "link" : "default"}>
             <SignInIcon />
             <span className="hidden md:block">{m.login_dialog_sign_in()}</span>
           </Button>
@@ -121,5 +132,3 @@ const LoginDialogContent = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     </Dialog>
   );
 };
-
-export const LoginDialog = (props: LoginDialogProps) => <LoginDialogContent {...props} />;

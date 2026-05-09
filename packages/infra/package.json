@@ -8,11 +8,11 @@
     "destroy": "alchemy destroy"
   },
   "dependencies": {
+    "@skills-re/config": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@skills-re/config": "workspace:*",
     "alchemy": "catalog:",
     "typescript": "catalog:"
   }

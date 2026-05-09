@@ -1,6 +1,12 @@
 import type { Thing, WebSite, WithContext } from "schema-dts";
 
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/constants";
+import {
+  OG_IMAGE_DEFAULT,
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/constants";
 import {
   baseLocale as defaultLocale,
   deLocalizeHref,
@@ -51,7 +57,7 @@ const createWebsiteSchema = (): WithContext<WebSite> => ({
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+      urlTemplate: `${SITE_URL}/skills?mode=search&q={search_term_string}`,
     },
   },
   url: SITE_URL,
@@ -64,7 +70,7 @@ export function createSeo({
   noIndex = false,
   structuredData = [],
   locale = defaultLocale,
-  image,
+  image = OG_IMAGE_DEFAULT,
 }: SeoOptions = {}) {
   const resolvedTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
   const resolvedRobots = noIndex ? "noindex, nofollow" : "index, follow";
@@ -90,10 +96,16 @@ export function createSeo({
   ];
 
   if (resolvedImage) {
+    const resolvedTwitterImage = image ? resolveUrl(`${image}?twitter=1`) : resolvedImage;
     meta.push(
       { property: "og:image", content: resolvedImage },
       { property: "og:image:alt", content: resolvedTitle },
-      { name: "twitter:image", content: resolvedImage },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: resolvedTwitterImage },
+      { name: "twitter:image:alt", content: resolvedTitle },
+      { name: "twitter:image:width", content: "1200" },
+      { name: "twitter:image:height", content: "675" },
     );
   }
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { TranslateIcon } from "@phosphor-icons/react";
 import {
@@ -16,6 +14,7 @@ import {
   setLocale,
   locales as availableLocales,
 } from "@/paraglide/runtime";
+import { cn } from "@/lib/utils";
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -30,14 +29,17 @@ export function LanguageSwitcher({ className }: { className?: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className={`text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors ${className ?? ""}`}
+        className={cn(
+          "text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
+          className,
+        )}
       >
         <TranslateIcon className="size-4 shrink-0" />
         <span>{m.language_switcher_short_label()}</span>
       </DialogTrigger>
 
       <DialogContent showCloseButton={false} className="max-w-xs p-0">
-        <DialogHeader className="border-rule border-b px-5 py-4">
+        <DialogHeader className="border-border border-b px-5 py-4">
           <DialogTitle className="text-muted-foreground font-mono text-[10px] tracking-[0.2em] uppercase">
             {m.language_switcher_languages()}
           </DialogTitle>
@@ -47,7 +49,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           {availableLocales.map((lang) => {
             const isActive = lang === currentLocale;
             return (
-              <li key={lang} className="border-rule border-b last:border-b-0">
+              <li key={lang} className="border-border border-b last:border-b-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -57,9 +59,13 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                       locale: lang,
                     });
                   }}
-                  className={`hover:bg-paper-2 flex w-full cursor-pointer items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
+                  className={cn(
+                    "hover:bg-paper-2 flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
+                    {
+                      "text-foreground": isActive,
+                      "text-muted-foreground": !isActive,
+                    },
+                  )}
                 >
                   <span>{localeLabelMap[lang]}</span>
                   <span className="text-[10px] tracking-[0.12em] uppercase">

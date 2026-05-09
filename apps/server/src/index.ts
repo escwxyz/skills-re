@@ -4,8 +4,8 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
+import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
-import { createDownloadMetricsRecorder } from "./download-metrics";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
@@ -131,22 +131,15 @@ app.get("/.well-known/agent-configuration", async (c) => {
   const configuration = await runtimeAuth.api.getAgentConfiguration();
   return c.json(configuration);
 });
-app.get("/api/skills/download", async (c) => {
+app.get("/skills/download", async (c) => {
   const url = new URL(c.req.url);
   return await createSkillArchiveDownloadResponse(
     {
-      format: url.searchParams.get("format") === "tar.gz" ? "tar.gz" : undefined,
-      skillId: url.searchParams.get("skillId") ?? "",
-      version: url.searchParams.get("version") ?? "",
+      snapshotId: url.searchParams.get("snapshotId") ?? "",
     },
     {
       snapshotStorage: createSnapshotArchiveStorageRuntime(c.env),
-      recordSuccessfulSkillDownload: createDownloadMetricsRecorder(
-        c.env as {
-          DOWNLOAD_EVENTS?: { writeDataPoint(dataPoint: { blobs: [string, string] }): void };
-        },
-        c.get("workerLogger"),
-      ),
+      recordSuccessfulSkillDownload: createDownloadMetricsRecorder(c.env, c.get("workerLogger")),
     },
   );
 });

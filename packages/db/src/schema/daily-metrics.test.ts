@@ -18,7 +18,7 @@ describe("daily metrics schema", () => {
     );
     expect(builderKey).toBeDefined();
     const builders = (
-      (dailyMetricsTable as Record<symbol, unknown>)[builderKey as symbol] as (
+      (dailyMetricsTable as unknown as Record<symbol, unknown>)[builderKey as symbol] as (
         table: object,
       ) => unknown[]
     )(dailyMetricsTable);

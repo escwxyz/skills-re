@@ -64,8 +64,6 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
@@ -80,13 +78,11 @@ function SidebarProvider({
     [setOpenProp, open],
   );
 
-  // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(
     () => (isMobile ? setOpenMobile((isOpen) => !isOpen) : setOpen((isOpen) => !isOpen)),
-    [isMobile, setOpen, setOpenMobile],
+    [isMobile, setOpen],
   );
 
-  // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
@@ -99,8 +95,6 @@ function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
-  // We add a state so that we can do data-state="expanded" or "collapsed".
-  // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed";
 
   const contextValue = React.useMemo<SidebarContextProps>(
@@ -205,7 +199,6 @@ function Sidebar({
       data-side={side}
       data-slot="sidebar"
     >
-      {/* This is what handles the sidebar gap on desktop */}
       <div
         data-slot="sidebar-gap"
         className={cn(
@@ -222,7 +215,6 @@ function Sidebar({
         data-side={side}
         className={cn(
           "fixed top-(--sidebar-top) z-10 hidden h-[calc(100svh-var(--sidebar-top))] w-(--sidebar-width) transition-[left,right,width,top,height] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
-          // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -493,6 +485,7 @@ function SidebarMenuButton({
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar();
+  const resolvedTooltip = typeof tooltip === "string" ? { children: tooltip } : tooltip;
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -501,7 +494,7 @@ function SidebarMenuButton({
       },
       props,
     ),
-    render: tooltip ? <TooltipTrigger render={render} /> : render,
+    render: resolvedTooltip ? <TooltipTrigger render={render} /> : render,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -510,15 +503,8 @@ function SidebarMenuButton({
     },
   });
 
-  if (!tooltip) {
+  if (!resolvedTooltip) {
     return comp;
-  }
-
-  if (typeof tooltip === "string") {
-    // oxlint-disable-next-line no-param-reassign
-    tooltip = {
-      children: tooltip,
-    };
   }
 
   return (
@@ -528,7 +514,7 @@ function SidebarMenuButton({
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
-        {...tooltip}
+        {...resolvedTooltip}
       />
     </Tooltip>
   );
@@ -585,7 +571,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
   const [width] = React.useState(() => `${Math.floor(Math.random() * 40) + 50}%`);
 
   return (

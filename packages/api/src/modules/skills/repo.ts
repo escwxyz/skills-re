@@ -779,6 +779,48 @@ export async function getSnapshotBySkillAndCommit(input: {
   return rows[0] ?? null;
 }
 
+export const incrementSkillDownloadsAllTime = async (skillId: SkillId) => {
+  await db
+    .update(skillsTable)
+    .set({
+      downloadsAllTime: sql`${skillsTable.downloadsAllTime} + 1`,
+    })
+    .where(eq(skillsTable.id, skillId));
+};
+
+export const findSkillDownloadsAllTime = async (skillId: SkillId) => {
+  const rows = await db
+    .select({
+      downloadsAllTime: skillsTable.downloadsAllTime,
+    })
+    .from(skillsTable)
+    .where(eq(skillsTable.id, skillId))
+    .limit(1);
+
+  return rows[0]?.downloadsAllTime ?? 0;
+};
+
+export const incrementSkillViewsAllTime = async (skillId: SkillId) => {
+  await db
+    .update(skillsTable)
+    .set({
+      viewsAllTime: sql`${skillsTable.viewsAllTime} + 1`,
+    })
+    .where(eq(skillsTable.id, skillId));
+};
+
+export const findSkillViewsAllTime = async (skillId: SkillId) => {
+  const rows = await db
+    .select({
+      viewsAllTime: skillsTable.viewsAllTime,
+    })
+    .from(skillsTable)
+    .where(eq(skillsTable.id, skillId))
+    .limit(1);
+
+  return rows[0]?.viewsAllTime ?? 0;
+};
+
 export interface AiSearchBackfillRow {
   aiSearchItemId: string | null;
   authorHandle: string;

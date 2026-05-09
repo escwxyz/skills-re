@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { useInView } from "motion/react";
 import type { UseInViewOptions } from "motion/react";
