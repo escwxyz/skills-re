@@ -28,7 +28,7 @@ describe("saved skills service", () => {
             }
           : null;
       },
-      listSavedSkillsByUserId: () => [],
+      listSavedSkillsByUserId: () => ({ continueCursor: "", isDone: true, page: [] }),
     });
 
     await expect(
@@ -67,7 +67,34 @@ describe("saved skills service", () => {
     const service = createSavedSkillsService({
       findSkillBySlug: () => null,
       insertSavedSkill: () => null,
-      listSavedSkillsByUserId: () => [
+      listSavedSkillsByUserId: () => ({
+        continueCursor: "",
+        isDone: true,
+        page: [
+          {
+            authorHandle: "ada",
+            createdAt: 111,
+            description: "First one",
+            id: "skill-1",
+            latestVersion: "v1.0.0",
+            repoName: "first-repo",
+            slug: "first-skill",
+            title: "First skill",
+            updatedAt: 222,
+          },
+        ],
+      }),
+    });
+
+    await expect(
+      service.listMine({
+        limit: 20,
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [
         {
           authorHandle: "ada",
           createdAt: 111,
@@ -81,24 +108,5 @@ describe("saved skills service", () => {
         },
       ],
     });
-
-    await expect(
-      service.listMine({
-        limit: 20,
-        userId: "user-1",
-      }),
-    ).resolves.toEqual([
-      {
-        authorHandle: "ada",
-        createdAt: 111,
-        description: "First one",
-        id: "skill-1",
-        latestVersion: "v1.0.0",
-        repoName: "first-repo",
-        slug: "first-skill",
-        title: "First skill",
-        updatedAt: 222,
-      },
-    ]);
   });
 });
