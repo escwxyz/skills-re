@@ -11,7 +11,7 @@ export const createServerORPCClient = () => {
     url: rpcUrl,
     fetch(input, init) {
       const incomingHeaders = getRequestHeaders();
-      const headers = new Headers(init?.headers);
+      const headers = new Headers((init as RequestInit | undefined)?.headers);
       const cookie = incomingHeaders.get("cookie");
 
       if (cookie) {

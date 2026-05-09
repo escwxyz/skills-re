@@ -36,4 +36,5 @@ const createClientORPCClient = () => {
   return createORPCClient(link) as AppRouterClient;
 };
 
-export const orpc = createTanstackQueryUtils(createClientORPCClient());
+export const orpcClient = createClientORPCClient();
+export const orpc = createTanstackQueryUtils(orpcClient);

@@ -9,6 +9,6 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
     },
   });
   return next({
-    context: { session },
+    context: { session: session ?? null },
   });
 });
