@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 
+import { renderContentAsync } from "@/lib/markdown";
 import { createServerORPCClient } from "@/lib/orpc.server";
-import { renderSkillContent } from "@/utils/skill-detail";
 
 export const getSkillFileContent = createServerFn({ method: "GET" })
   .inputValidator(
@@ -20,7 +20,7 @@ export const getSkillFileContent = createServerFn({ method: "GET" })
     });
 
     return {
-      html: await renderSkillContent({
+      html: await renderContentAsync({
         content: content.content,
         path: data.path,
       }),
