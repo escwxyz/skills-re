@@ -1,7 +1,7 @@
 import { m } from "@/paraglide/messages";
 import { Link } from "@tanstack/react-router";
 
-import { SkillSlugSwitcherAsync } from "@/components/skill-slug-switcher-async";
+import { SkillSlugSwitcher } from "@/components/skill-slug-switcher";
 
 interface Props {
   skill: {
@@ -28,7 +28,7 @@ export const SkillBreadcrumb = ({ skill }: Props) => (
       {skill.authorHandle}
     </Link>
     <span>/</span>
-    <SkillSlugSwitcherAsync authorHandle={skill.authorHandle} currentSlug={skill.slug} />
+    <SkillSlugSwitcher authorHandle={skill.authorHandle} currentSlug={skill.slug} />
 
     <div className="ml-auto flex items-center gap-3">
       {skill.tags.length > 0 && (

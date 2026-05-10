@@ -1,5 +1,5 @@
 import { m } from "@/paraglide/messages";
-import { SkillCard } from "./skill-card";
+import { SkillCard } from "@/components/skill-card";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getCategoryTopSkills } from "@/functions/skills/get-category-top-skills";

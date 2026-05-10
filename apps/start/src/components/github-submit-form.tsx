@@ -19,7 +19,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 
 const RESET_DELAY_MS = 5000;
 
