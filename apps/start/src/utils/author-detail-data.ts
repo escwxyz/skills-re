@@ -52,7 +52,9 @@ export const buildAuthorActivity = (skills: BrowseSkillItem[], locale?: Locale) 
         day: "2-digit",
       }),
       itemLabel: skill.latestVersion ? `${skill.title} ${skill.latestVersion}` : skill.title,
-      text: skill.updatedAt ? String(author_activity_updated()) : String(author_activity_published()),
+      text: skill.updatedAt
+        ? String(author_activity_updated())
+        : String(author_activity_published()),
     }));
 
 export const buildAuthorStats = (

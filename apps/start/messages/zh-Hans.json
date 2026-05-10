@@ -670,5 +670,6 @@
   "nav_user_feedbacks": "反馈",
   "nav_user_settings": "设置",
   "nav_user_sign_out": "退出登录",
-  "skill_slug_switcher_view_all": "查看全部"
+  "skill_slug_switcher_view_all": "查看全部",
+  "error_component_try_again_later": "请稍后重试"
 }

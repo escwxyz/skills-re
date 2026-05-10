@@ -670,5 +670,6 @@
   "nav_user_feedbacks": "Rückmeldungen",
   "nav_user_settings": "Einstellungen",
   "nav_user_sign_out": "Abmelden",
-  "skill_slug_switcher_view_all": "Alle anzeigen"
+  "skill_slug_switcher_view_all": "Alle anzeigen",
+  "error_component_try_again_later": "Bitte versuchen Sie es später erneut"
 }

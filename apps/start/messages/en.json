@@ -670,5 +670,6 @@
   "nav_user_feedbacks": "Feedbacks",
   "nav_user_settings": "Settings",
   "nav_user_sign_out": "Sign out",
-  "skill_slug_switcher_view_all": "View all"
+  "skill_slug_switcher_view_all": "View all",
+  "error_component_try_again_later": "Please try again later"
 }
