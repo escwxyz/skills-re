@@ -99,38 +99,45 @@ describe("reviews service", () => {
 
   test("lists reviews for a skill", async () => {
     const service = createReviewsService({
-      listReviewsBySkillId: () => [
-        {
-          authorAvatarUrl: null,
-          authorName: "Ada",
-          content: "Helpful",
-          createdAt: new Date(123),
-          id: asReviewId("review-1"),
-          rating: 5,
-          skillId: asSkillId("skill-1"),
-          title: "Strong fit",
-          updatedAt: new Date(123),
-          userId: asUserId("user-1"),
-        },
-      ],
+      listReviewsBySkillId: async () => ({
+        continueCursor: "",
+        isDone: true,
+        page: [
+          {
+            authorAvatarUrl: null,
+            authorName: "Ada",
+            content: "Helpful",
+            createdAt: new Date(123),
+            id: asReviewId("review-1"),
+            rating: 5,
+            skillId: asSkillId("skill-1"),
+            title: "Strong fit",
+            updatedAt: new Date(123),
+            userId: asUserId("user-1"),
+          },
+        ],
+      }),
     });
 
-    await expect(service.listBySkill({ skillId: "skill-1", limit: 20 })).resolves.toEqual([
-      {
-        author: {
-          avatarUrl: null,
-          name: "Ada",
+    await expect(service.listBySkill({ skillId: "skill-1", limit: 20 })).resolves.toEqual({
+      items: [
+        {
+          author: {
+            avatarUrl: null,
+            name: "Ada",
+          },
+          content: "Helpful",
+          createdAt: 123,
+          id: "review-1",
+          rating: 5,
+          skillId: "skill-1",
+          title: "Strong fit",
+          updatedAt: 123,
+          userId: "user-1",
         },
-        content: "Helpful",
-        createdAt: 123,
-        id: "review-1",
-        rating: 5,
-        skillId: "skill-1",
-        title: "Strong fit",
-        updatedAt: 123,
-        userId: "user-1",
-      },
-    ]);
+      ],
+      nextCursor: null,
+    });
   });
 
   test("returns null when the user has not reviewed the skill", async () => {

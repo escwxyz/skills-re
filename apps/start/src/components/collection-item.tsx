@@ -4,7 +4,6 @@ import {
   skill_card_metric_installs,
   skill_detail_no_tags,
 } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
@@ -13,7 +12,9 @@ interface CollectionSkillItem {
   id: string;
   installs: string;
   passRate: string;
+  authorHandle: string;
   publisherName: string;
+  repoName: string;
   slug: string;
   tags: string[];
   title: string;
@@ -37,7 +38,12 @@ export const CollectionItem = ({ skill, index }: Props) => {
 
   return (
     <Link
-      to={localizeHref(`/skills/${skill.slug}`)}
+      params={{
+        author: skill.authorHandle,
+        repo: skill.repoName,
+        slug: skill.slug,
+      }}
+      to="/skills/$author/$repo/$slug"
       className="border-border hover:bg-muted grid grid-cols-[56px_1fr] items-start gap-x-5 gap-y-3 border-b px-4 py-7 no-underline transition-colors md:grid-cols-[72px_1fr_auto] md:gap-x-8 md:px-6 md:py-9"
     >
       <div className="text-muted-foreground/40 pt-1 font-display text-[clamp(2.5rem,6vw,5rem)] leading-none italic">

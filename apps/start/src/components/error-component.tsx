@@ -36,7 +36,7 @@ export const ErrorComponent = ({ error, reset }: ErrorComponentProps) => {
           ) : null}
           <div className="mt-8 flex flex-wrap gap-3">
             <Button className="w-full px-8 sm:w-auto" onClick={reset} type="button">
-              {m.ui_try_again_later()}
+              {m.error_component_try_again_later()}
             </Button>
             <Link
               className={cn(buttonVariants({ variant: "ghost" }), "w-full px-8 sm:w-auto")}
