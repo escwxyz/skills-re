@@ -15,6 +15,8 @@ export const getCategoryTopSkills = createServerFn({ method: "GET" })
             title: skill.title,
             description: skill.description,
             slug: skill.slug,
+            authorHandle: skill.authorHandle,
+            repoName: skill.repoName,
           })),
         }
       : null;

@@ -1,6 +1,5 @@
 import { skill_card_metric_audit } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { buildSkillDetailPath } from "@/lib/skill-path";
 import { getCategoryLabel } from "@/utils/category-data";
 import { formatCompactNumber } from "@/utils/format";
 import type { BrowseSkillItem } from "@/utils/types";
@@ -23,11 +22,6 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
     skill.author?.name ?? skill.authorHandle ?? skill.author?.handle ?? "Community";
   const authorHandle = skill.authorHandle ?? skill.author?.handle ?? "unknown-author";
   const initial = getAuthorInitial(authorLabel);
-  const detailPath = buildSkillDetailPath({
-    authorHandle,
-    repoName: skill.repoName ?? "unknown-repo",
-    skillSlug: skill.slug,
-  });
   const categoryLabel = getCategoryLabel(skill.primaryCategory ?? "other", locale);
   const badgeLabel = skill.latestVersion ? `v${skill.latestVersion}` : undefined;
   const starsLabel =
@@ -37,7 +31,12 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
 
   return (
     <Link
-      to={detailPath}
+      to="/skills/$author/$repo/$slug"
+      params={{
+        author: authorHandle,
+        repo: skill.repoName ?? "unknown-repo",
+        slug: skill.slug,
+      }}
       className="border-border hover:bg-muted flex h-full flex-col border-b border-r p-5 transition-colors"
     >
       <div className="text-muted-foreground mb-3 flex items-center justify-between font-mono text-[10px] tracking-[.14em] uppercase">

@@ -56,7 +56,7 @@ export const CategoryTopSkills = ({ slug }: { slug: string }) => {
       {data.topSkills.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {data.topSkills.map((skill) => (
-            <SkillCard key={skill.id} skill={skill} />
+            <SkillCard key={skill.id} skill={skill} hideAuthorName={false} />
           ))}
         </div>
       ) : (
