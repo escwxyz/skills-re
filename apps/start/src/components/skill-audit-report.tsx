@@ -1,4 +1,3 @@
-// i18n
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -99,8 +98,8 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
   });
 
   return (
-    <div className="border border-border font-[var(--font-mono)] text-[11px]">
-      <div className="border-b border-border px-5 py-3.5 bg-[var(--paper-2)] text-[var(--muted-text)] tracking-[0.18em] uppercase">
+    <div className="border border-border font-mono text-[11px]">
+      <div className="border-b border-border px-5 py-3.5 bg-[var(--paper-2)] text-muted-text tracking-[0.18em] uppercase">
         {m.skill_audit_report_title()}
         {version ? ` · v${version}` : ""}
       </div>
@@ -109,15 +108,13 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
         {isLoading && <AuditReportSkeleton />}
 
         {isError && (
-          <p className="text-[var(--editorial-red)] font-[var(--font-serif)] text-[15px]">
+          <p className="text-[var(--editorial-red)] font-serif text-[15px]">
             {m.skill_audit_error()}
           </p>
         )}
 
         {!isLoading && !isError && !report && (
-          <p className="text-[var(--muted-text)] font-[var(--font-serif)] text-[15px]">
-            {m.skill_audit_pending()}
-          </p>
+          <p className="text-muted-text font-serif text-[15px]">{m.skill_audit_pending()}</p>
         )}
 
         {!isLoading && !isError && report && <AuditPanel report={report} />}
@@ -147,7 +144,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
       </div>
 
       {report.scanner.providerName && (
-        <p className="text-[var(--muted-text)] text-[10.5px] tracking-[0.06em]">
+        <p className="text-muted-text text-[10.5px] tracking-[0.06em]">
           {m.skill_audit_scanner_label()}:{" "}
           <span className="text-[var(--ink)] font-medium">{report.scanner.providerName}</span>
           {report.scanner.scannerVersion && ` · v${report.scanner.scannerVersion}`}
@@ -156,7 +153,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
       )}
 
       {report.summary && (
-        <p className="text-[var(--ink-2)] font-[var(--font-serif)] text-[15px] leading-[1.6] max-w-[680px]">
+        <p className="text-[var(--ink-2)] font-serif text-[15px] leading-[1.6] max-w-170">
           {report.summary}
         </p>
       )}
