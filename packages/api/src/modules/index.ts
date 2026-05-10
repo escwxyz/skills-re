@@ -53,6 +53,7 @@ export {
   countMineReviews,
   createReviewRecord,
   getMyReviewBySkill,
+  getReviewStatsBySkill,
   listMineReviews,
   listReviewsBySkill,
   reviewsService,

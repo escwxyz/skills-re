@@ -3,8 +3,21 @@ import {
   collections_grid_featured,
   collections_grid_skills,
 } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
+import { Link } from "@tanstack/react-router";
+
 import { cn } from "@/lib/utils";
+
+const getCollectionGridPosition = (index: number) => {
+  const num = String(index + 1).padStart(2, "0");
+  const featured = index === 0;
+  const noRightBorder = index === 2 || (index >= 4 && (index - 4) % 3 === 0);
+
+  return {
+    featured,
+    noRightBorder,
+    num,
+  };
+};
 
 interface CollectionGridItem {
   description: string;
@@ -19,15 +32,14 @@ interface Props {
 
 export const CollectionsGrid = ({ collections }: Props) => (
   <div className="border-border grid grid-cols-1 border-t border-l sm:grid-cols-[2fr_1fr_1fr]">
-    {collections.map((col, i) => {
-      const num = String(i + 1).padStart(2, "0");
-      const featured = i === 0;
-      const noRightBorder = i === 2 || (i >= 4 && (i - 4) % 3 === 0);
+    {collections.map((col, index) => {
+      const { featured, noRightBorder, num } = getCollectionGridPosition(index);
 
       return (
-        <a
+        <Link
           key={col.slug}
-          href={localizeHref(`/collections/${col.slug}`)}
+          to="/collections/$slug"
+          params={{ slug: col.slug }}
           className={cn(
             "border-border flex flex-col justify-between border-r border-b p-[26px_22px] no-underline transition-colors",
             featured
@@ -70,7 +82,7 @@ export const CollectionsGrid = ({ collections }: Props) => (
           >
             {col.description}
           </p>
-        </a>
+        </Link>
       );
     })}
   </div>

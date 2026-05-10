@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { baseContract } from "./common/base";
+import { paginatedResponseSchema } from "./common/pagination";
 
 const reviewAuthorSchema = z.object({
   avatarUrl: z.string().nullable(),
@@ -19,6 +20,19 @@ const reviewItemSchema = z.object({
   userId: z.string().min(1),
 });
 
+const reviewStatsSchema = z.object({
+  ratingAvg: z.number(),
+  ratingCounts: z.object({
+    1: z.number().int().nonnegative(),
+    2: z.number().int().nonnegative(),
+    3: z.number().int().nonnegative(),
+    4: z.number().int().nonnegative(),
+    5: z.number().int().nonnegative(),
+  }),
+  recommendPct: z.number(),
+  totalReviews: z.number().int().nonnegative(),
+});
+
 const reviewIdInputSchema = z.object({
   skillId: z.string().min(1),
 });
@@ -31,7 +45,8 @@ export const reviewCreateInputSchema = z.object({
 });
 
 const reviewListInputSchema = z.object({
-  limit: z.number().int().min(1).max(100).optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(50).default(10),
   skillId: z.string().min(1),
 });
 
@@ -79,15 +94,26 @@ export const reviewsContract = {
     .output(reviewItemSchema.nullable()),
   listBySkill: baseContract
     .route({
-      description: "Returns reviews for a skill.",
+      description: "Returns paginated reviews for a skill.",
       method: "GET",
       path: "/reviews/by-skill",
       tags: ["Reviews"],
-      successDescription: "Review list",
+      successDescription: "Paginated review list",
       summary: "List reviews by skill",
     })
     .input(reviewListInputSchema)
-    .output(z.array(reviewItemSchema)),
+    .output(paginatedResponseSchema(reviewItemSchema)),
+  statsBySkill: baseContract
+    .route({
+      description: "Returns aggregated rating statistics for a skill's reviews.",
+      method: "GET",
+      path: "/reviews/stats/by-skill",
+      tags: ["Reviews"],
+      successDescription: "Review statistics",
+      summary: "Get review stats by skill",
+    })
+    .input(z.object({ skillId: z.string().min(1) }))
+    .output(reviewStatsSchema),
   listMine: baseContract
     .route({
       description: "Returns the authenticated user's reviews across all skills.",
