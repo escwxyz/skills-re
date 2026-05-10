@@ -9,7 +9,7 @@ export const getSkillBasePageData = createServerFn({ method: "GET" })
 
     const path = await client.skills.resolvePathBySlug({ slug: data.slug });
 
-    if (!path?.authorHandle) {
+    if (!path) {
       return null;
     }
 
@@ -27,6 +27,7 @@ export const getSkillBasePageData = createServerFn({ method: "GET" })
       skill: {
         ...skill,
         authorHandle: path.authorHandle,
+        repoName: path.repoName,
       },
     };
   });
