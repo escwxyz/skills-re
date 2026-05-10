@@ -23,6 +23,7 @@ export {
   getMyReviewBySkill,
   listFeedback,
   listMineFeedback,
+  getReviewStatsBySkill,
   listReviewsBySkill,
   newsletterService,
   refreshDailySkillsSnapshots,

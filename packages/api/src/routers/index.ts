@@ -46,6 +46,7 @@ import {
   listMineReviews,
   checkSavedSkillByUser,
   listMineSavedSkills,
+  getReviewStatsBySkill,
   listReviewsBySkill,
   unsaveSkill,
   listSnapshotsBySkill,
@@ -291,6 +292,9 @@ export const appRouter = {
     ),
     listBySkill: publicProcedure.reviews.listBySkill.handler(({ input }) =>
       listReviewsBySkill(input),
+    ),
+    statsBySkill: publicProcedure.reviews.statsBySkill.handler(({ input }) =>
+      getReviewStatsBySkill(input),
     ),
     listMine: protectedProcedure.reviews.listMine.handler(({ input, context }) =>
       listMineReviews({ limit: input.limit, userId: context.session.user.id }),

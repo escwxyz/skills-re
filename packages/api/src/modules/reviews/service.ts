@@ -6,6 +6,7 @@ import type {
   countReviewsByUserId,
   createReview,
   getReviewBySkillIdAndUserId,
+  getReviewStatsBySkillId,
   listReviewsBySkillId,
   listReviewsByUserId,
 } from "./repo";
@@ -29,6 +30,7 @@ interface ReviewsServiceDeps {
   countReviewsByUserId: typeof countReviewsByUserId;
   createReview: typeof createReview;
   getReviewBySkillIdAndUserId: typeof getReviewBySkillIdAndUserId;
+  getReviewStatsBySkillId: typeof getReviewStatsBySkillId;
   listReviewsBySkillId: typeof listReviewsBySkillId;
   listReviewsByUserId: typeof listReviewsByUserId;
 }
@@ -39,6 +41,7 @@ const createDefaultReviewsDeps = async (): Promise<ReviewsServiceDeps> => {
     countReviewsByUserId: repo.countReviewsByUserId,
     createReview: repo.createReview,
     getReviewBySkillIdAndUserId: repo.getReviewBySkillIdAndUserId,
+    getReviewStatsBySkillId: repo.getReviewStatsBySkillId,
     listReviewsBySkillId: repo.listReviewsBySkillId,
     listReviewsByUserId: repo.listReviewsByUserId,
   };
@@ -105,14 +108,23 @@ export const createReviewsService = (overrides: Partial<ReviewsServiceDeps> = {}
       return row ? toOutputItem(row) : null;
     },
 
-    async listBySkill(input: { skillId: string; limit?: number }) {
+    async listBySkill(input: { skillId: string; cursor?: string; limit?: number }) {
       const listReviewsBySkillIdFn = await getDep("listReviewsBySkillId");
-      const rows = await listReviewsBySkillIdFn({
+      const result = await listReviewsBySkillIdFn({
+        cursor: input.cursor,
         limit: input.limit,
         skillId: asSkillId(input.skillId),
       });
 
-      return rows.map((row) => toOutputItem(row));
+      return {
+        items: result.page.map((row) => toOutputItem(row)),
+        nextCursor: result.isDone ? null : result.continueCursor || null,
+      };
+    },
+
+    async statsBySkill(input: { skillId: string }) {
+      const getReviewStatsBySkillIdFn = await getDep("getReviewStatsBySkillId");
+      return await getReviewStatsBySkillIdFn({ skillId: asSkillId(input.skillId) });
     },
 
     async countMine(input: { userId: string }) {
@@ -152,8 +164,16 @@ export async function getMyReviewBySkill(input: { skillId: string; userId: strin
   return await reviewsService.getMineBySkill(input);
 }
 
-export async function listReviewsBySkill(input: { skillId: string; limit?: number }) {
+export async function listReviewsBySkill(input: {
+  skillId: string;
+  cursor?: string;
+  limit?: number;
+}) {
   return await reviewsService.listBySkill(input);
+}
+
+export async function getReviewStatsBySkill(input: { skillId: string }) {
+  return await reviewsService.statsBySkill(input);
 }
 
 export async function listMineReviews(input: { userId: string; limit?: number }) {
