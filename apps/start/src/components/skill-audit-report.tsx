@@ -105,19 +105,19 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
       </div>
 
       <div className="px-5 py-6 sm:px-7 sm:py-8">
-        {isLoading && <AuditReportSkeleton />}
+        {isLoading ? <AuditReportSkeleton /> : null}
 
-        {isError && (
+        {isError ? (
           <p className="text-[var(--editorial-red)] font-serif text-[15px]">
             {m.skill_audit_error()}
           </p>
-        )}
+        ) : null}
 
-        {!isLoading && !isError && !report && (
+        {!isLoading && !isError && !report ? (
           <p className="text-muted-text font-serif text-[15px]">{m.skill_audit_pending()}</p>
-        )}
+        ) : null}
 
-        {!isLoading && !isError && report && <AuditPanel report={report} />}
+        {!isLoading && !isError && report ? <AuditPanel report={report} /> : null}
       </div>
     </div>
   );

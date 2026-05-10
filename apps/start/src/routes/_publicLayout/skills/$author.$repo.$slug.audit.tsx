@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
@@ -21,6 +21,14 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
     if (!data) {
       throw notFound();
     }
+    const { authorHandle, repoName, slug } = data.skill;
+    if (params.author !== authorHandle || params.repo !== repoName || params.slug !== slug) {
+      throw redirect({
+        to: "/skills/$author/$repo/$slug/audit",
+        params: { author: authorHandle, repo: repoName, slug },
+        statusCode: 301,
+      });
+    }
     return {
       skillDescription: data.skill.description,
       skillId: data.skill.id,
@@ -31,6 +39,7 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   head: ({ loaderData, params }) =>
     createSeo({
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/audit`,
+      // todo: use audit description?
       description: loaderData?.skillDescription,
       image:
         buildSkillOgImagePath({
@@ -51,17 +60,20 @@ function RouteComponent() {
   const skillId = data?.skillId;
   const search = Route.useSearch();
 
-  const locale = getLocale();
   const getVersionHistory = useServerFn(getSkillVersionHistory);
   const { data: versions } = useQuery({
     queryKey: ["skillVersionHistory", skillId],
-    queryFn: () => getVersionHistory({ data: { locale, skillId } }),
+    queryFn: () => getVersionHistory({ data: { skillId } }),
     enabled: !!skillId,
     // todo will depend on how often we update the snapshot
     refetchInterval: 12 * 60 * 60 * 1000,
   });
 
-  const snapshotId = search.snapshotId ?? versions?.[0]?.snapshotId ?? null;
+  let snapshotId: string | null | undefined = null;
+  if (versions) {
+    const isValid = search.snapshotId && versions.some((v) => v.snapshotId === search.snapshotId);
+    snapshotId = isValid ? search.snapshotId : (versions[0]?.snapshotId ?? null);
+  }
   const version = versions?.find((v) => v.snapshotId === snapshotId)?.version;
 
   return (

@@ -29,8 +29,8 @@ export const skillBasicSchema = z.object({
 });
 
 export const skillPathSchema = z.object({
-  authorHandle: githubOwnerSchema.optional(),
-  repoName: githubRepoSchema.optional(),
+  authorHandle: githubOwnerSchema,
+  repoName: githubRepoSchema,
   skillSlug: skillSlugSchema,
 });
 
@@ -45,7 +45,6 @@ export const authorSchema = z.object({
 });
 
 export const authorListItemSchema = authorSchema.extend({
-  githubUrl: z.string().url(),
   repoCount: z.number().int().nonnegative(),
   skillCount: z.number().int().nonnegative(),
 });
