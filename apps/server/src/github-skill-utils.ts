@@ -1,10 +1,9 @@
-export const SKILL_FILENAME = "skill.md";
+import { parseSkillMarkdownDocument } from "@skills-re/utils";
+import type { SkillFrontmatterData } from "@skills-re/utils";
 
-export interface ParsedFrontmatter {
-  description: string;
-  metadata?: Record<string, string>;
-  name: string;
-}
+export type { SkillFrontmatterData as ParsedFrontmatter } from "@skills-re/utils";
+
+export const SKILL_FILENAME = "skill.md";
 
 export interface SkillDuplicateFingerprint {
   frontmatterHash: string;
@@ -31,62 +30,8 @@ export const normalizeRelativePath = (value: string) => {
 export const normalizeSkillRootPath = (value: string) =>
   normalizeRelativePath(value).replace(/^\/+/, "").replace(/\/+$/, "");
 
-export const parseFrontmatter = (content: string): ParsedFrontmatter | null => {
-  const trimmed = content.trimStart();
-  if (!trimmed.startsWith("---")) {
-    return null;
-  }
-
-  const lines = trimmed.split(/\r?\n/);
-  if (lines[0]?.trim() !== "---") {
-    return null;
-  }
-
-  let closingIndex = -1;
-  for (let index = 1; index < lines.length; index += 1) {
-    if (lines[index]?.trim() === "---") {
-      closingIndex = index;
-      break;
-    }
-  }
-
-  if (closingIndex < 0) {
-    return null;
-  }
-
-  const frontmatterLines = lines.slice(1, closingIndex);
-  const result: Record<string, string> = {};
-
-  for (const line of frontmatterLines) {
-    const trimmedLine = line.trim();
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      continue;
-    }
-
-    const separatorIndex = trimmedLine.indexOf(":");
-    if (separatorIndex === -1) {
-      continue;
-    }
-
-    const key = trimmedLine.slice(0, separatorIndex).trim();
-    const value = trimmedLine.slice(separatorIndex + 1).trim();
-    if (!key) {
-      continue;
-    }
-
-    result[key] = value.replaceAll(/^['"]|['"]$/g, "");
-  }
-
-  if (!result.name || !result.description) {
-    return null;
-  }
-
-  return {
-    description: result.description,
-    metadata: Object.keys(result).length > 2 ? result : undefined,
-    name: result.name,
-  };
-};
+export const parseFrontmatter = (content: string): SkillFrontmatterData | null =>
+  parseSkillMarkdownDocument(content).frontmatter;
 
 const hasDotfileSegment = (path: string) =>
   path.split("/").some((segment) => segment.startsWith(".") && segment !== "." && segment !== "..");
@@ -117,7 +62,7 @@ const stableStringify = (value: unknown): string => {
 };
 
 export const buildSkillDuplicateFingerprint = async (
-  frontmatter: ParsedFrontmatter,
+  frontmatter: SkillFrontmatterData,
   skillMdContent: string,
 ): Promise<SkillDuplicateFingerprint> => ({
   frontmatterHash: await hashTextSha256(stableStringify(frontmatter)),
