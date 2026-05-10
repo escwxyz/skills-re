@@ -6,9 +6,10 @@ import { StarIcon } from "@phosphor-icons/react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { renderSkillMarkdown } from "@/utils/skill-detail";
+
 import { formatDate } from "@/utils/format";
 import { getLocale } from "@/paraglide/runtime";
+import { renderMarkdownAsync } from "@/lib/markdown";
 
 export interface ReviewCardProps {
   authorName: string;
@@ -37,7 +38,7 @@ export const ReviewCard = ({
   useEffect(() => {
     let cancelled = false;
     // oxlint-disable-next-line promise/prefer-await-to-then
-    renderSkillMarkdown(body).then((html) => {
+    renderMarkdownAsync(body).then((html) => {
       if (!cancelled) {
         setBodyHtml(html);
       }
