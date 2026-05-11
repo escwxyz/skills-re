@@ -82,7 +82,11 @@ export const normalizeSkillsBrowseFilters = (
   input: SkillsBrowseSearchInput,
 ): NormalizedSkillsBrowseFilters => {
   const activeClass = input.category?.trim() || "all";
-  const tags = [...new Set([...(input.tag ?? []), ...(input.tags ?? [])].map((tag) => tag.trim()).filter(Boolean))].toSorted();
+  const tags = [
+    ...new Set(
+      [...(input.tag ?? []), ...(input.tags ?? [])].map((tag) => tag.trim()).filter(Boolean),
+    ),
+  ].toSorted();
 
   return {
     activeClass,

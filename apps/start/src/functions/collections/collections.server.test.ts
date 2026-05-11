@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { COLLECTIONS_PAGE_SIZE, fetchCollectionDetail, fetchCollectionsListPage } from "./collections.server";
+import {
+  COLLECTIONS_PAGE_SIZE,
+  fetchCollectionDetail,
+  fetchCollectionsListPage,
+} from "./collections.server";
 
 type FetchCollectionsListPageClient = Parameters<typeof fetchCollectionsListPage>[0]["client"];
 type FetchCollectionDetailClient = Parameters<typeof fetchCollectionDetail>[0]["client"];
