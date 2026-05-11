@@ -2,7 +2,7 @@ import { m } from "@/paraglide/messages";
 import { SkillCard } from "@/components/skill-card";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { getCategoryTopSkills } from "@/functions/get-category-top-skills";
+import { getCategoryTopSkills } from "@/functions/categories/get-category-top-skills";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLocale } from "@/paraglide/runtime";

@@ -4,7 +4,7 @@ import { CategoryOtherClassifications } from "@/components/category-other-classi
 import { CategoryTopSkills } from "@/components/category-top-skills";
 import { TITLE_VARIANT_CLASS } from "@/components/category-card";
 import { PageHero } from "@/components/page-hero";
-import { getCategoryDetail } from "@/functions/get-category-detail";
+import { getCategoryDetail } from "@/functions/categories/get-category-detail";
 import { buildCategoryOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";

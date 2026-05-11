@@ -2,18 +2,18 @@
 
 import { describe, expect, test } from "bun:test";
 import {
-  fetchCategoriesList,
+  fetchCategories,
   fetchCategoriesStats,
   fetchCategoryDetailPageData,
   fetchCategoryTopSkills,
 } from "./categories.server";
 
-type CategoriesListClient = Exclude<Parameters<typeof fetchCategoriesList>[0]["client"], undefined>;
+type CategoriesClient = Exclude<Parameters<typeof fetchCategories>[0]["client"], undefined>;
 type CategoriesStatsClient = Parameters<typeof fetchCategoriesStats>[0]["client"];
 type CategoryDetailClient = Parameters<typeof fetchCategoryDetailPageData>[0]["client"];
 type CategoryTopSkillsClient = Parameters<typeof fetchCategoryTopSkills>[0]["client"];
 
-describe("fetchCategoriesList", () => {
+describe("fetchCategories", () => {
   test("forwards the list and count calls to the public categories contract", async () => {
     const calls: { list?: { all?: boolean; limit?: number }; count?: number }[] = [];
     const client = {
@@ -36,9 +36,9 @@ describe("fetchCategoriesList", () => {
           return Promise.resolve(42);
         },
       },
-    } satisfies CategoriesListClient;
+    } satisfies CategoriesClient;
 
-    await expect(fetchCategoriesList({ client })).resolves.toEqual({
+    await expect(fetchCategories({ client })).resolves.toEqual({
       categories: [
         {
           count: 3,

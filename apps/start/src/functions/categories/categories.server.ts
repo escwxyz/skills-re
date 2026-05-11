@@ -1,11 +1,11 @@
 import type { AppRouterClient } from "@skills-re/api";
 
-interface CategoriesListClient {
+interface CategoriesClient {
   categories: Pick<AppRouterClient["categories"], "list">;
   skills: Pick<AppRouterClient["skills"], "count">;
 }
 
-export const fetchCategoriesList = async (input: { client: CategoriesListClient }) => {
+export const fetchCategories = async (input: { client: CategoriesClient }) => {
   const [categories, skillsCount] = await Promise.all([
     input.client.categories.list({ all: true, limit: 100 }),
     input.client.skills.count(),
