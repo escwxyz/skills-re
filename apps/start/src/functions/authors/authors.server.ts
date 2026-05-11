@@ -45,3 +45,76 @@ export const fetchAuthorsPagination = async (input: {
     limit: input.limit,
     sort: input.sort,
   });
+
+interface AuthorSkillsPaginationClient {
+  skills: Pick<AppRouterClient["skills"], "search">;
+}
+
+export const fetchAuthorSkillsPagination = async (input: {
+  client: AuthorSkillsPaginationClient;
+  cursor?: string;
+  handle: string;
+  limit?: number;
+}) => {
+  const result = await input.client.skills.search({
+    authorHandle: input.handle,
+    cursor: input.cursor,
+    limit: input.limit ?? 5,
+    sort: "downloads-all-time",
+  });
+
+  return {
+    continueCursor: result.continueCursor,
+    isDone: result.isDone,
+    page: result.page,
+  };
+};
+
+export const fetchAuthorSkillsStats = async (input: {
+  client: AuthorSkillsPaginationClient;
+  handle: string;
+}) => {
+  const limit = 100;
+  let cursor: string | undefined;
+  let skillCount = 0;
+  let totalDownloads = 0;
+  let totalStars = 0;
+  let totalAuditScore = 0;
+  let done = false;
+
+  while (!done) {
+    const page = await input.client.skills.search({
+      authorHandle: input.handle,
+      cursor,
+      limit,
+      sort: "downloads-all-time",
+    });
+
+    for (const skill of page.page) {
+      skillCount += 1;
+      totalDownloads += skill.downloadsAllTime ?? 0;
+      totalStars += skill.stargazerCount ?? 0;
+      totalAuditScore += skill.staticAudit?.overallScore ?? 0;
+    }
+
+    if (page.isDone) {
+      done = true;
+      continue;
+    }
+
+    const nextCursor = page.continueCursor || undefined;
+    if (!nextCursor || nextCursor === cursor) {
+      done = true;
+      continue;
+    }
+
+    cursor = nextCursor;
+  }
+
+  return {
+    averageAuditScore: skillCount > 0 ? Math.round(totalAuditScore / skillCount) : null,
+    skillCount,
+    totalDownloads,
+    totalStars,
+  };
+};
