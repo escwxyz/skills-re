@@ -79,7 +79,9 @@ export const SaveSkillButton = ({ slug }: Props) => {
       pendingTargetRef.current = null;
 
       try {
-        await (target ? saveSkillMutation.mutateAsync({ slug }) : unsaveSkillMutation.mutateAsync({ slug }));
+        await (target
+          ? saveSkillMutation.mutateAsync({ slug })
+          : unsaveSkillMutation.mutateAsync({ slug }));
       } catch {
         // Revert optimistic state on failure
         setOptimisticSaved(null);
