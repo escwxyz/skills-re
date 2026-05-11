@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { buildTagOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { buildTagSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
-import { getTagDetail } from "@/functions/tags/get-tag-detail";
+import { getTagDetail } from "@/functions/get-tag-detail";
 import { cn, kebabToTitle } from "@/lib/utils";
 import {
   tag_page_noindexed_notice,

@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillCard } from "@/components/skill-card";
-import { getTagTopSkills } from "@/functions/tags/get-tag-top-skills";
+import { getTagTopSkills } from "@/functions/get-tag-top-skills";
 import {
   tag_page_no_public_skills,
   tag_page_see_all_skills,

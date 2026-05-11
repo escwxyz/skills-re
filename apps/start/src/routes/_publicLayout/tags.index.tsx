@@ -1,17 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { LoadMore } from "@/components/load-more";
 
 import { PageHero } from "@/components/page-hero";
 import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
-import { buildTagsHubSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
-
-import { orpc } from "@/lib/orpc";
+import { formatPublicSkillCount } from "@/lib/seo-taxonomy";
+import { buildTagsHubSeo } from "@/view-models/build-tags-hub-seo";
 import { kebabToTitle } from "@/lib/utils";
 import { ui_open, tags_skill_tags, tags_eyebrow } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { getTagsListInitial } from "@/functions/tags/get-tags-list-initial";
+import { getTagsListInitial } from "@/functions/get-tags-list-initial";
+import { getTagsListPagination } from "@/functions/get-tags-list-pagination";
 
 const TAGS_LIST_PAGE_SIZE = 24;
 
@@ -40,16 +41,18 @@ function RouteComponent() {
     throw new Error("Tags page data is missing.");
   }
 
+  const getPage = useServerFn(getTagsListPagination);
   const query = useInfiniteQuery({
-    // we can move it to server funcitons
-    ...orpc.tags.listPage.infiniteOptions({
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      initialPageParam: undefined,
-      input: (pageParam) => ({
-        cursor: typeof pageParam === "string" ? pageParam : undefined,
-        limit: TAGS_LIST_PAGE_SIZE,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) =>
+      getPage({
+        data: {
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          limit: TAGS_LIST_PAGE_SIZE,
+        },
       }),
-    }),
+    queryKey: ["tagsPage"],
     initialData: {
       pageParams: [undefined],
       pages: [data.initialPage],
@@ -74,9 +77,7 @@ function RouteComponent() {
           <div className="text-muted-foreground space-y-1 font-mono text-[11px] tracking-widest uppercase">
             <div>
               {tags_eyebrow()}{" "}
-              <b className="text-foreground font-medium">
-                {formatPublicSkillCount(data.count, locale)}
-              </b>
+              <b className="text-foreground font-medium">{data.count.toLocaleString(locale)}</b>
             </div>
           </div>
         }
