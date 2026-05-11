@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "generate:paraglide": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
-    "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && vite build",
+    "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "serve": "vite preview",
     "dev:bare": "vite dev",
     "check-types": "tsc -p tsconfig.json --noEmit"
@@ -16,7 +16,6 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/manrope": "^5.2.8",
     "@fontsource/libre-caslon-text": "^5.2.7",
-    "@lobehub/icons": "^5.6.0",
     "@orpc/client": "catalog:",
     "@orpc/tanstack-query": "catalog:",
     "@phosphor-icons/react": "^2.1.10",
