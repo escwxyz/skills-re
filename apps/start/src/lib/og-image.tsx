@@ -5,6 +5,18 @@ import { createElement } from "react";
 import interTightFontUrl from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
 
 import { OG_IMAGE_DEFAULT, SITE_NAME } from "@/lib/constants";
+export {
+  OG_AUTHORS_IMAGE_PATH,
+  OG_CATEGORIES_IMAGE_PATH,
+  OG_COLLECTIONS_IMAGE_PATH,
+  OG_SKILLS_IMAGE_PATH,
+  OG_TAGS_IMAGE_PATH,
+  buildAuthorOgImagePath,
+  buildCategoryOgImagePath,
+  buildCollectionOgImagePath,
+  buildSkillOgImagePath,
+  buildTagOgImagePath,
+} from "@/lib/og-image-paths";
 
 const OG_WIDTH = 1200;
 const OG_HEIGHT = 630;
@@ -329,35 +341,3 @@ export const createOgImageResponse = async (input: OgImageInput) => {
     return await fetch(new URL(OG_IMAGE_DEFAULT, input.requestUrl));
   }
 };
-
-export const buildAuthorOgImagePath = (handle: string) =>
-  `/api/og/authors/${encodeURIComponent(handle)}/png`;
-
-export const buildSkillOgImagePath = (input: {
-  authorHandle: string;
-  repoName?: string | null;
-  skillSlug: string;
-}) => {
-  if (!input.repoName) {
-    return null;
-  }
-
-  return `/api/og/skills/${encodeURIComponent(input.authorHandle)}/${encodeURIComponent(
-    input.repoName,
-  )}/${encodeURIComponent(input.skillSlug)}/png`;
-};
-
-export const buildCategoryOgImagePath = (slug: string) =>
-  `/api/og/categories/${encodeURIComponent(slug)}/png`;
-
-export const buildCollectionOgImagePath = (slug: string) =>
-  `/api/og/collections/${encodeURIComponent(slug)}/png`;
-
-export const buildTagOgImagePath = (slug: string) => `/api/og/tags/${encodeURIComponent(slug)}/png`;
-
-// Static aggregation-page paths
-export const OG_SKILLS_IMAGE_PATH = "/api/og/skills/png";
-export const OG_AUTHORS_IMAGE_PATH = "/api/og/authors/png";
-export const OG_CATEGORIES_IMAGE_PATH = "/api/og/categories/png";
-export const OG_COLLECTIONS_IMAGE_PATH = "/api/og/collections/png";
-export const OG_TAGS_IMAGE_PATH = "/api/og/tags/png";

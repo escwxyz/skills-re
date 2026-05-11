@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useAppForm } from "@/hooks/form-hook";
-import { CATEGORY_SLUGS, getCategoryLabel, getCategoryPresentation } from "@/utils/category-data";
+import { CATEGORY_SLUGS, getCategoryPresentation, getCategoryTitle } from "@/utils/category-data";
 import { cn } from "@/lib/utils";
 import { localizeHref } from "@/paraglide/runtime";
 import { Field, FieldError, FieldLabel, Form } from "@/components/ui/form";
@@ -116,7 +116,7 @@ const buildChecklistItems = (values: ManualSubmitFormValues) => [
 export const ManualSubmitForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const classificationOptions = CATEGORY_SLUGS.map((slug, index) => ({
-    label: `${getCategoryPresentation(slug, index).num} ${getCategoryLabel(slug)}`,
+    label: `${getCategoryPresentation(slug, index).num} ${getCategoryTitle(slug)}`,
     value: slug,
   }));
 

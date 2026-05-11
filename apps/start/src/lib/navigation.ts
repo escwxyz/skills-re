@@ -21,11 +21,9 @@ const stripLocalePrefix = (value: string) => {
   return normalizedValue;
 };
 
-export const normalizeLocalizedPathname = (value: string) => stripLocalePrefix(value);
-
 export const isActiveLocalizedPath = (currentPathname: string, href: string) => {
-  const normalizedCurrentPathname = normalizeLocalizedPathname(currentPathname);
-  const normalizedHref = normalizeLocalizedPathname(href);
+  const normalizedCurrentPathname = stripLocalePrefix(currentPathname);
+  const normalizedHref = stripLocalePrefix(href);
 
   if (normalizedHref === "/") {
     return normalizedCurrentPathname === "/";

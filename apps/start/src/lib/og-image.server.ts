@@ -15,7 +15,7 @@ import {
 import { fetchSkillBase } from "@/functions/skills/skills.server";
 import { fetchTagsInitial, fetchTagDetail } from "@/functions/tags/tags.server";
 
-import { getCategoryDescription, getCategoryLabel } from "@/utils/category-data";
+import { getCategoryDescription, getCategoryTitle } from "@/utils/category-data";
 import { formatCollectionTotalDownloads } from "@/utils/collection-data";
 
 export const createAuthorOgImageResponse = async ({
@@ -110,7 +110,7 @@ export const createCategoryOgImageResponse = async ({
     return new Response("Category not found.", { status: 404 });
   }
 
-  const title = getCategoryLabel(slug);
+  const title = getCategoryTitle(slug);
   const description = getCategoryDescription(slug);
 
   return createOgImageResponse({

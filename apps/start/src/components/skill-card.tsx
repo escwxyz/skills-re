@@ -1,6 +1,6 @@
 import { skill_card_metric_audit } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { getCategoryLabel } from "@/utils/category-data";
+import { getCategoryTitle } from "@/utils/category-data";
 import { formatCompactNumber } from "@/utils/format";
 import type { BrowseSkillItem } from "@/utils/types";
 
@@ -22,7 +22,7 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
     skill.author?.name ?? skill.authorHandle ?? skill.author?.handle ?? "Community";
   const authorHandle = skill.authorHandle ?? skill.author?.handle ?? "unknown-author";
   const initial = getAuthorInitial(authorLabel);
-  const categoryLabel = getCategoryLabel(skill.primaryCategory ?? "other", locale);
+  const categoryLabel = getCategoryTitle(skill.primaryCategory ?? "other", locale);
   const badgeLabel = skill.latestVersion ? `v${skill.latestVersion}` : undefined;
   const starsLabel =
     typeof skill.stargazerCount === "number"

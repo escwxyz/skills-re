@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { SkillSnapshotDiffLine, SkillVersionHistoryItem } from "@/lib/skill-detail-data";
 import { getSkillSnapshotDiff } from "@/functions/skills/get-skill-snapshot-diff";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -42,6 +41,21 @@ import {
   skill_snapshot_diff_title,
   skill_snapshot_diff_unavailable,
 } from "@/paraglide/messages";
+
+interface SkillSnapshotDiffLine {
+  kind: "added" | "context" | "removed";
+  leftLineNumber?: number;
+  rightLineNumber?: number;
+  text: string;
+}
+
+interface SkillVersionHistoryItem {
+  date: number;
+  entryPath?: string;
+  label?: string;
+  snapshotId: string;
+  version: string;
+}
 
 interface Props {
   currentSnapshotId: string | null;

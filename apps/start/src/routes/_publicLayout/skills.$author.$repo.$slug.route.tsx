@@ -19,7 +19,7 @@ import {
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
-import { getCategoryLabel } from "@/utils/category-data";
+import { getCategoryTitle } from "@/utils/category-data";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -76,8 +76,8 @@ function RouteComponent() {
           authorHandle: skill.authorHandle,
           categorySlug: skill.primaryCategory || "other",
           categoryLabel: skill.primaryCategory
-            ? getCategoryLabel(skill.primaryCategory, locale)
-            : getCategoryLabel("other", locale),
+            ? getCategoryTitle(skill.primaryCategory, locale)
+            : getCategoryTitle("other", locale),
           tags: skill.tags || [],
         }}
       />

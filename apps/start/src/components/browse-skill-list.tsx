@@ -6,7 +6,7 @@ import { buildSkillDetailPath } from "@/lib/skill-path";
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { formatCompactNumber } from "@/utils/format";
-import { getCategoryLabel } from "@/utils/category-data";
+import { getCategoryTitle } from "@/utils/category-data";
 import type { BrowseSkillItem } from "@/utils/types";
 import {
   getBrowseSkillAuthorHandle,
@@ -37,7 +37,7 @@ export const BrowseSkillList = ({ skills }: Props) => {
           const authorLabel = getBrowseSkillAuthorLabel(skill);
           const authorHandle = getBrowseSkillAuthorHandle(skill);
           const updatedAtLabel = getBrowseSkillUpdatedAtLabel(skill, locale);
-          const categoryLabel = getCategoryLabel(skill.primaryCategory ?? "other", locale);
+          const categoryLabel = getCategoryTitle(skill.primaryCategory ?? "other", locale);
           const downloadsLabel = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
           const starsLabel =
             typeof skill.stargazerCount === "number"

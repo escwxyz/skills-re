@@ -1,7 +1,10 @@
 import { formatInteger } from "@/utils/format";
 import type { Locale } from "@/paraglide/runtime";
+import type { AppRouterClient } from "@skills-re/api";
 
-import type { DailyMetricPoint } from "@/utils/types";
+type DailyMetricPoint = Awaited<
+  ReturnType<AppRouterClient["metrics"]["dailySkillsSnapshots"]>
+>[number];
 
 export interface StatStripItem {
   accent?: "green" | "blue" | "red";

@@ -18,8 +18,8 @@ import {
 import { getLocale } from "@/paraglide/runtime";
 import {
   getCategoryDescription,
-  getCategoryLabel,
   getCategoryPresentation,
+  getCategoryTitle,
 } from "@/utils/category-data";
 
 export const Route = createFileRoute("/_publicLayout/categories/$slug")({
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_publicLayout/categories/$slug")({
       description: loaderData ? getCategoryDescription(loaderData.slug, getLocale()) : undefined,
       image: loaderData ? buildCategoryOgImagePath(loaderData.slug) : undefined,
       title: loaderData
-        ? `${getCategoryLabel(loaderData.slug, getLocale())} — ${String(categories_page_title())}`
+        ? `${getCategoryTitle(loaderData.slug, getLocale())} — ${String(categories_page_title())}`
         : undefined,
       locale: getLocale(),
     }),
@@ -47,7 +47,7 @@ function RouteComponent() {
   const locale = getLocale();
   const presentation = getCategoryPresentation(slug, undefined, locale);
   const titleVariantClass = TITLE_VARIANT_CLASS[presentation.variant ?? "default"] ?? "";
-  const title = getCategoryLabel(slug, locale);
+  const title = getCategoryTitle(slug, locale);
   const description = getCategoryDescription(slug, locale);
 
   return (
