@@ -1,6 +1,7 @@
 export {
   checkExistingSkill,
   claimAsAuthor,
+  countAuthorsPublic as countAuthors,
   countSkillsPublic as countSkills,
   aiSearch,
   getAuthorByHandle,

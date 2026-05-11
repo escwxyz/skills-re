@@ -28,6 +28,18 @@ interface AuthorRow {
   name: string | null;
   repoCount: number;
   skillCount: number;
+  displayName?: string;
+}
+
+interface AuthorListPageRow {
+  continueCursor: string;
+  isDone: boolean;
+  page: AuthorRow[];
+}
+
+interface AuthorCountRow {
+  authorsCount: number;
+  verifiedCount: number;
 }
 
 interface SkillPathRow {
@@ -138,6 +150,7 @@ export interface SkillsServiceDeps {
   checkReposExistingByOwner: (repoOwner: string) => Promise<boolean>;
   checkSkillExistingBySlug: (slug: string) => Promise<boolean>;
   countSkills: () => Promise<number>;
+  countAuthors: () => Promise<AuthorCountRow>;
   findAuthorByHandle: (handle: string) => Promise<AuthorRow | null>;
   findSkillById: (id: string) => Promise<SkillListRow | null>;
   findSkillClaimContextBySlug: (slug: string) => Promise<SkillClaimContextRow | null>;
@@ -157,7 +170,11 @@ export interface SkillsServiceDeps {
     visibility?: "public" | "private";
   }) => Promise<string>;
   findSkillBySlug: (slug: string) => Promise<SkillListRow | null>;
-  listAuthors: () => Promise<AuthorRow[]>;
+  listAuthors: (input?: {
+    cursor?: string;
+    limit?: number;
+    sort?: "alphabetical" | "popular";
+  }) => Promise<AuthorListPageRow>;
   listSkillsHistoryInfoByIds: (skillIds: string[]) => Promise<SkillHistoryInfoRow[]>;
   searchSkillsPageByFilters: (input?: SearchSkillsPageInput) => Promise<{
     continueCursor: string;
@@ -215,6 +232,10 @@ const defaultDeps: SkillsServiceDeps = {
     const { countSkills } = await import("./repo");
     return await countSkills();
   },
+  countAuthors: async () => {
+    const { countAuthors } = await import("./repo");
+    return await countAuthors();
+  },
   findAuthorByHandle: async (handle) => {
     const { findAuthorByHandle } = await import("./repo");
     return await findAuthorByHandle(handle);
@@ -243,9 +264,13 @@ const defaultDeps: SkillsServiceDeps = {
     const { findSkillBySlug } = await import("./repo");
     return await findSkillBySlug(slug);
   },
-  listAuthors: async () => {
+  listAuthors: async (input?: {
+    cursor?: string;
+    limit?: number;
+    sort?: "alphabetical" | "popular";
+  }) => {
     const { listAuthors } = await import("./repo");
-    return await listAuthors();
+    return await listAuthors(input);
   },
   listSkillsHistoryInfoByIds: async (skillIds) => {
     const { listSkillsHistoryInfoByIds } = await import("./repo");
@@ -304,6 +329,10 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
     async count() {
       return await deps.countSkills();
+    },
+
+    async countAuthors() {
+      return await deps.countAuthors();
     },
 
     async getAuthorByHandle(input: { handle: string }) {
@@ -394,9 +423,17 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
       };
     },
 
-    async listAuthors() {
-      const rows = await deps.listAuthors();
-      return rows.map(toAuthor);
+    async listAuthors(input?: {
+      cursor?: string;
+      limit?: number;
+      sort?: "alphabetical" | "popular";
+    }) {
+      const page = await deps.listAuthors(input);
+      return {
+        continueCursor: page.continueCursor,
+        isDone: page.isDone,
+        page: page.page.map(toAuthor),
+      };
     },
 
     async getSkillsHistoryInfo(input: { skillIds: string[] }) {
@@ -488,6 +525,10 @@ export async function countSkillsPublic() {
   return await skillsService.count();
 }
 
+export async function countAuthorsPublic() {
+  return await skillsService.countAuthors();
+}
+
 export async function getAuthorByHandle(input: { handle: string }) {
   return await skillsService.getAuthorByHandle(input);
 }
@@ -512,8 +553,12 @@ export async function getByPath(input: {
   return await skillsService.getByPath(input);
 }
 
-export async function listAuthorsPublic() {
-  return await skillsService.listAuthors();
+export async function listAuthorsPublic(input?: {
+  cursor?: string;
+  limit?: number;
+  sort?: "alphabetical" | "popular";
+}) {
+  return await skillsService.listAuthors(input);
 }
 
 export async function getSkillsHistoryInfo(input: { skillIds: string[] }) {

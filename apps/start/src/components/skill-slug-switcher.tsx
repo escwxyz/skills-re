@@ -21,9 +21,9 @@ interface Props {
 export const SkillSlugSwitcher = ({ authorHandle, currentSlug }: Props) => {
   const getSkills = useServerFn(getAuthorSkills);
   const { data, isLoading } = useQuery({
-    queryKey: ["authorSkills", authorHandle],
+    queryKey: ["authorSkills", authorHandle, "slug-switcher"],
     queryFn: () => getSkills({ data: { handle: authorHandle } }),
-    select: (skills) => skills.map((s) => ({ slug: s.slug, title: s.title })),
+    select: (result) => result.page.map((s) => ({ slug: s.slug, title: s.title })),
     refetchInterval: 24 * 60 * 60 * 1000,
   });
 

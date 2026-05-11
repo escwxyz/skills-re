@@ -1,0 +1,104 @@
+export type BrowseSort =
+  | "newest"
+  | "updated"
+  | "views"
+  | "downloads-trending"
+  | "downloads-all-time"
+  | "stars";
+
+export const DEFAULT_BROWSE_SORT: BrowseSort = "downloads-all-time";
+export const SKILLS_BROWSE_PAGE_SIZE = 24;
+
+const SORT_SEQUENCE: BrowseSort[] = [
+  "downloads-all-time",
+  "downloads-trending",
+  "newest",
+  "updated",
+  "stars",
+  "views",
+];
+
+const VALID_BROWSE_SORTS = new Set<BrowseSort>([
+  "downloads-all-time",
+  "downloads-trending",
+  "newest",
+  "stars",
+  "updated",
+  "views",
+]);
+
+export interface SkillsBrowseFilters {
+  activeClass: string;
+  page: number;
+  query: string;
+  sort: BrowseSort;
+  tags: string[];
+}
+
+export const buildBrowseUrl = (filters: SkillsBrowseFilters): string => {
+  const params = new URLSearchParams();
+  if (filters.query.trim()) {
+    params.set("q", filters.query.trim());
+  }
+  if (filters.activeClass !== "all") {
+    params.set("category", filters.activeClass);
+  }
+  for (const tag of filters.tags) {
+    params.append("tag", tag);
+  }
+  if (filters.sort !== DEFAULT_BROWSE_SORT) {
+    params.set("sort", filters.sort);
+  }
+  if (filters.page > 1) {
+    params.set("page", String(filters.page));
+  }
+  const qs = params.toString();
+  return qs ? `/skills?${qs}` : "/skills";
+};
+
+export const getNextBrowseSort = (current: BrowseSort): BrowseSort => {
+  const idx = SORT_SEQUENCE.indexOf(current);
+  return idx === -1
+    ? DEFAULT_BROWSE_SORT
+    : (SORT_SEQUENCE[(idx + 1) % SORT_SEQUENCE.length] ?? DEFAULT_BROWSE_SORT);
+};
+
+export const getBrowseSort = (value: string | null): BrowseSort =>
+  value && VALID_BROWSE_SORTS.has(value as BrowseSort)
+    ? (value as BrowseSort)
+    : DEFAULT_BROWSE_SORT;
+
+export const parsePageNumber = (value: string | null) => {
+  if (!value) {
+    return 1;
+  }
+
+  const page = Number.parseInt(value, 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+};
+
+export const encodeSearchOffsetCursor = (offset: number) =>
+  btoa(JSON.stringify({ offset })).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+
+export const getBrowseSortLabel = (sort: BrowseSort) => {
+  switch (sort) {
+    case "downloads-trending": {
+      return "Trending";
+    }
+    case "newest": {
+      return "Newest";
+    }
+    case "stars": {
+      return "Stars";
+    }
+    case "updated": {
+      return "Updated";
+    }
+    case "views": {
+      return "Views";
+    }
+    default: {
+      return "Installs";
+    }
+  }
+};

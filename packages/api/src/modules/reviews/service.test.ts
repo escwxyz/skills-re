@@ -11,17 +11,17 @@ describe("reviews service", () => {
     const calls: unknown[] = [];
     let callCount = 0;
     const service = createReviewsService({
-      createReview: (input) => {
+      createReview: async (input) => {
         calls.push(input);
-        return asReviewId("review-1");
+        return await asReviewId("review-1");
       },
-      getReviewBySkillIdAndUserId: () => {
+      getReviewBySkillIdAndUserId: async () => {
         callCount += 1;
         if (callCount === 1) {
           return null;
         }
 
-        return {
+        return await {
           authorAvatarUrl: null,
           authorName: "Ada",
           content: "Helpful",
@@ -71,19 +71,20 @@ describe("reviews service", () => {
 
   test("rejects duplicate reviews from the same user", async () => {
     const service = createReviewsService({
-      createReview: () => asReviewId("review-1"),
-      getReviewBySkillIdAndUserId: () => ({
-        authorAvatarUrl: null,
-        authorName: "Ada",
-        content: "Helpful",
-        createdAt: new Date(123),
-        id: asReviewId("review-1"),
-        rating: 5,
-        skillId: asSkillId("skill-1"),
-        title: "Strong fit",
-        updatedAt: new Date(123),
-        userId: asUserId("user-1"),
-      }),
+      createReview: async () => await asReviewId("review-1"),
+      getReviewBySkillIdAndUserId: async () =>
+        await {
+          authorAvatarUrl: null,
+          authorName: "Ada",
+          content: "Helpful",
+          createdAt: new Date(123),
+          id: asReviewId("review-1"),
+          rating: 5,
+          skillId: asSkillId("skill-1"),
+          title: "Strong fit",
+          updatedAt: new Date(123),
+          userId: asUserId("user-1"),
+        },
     });
 
     await expect(
@@ -99,24 +100,25 @@ describe("reviews service", () => {
 
   test("lists reviews for a skill", async () => {
     const service = createReviewsService({
-      listReviewsBySkillId: async () => ({
-        continueCursor: "",
-        isDone: true,
-        page: [
-          {
-            authorAvatarUrl: null,
-            authorName: "Ada",
-            content: "Helpful",
-            createdAt: new Date(123),
-            id: asReviewId("review-1"),
-            rating: 5,
-            skillId: asSkillId("skill-1"),
-            title: "Strong fit",
-            updatedAt: new Date(123),
-            userId: asUserId("user-1"),
-          },
-        ],
-      }),
+      listReviewsBySkillId: async () =>
+        await {
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorAvatarUrl: null,
+              authorName: "Ada",
+              content: "Helpful",
+              createdAt: new Date(123),
+              id: asReviewId("review-1"),
+              rating: 5,
+              skillId: asSkillId("skill-1"),
+              title: "Strong fit",
+              updatedAt: new Date(123),
+              userId: asUserId("user-1"),
+            },
+          ],
+        },
     });
 
     await expect(service.listBySkill({ skillId: "skill-1", limit: 20 })).resolves.toEqual({

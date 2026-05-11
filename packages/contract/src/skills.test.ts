@@ -4,6 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   authorListItemSchema,
+  authorListPageSchema,
   searchSkillListItemSchema,
   skillBasicSchema,
   skillListItemSchema,
@@ -66,6 +67,40 @@ describe("skills contract", () => {
     });
   });
 
+  test("accepts a paginated public author payload", () => {
+    expect(
+      authorListPageSchema.parse({
+        continueCursor: "",
+        isDone: true,
+        page: [
+          {
+            avatarUrl: "https://example.com/avatar.png",
+            githubUrl: "https://github.com/acme",
+            handle: "acme",
+            isVerified: true,
+            name: "Acme",
+            repoCount: 2,
+            skillCount: 3,
+          },
+        ],
+      }),
+    ).toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          avatarUrl: "https://example.com/avatar.png",
+          githubUrl: "https://github.com/acme",
+          handle: "acme",
+          isVerified: true,
+          name: "Acme",
+          repoCount: 2,
+          skillCount: 3,
+        },
+      ],
+    });
+  });
+
   test("accepts a search skill payload", () => {
     expect(
       searchSkillListItemSchema.parse({
@@ -94,6 +129,7 @@ describe("skills contract", () => {
     expect(skillsContract.checkExisting).toBeDefined();
     expect(skillsContract.getAuthorByHandle).toBeDefined();
     expect(skillsContract.listAuthors).toBeDefined();
+    expect((skillsContract as any).countAuthors).toBeDefined();
   });
 
   test("accepts a basic skill payload", () => {

@@ -49,6 +49,12 @@ export const authorListItemSchema = authorSchema.extend({
   skillCount: z.number().int().nonnegative(),
 });
 
+export const authorListPageSchema = z.object({
+  continueCursor: z.string(),
+  isDone: z.boolean(),
+  page: z.array(authorListItemSchema),
+});
+
 const aiMatchSchema = z.object({
   itemKey: z.string().optional(),
   score: z.number().optional(),
