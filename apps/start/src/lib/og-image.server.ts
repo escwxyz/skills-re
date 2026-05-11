@@ -1,11 +1,22 @@
-// i18n
 import { createServerORPCClient } from "@/lib/orpc.server";
 import { buildTagSeo, buildTagsHubSeo } from "@/lib/seo-taxonomy";
 import { createOgImageResponse } from "@/lib/og-image";
-import { fetchCategoryDetailPageData } from "@/functions/categories/categories.server";
-import { fetchCollectionDetailPageData } from "@/functions/collections/collections.server";
-import { fetchTagDetail } from "@/functions/tags/tags.server";
+import { fetchAuthorDetail, fetchAuthorsInitial } from "@/functions/authors/authors.server";
+import {
+  fetchCategories,
+  fetchCategoryDetailPageData,
+} from "@/functions/categories/categories.server";
+
+import {
+  fetchCollectionDetail,
+  fetchCollectionsListPage,
+} from "@/functions/collections/collections.server";
+
+import { fetchSkillBase } from "@/functions/skills/skills.server";
+import { fetchTagsInitial, fetchTagDetail } from "@/functions/tags/tags.server";
+
 import { getCategoryDescription, getCategoryLabel } from "@/utils/category-data";
+import { formatCollectionTotalDownloads } from "@/utils/collection-data";
 
 export const createAuthorOgImageResponse = async ({
   handle,
@@ -16,8 +27,10 @@ export const createAuthorOgImageResponse = async ({
   requestUrl: string;
   twitter?: boolean;
 }) => {
-  const client = createServerORPCClient();
-  const author = await client.skills.getAuthorByHandle({ handle });
+  const author = await fetchAuthorDetail({
+    client: createServerORPCClient(),
+    handle,
+  });
 
   if (!author) {
     return new Response("Author not found.", { status: 404 });
@@ -29,7 +42,7 @@ export const createAuthorOgImageResponse = async ({
     description: `${displayName} publishes ${author.skillCount ?? 0} public skills across ${
       author.repoCount ?? 0
     } repositories.`,
-    eyebrow: "Publisher profile",
+    eyebrow: "Author profile",
     highlight: `github.com/${author.handle}`,
     identityHandle: `@${author.handle}`,
     metrics: [
@@ -55,16 +68,16 @@ export const createSkillOgImageResponse = async ({
   skillSlug: string;
   twitter?: boolean;
 }) => {
-  const client = createServerORPCClient();
-  const skill = await client.skills.getByPath({
-    authorHandle: author,
-    repoName: repo,
+  const data = await fetchSkillBase({
+    client: createServerORPCClient(),
     skillSlug,
   });
 
-  if (!skill) {
+  if (!data?.skill) {
     return new Response("Skill not found.", { status: 404 });
   }
+
+  const { skill } = data;
 
   return createOgImageResponse({
     accentColor: "#2d5a3d",
@@ -92,7 +105,7 @@ export const createCategoryOgImageResponse = async ({
   requestUrl: string;
   twitter?: boolean;
 }) => {
-  const data = await fetchCategoryDetailPageData(slug);
+  const data = await fetchCategoryDetailPageData({ client: createServerORPCClient(), slug });
   if (!data) {
     return new Response("Category not found.", { status: 404 });
   }
@@ -125,7 +138,7 @@ export const createCollectionOgImageResponse = async ({
   requestUrl: string;
   twitter?: boolean;
 }) => {
-  const data = await fetchCollectionDetailPageData(slug, "en");
+  const data = await fetchCollectionDetail({ client: createServerORPCClient(), slug });
   if (!data) {
     return new Response("Collection not found.", { status: 404 });
   }
@@ -138,7 +151,7 @@ export const createCollectionOgImageResponse = async ({
     identityHandle: `@skills.re/${slug}`,
     metrics: [
       { label: "Skills", value: data.skills.length },
-      { label: "Downloads", value: data.totalDownloads },
+      { label: "Downloads", value: formatCollectionTotalDownloads(data.skills, "en") },
     ],
     requestUrl,
     title: data.title,
@@ -155,7 +168,8 @@ export const createTagOgImageResponse = async ({
   requestUrl: string;
   twitter?: boolean;
 }) => {
-  const data = await fetchTagDetail(slug);
+  const client = createServerORPCClient();
+  const data = await fetchTagDetail({ client, slug });
   if (!data) {
     return new Response("Tag not found.", { status: 404 });
   }
@@ -183,11 +197,9 @@ interface IndexOgInput {
 }
 
 export const createSkillsIndexOgImageResponse = async ({ requestUrl, twitter }: IndexOgInput) => {
-  const client = createServerORPCClient();
-  const [skillsCount, categories] = await Promise.all([
-    client.skills.count(),
-    client.categories.list({ all: true, limit: 100 }),
-  ]);
+  const { categories, skillsCount } = await fetchCategories({
+    client: createServerORPCClient(),
+  });
 
   return createOgImageResponse({
     accentColor: "#c2410c",
@@ -206,11 +218,9 @@ export const createSkillsIndexOgImageResponse = async ({ requestUrl, twitter }: 
 };
 
 export const createAuthorsIndexOgImageResponse = async ({ requestUrl, twitter }: IndexOgInput) => {
-  const client = createServerORPCClient();
-  const [authors, skillsCount] = await Promise.all([
-    client.skills.listAuthors(),
-    client.skills.count(),
-  ]);
+  const { authorsCount, skillsCount } = await fetchAuthorsInitial({
+    client: createServerORPCClient(),
+  });
 
   return createOgImageResponse({
     accentColor: "#1d3a8a",
@@ -219,11 +229,11 @@ export const createAuthorsIndexOgImageResponse = async ({ requestUrl, twitter }:
     highlight: "skills.re/authors",
     identityHandle: "#authors",
     metrics: [
-      { label: "Publishers", value: authors.length },
+      { label: "Authors", value: authorsCount },
       { label: "Skills", value: skillsCount },
     ],
     requestUrl,
-    title: "Publishers",
+    title: "Authors",
     twitter,
   });
 };
@@ -232,11 +242,9 @@ export const createCategoriesIndexOgImageResponse = async ({
   requestUrl,
   twitter,
 }: IndexOgInput) => {
-  const client = createServerORPCClient();
-  const [categories, skillsCount] = await Promise.all([
-    client.categories.list({ all: true, limit: 100 }),
-    client.skills.count(),
-  ]);
+  const { categories, skillsCount } = await fetchCategories({
+    client: createServerORPCClient(),
+  });
 
   return createOgImageResponse({
     accentColor: "#2d5a3d",
@@ -258,8 +266,10 @@ export const createCollectionsIndexOgImageResponse = async ({
   requestUrl,
   twitter,
 }: IndexOgInput) => {
-  const client = createServerORPCClient();
-  const { page: collections } = await client.collections.list({ limit: 100 });
+  const { page: collections } = await fetchCollectionsListPage({
+    client: createServerORPCClient(),
+    limit: 100,
+  });
 
   return createOgImageResponse({
     accentColor: "#dc2626",
@@ -275,9 +285,9 @@ export const createCollectionsIndexOgImageResponse = async ({
 };
 
 export const createTagsIndexOgImageResponse = async ({ requestUrl, twitter }: IndexOgInput) => {
-  const client = createServerORPCClient();
-  const { totalCount } = await client.tags.listPage({ limit: 1 });
-  const count = totalCount ?? 0;
+  const { count } = await fetchTagsInitial({
+    client: createServerORPCClient(),
+  });
   const seo = buildTagsHubSeo({ count });
 
   return createOgImageResponse({
