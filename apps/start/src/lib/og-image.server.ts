@@ -4,7 +4,7 @@ import { buildTagSeo, buildTagsHubSeo } from "@/lib/seo-taxonomy";
 import { createOgImageResponse } from "@/lib/og-image";
 import { fetchCategoryDetailPageData } from "@/functions/categories/categories.server";
 import { fetchCollectionDetailPageData } from "@/functions/collections/collections.server";
-import { fetchTagDetailPageData } from "@/functions/tags/tags.server";
+import { fetchTagDetail } from "@/functions/tags/tags.server";
 import { getCategoryDescription, getCategoryLabel } from "@/utils/category-data";
 
 export const createAuthorOgImageResponse = async ({
@@ -155,7 +155,7 @@ export const createTagOgImageResponse = async ({
   requestUrl: string;
   twitter?: boolean;
 }) => {
-  const data = await fetchTagDetailPageData(slug);
+  const data = await fetchTagDetail(slug);
   if (!data) {
     return new Response("Tag not found.", { status: 404 });
   }
