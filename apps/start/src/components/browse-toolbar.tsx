@@ -7,7 +7,7 @@ import { BrowseSortDropdown } from "@/components/browse-sort-dropdown";
 import { SkillsSearchField } from "@/components/skills-search-field";
 import { SkillsViewModeToggle } from "@/components/skills-view-mode-toggle";
 import { Button } from "@/components/ui/button";
-import type { NormalizedSkillsBrowseFilters } from "@/functions/skills/skills.server";
+import type { NormalizedSkillsBrowseFilters } from "@/utils/browse";
 import { m } from "@/paraglide/messages";
 
 interface Props {

@@ -1,6 +1,7 @@
 import { renderContentAsync } from "@/lib/markdown";
 import { m } from "@/paraglide/messages";
 import type { Locale } from "@/paraglide/runtime";
+import { normalizeSkillsBrowseFilters } from "@/utils/browse";
 import type { BrowseSort } from "@/utils/browse";
 import { formatFileSize } from "@/utils/format";
 import { buildSnapshotLineDiff } from "@/utils/skill-diff";
@@ -9,6 +10,9 @@ import { buildFileTreeRows } from "@/view-models/build-file-tree-rows";
 import { splitLegacyReviewContent } from "@/view-models/split-legacy-review-content";
 import type { AppRouterClient } from "@skills-re/api";
 import { parseSkillMarkdownDocument } from "@skills-re/utils";
+
+export type { NormalizedSkillsBrowseFilters } from "@/utils/browse";
+export { normalizeSkillsBrowseFilters } from "@/utils/browse";
 
 interface SnapshotRecord {
   description: string;
@@ -475,25 +479,7 @@ export interface SkillsBrowseFilters {
   cursor?: string;
 }
 
-export interface SkillsBrowseMetaData {
-  categories: {
-    count: number;
-    id: string;
-    name: string;
-    slug: string;
-  }[];
-  counts: {
-    activeFilters: number;
-    categories: number;
-    newSkills30d: number;
-    skills: number;
-  };
-  tags: {
-    count: number;
-    id: string;
-    slug: string;
-  }[];
-}
+export type { SkillsBrowseMetaData, SkillsBrowsePageSlice } from "@/utils/browse";
 
 export interface SkillsBrowseMetaClient {
   categories: Pick<AppRouterClient["categories"], "list">;
@@ -502,36 +488,9 @@ export interface SkillsBrowseMetaClient {
   tags: Pick<AppRouterClient["tags"], "listIndexable">;
 }
 
-export interface SkillsBrowsePageSlice {
-  continueCursor: string;
-  isDone: boolean;
-  page: Awaited<ReturnType<AppRouterClient["skills"]["search"]>>["page"];
-}
-
 interface SkillsBrowsePaginationClient {
   skills: Pick<AppRouterClient["skills"], "search">;
 }
-
-export interface NormalizedSkillsBrowseFilters {
-  activeClass: string;
-  query: string;
-  sort: BrowseSort;
-  tags: string[];
-}
-
-export const normalizeSkillsBrowseFilters = (
-  input: Pick<SkillsBrowseFilters, "category" | "q" | "sort" | "tag">,
-): NormalizedSkillsBrowseFilters => {
-  const activeClass = input.category?.trim() || "all";
-  const tags = [...new Set((input.tag ?? []).map((tag) => tag.trim()).filter(Boolean))].toSorted();
-
-  return {
-    activeClass,
-    query: input.q?.trim() ?? "",
-    sort: input.sort ?? "downloads-all-time",
-    tags,
-  };
-};
 
 export const fetchSkillsBrowseMeta = async (
   input: Pick<SkillsBrowseFilters, "category" | "q" | "sort" | "tag"> & {

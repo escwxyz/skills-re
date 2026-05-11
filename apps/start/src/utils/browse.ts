@@ -1,3 +1,5 @@
+import type { AppRouterClient } from "@skills-re/api";
+
 export type BrowseSort =
   | "newest"
   | "updated"
@@ -34,6 +36,61 @@ export interface SkillsBrowseFilters {
   sort: BrowseSort;
   tags: string[];
 }
+
+export interface NormalizedSkillsBrowseFilters {
+  activeClass: string;
+  query: string;
+  sort: BrowseSort;
+  tags: string[];
+}
+
+export interface SkillsBrowseMetaData {
+  categories: {
+    count: number;
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  counts: {
+    activeFilters: number;
+    categories: number;
+    newSkills30d: number;
+    skills: number;
+  };
+  tags: {
+    count: number;
+    id: string;
+    slug: string;
+  }[];
+}
+
+export interface SkillsBrowseSearchInput {
+  category?: string;
+  q?: string;
+  sort?: BrowseSort | null;
+  tag?: string[];
+  tags?: string[];
+}
+
+export interface SkillsBrowsePageSlice {
+  continueCursor: string;
+  isDone: boolean;
+  page: Awaited<ReturnType<AppRouterClient["skills"]["search"]>>["page"];
+}
+
+export const normalizeSkillsBrowseFilters = (
+  input: SkillsBrowseSearchInput,
+): NormalizedSkillsBrowseFilters => {
+  const activeClass = input.category?.trim() || "all";
+  const tags = [...new Set([...(input.tag ?? []), ...(input.tags ?? [])].map((tag) => tag.trim()).filter(Boolean))].toSorted();
+
+  return {
+    activeClass,
+    query: input.q?.trim() ?? "",
+    sort: input.sort ?? DEFAULT_BROWSE_SORT,
+    tags,
+  };
+};
 
 export const buildBrowseUrl = (filters: SkillsBrowseFilters): string => {
   const params = new URLSearchParams();

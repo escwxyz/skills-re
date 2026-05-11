@@ -16,10 +16,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type {
-  NormalizedSkillsBrowseFilters,
-  SkillsBrowseMetaData,
-} from "@/functions/skills/skills.server";
+import type { NormalizedSkillsBrowseFilters, SkillsBrowseMetaData } from "@/utils/browse";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { formatInteger } from "@/utils/format";

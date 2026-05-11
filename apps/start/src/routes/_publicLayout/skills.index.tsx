@@ -3,7 +3,6 @@ import { z } from "zod/v4";
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useSetAtom } from "jotai";
 
 import { PageHero } from "@/components/page-hero";
@@ -17,12 +16,10 @@ import { isLoginDialogOpenAtom } from "@/atoms/app";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { orpc } from "@/lib/orpc";
-import { formatInteger } from "@/utils/format";
-import { getBrowseSortLabel } from "@/utils/browse";
-import { m } from "@/paraglide/messages";
 import { getSkillsBrowseMeta } from "@/functions/skills/get-skills-browse-meta";
-import { normalizeSkillsBrowseFilters } from "@/functions/skills/skills.server";
-import type { SkillsBrowseMetaData } from "@/functions/skills/skills.server";
+import { formatInteger } from "@/utils/format";
+import { getBrowseSortLabel, normalizeSkillsBrowseFilters } from "@/utils/browse";
+import { m } from "@/paraglide/messages";
 import { OG_SKILLS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { getLocale } from "@/paraglide/runtime";
@@ -49,6 +46,14 @@ const filterSchema = z.object({
 
 export const Route = createFileRoute("/_publicLayout/skills/")({
   validateSearch: filterSchema,
+  loaderDeps: ({ search }) => ({
+    category: search.category,
+    q: search.q,
+    sort: search.sort,
+    tag: search.tag,
+    tags: search.tags,
+  }),
+  loader: ({ deps }) => getSkillsBrowseMeta({ data: deps }),
   head: () =>
     createSeo({
       canonicalPath: "/skills/",
@@ -61,6 +66,7 @@ export const Route = createFileRoute("/_publicLayout/skills/")({
 });
 
 function RouteComponent() {
+  const browseMeta = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/skills/" });
   const isMobile = useIsMobile();
@@ -78,37 +84,6 @@ function RouteComponent() {
     sort: search.sort,
     tag: [...new Set([...(search.tag ?? []), ...(search.tags ?? [])])],
   });
-  // note: if we use this in the loader, we need to pass search params to loaderDeps
-  const getBrowseMeta = useServerFn(getSkillsBrowseMeta);
-  const browseMetaQuery = useQuery({
-    queryFn: () =>
-      getBrowseMeta({
-        data: {
-          category: search.category,
-          q: search.q,
-          sort: search.sort,
-          tag: search.tag,
-          tags: search.tags,
-        },
-      }),
-    queryKey: [
-      "skillsBrowseMeta",
-      browseFilters.activeClass,
-      browseFilters.query,
-      browseFilters.sort,
-      browseFilters.tags.join("|"),
-    ],
-  });
-  const browseMeta: SkillsBrowseMetaData = browseMetaQuery.data ?? {
-    categories: [],
-    counts: {
-      activeFilters: 0,
-      categories: 0,
-      newSkills30d: 0,
-      skills: 0,
-    },
-    tags: [],
-  };
 
   const semanticQuery = useQuery({
     ...orpc.skills.search.queryOptions({

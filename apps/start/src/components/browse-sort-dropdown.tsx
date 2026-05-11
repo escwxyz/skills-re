@@ -11,9 +11,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { NormalizedSkillsBrowseFilters } from "@/functions/skills/skills.server";
+import type { NormalizedSkillsBrowseFilters, BrowseSort } from "@/utils/browse";
 import { getBrowseSortLabel } from "@/utils/browse";
-import type { BrowseSort } from "@/utils/browse";
 import { m } from "@/paraglide/messages";
 
 const BROWSE_SORT_OPTIONS: { label: string; value: BrowseSort }[] = [
