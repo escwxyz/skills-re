@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
-import { fetchTagsListPage } from "./tags.server";
+import { fetchTagsPagination } from "./tags.server";
 import { createServerORPCClient } from "@/lib/orpc.server";
 
-export const getTagsListPagination = createServerFn({ method: "GET" })
+export const getTagsPagination = createServerFn({ method: "GET" })
   .inputValidator(
     z.object({
       cursor: z.string().optional(),
@@ -12,7 +12,7 @@ export const getTagsListPagination = createServerFn({ method: "GET" })
   )
   .handler(
     async ({ data }) =>
-      await fetchTagsListPage({
+      await fetchTagsPagination({
         client: createServerORPCClient(),
         cursor: data.cursor,
         limit: data.limit,

@@ -4,7 +4,7 @@ interface TagsInitialClient {
   tags: Pick<AppRouterClient["tags"], "count" | "listPage">;
 }
 
-export const fetchTagsListInitial = async (input: { client: TagsInitialClient }) => {
+export const fetchTagsInitial = async (input: { client: TagsInitialClient }) => {
   const [count, initialPage] = await Promise.all([
     input.client.tags.count(),
     input.client.tags.listPage({ limit: 24 }),
@@ -20,7 +20,7 @@ interface TagsListPageClient {
   tags: Pick<AppRouterClient["tags"], "listPage">;
 }
 
-export const fetchTagsListPage = async (input: {
+export const fetchTagsPagination = async (input: {
   client: TagsListPageClient;
   cursor?: string;
   limit?: number;

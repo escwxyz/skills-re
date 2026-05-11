@@ -4,16 +4,16 @@ import { describe, expect, test } from "bun:test";
 import {
   fetchTagDetail,
   fetchTagTopSkills,
-  fetchTagsListInitial,
-  fetchTagsListPage,
+  fetchTagsInitial,
+  fetchTagsPagination,
 } from "./tags.server";
 
-type TagsListInitialClient = Parameters<typeof fetchTagsListInitial>[0]["client"];
-type TagsListPageClient = Parameters<typeof fetchTagsListPage>[0]["client"];
+type TagsListInitialClient = Parameters<typeof fetchTagsInitial>[0]["client"];
+type TagsListPageClient = Parameters<typeof fetchTagsPagination>[0]["client"];
 type TagDetailClient = Parameters<typeof fetchTagDetail>[0]["client"];
 type TagTopSkillsClient = Parameters<typeof fetchTagTopSkills>[0]["client"];
 
-describe("fetchTagsListInitial", () => {
+describe("fetchTagsInitial", () => {
   test("forwards count and initial page calls to the public tags contract", async () => {
     const calls: { count: number; listPage?: { limit?: number } }[] = [];
     const client = {
@@ -39,7 +39,7 @@ describe("fetchTagsListInitial", () => {
       },
     } satisfies TagsListInitialClient;
 
-    expect(fetchTagsListInitial({ client })).resolves.toEqual({
+    expect(fetchTagsInitial({ client })).resolves.toEqual({
       count: 128,
       initialPage: {
         items: [
@@ -58,7 +58,7 @@ describe("fetchTagsListInitial", () => {
   });
 });
 
-describe("fetchTagsListPage", () => {
+describe("fetchTagsPagination", () => {
   test("forwards cursor and limit to the public tag page contract", async () => {
     const calls: { cursor?: string; limit?: number }[] = [];
     const client = {
@@ -80,7 +80,7 @@ describe("fetchTagsListPage", () => {
       },
     } satisfies TagsListPageClient;
 
-    expect(fetchTagsListPage({ client, cursor: "cursor-1", limit: 24 })).resolves.toEqual({
+    expect(fetchTagsPagination({ client, cursor: "cursor-1", limit: 24 })).resolves.toEqual({
       nextCursor: "next-cursor",
       totalCount: 42,
       items: [

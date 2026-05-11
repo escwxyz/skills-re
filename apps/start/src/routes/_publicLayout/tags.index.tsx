@@ -11,13 +11,13 @@ import { buildTagsHubSeo } from "@/view-models/build-tags-hub-seo";
 import { kebabToTitle } from "@/lib/utils";
 import { ui_open, tags_skill_tags, tags_eyebrow } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { getTagsListInitial } from "@/functions/get-tags-list-initial";
-import { getTagsListPagination } from "@/functions/get-tags-list-pagination";
+import { getTagsInitial } from "@/functions/tags/get-tags-initial";
+import { getTagsPagination } from "@/functions/tags/get-tags-pagination";
 
 const TAGS_LIST_PAGE_SIZE = 24;
 
 export const Route = createFileRoute("/_publicLayout/tags/")({
-  loader: () => getTagsListInitial({ data: {} }),
+  loader: () => getTagsInitial(),
   head: ({ loaderData }) => {
     const seo = buildTagsHubSeo({
       count: loaderData?.count ?? 0,
@@ -41,7 +41,7 @@ function RouteComponent() {
     throw new Error("Tags page data is missing.");
   }
 
-  const getPage = useServerFn(getTagsListPagination);
+  const getPage = useServerFn(getTagsPagination);
   const query = useInfiniteQuery({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
