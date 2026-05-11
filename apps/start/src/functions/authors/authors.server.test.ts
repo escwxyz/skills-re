@@ -93,7 +93,7 @@ describe("fetchAuthorSkillsPagination", () => {
           });
         },
       },
-    } satisfies AuthorSkillsPaginationClient;
+    } as unknown as AuthorSkillsPaginationClient;
 
     expect(
       fetchAuthorSkillsPagination({
@@ -177,7 +177,7 @@ describe("fetchAuthorSkillsStats", () => {
           });
         },
       },
-    } satisfies AuthorSkillsStatsClient;
+    } as unknown as AuthorSkillsStatsClient;
 
     await expect(
       fetchAuthorSkillsStats({

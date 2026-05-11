@@ -41,20 +41,13 @@ import {
   skill_snapshot_diff_title,
   skill_snapshot_diff_unavailable,
 } from "@/paraglide/messages";
+import type { SkillVersionHistoryItem } from "@/utils/types";
 
 interface SkillSnapshotDiffLine {
   kind: "added" | "context" | "removed";
   leftLineNumber?: number;
   rightLineNumber?: number;
   text: string;
-}
-
-interface SkillVersionHistoryItem {
-  date: number;
-  entryPath?: string;
-  label?: string;
-  snapshotId: string;
-  version: string;
 }
 
 interface Props {

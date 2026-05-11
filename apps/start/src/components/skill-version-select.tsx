@@ -1,6 +1,6 @@
 "use client";
 
-import type { SkillVersionHistoryItem } from "@/lib/skill-detail-data";
+import type { SkillVersionHistoryItem } from "@/utils/types";
 import {
   skill_detail_meta_version,
   skill_version_current_badge,

@@ -1,6 +1,6 @@
 import { m } from "@/paraglide/messages";
 
-import type { SkillVersionHistoryItem } from "@/lib/skill-detail-data";
+import type { SkillVersionHistoryItem } from "@/utils/types";
 
 interface Props {
   activeSnapshotId?: string | null;

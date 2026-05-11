@@ -379,9 +379,10 @@ describe("resolveSnapshot", () => {
       syncTime: 2,
       version: "v2",
     });
-    expect(resolveSnapshot(snapshots, "v1")).toEqual(snapshots[0]);
-    expect(resolveSnapshot(snapshots, "missing")).toEqual(snapshots[0]);
-    expect(resolveSnapshot(snapshots, null)).toEqual(snapshots[0]);
+    const firstSnapshot = snapshots[0] ?? null;
+    expect(resolveSnapshot(snapshots, "v1")).toEqual(firstSnapshot);
+    expect(resolveSnapshot(snapshots, "missing")).toEqual(firstSnapshot);
+    expect(resolveSnapshot(snapshots, null)).toEqual(firstSnapshot);
     expect(resolveSnapshot([], null)).toBeNull();
   });
 });
@@ -409,7 +410,7 @@ describe("resolveSkillBase", () => {
           });
         },
       },
-    } satisfies ResolveSkillBaseClient;
+    } as unknown as ResolveSkillBaseClient;
 
     await expect(resolveSkillBase({ client, slug: "builder" })).resolves.toEqual({
       description: "Builds things",
@@ -464,7 +465,7 @@ describe("fetchSkillVersionHistory", () => {
           });
         },
       },
-    } satisfies FetchSkillVersionHistoryClient;
+    } as unknown as FetchSkillVersionHistoryClient;
 
     await expect(fetchSkillVersionHistory({ client, skillId: "skill-1" })).resolves.toEqual([
       {
