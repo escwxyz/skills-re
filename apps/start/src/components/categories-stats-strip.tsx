@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { getCategoriesStats } from "@/functions/categories/get-categories-stats";
+import { getCategoriesStats } from "@/functions/get-categories-stats";
 import {
   categories_index_stat_disciplines,
   categories_index_stat_listed_authors,

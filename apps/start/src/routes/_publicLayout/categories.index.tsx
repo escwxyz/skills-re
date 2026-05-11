@@ -3,7 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { CategoriesStatsStrip } from "@/components/categories-stats-strip";
 import { CategoryCard } from "@/components/category-card";
 import { PageHero } from "@/components/page-hero";
-import { getCategoriesList } from "@/functions/categories/get-categories-list";
+import { getCategoriesList } from "@/functions/get-categories-list";
 import { OG_CATEGORIES_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
@@ -18,7 +18,7 @@ import {
 import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_publicLayout/categories/")({
-  loader: () => getCategoriesList({ data: {} }),
+  loader: () => getCategoriesList(),
   head: () =>
     createSeo({
       canonicalPath: "/categories",
