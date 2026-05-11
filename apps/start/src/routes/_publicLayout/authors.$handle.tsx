@@ -17,7 +17,15 @@ import { getLocale } from "@/paraglide/runtime";
 import { getAuthorDisplayName, getAvatarLabel } from "@/utils/author-shared";
 
 export const Route = createFileRoute("/_publicLayout/authors/$handle")({
-  loader: ({ params }) => getAuthorDetail({ data: { handle: params.handle } }),
+  loader: async ({ params }) => {
+    const author = await getAuthorDetail({ data: { handle: params.handle } });
+
+    if (!author) {
+      throw redirect({ to: "/authors" });
+    }
+
+    return author;
+  },
   head: ({ loaderData }) =>
     createSeo({
       canonicalPath: loaderData ? `/authors/${loaderData.handle}` : "/authors",
@@ -33,9 +41,6 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
 
 function RouteComponent() {
   const author = Route.useLoaderData();
-  if (!author) {
-    throw redirect({ to: "/authors" });
-  }
 
   const { handle, githubUrl, isVerified, repoCount, skillCount } = author;
   const name = getAuthorDisplayName(author);
