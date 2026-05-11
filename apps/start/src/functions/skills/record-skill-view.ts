@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 
 import { createServerORPCClient } from "@/lib/orpc.server";
+import { updateSkillViewMetrics } from "./skills.server";
 
 export const recordSkillViewFn = createServerFn({ method: "POST" })
   .inputValidator(
@@ -10,10 +11,6 @@ export const recordSkillViewFn = createServerFn({ method: "POST" })
       skillId: z.string().min(1),
     }),
   )
-  .handler(async ({ data }) => {
-    const client = createServerORPCClient();
-    return await client.metrics.recordSkillView({
-      path: data.path,
-      skillId: data.skillId,
-    });
-  });
+  .handler(
+    async ({ data }) => await updateSkillViewMetrics({ client: createServerORPCClient(), ...data }),
+  );

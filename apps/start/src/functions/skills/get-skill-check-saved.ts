@@ -1,0 +1,14 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod/v4";
+import { fetchSkillCheckSaved } from "./skills.server";
+import { createServerORPCClient } from "@/lib/orpc.server";
+
+export const getSkillCheckSaved = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ slug: z.string().trim().min(1) }))
+  .handler(
+    async ({ data }) =>
+      await fetchSkillCheckSaved({
+        client: createServerORPCClient(),
+        slug: data.slug,
+      }),
+  );

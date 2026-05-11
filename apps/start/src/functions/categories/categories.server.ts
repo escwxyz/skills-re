@@ -57,18 +57,21 @@ export const fetchCategoryTopSkills = async (input: {
   client: CategoryTopSkillsClient;
   slug: string;
 }) => {
-  const result = await input.client.categories.getBySlug({ slug: input.slug });
-  return result
-    ? {
-        count: result.count,
-        topSkills: result.topSkills.map((skill) => ({
-          id: skill.id,
-          title: skill.title,
-          description: skill.description,
-          slug: skill.slug,
-          authorHandle: skill.authorHandle,
-          repoName: skill.repoName,
-        })),
-      }
-    : null;
+  const category = await input.client.categories.getBySlug({ slug: input.slug });
+
+  if (!category) {
+    return null;
+  }
+
+  return {
+    count: category.count,
+    topSkills: category.topSkills.map((skill) => ({
+      id: skill.id,
+      title: skill.title,
+      description: skill.description,
+      slug: skill.slug,
+      authorHandle: skill.authorHandle,
+      repoName: skill.repoName,
+    })),
+  };
 };
