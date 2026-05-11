@@ -9,7 +9,7 @@ import { LoadMore } from "@/components/load-more";
 import { ReviewCard } from "@/components/review-card";
 import { ReviewRatingSidebar } from "@/components/review-rating-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";

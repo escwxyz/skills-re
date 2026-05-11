@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 
 import { FileEmptyState, SkillFileContent } from "@/components/skill-file-content";
 import { getSkillFileTreePageData } from "@/functions/skills/get-skill-file-tree";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";

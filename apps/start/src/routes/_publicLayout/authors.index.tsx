@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SealCheckIcon } from "@phosphor-icons/react";
 import { PageHero } from "@/components/page-hero";
 import { getAuthorsList } from "@/functions/authors/get-authors-list";
-import { OG_AUTHORS_IMAGE_PATH } from "@/lib/og-image";
+import { OG_AUTHORS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
   authors_index_alphabetical_title,

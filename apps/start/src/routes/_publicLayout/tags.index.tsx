@@ -3,19 +3,20 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { LoadMore } from "@/components/load-more";
 
 import { PageHero } from "@/components/page-hero";
-import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image";
+import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { buildTagsHubSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
-import { getTagsList } from "@/functions/tags/get-tags-list";
+
 import { orpc } from "@/lib/orpc";
 import { kebabToTitle } from "@/lib/utils";
 import { ui_open, tags_skill_tags, tags_eyebrow } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
+import { getTagsListInitial } from "@/functions/tags/get-tags-list-initial";
 
 const TAGS_LIST_PAGE_SIZE = 24;
 
 export const Route = createFileRoute("/_publicLayout/tags/")({
-  loader: () => getTagsList({ data: {} }),
+  loader: () => getTagsListInitial({ data: {} }),
   head: ({ loaderData }) => {
     const seo = buildTagsHubSeo({
       count: loaderData?.count ?? 0,
@@ -40,6 +41,7 @@ function RouteComponent() {
   }
 
   const query = useInfiniteQuery({
+    // we can move it to server funcitons
     ...orpc.tags.listPage.infiniteOptions({
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       initialPageParam: undefined,

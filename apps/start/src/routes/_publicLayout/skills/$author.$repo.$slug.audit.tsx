@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 import { SkillAuditReport } from "@/components/skill-audit-report";
 import { getSkillBasePageData } from "@/functions/skills/get-skill-base";
 import { getSkillVersionHistory } from "@/functions/skills/get-skill-version-history";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";

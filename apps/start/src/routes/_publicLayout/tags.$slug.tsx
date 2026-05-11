@@ -1,20 +1,18 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
 import { PageHero } from "@/components/page-hero";
-import { SkillCard } from "@/components/skill-card";
+import { TagTopSkills } from "@/components/tag-top-skills";
 import { buttonVariants } from "@/components/ui/button";
-import { buildTagOgImagePath } from "@/lib/og-image";
+import { buildTagOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { buildTagSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
 import { getTagDetail } from "@/functions/tags/get-tag-detail";
 import { cn, kebabToTitle } from "@/lib/utils";
 import {
-  tag_page_no_public_skills,
   tag_page_noindexed_notice,
   tag_page_related_categories,
   tag_page_related_tags,
   tag_page_see_all_skills,
-  tag_page_top_skills,
   tags_eyebrow,
   tags_skill_tags,
 } from "@/paraglide/messages";
@@ -183,33 +181,7 @@ function RouteComponent() {
         </div>
       </section>
 
-      <section className="border-border border-b px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-mono text-muted-foreground text-sm uppercase tracking-[0.16em]">
-              {tag_page_top_skills()}
-            </h2>
-            <div className="mt-1 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.12em]">
-              {formatPublicSkillCount(tag.count, locale)}
-            </div>
-          </div>
-          <div className="max-w-120 text-right font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
-            {seo.description}
-          </div>
-        </div>
-
-        {tag.topSkills.length > 0 ? (
-          <div className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-2 xl:grid-cols-3">
-            {tag.topSkills.map((skill) => (
-              <SkillCard key={skill.id} skill={skill} />
-            ))}
-          </div>
-        ) : (
-          <div className="border-border text-muted-foreground border px-6 py-10 text-sm">
-            {tag_page_no_public_skills()}
-          </div>
-        )}
-      </section>
+      <TagTopSkills slug={tag.slug} />
     </>
   );
 }

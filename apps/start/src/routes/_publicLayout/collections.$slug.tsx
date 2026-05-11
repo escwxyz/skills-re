@@ -2,7 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { CollectionItem } from "@/components/collection-item";
 import { getCollectionDetail } from "@/functions/collections/get-collection-detail";
-import { buildCollectionOgImagePath } from "@/lib/og-image";
+import { buildCollectionOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
   collections_page_all_collections,

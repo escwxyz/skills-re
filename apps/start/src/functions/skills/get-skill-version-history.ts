@@ -7,7 +7,7 @@ export const getSkillVersionHistory = createServerFn({ method: "GET" })
   .inputValidator(z.object({ skillId: z.string() }))
   .handler(async ({ data }) => {
     const client = createServerORPCClient();
-    const result = await client.snapshots.listBySkill({ limit: 8, skillId: data.skillId });
+    const result = await client.snapshots.listBySkill({ limit: 3, skillId: data.skillId });
 
     return result.page.map((snapshot, index) => ({
       date: snapshot.sourceCommitDate ?? snapshot.syncTime,

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CollectionsGrid } from "@/components/collections-grid";
 import { PageHero } from "@/components/page-hero";
 import { getCollectionsList } from "@/functions/collections/get-collections-list";
-import { OG_COLLECTIONS_IMAGE_PATH } from "@/lib/og-image";
+import { OG_COLLECTIONS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/_publicLayout/collections/")({

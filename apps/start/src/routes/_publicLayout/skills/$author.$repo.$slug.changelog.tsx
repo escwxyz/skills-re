@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { z } from "zod/v4";
 
 import { getSkillChangelogPageData } from "@/functions/skills/get-skill-changelog";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";

@@ -2,28 +2,35 @@ import { createServerORPCClient } from "@/lib/orpc.server";
 import type { CategoryListItem, DailyMetricPoint } from "@/utils/types";
 
 export interface CategoriesListPageData {
-  authorsCount: number;
   categories: CategoryListItem[];
-  dailyMetrics: DailyMetricPoint[];
   skillsCount: number;
+}
+
+export interface CategoriesStatsData {
+  authorsCount: number;
+  dailyMetrics: DailyMetricPoint[];
 }
 
 export const fetchCategoriesListPageData = async () => {
   const client = createServerORPCClient();
 
-  const [categories, skillsCount, authors, dailyMetrics] = await Promise.all([
+  const [categories, skillsCount] = await Promise.all([
     client.categories.list({ all: true, limit: 100 }),
     client.skills.count(),
-    client.skills.listAuthors(),
-    client.metrics.dailySkillsSnapshots({ limit: 30 }),
   ]);
 
-  return {
-    authorsCount: authors.length,
-    categories,
-    dailyMetrics,
-    skillsCount,
-  };
+  return { categories, skillsCount };
+};
+
+export const fetchCategoriesStats = async () => {
+  const client = createServerORPCClient();
+
+  const [authors, dailyMetrics] = await Promise.all([
+    client.skills.listAuthors(),
+    client.metrics.dailySkillsSnapshots({ limit: 7 }),
+  ]);
+
+  return { authorsCount: authors.length, dailyMetrics };
 };
 
 export const fetchCategoryDetailPageData = async (slug: string) => {
