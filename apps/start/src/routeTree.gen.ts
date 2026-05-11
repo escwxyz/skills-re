@@ -19,7 +19,6 @@ import { Route as SitemapTaxonomyDotxmlRouteImport } from './routes/sitemap.taxo
 import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static[.]xml'
 import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
 import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
-import { Route as ApiRenderRouteImport } from './routes/api/render'
 import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
 import { Route as PublicLayoutSubmitRouteImport } from './routes/_publicLayout/submit'
 import { Route as PublicLayoutPrivacyRouteImport } from './routes/_publicLayout/privacy'
@@ -31,7 +30,7 @@ import { Route as DotwellKnownApiCatalogRouteImport } from './routes/[.]well-kno
 import { Route as DotwellKnownAgentConfigurationRouteImport } from './routes/[.]well-known/agent-configuration'
 import { Route as AuthedLayoutDashboardRouteRouteImport } from './routes/_authedLayout/dashboard.route'
 import { Route as PublicLayoutTagsIndexRouteImport } from './routes/_publicLayout/tags.index'
-import { Route as PublicLayoutSkillsIndexRouteImport } from './routes/_publicLayout/skills/index'
+import { Route as PublicLayoutSkillsIndexRouteImport } from './routes/_publicLayout/skills.index'
 import { Route as PublicLayoutDocsIndexRouteImport } from './routes/_publicLayout/docs.index'
 import { Route as PublicLayoutCollectionsIndexRouteImport } from './routes/_publicLayout/collections.index'
 import { Route as PublicLayoutCategoriesIndexRouteImport } from './routes/_publicLayout/categories.index'
@@ -62,12 +61,12 @@ import { Route as ApiOgCollectionsSlugPngRouteImport } from './routes/api/og/col
 import { Route as ApiOgCategoriesSlugPngRouteImport } from './routes/api/og/categories.$slug.png'
 import { Route as ApiOgAuthorsHandlePngRouteImport } from './routes/api/og/authors.$handle.png'
 import { Route as PublicLayoutSkillAuthorRepoSlugRouteImport } from './routes/_publicLayout/skill.$author.$repo.$slug'
-import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.route'
-import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.index'
-import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.reviews'
-import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.file-tree'
-import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.changelog'
-import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.audit'
+import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.route'
+import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.index'
+import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.reviews'
+import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.file-tree'
+import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.changelog'
+import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.audit'
 import { Route as ApiOgSkillsAuthorRepoSkillSlugPngRouteImport } from './routes/api/og/skills.$author.$repo.$skillSlug.png'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -116,11 +115,6 @@ const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
 const RobotsTxtRoute = RobotsTxtRouteImport.update({
   id: '/robots/txt',
   path: '/robots/txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRenderRoute = ApiRenderRouteImport.update({
-  id: '/api/render',
-  path: '/api/render',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicLayoutTermsRoute = PublicLayoutTermsRouteImport.update({
@@ -409,7 +403,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -468,7 +461,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -529,7 +521,6 @@ export interface FileRoutesById {
   '/_publicLayout/privacy': typeof PublicLayoutPrivacyRoute
   '/_publicLayout/submit': typeof PublicLayoutSubmitRoute
   '/_publicLayout/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -592,7 +583,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -651,7 +641,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -711,7 +700,6 @@ export interface FileRouteTypes {
     | '/_publicLayout/privacy'
     | '/_publicLayout/submit'
     | '/_publicLayout/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -766,7 +754,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownAgentConfigurationRoute: typeof DotwellKnownAgentConfigurationRoute
   DotwellKnownApiCatalogRoute: typeof DotwellKnownApiCatalogRoute
-  ApiRenderRoute: typeof ApiRenderRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
   SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
   SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
@@ -854,13 +841,6 @@ declare module '@tanstack/react-router' {
       path: '/robots/txt'
       fullPath: '/robots/txt'
       preLoaderRoute: typeof RobotsTxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/render': {
-      id: '/api/render'
-      path: '/api/render'
-      fullPath: '/api/render'
-      preLoaderRoute: typeof ApiRenderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_publicLayout/terms': {
@@ -1355,7 +1335,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownAgentConfigurationRoute: DotwellKnownAgentConfigurationRoute,
   DotwellKnownApiCatalogRoute: DotwellKnownApiCatalogRoute,
-  ApiRenderRoute: ApiRenderRoute,
   RobotsTxtRoute: RobotsTxtRoute,
   SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
   SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
