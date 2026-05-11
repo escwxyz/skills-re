@@ -13,8 +13,7 @@ import { LoadMore } from "@/components/load-more";
 import { SkillCardBrowse } from "@/components/skill-card-browse";
 import { getSkillsBrowseInitialPage } from "@/functions/skills/get-skills-browse-initial-page";
 import { getSkillsBrowsePagination } from "@/functions/skills/get-skills-browse-pagination";
-import type { NormalizedSkillsBrowseFilters } from "@/utils/browse";
-import type { SkillsBrowsePageSlice } from "@/utils/browse";
+import type { NormalizedSkillsBrowseFilters, SkillsBrowsePageSlice } from "@/utils/browse";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 
