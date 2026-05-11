@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { CollectionsGrid } from "@/components/collections-grid";
+import { CollectionsInfiniteGrid } from "@/components/collections-infinite-grid";
 import { PageHero } from "@/components/page-hero";
 import { getCollectionsList } from "@/functions/collections/get-collections-list";
 import { OG_COLLECTIONS_IMAGE_PATH } from "@/lib/og-image-paths";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_publicLayout/collections/")({
 });
 
 function RouteComponent() {
-  const { collections } = Route.useLoaderData();
+  const initialPage = Route.useLoaderData();
 
   return (
     <>
@@ -31,7 +31,7 @@ function RouteComponent() {
       </PageHero>
 
       <div className="px-4 pb-15 md:px-6">
-        <CollectionsGrid collections={collections} />
+        <CollectionsInfiniteGrid initialPage={initialPage} />
       </div>
     </>
   );

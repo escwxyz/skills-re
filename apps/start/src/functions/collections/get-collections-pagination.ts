@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 import { fetchCollectionsListPage } from "./collections.server";
 import { createServerORPCClient } from "@/lib/orpc.server";
 
-export const getCollectionsList = createServerFn({ method: "GET" })
+export const getCollectionsPagination = createServerFn({ method: "GET" })
   .inputValidator(
     z
       .object({
