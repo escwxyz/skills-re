@@ -9,6 +9,29 @@ export interface SkillFrontmatterData {
   name: string;
 }
 
+export interface SkillTocItem {
+  slug: string;
+  title: string;
+}
+
+export const slugifyHeadingBase = (value: string) => {
+  const normalized = value.normalize("NFKD").toLowerCase().trim();
+  const slug = normalized
+    .replaceAll(/["'’]/g, "")
+    .replaceAll(/[^\p{Letter}\p{Number}]+/gu, "-")
+    .replaceAll(/-+/g, "-")
+    .replaceAll(/^-|-$/g, "");
+
+  return slug || "section";
+};
+
+const createUniqueHeadingSlug = (value: string, counts: Map<string, number>) => {
+  const baseSlug = slugifyHeadingBase(value);
+  const currentCount = counts.get(baseSlug) ?? 0;
+  counts.set(baseSlug, currentCount + 1);
+  return currentCount === 0 ? baseSlug : `${baseSlug}-${currentCount + 1}`;
+};
+
 const normalizeFrontmatterKey = (value: string) => value.trim().toLowerCase().replaceAll("_", "-");
 
 const stripWrappingQuotes = (value: string) => {
@@ -129,10 +152,22 @@ export const parseSkillMarkdownDocument = (source: string) => {
   }
 
   const body = lines.join("\n").trim();
-  const tocItems = body
-    .split(/\r?\n/)
-    .map((line) => line.match(/^##+\s+(.+)$/)?.[1]?.trim())
-    .filter((item): item is string => item !== undefined);
+  const tocItems: SkillTocItem[] = [];
+  const headingCounts = new Map<string, number>();
+
+  for (const line of body.split(/\r?\n/)) {
+    const headingMatch = line.match(/^(#{2,6})\s+(.+?)(?:\s+#+\s*)?$/);
+    const title = headingMatch?.[2]?.trim();
+
+    if (!title) {
+      continue;
+    }
+
+    tocItems.push({
+      slug: createUniqueHeadingSlug(title, headingCounts),
+      title,
+    });
+  }
 
   return { body, frontmatter, tocItems };
 };

@@ -4,6 +4,7 @@ import { createMarkdownItAsync } from "markdown-it-async";
 import type { LanguageInput, SpecialLanguage } from "shiki/core";
 import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { slugifyHeadingBase } from "@skills-re/utils";
 
 export type ResolvedTheme = "dark" | "light";
 
@@ -187,18 +188,20 @@ const ensureLanguageLoaded = async (language?: string | null) => {
 const createRenderer = (theme: "github-dark" | "github-light") => {
   const md = createMarkdownItAsync({ breaks: true, html: false, linkify: true, typographer: true });
 
-  let headingCounter = 0;
+  const headingCounts = new Map<string, number>();
   md.use(anchor, {
     level: [2, 3, 4, 5, 6],
-    slugify: () => {
-      headingCounter += 1;
-      return `s${String(headingCounter).padStart(2, "0")}`;
+    slugify: (value) => {
+      const baseSlug = slugifyHeadingBase(value);
+      const currentCount = headingCounts.get(baseSlug) ?? 0;
+      headingCounts.set(baseSlug, currentCount + 1);
+      return currentCount === 0 ? baseSlug : `${baseSlug}-${currentCount + 1}`;
     },
   });
 
   const originalRenderAsync = md.renderAsync.bind(md);
   md.renderAsync = async (src: string, env?: object) => {
-    headingCounter = 0;
+    headingCounts.clear();
     return await originalRenderAsync(src, env);
   };
 

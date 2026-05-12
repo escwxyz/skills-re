@@ -83,7 +83,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html
       lang={getLocale()}
       suppressHydrationWarning={!import.meta.env.DEV}
-      data-scroll-behavior="smooth"
+      className="scroll-smooth"
       {...registerTheme(themeState)}
     >
       <head>
