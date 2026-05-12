@@ -1,21 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { LoadMore } from "@/components/load-more";
 
 import { PageHero } from "@/components/page-hero";
-import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image";
+import { OG_TAGS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
-import { buildTagsHubSeo, formatPublicSkillCount } from "@/lib/seo-taxonomy";
-import { getTagsList } from "@/functions/tags/get-tags-list";
-import { orpc } from "@/lib/orpc";
+import { formatPublicSkillCount, buildTagsHubSeo } from "@/lib/seo-taxonomy";
 import { kebabToTitle } from "@/lib/utils";
 import { ui_open, tags_skill_tags, tags_eyebrow } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
+import { getTagsInitial } from "@/functions/tags/get-tags-initial";
+import { getTagsPagination } from "@/functions/tags/get-tags-pagination";
 
 const TAGS_LIST_PAGE_SIZE = 24;
 
 export const Route = createFileRoute("/_publicLayout/tags/")({
-  loader: () => getTagsList({ data: {} }),
+  loader: () => getTagsInitial(),
   head: ({ loaderData }) => {
     const seo = buildTagsHubSeo({
       count: loaderData?.count ?? 0,
@@ -39,15 +40,18 @@ function RouteComponent() {
     throw new Error("Tags page data is missing.");
   }
 
+  const getPage = useServerFn(getTagsPagination);
   const query = useInfiniteQuery({
-    ...orpc.tags.listPage.infiniteOptions({
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      initialPageParam: undefined,
-      input: (pageParam) => ({
-        cursor: typeof pageParam === "string" ? pageParam : undefined,
-        limit: TAGS_LIST_PAGE_SIZE,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) =>
+      getPage({
+        data: {
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          limit: TAGS_LIST_PAGE_SIZE,
+        },
       }),
-    }),
+    queryKey: ["tagsPage"],
     initialData: {
       pageParams: [undefined],
       pages: [data.initialPage],
@@ -72,9 +76,7 @@ function RouteComponent() {
           <div className="text-muted-foreground space-y-1 font-mono text-[11px] tracking-widest uppercase">
             <div>
               {tags_eyebrow()}{" "}
-              <b className="text-foreground font-medium">
-                {formatPublicSkillCount(data.count, locale)}
-              </b>
+              <b className="text-foreground font-medium">{data.count.toLocaleString(locale)}</b>
             </div>
           </div>
         }

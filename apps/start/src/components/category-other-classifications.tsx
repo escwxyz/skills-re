@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { orpc } from "@/lib/orpc";
 import { categories_page_other_classifications } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { getCategoryLabel, getCategoryPresentation } from "@/utils/category-data";
+import { getCategoryPresentation, getCategoryTitle } from "@/utils/category-data";
 
 export const CategoryOtherClassifications = ({ currentSlug }: { currentSlug: string }) => {
   const locale = getLocale();
@@ -38,7 +38,7 @@ export const CategoryOtherClassifications = ({ currentSlug }: { currentSlug: str
             className="text-muted-foreground hover:text-foreground font-mono text-[10.5px] tracking-widest uppercase transition-colors"
           >
             {getCategoryPresentation(cat.slug, undefined, locale).num}{" "}
-            {getCategoryLabel(cat.slug, locale)}
+            {getCategoryTitle(cat.slug, locale)}
           </Link>
         ))}
       </div>

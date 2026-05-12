@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAuthorSkills } from "@/functions/authors/get-author-skills";
+import { getAuthorStats } from "@/functions/authors/get-author-stats";
 import {
   author_stats_aggregate_stars,
   author_stats_avg_audit_score,
@@ -11,7 +11,6 @@ import {
   author_stats_total_installs,
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { buildAuthorStats } from "@/utils/author-detail-data";
 
 const STAT_LABELS = [
   author_stats_published_skills,
@@ -29,12 +28,11 @@ interface Props {
 
 export const AuthorStats = ({ handle, repoCount, skillCount }: Props) => {
   const locale = getLocale();
-  const getSkills = useServerFn(getAuthorSkills);
+  const getStats = useServerFn(getAuthorStats);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["authorSkills", handle],
-    queryFn: () => getSkills({ data: { handle } }),
-    select: (skills) => buildAuthorStats({ handle, repoCount, skillCount }, skills, locale),
+    queryKey: ["authorStats", handle],
+    queryFn: () => getStats({ data: { handle } }),
     refetchInterval: 2 * 60 * 60 * 1000,
   });
 
@@ -46,9 +44,32 @@ export const AuthorStats = ({ handle, repoCount, skillCount }: Props) => {
     return null;
   }
 
+  const metrics = [
+    {
+      label: String(author_stats_published_skills()),
+      value: Intl.NumberFormat(locale).format(skillCount ?? data.skillCount),
+    },
+    {
+      label: String(author_stats_repositories()),
+      value: Intl.NumberFormat(locale).format(repoCount ?? 0),
+    },
+    {
+      label: String(author_stats_total_installs()),
+      value: Intl.NumberFormat(locale).format(data.totalDownloads),
+    },
+    {
+      label: String(author_stats_aggregate_stars()),
+      value: Intl.NumberFormat(locale).format(data.totalStars),
+    },
+    {
+      label: String(author_stats_avg_audit_score()),
+      value: data.averageAuditScore === null ? "—" : `${data.averageAuditScore}/100`,
+    },
+  ];
+
   return (
     <div className="border-border grid grid-cols-2 border-b-[3px] sm:grid-cols-3 md:grid-cols-5">
-      {data.metrics.map((stat, index) => (
+      {metrics.map((stat, index) => (
         <div key={stat.label} className="border-border border-r px-5 py-5 last:border-r-0">
           <div className="font-display text-[46px] leading-none font-normal">{stat.value}</div>
           <div className="text-muted-foreground mt-2 font-mono text-[10px] tracking-[.14em] uppercase">

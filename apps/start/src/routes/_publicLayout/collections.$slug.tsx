@@ -2,7 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { CollectionItem } from "@/components/collection-item";
 import { getCollectionDetail } from "@/functions/collections/get-collection-detail";
-import { buildCollectionOgImagePath } from "@/lib/og-image";
+import { buildCollectionOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
   collections_page_all_collections,
@@ -24,9 +24,17 @@ import {
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
+import {
+  formatCollectionLicenseMix,
+  formatCollectionPassRate,
+  formatCollectionSkillPassRate,
+  formatCollectionTotalDownloads,
+  formatCollectionTotalFileSize,
+} from "@/utils/collection-data";
+import { formatCompactNumber } from "@/utils/format";
 
 export const Route = createFileRoute("/_publicLayout/collections/$slug")({
-  loader: ({ params }) => getCollectionDetail({ data: { locale: getLocale(), slug: params.slug } }),
+  loader: ({ params }) => getCollectionDetail({ data: { slug: params.slug } }),
   head: ({ loaderData }) =>
     createSeo({
       canonicalPath: loaderData ? `/collections/${loaderData.slug}` : "/collections",
@@ -43,16 +51,27 @@ function RouteComponent() {
     throw notFound();
   }
 
-  const {
-    description,
-    licenseMix,
-    passingSkills,
-    skills,
-    slug,
-    title,
-    totalDownloads,
-    totalFileSize,
-  } = data;
+  const locale = getLocale();
+  const skills = data.skills.map((skill) => ({
+    authorHandle: skill.authorHandle ?? skill.author?.handle ?? "unknown-author",
+    description: skill.description,
+    id: skill.id,
+    installs:
+      typeof skill.downloadsAllTime === "number"
+        ? formatCompactNumber(skill.downloadsAllTime, locale)
+        : "—",
+    passRate: formatCollectionSkillPassRate(skill),
+    publisherName: skill.author?.name ?? skill.authorHandle ?? "—",
+    repoName: skill.repoName ?? "",
+    slug: skill.slug,
+    tags: skill.tags ?? [],
+    title: skill.title,
+    version: skill.latestVersion ?? "—",
+  }));
+  const licenseMix = formatCollectionLicenseMix(data.skills);
+  const passingSkills = formatCollectionPassRate(data.skills);
+  const totalDownloads = formatCollectionTotalDownloads(data.skills, locale);
+  const totalFileSize = formatCollectionTotalFileSize(data.skills);
 
   const metaItems = [
     { lbl: String(collections_page_skills()), val: String(skills.length) },
@@ -67,13 +86,13 @@ function RouteComponent() {
       {/* Hero */}
       <section className="border-border border-b px-5 py-10 md:px-10 md:py-16">
         <div className="text-destructive mb-4 font-mono text-[10.5px] tracking-[.2em] uppercase">
-          ● {collections_page_eyebrow({ slug })}
+          ● {collections_page_eyebrow({ slug: data.slug })}
         </div>
         <h1 className="font-display m-0 mb-5 text-[clamp(2.8rem,8vw,7rem)] leading-[.88] font-normal tracking-tight">
-          {title}
+          {data.title}
         </h1>
         <p className="text-muted-foreground m-0 max-w-3xl font-serif text-[clamp(1rem,2vw,1.4rem)] leading-relaxed">
-          {description}
+          {data.description}
         </p>
       </section>
 
@@ -107,7 +126,7 @@ function RouteComponent() {
             § {collections_page_mount_all()}
           </b>
           <span className="text-foreground break-all tracking-wider">
-            skr install @skills.re/{slug}
+            skr install @skills.re/{data.slug}
           </span>
         </aside>
 

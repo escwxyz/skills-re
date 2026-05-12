@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadMore } from "@/components/load-more";
 import { getAuthorSkills } from "@/functions/authors/get-author-skills";
 import {
   author_skills_none,
@@ -14,6 +15,7 @@ import {
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { toAuthorSkillRowData } from "@/utils/author-detail-data";
+import type { fetchAuthorSkillsPagination } from "@/functions/authors/authors.server";
 
 interface AuthorSkillRowData {
   auditScoreLabel: string;
@@ -97,37 +99,51 @@ export const AuthorSkillList = ({ handle }: Props) => {
   const locale = getLocale();
   const getSkills = useServerFn(getAuthorSkills);
 
-  const { data, isLoading } = useQuery({
+  const query = useInfiniteQuery<Awaited<ReturnType<typeof fetchAuthorSkillsPagination>>, Error>({
+    getNextPageParam: (lastPage) =>
+      lastPage.isDone ? undefined : lastPage.continueCursor || undefined,
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) =>
+      getSkills({
+        data: {
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          handle,
+          limit: 24,
+        },
+      }),
     queryKey: ["authorSkills", handle],
-    queryFn: () => getSkills({ data: { handle } }),
-    select: (skills) => ({
-      skillCount: skills.length,
-      skills: skills.map((skill, index) => toAuthorSkillRowData(skill, index, locale)),
-    }),
     refetchInterval: 6 * 60 * 60 * 1000,
   });
+
+  const pages = query.data?.pages ?? [];
+  const skills = pages.flatMap((page) => page.page);
+  const isLoading = query.isPending && skills.length === 0;
 
   if (isLoading) {
     return <AuthorSkillListSkeleton />;
   }
 
-  const skills = data?.skills ?? [];
-  const skillCount = data?.skillCount ?? 0;
+  const rowSkills = skills.map((skill, index) => toAuthorSkillRowData(skill, index, locale));
 
   return (
     <div className="py-9 pr-6 pl-4 md:pr-8 md:pl-6">
       <div className="border-border mb-5 flex items-baseline justify-between border-b pb-3">
         <h3 className="font-display m-0 text-[32px] font-normal">{author_skills_title()}</h3>
         <div className="text-muted-foreground font-mono text-[10.5px] tracking-[.14em] uppercase">
-          {author_skills_total_sorted({ count: String(skillCount) })}
+          {author_skills_total_sorted({ count: String(skills.length) })}
         </div>
       </div>
-      {skills.map((skill) => (
+      {rowSkills.map((skill) => (
         <SkillRow key={skill.id} skill={skill} />
       ))}
       {skills.length === 0 ? (
         <p className="text-muted-foreground font-serif italic">{author_skills_none()}</p>
       ) : null}
+      <LoadMore
+        fetchNextPage={() => query.fetchNextPage()}
+        hasNextPage={Boolean(query.hasNextPage)}
+        isFetchingNextPage={query.isFetchingNextPage}
+      />
     </div>
   );
 };

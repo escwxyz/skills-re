@@ -9,11 +9,11 @@ import { LoadMore } from "@/components/load-more";
 import { ReviewCard } from "@/components/review-card";
 import { ReviewRatingSidebar } from "@/components/review-rating-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { getSkillReviewsInitialPage } from "@/functions/skills/get-skill-reviews-initial";
+import { getSkillReviewsInitial } from "@/functions/skills/get-skill-reviews-initial";
 import { getSkillReviewsPagination } from "@/functions/skills/get-skill-reviews-pagination";
 
 const searchSchema = z.object({
@@ -21,7 +21,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/reviews")({
-  loader: ({ params }) => getSkillReviewsInitialPage({ data: { slug: params.slug } }),
+  loader: ({ params }) => getSkillReviewsInitial({ data: { skillSlug: params.slug } }),
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
     createSeo({
@@ -52,7 +52,8 @@ function RouteComponent() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["skillReviews", slug],
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getPage({ data: { cursor: pageParam ?? undefined, slug } }),
+    queryFn: ({ pageParam }) =>
+      getPage({ data: { cursor: pageParam ?? undefined, skillSlug: slug } }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
     initialData: {
       pages: [{ nextCursor: loaderData.nextCursor, reviews: loaderData.reviews }],

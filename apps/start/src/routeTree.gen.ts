@@ -19,7 +19,6 @@ import { Route as SitemapTaxonomyDotxmlRouteImport } from './routes/sitemap.taxo
 import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static[.]xml'
 import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
 import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
-import { Route as ApiRenderRouteImport } from './routes/api/render'
 import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
 import { Route as PublicLayoutSubmitRouteImport } from './routes/_publicLayout/submit'
 import { Route as PublicLayoutPrivacyRouteImport } from './routes/_publicLayout/privacy'
@@ -31,7 +30,7 @@ import { Route as DotwellKnownApiCatalogRouteImport } from './routes/[.]well-kno
 import { Route as DotwellKnownAgentConfigurationRouteImport } from './routes/[.]well-known/agent-configuration'
 import { Route as AuthedLayoutDashboardRouteRouteImport } from './routes/_authedLayout/dashboard.route'
 import { Route as PublicLayoutTagsIndexRouteImport } from './routes/_publicLayout/tags.index'
-import { Route as PublicLayoutSkillsIndexRouteImport } from './routes/_publicLayout/skills/index'
+import { Route as PublicLayoutSkillsIndexRouteImport } from './routes/_publicLayout/skills.index'
 import { Route as PublicLayoutDocsIndexRouteImport } from './routes/_publicLayout/docs.index'
 import { Route as PublicLayoutCollectionsIndexRouteImport } from './routes/_publicLayout/collections.index'
 import { Route as PublicLayoutCategoriesIndexRouteImport } from './routes/_publicLayout/categories.index'
@@ -51,6 +50,7 @@ import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authe
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
 import { Route as AuthedLayoutDashboardReviewsRouteImport } from './routes/_authedLayout/dashboard.reviews'
 import { Route as AuthedLayoutDashboardFeedbacksRouteImport } from './routes/_authedLayout/dashboard.feedbacks'
+import { Route as ApiSkillsSkillIdViewRouteImport } from './routes/api/skills/$skillId/view'
 import { Route as ApiOgTagsPngRouteImport } from './routes/api/og/tags.png'
 import { Route as ApiOgSkillsPngRouteImport } from './routes/api/og/skills.png'
 import { Route as ApiOgCollectionsPngRouteImport } from './routes/api/og/collections.png'
@@ -62,12 +62,12 @@ import { Route as ApiOgCollectionsSlugPngRouteImport } from './routes/api/og/col
 import { Route as ApiOgCategoriesSlugPngRouteImport } from './routes/api/og/categories.$slug.png'
 import { Route as ApiOgAuthorsHandlePngRouteImport } from './routes/api/og/authors.$handle.png'
 import { Route as PublicLayoutSkillAuthorRepoSlugRouteImport } from './routes/_publicLayout/skill.$author.$repo.$slug'
-import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.route'
-import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.index'
-import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.reviews'
-import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.file-tree'
-import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.changelog'
-import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills/$author.$repo.$slug.audit'
+import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.route'
+import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.index'
+import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.reviews'
+import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.file-tree'
+import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.changelog'
+import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.audit'
 import { Route as ApiOgSkillsAuthorRepoSkillSlugPngRouteImport } from './routes/api/og/skills.$author.$repo.$skillSlug.png'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -116,11 +116,6 @@ const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
 const RobotsTxtRoute = RobotsTxtRouteImport.update({
   id: '/robots/txt',
   path: '/robots/txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRenderRoute = ApiRenderRouteImport.update({
-  id: '/api/render',
-  path: '/api/render',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicLayoutTermsRoute = PublicLayoutTermsRouteImport.update({
@@ -294,6 +289,11 @@ const AuthedLayoutDashboardFeedbacksRoute =
     path: '/feedbacks',
     getParentRoute: () => AuthedLayoutDashboardRouteRoute,
   } as any)
+const ApiSkillsSkillIdViewRoute = ApiSkillsSkillIdViewRouteImport.update({
+  id: '/api/skills/$skillId/view',
+  path: '/api/skills/$skillId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOgTagsPngRoute = ApiOgTagsPngRouteImport.update({
   id: '/api/og/tags/png',
   path: '/api/og/tags/png',
@@ -409,7 +409,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -441,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
   '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
@@ -468,7 +468,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -500,6 +499,7 @@ export interface FileRoutesByTo {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
   '/api/og/categories/$slug/png': typeof ApiOgCategoriesSlugPngRoute
@@ -529,7 +529,6 @@ export interface FileRoutesById {
   '/_publicLayout/privacy': typeof PublicLayoutPrivacyRoute
   '/_publicLayout/submit': typeof PublicLayoutSubmitRoute
   '/_publicLayout/terms': typeof PublicLayoutTermsRoute
-  '/api/render': typeof ApiRenderRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
@@ -562,6 +561,7 @@ export interface FileRoutesById {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/_publicLayout/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
   '/_publicLayout/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
@@ -592,7 +592,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -624,6 +623,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/skills/$author/$repo/$slug'
     | '/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
@@ -651,7 +651,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -683,6 +682,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
     | '/api/og/categories/$slug/png'
@@ -711,7 +711,6 @@ export interface FileRouteTypes {
     | '/_publicLayout/privacy'
     | '/_publicLayout/submit'
     | '/_publicLayout/terms'
-    | '/api/render'
     | '/robots/txt'
     | '/sitemap/authors.xml'
     | '/sitemap/static.xml'
@@ -744,6 +743,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/_publicLayout/skills/$author/$repo/$slug'
     | '/_publicLayout/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
@@ -766,7 +766,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownAgentConfigurationRoute: typeof DotwellKnownAgentConfigurationRoute
   DotwellKnownApiCatalogRoute: typeof DotwellKnownApiCatalogRoute
-  ApiRenderRoute: typeof ApiRenderRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
   SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
   SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
@@ -777,6 +776,7 @@ export interface RootRouteChildren {
   ApiOgCollectionsPngRoute: typeof ApiOgCollectionsPngRoute
   ApiOgSkillsPngRoute: typeof ApiOgSkillsPngRoute
   ApiOgTagsPngRoute: typeof ApiOgTagsPngRoute
+  ApiSkillsSkillIdViewRoute: typeof ApiSkillsSkillIdViewRoute
   ApiOgAuthorsHandlePngRoute: typeof ApiOgAuthorsHandlePngRoute
   ApiOgCategoriesSlugPngRoute: typeof ApiOgCategoriesSlugPngRoute
   ApiOgCollectionsSlugPngRoute: typeof ApiOgCollectionsSlugPngRoute
@@ -854,13 +854,6 @@ declare module '@tanstack/react-router' {
       path: '/robots/txt'
       fullPath: '/robots/txt'
       preLoaderRoute: typeof RobotsTxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/render': {
-      id: '/api/render'
-      path: '/api/render'
-      fullPath: '/api/render'
-      preLoaderRoute: typeof ApiRenderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_publicLayout/terms': {
@@ -1079,6 +1072,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/feedbacks'
       preLoaderRoute: typeof AuthedLayoutDashboardFeedbacksRouteImport
       parentRoute: typeof AuthedLayoutDashboardRouteRoute
+    }
+    '/api/skills/$skillId/view': {
+      id: '/api/skills/$skillId/view'
+      path: '/api/skills/$skillId/view'
+      fullPath: '/api/skills/$skillId/view'
+      preLoaderRoute: typeof ApiSkillsSkillIdViewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/og/tags/png': {
       id: '/api/og/tags/png'
@@ -1355,7 +1355,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownAgentConfigurationRoute: DotwellKnownAgentConfigurationRoute,
   DotwellKnownApiCatalogRoute: DotwellKnownApiCatalogRoute,
-  ApiRenderRoute: ApiRenderRoute,
   RobotsTxtRoute: RobotsTxtRoute,
   SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
   SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
@@ -1366,6 +1365,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOgCollectionsPngRoute: ApiOgCollectionsPngRoute,
   ApiOgSkillsPngRoute: ApiOgSkillsPngRoute,
   ApiOgTagsPngRoute: ApiOgTagsPngRoute,
+  ApiSkillsSkillIdViewRoute: ApiSkillsSkillIdViewRoute,
   ApiOgAuthorsHandlePngRoute: ApiOgAuthorsHandlePngRoute,
   ApiOgCategoriesSlugPngRoute: ApiOgCategoriesSlugPngRoute,
   ApiOgCollectionsSlugPngRoute: ApiOgCollectionsSlugPngRoute,

@@ -1,34 +1,42 @@
-import { createServerORPCClient } from "@/lib/orpc.server";
-import type { CategoryListItem, DailyMetricPoint } from "@/utils/types";
+import type { AppRouterClient } from "@skills-re/api";
 
-export interface CategoriesListPageData {
-  authorsCount: number;
-  categories: CategoryListItem[];
-  dailyMetrics: DailyMetricPoint[];
-  skillsCount: number;
+interface CategoriesClient {
+  categories: Pick<AppRouterClient["categories"], "list">;
+  skills: Pick<AppRouterClient["skills"], "count">;
 }
 
-export const fetchCategoriesListPageData = async () => {
-  const client = createServerORPCClient();
-
-  const [categories, skillsCount, authors, dailyMetrics] = await Promise.all([
-    client.categories.list({ all: true, limit: 100 }),
-    client.skills.count(),
-    client.skills.listAuthors(),
-    client.metrics.dailySkillsSnapshots({ limit: 30 }),
+export const fetchCategories = async (input: { client: CategoriesClient }) => {
+  const [categories, skillsCount] = await Promise.all([
+    input.client.categories.list({ all: true, limit: 100 }),
+    input.client.skills.count(),
   ]);
 
-  return {
-    authorsCount: authors.length,
-    categories,
-    dailyMetrics,
-    skillsCount,
-  };
+  return { categories, skillsCount };
 };
 
-export const fetchCategoryDetailPageData = async (slug: string) => {
-  const client = createServerORPCClient();
-  const categoryDetail = await client.categories.getBySlug({ slug });
+interface CategoriesStatsClient {
+  metrics: Pick<AppRouterClient["metrics"], "dailySkillsSnapshots">;
+  skills: Pick<AppRouterClient["skills"], "countAuthors">;
+}
+
+export const fetchCategoriesStats = async (input: { client: CategoriesStatsClient }) => {
+  const [authors, dailyMetrics] = await Promise.all([
+    input.client.skills.countAuthors(),
+    input.client.metrics.dailySkillsSnapshots({ limit: 7 }),
+  ]);
+
+  return { authorsCount: authors.authorsCount, dailyMetrics };
+};
+
+interface CategoryDetailClient {
+  categories: Pick<AppRouterClient["categories"], "getBySlug">;
+}
+
+export const fetchCategoryDetailPageData = async (input: {
+  client: CategoryDetailClient;
+  slug: string;
+}) => {
+  const categoryDetail = await input.client.categories.getBySlug({ slug: input.slug });
 
   if (!categoryDetail) {
     return null;
@@ -37,6 +45,33 @@ export const fetchCategoryDetailPageData = async (slug: string) => {
   return {
     count: categoryDetail.count,
     relatedTags: categoryDetail.relatedTags,
-    slug,
+    slug: input.slug,
+  };
+};
+
+interface CategoryTopSkillsClient {
+  categories: Pick<AppRouterClient["categories"], "getBySlug">;
+}
+
+export const fetchCategoryTopSkills = async (input: {
+  client: CategoryTopSkillsClient;
+  slug: string;
+}) => {
+  const category = await input.client.categories.getBySlug({ slug: input.slug });
+
+  if (!category) {
+    return null;
+  }
+
+  return {
+    count: category.count,
+    topSkills: category.topSkills.map((skill) => ({
+      id: skill.id,
+      title: skill.title,
+      description: skill.description,
+      slug: skill.slug,
+      authorHandle: skill.authorHandle,
+      repoName: skill.repoName,
+    })),
   };
 };

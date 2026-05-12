@@ -41,7 +41,7 @@ const SEVERITY_COLORS: Record<AuditSeverity, { badge: string; card: string }> = 
   },
 };
 
-const getCategoryLabel = (category: AuditCategory): string => {
+const getAuditCategoryLabel = (category: AuditCategory): string => {
   const labels: Record<AuditCategory, string> = {
     credentials: m.skill_audit_category_credentials(),
     data_exfiltration: m.skill_audit_category_data_exfiltration(),
@@ -195,7 +195,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                   )}
                 </div>
                 <div className="mt-3 text-[12px] leading-[1.3] text-[var(--ink)] font-serif">
-                  {getCategoryLabel(category)}
+                  {getAuditCategoryLabel(category)}
                 </div>
               </div>
             );
@@ -274,7 +274,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
               {finding.severity}
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-text">
-              {getCategoryLabel(finding.category)}
+              {getAuditCategoryLabel(finding.category)}
             </span>
           </div>
           <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-text">

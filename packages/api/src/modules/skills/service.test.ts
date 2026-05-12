@@ -7,6 +7,90 @@ import { encodeRepoCursor } from "../repos/cursor";
 import { aiSearch, createSkillsService, submitGithubRepoPublic, uploadSkills } from "./service";
 
 describe("skills service", () => {
+  test("returns paginated authors from the public authors list contract", async () => {
+    const calls: { cursor?: string; limit?: number; sort?: "alphabetical" | "popular" }[] = [];
+    const service = createSkillsService({
+      listAuthors: (input) => {
+        calls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              avatarUrl: null,
+              displayName: "Acme",
+              githubUrl: "https://github.com/acme",
+              handle: "acme",
+              isVerified: 1,
+              name: "Acme",
+              repoCount: 2,
+              skillCount: 3,
+            },
+            {
+              avatarUrl: null,
+              displayName: "Beta",
+              githubUrl: "https://github.com/beta",
+              handle: "beta",
+              isVerified: 0,
+              name: "Beta",
+              repoCount: 1,
+              skillCount: 1,
+            },
+          ],
+        });
+      },
+    });
+
+    await expect(
+      (service as any).listAuthors({ cursor: "cursor-1", limit: 2, sort: "alphabetical" }),
+    ).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          avatarUrl: undefined,
+          githubUrl: "https://github.com/acme",
+          handle: "acme",
+          isVerified: true,
+          name: "Acme",
+          repoCount: 2,
+          skillCount: 3,
+        },
+        {
+          avatarUrl: undefined,
+          githubUrl: "https://github.com/beta",
+          handle: "beta",
+          isVerified: false,
+          name: "Beta",
+          repoCount: 1,
+          skillCount: 1,
+        },
+      ],
+    });
+    expect(calls).toEqual([
+      {
+        cursor: "cursor-1",
+        limit: 2,
+        sort: "alphabetical",
+      },
+    ]);
+  });
+
+  test("counts public authors with verified coverage", async () => {
+    const service = createSkillsService({
+      countAuthors: () =>
+        Promise.resolve({
+          authorsCount: 12,
+          verifiedCount: 4,
+        }),
+    });
+
+    await expect(service.countAuthors()).resolves.toEqual({
+      authorsCount: 12,
+      verifiedCount: 4,
+    });
+  });
+
   test("maps list cursors and public skill fields using the contract shape", async () => {
     const calls: { cursor?: string; limit?: number }[] = [];
     const service = createSkillsService({

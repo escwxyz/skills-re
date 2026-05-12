@@ -2,8 +2,8 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { z } from "zod/v4";
 
 import { FileEmptyState, SkillFileContent } from "@/components/skill-file-content";
-import { getSkillFileTreePageData } from "@/functions/skills/get-skill-file-tree";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { getSkillFileTree } from "@/functions/skills/get-skill-file-tree";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
@@ -17,10 +17,10 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/file-tree")({
   loaderDeps: ({ search }) => ({ snapshotId: search.snapshotId }),
   loader: ({ deps, params }) =>
-    getSkillFileTreePageData({
+    getSkillFileTree({
       data: {
         selectedSnapshotId: deps.snapshotId,
-        slug: params.slug,
+        skillSlug: params.slug,
       },
     }),
   head: ({ loaderData, params }) =>

@@ -30,6 +30,54 @@ export interface SkillClaimContext {
 const isDefined = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 
+interface AuthorListCursor {
+  sort: "alphabetical" | "popular";
+  handle: string;
+  value: string;
+}
+
+const encodeAuthorCursor = (cursor: AuthorListCursor | null) => {
+  if (!cursor) {
+    return "";
+  }
+
+  return btoa(JSON.stringify(cursor)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+};
+
+const decodeAuthorCursor = (cursor: string | undefined) => {
+  if (!cursor) {
+    return null;
+  }
+
+  try {
+    const normalized = cursor
+      .replaceAll("-", "+")
+      .replaceAll("_", "/")
+      .padEnd(Math.ceil(cursor.length / 4) * 4, "=");
+    const parsed = JSON.parse(atob(normalized)) as {
+      sort?: unknown;
+      handle?: unknown;
+      value?: unknown;
+    };
+
+    if (
+      (parsed.sort === "alphabetical" || parsed.sort === "popular") &&
+      typeof parsed.handle === "string" &&
+      typeof parsed.value === "string"
+    ) {
+      return {
+        sort: parsed.sort,
+        handle: parsed.handle,
+        value: parsed.value,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
 export async function listSkillsPageBySyncTime(input?: { cursor?: string; limit?: number }) {
   const limit = input?.limit ?? defaultLimit;
   const cursor = decodeRepoCursor(input?.cursor);
@@ -281,12 +329,22 @@ export async function resolveSkillPathBySlug(slug: string) {
   return rows[0] ?? null;
 }
 
-export async function listAuthors() {
-  const rows = await db
+export async function listAuthors(input?: {
+  cursor?: string;
+  limit?: number;
+  sort?: "alphabetical" | "popular";
+}) {
+  const limit = input?.limit ?? defaultLimit;
+  const sort = input?.sort ?? "popular";
+  const cursor = decodeAuthorCursor(input?.cursor);
+  // todo: type check
+  // oxlint-disable-next-line typescript/no-explicit-any
+  let query: any = db
     .select({
       avatarUrl: sql<string | null>`max(${reposTable.ownerAvatarUrl})`,
       githubUrl: sql<string>`'https://github.com/' || ${reposTable.ownerHandle}`,
       handle: reposTable.ownerHandle,
+      displayName: sql<string>`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
       name: sql<string | null>`max(${reposTable.ownerName})`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
@@ -295,10 +353,69 @@ export async function listAuthors() {
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
     .where(and(eq(skillsTable.visibility, "public"), sql`trim(${reposTable.ownerHandle}) <> ''`))
-    .groupBy(reposTable.ownerHandle)
-    .orderBy(desc(sql`count(${skillsTable.id})`), asc(reposTable.ownerHandle));
+    .groupBy(reposTable.ownerHandle);
 
-  return rows;
+  if (sort === "alphabetical") {
+    query = query.orderBy(
+      asc(sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`),
+      asc(reposTable.ownerHandle),
+    );
+    if (cursor) {
+      query = query.having(
+        sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) > ${cursor.value} OR (coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) = ${cursor.value} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+      );
+    }
+  } else {
+    query = query.orderBy(desc(sql`count(${skillsTable.id})`), asc(reposTable.ownerHandle));
+    if (cursor) {
+      query = query.having(
+        sql`count(${skillsTable.id}) < ${Number(cursor.value)} OR (count(${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+      );
+    }
+  }
+
+  const rows = await query.limit(limit + 1);
+  const page = rows.slice(0, limit);
+  const next = page.at(-1) ?? null;
+
+  return {
+    continueCursor:
+      rows.length > limit && next
+        ? encodeAuthorCursor(
+            sort === "alphabetical"
+              ? {
+                  handle: next.handle,
+                  sort,
+                  value: next.displayName,
+                }
+              : {
+                  handle: next.handle,
+                  sort,
+                  value: String(next.skillCount),
+                },
+          )
+        : "",
+    isDone: rows.length <= limit,
+    page,
+  };
+}
+
+export async function countAuthors() {
+  const rows = await db
+    .select({
+      authorsCount: sql<number>`count(distinct ${reposTable.ownerHandle})`,
+      verifiedCount: sql<number>`count(distinct case when ${skillsTable.isVerified} then ${reposTable.ownerHandle} end)`,
+    })
+    .from(reposTable)
+    .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .where(and(eq(skillsTable.visibility, "public"), sql`trim(${reposTable.ownerHandle}) <> ''`));
+
+  return (
+    rows[0] ?? {
+      authorsCount: 0,
+      verifiedCount: 0,
+    }
+  );
 }
 
 export async function findAuthorByHandle(handle: string) {

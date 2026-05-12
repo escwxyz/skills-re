@@ -3,7 +3,7 @@ import { z } from "zod";
 import { baseContract } from "./common/base";
 import { submitGithubPreparedOutputSchema } from "./common/github";
 import {
-  authorListItemSchema,
+  authorListPageSchema,
   authorSchema,
   searchSkillListItemSchema,
   skillBasicSchema,
@@ -73,6 +73,19 @@ const unsaveSkillResultSchema = z.object({
 
 const authorHandleInputSchema = z.object({
   handle: z.string().min(1),
+});
+
+const authorListInputSchema = z
+  .object({
+    cursor: z.string().optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+    sort: z.enum(["alphabetical", "popular"]).optional(),
+  })
+  .optional();
+
+const authorCountResultSchema = z.object({
+  authorsCount: z.number().int().nonnegative(),
+  verifiedCount: z.number().int().nonnegative(),
 });
 
 const skillByPathInputSchema = z.object({
@@ -247,7 +260,19 @@ const listAuthorsContract = baseContract
     successDescription: "Public author list",
     summary: "List public authors",
   })
-  .output(z.array(authorListItemSchema));
+  .input(authorListInputSchema)
+  .output(authorListPageSchema);
+
+const countAuthorsContract = baseContract
+  .route({
+    description: "Returns public author counts used by the authors index and taxonomy surfaces.",
+    method: "GET",
+    path: "/skills/authors/count",
+    tags: ["Skills"],
+    successDescription: "Public author counts",
+    summary: "Count public authors",
+  })
+  .output(authorCountResultSchema);
 
 const skillHistoryInfoItemSchema = z.object({
   directoryPath: z.string(),
@@ -262,6 +287,7 @@ export const skillsContract = {
   checkExisting: skillExistingContract,
   getAuthorByHandle: authorByHandleContract,
   count: skillCountContract,
+  countAuthors: countAuthorsContract,
   getBasic: skillBasicContract,
   getByPath: skillByPathContract,
   getSkillsHistoryInfo: baseContract

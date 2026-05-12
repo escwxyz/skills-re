@@ -1,55 +1,28 @@
-import { createServerORPCClient } from "@/lib/orpc.server";
-import {
-  formatCollectionLicenseMix,
-  formatCollectionPassRate,
-  formatCollectionSkillPassRate,
-  formatCollectionTotalDownloads,
-  formatCollectionTotalFileSize,
-} from "@/utils/collection-data";
-import { formatCompactNumber } from "@/utils/format";
-import type { Locale } from "@/paraglide/runtime";
+import type { AppRouterClient } from "@skills-re/api";
 
-export const fetchCollectionsListPageData = async () => {
-  const client = createServerORPCClient();
-  const { page: collections } = await client.collections.list({ limit: 100 });
-  return {
-    collections,
-  };
-};
+export const COLLECTIONS_PAGE_SIZE = 9;
 
-export const fetchCollectionDetailPageData = async (slug: string, locale: Locale) => {
-  const client = createServerORPCClient();
-  const collection = await client.collections.getBySlug({ slug });
+interface CollectionsListClient {
+  collections: Pick<AppRouterClient["collections"], "list">;
+}
 
-  if (!collection) {
-    return null;
-  }
+interface CollectionDetailClient {
+  collections: Pick<AppRouterClient["collections"], "getBySlug">;
+}
 
-  const rawSkills = collection.skills;
+export const fetchCollectionsListPage = async (input: {
+  client: CollectionsListClient;
+  cursor?: string;
+  limit?: number;
+}) =>
+  await input.client.collections.list({
+    cursor: input.cursor,
+    limit: input.limit ?? COLLECTIONS_PAGE_SIZE,
+  });
 
-  const skills = rawSkills.map((s) => ({
-    description: s.description,
-    id: s.id,
-    installs:
-      typeof s.downloadsAllTime === "number"
-        ? formatCompactNumber(s.downloadsAllTime, locale)
-        : "—",
-    passRate: formatCollectionSkillPassRate(s),
-    publisherName: s.author?.name ?? s.authorHandle ?? "—",
-    slug: s.slug,
-    tags: s.tags ?? [],
-    title: s.title,
-    version: s.latestVersion ?? "—",
-  }));
+export const fetchCollectionDetail = async (input: {
+  client: CollectionDetailClient;
+  slug: string;
+}) => await input.client.collections.getBySlug({ slug: input.slug });
 
-  return {
-    description: collection.description,
-    licenseMix: formatCollectionLicenseMix(rawSkills),
-    passingSkills: formatCollectionPassRate(rawSkills),
-    skills,
-    slug: collection.slug,
-    title: collection.title,
-    totalDownloads: formatCollectionTotalDownloads(rawSkills, locale),
-    totalFileSize: formatCollectionTotalFileSize(rawSkills),
-  };
-};
+export type CollectionsListPage = Awaited<ReturnType<typeof fetchCollectionsListPage>>;

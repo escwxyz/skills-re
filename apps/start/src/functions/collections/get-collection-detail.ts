@@ -1,9 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
-
-import { locales } from "@/paraglide/runtime";
-import { fetchCollectionDetailPageData } from "./collections.server";
+import { fetchCollectionDetail } from "./collections.server";
+import { createServerORPCClient } from "@/lib/orpc.server";
 
 export const getCollectionDetail = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ locale: z.enum([...locales]), slug: z.string() }))
-  .handler(({ data }) => fetchCollectionDetailPageData(data.slug, data.locale));
+  .inputValidator(z.object({ slug: z.string().trim().min(1) }))
+  .handler(
+    async ({ data }) =>
+      await fetchCollectionDetail({
+        client: createServerORPCClient(),
+        slug: data.slug,
+      }),
+  );

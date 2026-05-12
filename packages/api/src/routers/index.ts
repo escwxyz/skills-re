@@ -11,6 +11,7 @@ import {
   addSkillToCollection,
   countCategories,
   countCollections,
+  countAuthors,
   countMineFeedback,
   countMineReviews,
   createCollection,
@@ -445,7 +446,8 @@ export const appRouter = {
       getSkillsHistoryInfo(input as { skillIds: string[] }),
     ),
     list: publicProcedure.skills.list.handler(({ input }) => listSkills(input)),
-    listAuthors: publicProcedure.skills.listAuthors.handler(() => listAuthors()),
+    countAuthors: publicProcedure.skills.countAuthors.handler(() => countAuthors()),
+    listAuthors: publicProcedure.skills.listAuthors.handler(({ input }) => listAuthors(input)),
     listMine: protectedProcedure.skills.listMine.handler(({ input, context }) =>
       listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
     ),

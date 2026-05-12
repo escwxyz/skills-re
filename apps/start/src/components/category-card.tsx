@@ -5,10 +5,10 @@ import { getLocale } from "@/paraglide/runtime";
 import { category_card_skills } from "@/paraglide/messages";
 import {
   getCategoryDescription,
-  getCategoryLabel,
   getCategoryPresentation,
+  getCategoryTitle,
 } from "@/utils/category-data";
-import type { CategoryListItem } from "@/utils/types";
+import type { AppRouterClient } from "@skills-re/api";
 
 export const TITLE_VARIANT_CLASS: Record<
   "default" | "accent" | "blue" | "green" | "italic",
@@ -22,14 +22,14 @@ export const TITLE_VARIANT_CLASS: Record<
 };
 
 interface Props {
-  category: CategoryListItem;
+  category: Awaited<ReturnType<AppRouterClient["categories"]["list"]>>[number];
   index?: number;
 }
 
 export const CategoryCard = ({ category, index }: Props) => {
   const locale = getLocale();
   const presentation = getCategoryPresentation(category.slug, index, locale);
-  const title = getCategoryLabel(category.slug, locale);
+  const title = getCategoryTitle(category.slug, locale);
   const description = getCategoryDescription(category.slug, locale);
 
   return (

@@ -4,9 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 
 import { SkillAuditReport } from "@/components/skill-audit-report";
-import { getSkillBasePageData } from "@/functions/skills/get-skill-base";
+import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { getSkillVersionHistory } from "@/functions/skills/get-skill-version-history";
-import { buildSkillOgImagePath } from "@/lib/og-image";
+import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
@@ -17,7 +17,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/audit")({
   loader: async ({ params }) => {
-    const data = await getSkillBasePageData({ data: { slug: params.slug } });
+    const data = await getSkillBase({ data: { skillSlug: params.slug } });
     if (!data) {
       throw notFound();
     }

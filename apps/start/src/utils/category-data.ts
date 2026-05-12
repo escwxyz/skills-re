@@ -100,8 +100,6 @@ export const getCategoryTitle = (slug: string, locale?: Locale) =>
 export const getCategoryDescription = (slug: string, locale?: Locale) =>
   getCategoryCopy(resolveLocale(locale), slug).description;
 
-export const getCategoryLabel = (slug: string, locale?: Locale) => getCategoryTitle(slug, locale);
-
 export const getCategoryPresentation = (slug: string, index?: number, locale?: Locale) => {
   const definition = getCategoryDefinition(slug);
   const copy = getCategoryCopy(resolveLocale(locale), slug);

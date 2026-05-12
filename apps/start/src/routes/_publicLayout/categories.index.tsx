@@ -1,12 +1,11 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
+import { CategoriesStatsStrip } from "@/components/categories-stats-strip";
 import { CategoryCard } from "@/components/category-card";
 import { PageHero } from "@/components/page-hero";
-import { getCategoriesList } from "@/functions/categories/get-categories-list";
-import { OG_CATEGORIES_IMAGE_PATH } from "@/lib/og-image";
+import { getCategories } from "@/functions/categories/get-categories";
+import { OG_CATEGORIES_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
-import { formatInteger } from "@/utils/format";
-import { sumDailyMetrics } from "@/utils/stats";
 import {
   categories_index_description,
   categories_index_eyebrow,
@@ -14,17 +13,12 @@ import {
   categories_index_note_lead,
   categories_index_reading_body,
   categories_index_reading_heading,
-  categories_index_stat_disciplines,
-  categories_index_stat_listed_authors,
-  categories_index_stat_new_skills,
-  categories_index_stat_skills_indexed,
   categories_index_title,
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_publicLayout/categories/")({
-  loader: () => getCategoriesList({ data: {} }),
+  loader: () => getCategories(),
   head: () =>
     createSeo({
       canonicalPath: "/categories",
@@ -41,29 +35,9 @@ function RouteComponent() {
     throw notFound();
   }
 
-  const { categories, authorsCount, dailyMetrics, skillsCount } = data;
+  const { categories, skillsCount } = data;
   const locale = getLocale();
-  const totals = sumDailyMetrics(dailyMetrics);
   const totalSkills = categories.reduce((sum, category) => sum + category.count, 0);
-
-  const statStrip = [
-    {
-      label: String(categories_index_stat_disciplines()),
-      value: formatInteger(categories.length, locale),
-    },
-    {
-      label: String(categories_index_stat_skills_indexed()),
-      value: formatInteger(skillsCount, locale),
-    },
-    {
-      label: String(categories_index_stat_listed_authors()),
-      value: formatInteger(authorsCount, locale),
-    },
-    {
-      label: String(categories_index_stat_new_skills()),
-      value: formatInteger(totals.newSkills, locale),
-    },
-  ];
 
   return (
     <>
@@ -84,20 +58,7 @@ function RouteComponent() {
         <em>{categories_index_title()}</em>
       </PageHero>
 
-      <div className="border-border grid grid-cols-2 border-b-[3px] font-mono text-[10.5px] tracking-widest uppercase md:grid-cols-4">
-        {statStrip.map((s, i) => (
-          <div
-            key={s.label}
-            className={cn(
-              "border-border border-r px-5 py-4.5",
-              i === statStrip.length - 1 ? " border-r-0" : "",
-            )}
-          >
-            <div className="text-muted-foreground">{s.label}</div>
-            <div className="font-display mt-1 text-[36px] leading-none font-normal">{s.value}</div>
-          </div>
-        ))}
-      </div>
+      <CategoriesStatsStrip categoriesCount={categories.length} skillsCount={skillsCount} />
 
       <section>
         <div className="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

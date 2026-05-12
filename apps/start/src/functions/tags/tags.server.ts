@@ -1,40 +1,41 @@
-import { createServerORPCClient } from "@/lib/orpc.server";
-import type { BrowseSkillItem, TagListItem } from "@/utils/types";
+import type { AppRouterClient } from "@skills-re/api";
 
-export const TAGS_LIST_PAGE_SIZE = 24;
-
-export interface TagsListPageData {
-  count: number;
-  initialPage: {
-    items: TagListItem[];
-    nextCursor: string | null;
-    totalCount?: number;
-  };
+interface TagsInitialClient {
+  tags: Pick<AppRouterClient["tags"], "count" | "listPage">;
 }
 
-export interface TagDetailPageData {
-  count: number;
-  indexable: boolean;
-  relatedCategories: { count: number; slug: string; name: string }[];
-  relatedTags: { count: number; slug: string }[];
-  slug: string;
-  topSkills: BrowseSkillItem[];
-}
-
-export const fetchTagsListPageData = async () => {
-  const client = createServerORPCClient();
-
-  const page = await client.tags.listPage({ limit: TAGS_LIST_PAGE_SIZE });
+export const fetchTagsInitial = async (input: { client: TagsInitialClient }) => {
+  const [count, initialPage] = await Promise.all([
+    input.client.tags.count(),
+    input.client.tags.listPage({ limit: 24 }),
+  ]);
 
   return {
-    count: page.totalCount ?? 0,
-    initialPage: page,
+    count,
+    initialPage,
   };
 };
 
-export const fetchTagDetailPageData = async (slug: string) => {
-  const client = createServerORPCClient();
-  const tag = await client.tags.getBySlug({ slug });
+interface TagsListPageClient {
+  tags: Pick<AppRouterClient["tags"], "listPage">;
+}
+
+export const fetchTagsPagination = async (input: {
+  client: TagsListPageClient;
+  cursor?: string;
+  limit?: number;
+}) =>
+  await input.client.tags.listPage({
+    cursor: input.cursor,
+    limit: input.limit,
+  });
+
+interface TagDetailClient {
+  tags: Pick<AppRouterClient["tags"], "getBySlug">;
+}
+
+export const fetchTagDetail = async (input: { client: TagDetailClient; slug: string }) => {
+  const tag = await input.client.tags.getBySlug({ slug: input.slug });
 
   if (!tag) {
     return null;
@@ -46,6 +47,29 @@ export const fetchTagDetailPageData = async (slug: string) => {
     relatedCategories: tag.relatedCategories,
     relatedTags: tag.relatedTags,
     slug: tag.slug,
-    topSkills: tag.topSkills,
+  };
+};
+
+interface TagTopSkillsClient {
+  tags: Pick<AppRouterClient["tags"], "getBySlug">;
+}
+
+export const fetchTagTopSkills = async (input: { client: TagTopSkillsClient; slug: string }) => {
+  const tag = await input.client.tags.getBySlug({ slug: input.slug });
+
+  if (!tag) {
+    return null;
+  }
+
+  return {
+    count: tag.count,
+    topSkills: tag.topSkills.map((skill) => ({
+      id: skill.id,
+      title: skill.title,
+      description: skill.description,
+      slug: skill.slug,
+      authorHandle: skill.authorHandle,
+      repoName: skill.repoName,
+    })),
   };
 };
