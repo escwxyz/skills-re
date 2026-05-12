@@ -70,7 +70,7 @@ const TABS: SkillDetailTabItem[] = [
 ];
 
 export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
-  <>
+  <div className="flex min-w-0 flex-1 overflow-x-auto">
     {TABS.map((tab) => {
       const Icon = tab.icon;
 
@@ -93,5 +93,5 @@ export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
         </Link>
       );
     })}
-  </>
+  </div>
 );

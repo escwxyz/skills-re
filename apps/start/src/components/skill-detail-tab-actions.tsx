@@ -13,7 +13,7 @@ export const SkillDetailTabActions = ({ snapshotId, skillSlug }: Props) => {
   const { handleClick } = useClaimAuthor({ skillSlug });
 
   return (
-    <div className="flex flex-1 items-center justify-end px-3">
+    <div className="ml-auto flex shrink-0 items-center justify-end px-3">
       <div className="flex items-center justify-end gap-1.5">
         <SkillArchiveDownloadButton
           ariaLabel={m.skill_tabs_actions_download_archive()}

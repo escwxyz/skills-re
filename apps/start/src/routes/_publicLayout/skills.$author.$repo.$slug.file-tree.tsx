@@ -1,6 +1,7 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useRef } from "react";
 import { z } from "zod/v4";
 
 import { FileEmptyState, SkillFileContent } from "@/components/skill-file-content";
@@ -56,6 +57,7 @@ function RouteComponent() {
   const search = Route.useSearch();
   const activePath = search.path ?? data.defaultActivePath;
   const getContent = useServerFn(getSkillFileContent);
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { data: fileContent, isLoading } = useQuery({
     enabled: Boolean(activePath && data.snapshotId),
@@ -70,8 +72,8 @@ function RouteComponent() {
   });
 
   return (
-    <div className="grid min-h-160 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_220px]">
-      <aside className="border-border bg-paper-2 lg:border-r">
+    <div className="grid min-h-160 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_220px] lg:items-start">
+      <aside className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-10 bg-paper-2 lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto lg:border-r">
         {data.rows.length > 0 ? (
           <div className="pt-4 pb-4">
             {data.rows.map((row) =>
@@ -118,7 +120,10 @@ function RouteComponent() {
         )}
       </aside>
 
-      <div className="min-w-0 border-border lg:border-r">
+      <div
+        ref={contentScrollRef}
+        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto lg:border-r"
+      >
         {activePath && data.snapshotId ? (
           <SkillFileContent activePath={activePath} data={fileContent} isLoading={isLoading} />
         ) : (
@@ -126,9 +131,11 @@ function RouteComponent() {
         )}
       </div>
 
-      <aside className="hidden min-w-0 lg:block">
-        <div className="sticky top-24 p-6">
-          {fileContent?.tocItems.length ? <SkillMdToc items={fileContent.tocItems} /> : null}
+      <aside className="hidden min-w-0 lg:block lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto">
+        <div className="p-6">
+          {fileContent?.tocItems.length ? (
+            <SkillMdToc items={fileContent.tocItems} scrollContainerRef={contentScrollRef} />
+          ) : null}
         </div>
       </aside>
     </div>

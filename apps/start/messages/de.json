@@ -620,6 +620,8 @@
   "skill_file_tree_content_empty_description": "Für diesen Snapshot ist keine lesbare Dateivorschau verfügbar.",
   "skill_file_tree_content_truncated": "gekürzt",
   "skill_file_tree_content_truncated_notice": "Es wird eine gekürzte Vorschau dieser Datei angezeigt.",
+  "skill_file_tree_content_raw": "Roh",
+  "skill_file_tree_content_rendered": "Gerendert",
   "skill_file_tree_sidebar_description": "Durchsuche den neuesten öffentlichen Snapshot für diesen Skill.",
   "skill_file_tree_sidebar_empty": "Für diesen Snapshot sind noch keine Dateien verfügbar.",
   "skill_file_tree_sidebar_title": "Snapshot-Dateien",

@@ -46,13 +46,15 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
 
   return (
     <>
-      <div className="border-border flex items-start justify-between gap-4 border-b px-5 py-4">
+      <div className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-20 flex items-start justify-between gap-4 border-b bg-background/95 px-5 py-4 backdrop-blur-sm lg:top-0">
         <div className="min-w-0">
           <div className="truncate font-mono text-[12px] text-ink">{activePath}</div>
           <div className="eyebrow mt-1">{metaLabel}</div>
         </div>
         <label className="flex shrink-0 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          <span>{isRendered ? "Rendered" : "Raw"}</span>
+          <span>
+            {isRendered ? m.skill_file_tree_content_rendered() : m.skill_file_tree_content_raw()}
+          </span>
           <Switch checked={isRendered} onCheckedChange={setIsRendered} size="sm" />
         </label>
       </div>

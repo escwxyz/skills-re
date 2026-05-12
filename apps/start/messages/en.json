@@ -620,6 +620,8 @@
   "skill_file_tree_content_empty_description": "No readable file preview is available for this snapshot.",
   "skill_file_tree_content_truncated": "truncated",
   "skill_file_tree_content_truncated_notice": "Showing a truncated preview for this file.",
+  "skill_file_tree_content_raw": "Raw",
+  "skill_file_tree_content_rendered": "Rendered",
   "skill_file_tree_sidebar_description": "Browse the latest public snapshot for this skill.",
   "skill_file_tree_sidebar_empty": "No files are available for this snapshot yet.",
   "skill_file_tree_sidebar_title": "Snapshot Files",
