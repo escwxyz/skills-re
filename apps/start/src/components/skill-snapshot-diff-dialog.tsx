@@ -42,6 +42,7 @@ import {
   skill_snapshot_diff_unavailable,
 } from "@/paraglide/messages";
 import type { SkillVersionHistoryItem } from "@/utils/types";
+import { cn } from "@/lib/utils";
 
 interface SkillSnapshotDiffLine {
   kind: "added" | "context" | "removed";
@@ -93,7 +94,10 @@ const getRowMarker = (kind: SkillSnapshotDiffLine["kind"]) => {
 function DiffRow({ row }: { row: SkillSnapshotDiffLine }) {
   return (
     <div
-      className={`grid grid-cols-[3rem_3rem_3rem_minmax(0,1fr)] items-start gap-2 border-b px-3 py-1.5 font-mono text-[10.5px] leading-5 ${DIFF_ROW_CLASS[row.kind]}`}
+      className={cn(
+        "grid grid-cols-[3.5rem_3.5rem_2.5rem_minmax(0,1fr)] items-start gap-2 border-b px-3 py-1.5 font-mono text-[10.5px] leading-5",
+        DIFF_ROW_CLASS[row.kind],
+      )}
     >
       <span className="text-right tabular-nums">
         {row.kind === "added" ? "" : row.leftLineNumber}
@@ -223,8 +227,8 @@ export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }
         }
       />
 
-      <DialogContent className="max-w-5xl p-0">
-        <DialogHeader className="border-border border-b px-5 py-4">
+      <DialogContent className="w-[min(96vw,72rem)] max-w-none overflow-hidden p-0">
+        <DialogHeader className="border-border border-b px-6 py-5">
           <DialogTitle className="font-display text-[24px] font-normal leading-tight">
             {skill_snapshot_diff_title()}
           </DialogTitle>
@@ -233,46 +237,40 @@ export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 p-5 lg:grid-cols-[1fr_280px]">
-          <div className="min-w-0">
+        <div className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="min-w-0 space-y-4">
             <div className="border-border bg-paper-2 border px-4 py-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="min-w-0">
                   <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
                     {skill_snapshot_diff_base_label()}
                   </div>
-                  <div className="font-mono text-[11px]">
+                  <div className="truncate font-mono text-[11px]">
                     {currentVersion
                       ? `v.${currentVersion.version}`
                       : skill_snapshot_diff_unavailable()}
                   </div>
-                  <div className="text-muted-foreground font-mono text-[10px]">
-                    {/**
-                     * todo: format
-                     */}
+                  <div className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                     {currentVersion?.date}
                   </div>
-                  <div className="text-muted-foreground mt-1 font-mono text-[10px]">
+                  <div className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                     {currentVersion?.entryPath}
                   </div>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
                     {skill_snapshot_diff_compare_label()}
                   </div>
-                  <div className="font-mono text-[11px]">
+                  <div className="truncate font-mono text-[11px]">
                     {compareVersion
                       ? `v.${compareVersion.version}`
                       : skill_snapshot_diff_unavailable()}
                   </div>
-                  <div className="text-muted-foreground font-mono text-[10px]">
-                    {/**
-                     * todo: format
-                     */}
+                  <div className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                     {compareVersion?.date}
                   </div>
-                  <div className="text-muted-foreground mt-1 font-mono text-[10px]">
+                  <div className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                     {compareVersion?.entryPath}
                   </div>
                 </div>
@@ -309,8 +307,8 @@ export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }
               }}
               value={compareSnapshotId}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue>
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue className="min-w-0">
                   {(value: string | null) => {
                     const version = getSelectedVersion(versions, value);
                     return version ? `v.${version.version}` : skill_snapshot_diff_select_version();
@@ -323,12 +321,9 @@ export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }
                   .filter((version) => version.snapshotId !== currentSnapshotId)
                   .map((version) => (
                     <SelectItem key={version.snapshotId} value={version.snapshotId}>
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate">v.{version.version}</span>
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-sm">v.{version.version}</span>
                         <span className="truncate text-[10px] text-muted-foreground">
-                          {/**
-                           * todo: format
-                           */}
                           {version.date}
                         </span>
                       </span>

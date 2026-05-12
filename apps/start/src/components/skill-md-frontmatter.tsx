@@ -24,7 +24,7 @@ export const SkillMdFrontmatter = (props: SkillFrontmatterData) => {
   const metadataEntries = props.metadata ? Object.entries(props.metadata) : [];
 
   return (
-    <aside className="hidden self-start font-mono text-[11px] leading-[1.7] text-muted-foreground lg:sticky lg:top-17.5 lg:block">
+    <aside className="hidden self-start font-mono text-[11px] leading-[1.7] text-muted-foreground lg:sticky lg:top-24 lg:block">
       <h6 className="text-muted-foreground mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em]">
         {m.skill_detail_frontmatter()}
       </h6>
