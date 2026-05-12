@@ -504,7 +504,7 @@ export const GithubSubmitForm = () => {
                   {repoPreview.invalidSkills.map((skill) => (
                     <div
                       key={skill.skillMdPath}
-                      className="rounded border border-editorial-red/30 bg-paper-2 p-3"
+                      className="rounded-none border border-editorial-red/30 bg-paper-2 p-3"
                     >
                       <p className="font-mono text-[11px] text-ink">{skill.skillMdPath}</p>
                       <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">

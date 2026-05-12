@@ -331,19 +331,19 @@ function AuditReportSkeleton() {
       <div className="grid grid-cols-2 border border-border sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="border-border border-r px-4 py-3 last:border-r-0">
-            <div className="mb-2 h-2 w-20 animate-pulse rounded bg-[var(--rule)]" />
-            <div className="h-6 w-14 animate-pulse rounded bg-[var(--rule)]" />
+            <div className="mb-2 h-2 w-20 animate-pulse rounded-none bg-[var(--rule)]" />
+            <div className="h-6 w-14 animate-pulse rounded-none bg-[var(--rule)]" />
           </div>
         ))}
       </div>
       <div className="space-y-2">
-        <div className="h-3.5 w-full max-w-lg animate-pulse rounded bg-[var(--rule)]" />
-        <div className="h-3.5 w-3/4 animate-pulse rounded bg-[var(--rule)]" />
-        <div className="h-3.5 w-1/2 animate-pulse rounded bg-[var(--rule)]" />
+        <div className="h-3.5 w-full max-w-lg animate-pulse rounded-none bg-[var(--rule)]" />
+        <div className="h-3.5 w-3/4 animate-pulse rounded-none bg-[var(--rule)]" />
+        <div className="h-3.5 w-1/2 animate-pulse rounded-none bg-[var(--rule)]" />
       </div>
       <div>
-        <div className="mb-1.5 h-2 w-28 animate-pulse rounded bg-[var(--rule)]" />
-        <div className="mb-4 h-7 w-40 animate-pulse rounded bg-[var(--rule)]" />
+        <div className="mb-1.5 h-2 w-28 animate-pulse rounded-none bg-[var(--rule)]" />
+        <div className="mb-4 h-7 w-40 animate-pulse rounded-none bg-[var(--rule)]" />
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <div

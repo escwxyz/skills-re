@@ -1,7 +1,9 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef } from "react";
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { z } from "zod/v4";
 
 import { FileEmptyState, SkillFileContent } from "@/components/skill-file-content";
@@ -18,6 +20,31 @@ const searchSchema = z.object({
   path: z.string().optional(),
   snapshotId: z.string().optional(),
 });
+
+const MOBILE_TREE_HEIGHT = "14rem";
+
+const getParentFolderPaths = (path: string) => {
+  const segments = path.split("/").filter(Boolean);
+  const parents: string[] = [];
+  let currentPath = "";
+
+  for (const segment of segments.slice(0, -1)) {
+    currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+    parents.push(currentPath);
+  }
+
+  return parents;
+};
+
+const isTreeRowVisible = (rowPath: string, collapsedFolders: Set<string>) => {
+  for (const ancestor of getParentFolderPaths(rowPath)) {
+    if (collapsedFolders.has(ancestor)) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/file-tree")({
   loaderDeps: ({ search }) => ({ snapshotId: search.snapshotId }),
@@ -58,6 +85,7 @@ function RouteComponent() {
   const activePath = search.path ?? data.defaultActivePath;
   const getContent = useServerFn(getSkillFileContent);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() => new Set());
 
   const { data: fileContent, isLoading } = useQuery({
     enabled: Boolean(activePath && data.snapshotId),
@@ -71,20 +99,49 @@ function RouteComponent() {
       }),
   });
 
+  const visibleRows = useMemo(
+    () => data.rows.filter((row) => isTreeRowVisible(row.path, collapsedFolders)),
+    [collapsedFolders, data.rows],
+  );
+
+  const toggleFolder = (path: string) => {
+    setCollapsedFolders((current) => {
+      const next = new Set(current);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
+
   return (
-    <div className="grid min-h-160 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_220px] lg:items-start">
-      <aside className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-10 bg-paper-2 lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto lg:border-r">
+    <div
+      className="grid min-h-160 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_220px] lg:items-start"
+      style={{ "--skill-file-tree-mobile-height": MOBILE_TREE_HEIGHT } as CSSProperties}
+    >
+      <aside className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-10 h-[var(--skill-file-tree-mobile-height)] overflow-y-auto bg-paper-2 lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:border-r">
         {data.rows.length > 0 ? (
-          <div className="pt-4 pb-4">
-            {data.rows.map((row) =>
+          <div className="py-4">
+            {visibleRows.map((row) =>
               row.type === "folder" ? (
-                <div
+                <button
                   key={row.path}
-                  className="text-muted-text px-5 py-1.5 font-mono text-[11px] uppercase tracking-[.06em]"
+                  type="button"
+                  className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
                   style={{ paddingLeft: `${20 + row.depth * 18}px` }}
+                  aria-expanded={!collapsedFolders.has(row.path)}
+                  aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
+                  onClick={() => toggleFolder(row.path)}
                 >
-                  {row.name}
-                </div>
+                  {collapsedFolders.has(row.path) ? (
+                    <CaretRightIcon aria-hidden className="size-3 shrink-0" />
+                  ) : (
+                    <CaretDownIcon aria-hidden className="size-3 shrink-0" />
+                  )}
+                  <span className="truncate">{row.name}</span>
+                </button>
               ) : (
                 <Link
                   key={row.path}

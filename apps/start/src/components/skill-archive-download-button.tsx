@@ -9,7 +9,7 @@ interface Props {
   children: ReactNode;
   className?: string;
   snapshotId: string | null;
-  size?: "default" | "icon-sm";
+  size?: "lg" | "icon-sm";
   title: string;
 }
 
@@ -18,7 +18,7 @@ export const SkillArchiveDownloadButton = ({
   children,
   className,
   snapshotId,
-  size = "default",
+  size = "lg",
   title,
 }: Props) => {
   if (!snapshotId) {

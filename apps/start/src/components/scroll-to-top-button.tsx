@@ -22,7 +22,7 @@ export const ScrollToTopButton = () => {
   return (
     <button
       aria-label="Scroll to top"
-      className="fixed right-6 bottom-6 z-40 flex size-10 items-center justify-center rounded border bg-card font-mono text-foreground text-xs transition-colors hover:border-foreground hover:text-foreground max-sm:right-auto max-sm:left-1/2 max-sm:-translate-x-1/2"
+      className="fixed right-6 bottom-6 z-40 flex size-10 items-center justify-center rounded-none border bg-card font-mono text-foreground text-xs transition-colors hover:border-foreground hover:text-foreground max-sm:right-auto max-sm:left-1/2 max-sm:-translate-x-1/2"
       onClick={() => {
         window.scrollTo({ behavior: "smooth", top: 0 });
       }}

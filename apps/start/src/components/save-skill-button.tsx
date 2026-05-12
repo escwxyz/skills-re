@@ -93,7 +93,7 @@ export const SaveSkillButton = ({ slug }: Props) => {
   };
 
   return (
-    <Button onClick={handleClick} className="justify-between items-center" variant="default">
+    <Button onClick={handleClick} size="lg">
       <BookmarkSimpleIcon className="size-4" weight={isSaved ? "fill" : "regular"} />
       {isSaved ? m.skill_actions_saved_skill() : m.skill_actions_save_skill()}
     </Button>
