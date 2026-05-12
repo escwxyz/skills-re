@@ -50,6 +50,7 @@ import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authe
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
 import { Route as AuthedLayoutDashboardReviewsRouteImport } from './routes/_authedLayout/dashboard.reviews'
 import { Route as AuthedLayoutDashboardFeedbacksRouteImport } from './routes/_authedLayout/dashboard.feedbacks'
+import { Route as ApiSkillsSkillIdViewRouteImport } from './routes/api/skills/$skillId/view'
 import { Route as ApiOgTagsPngRouteImport } from './routes/api/og/tags.png'
 import { Route as ApiOgSkillsPngRouteImport } from './routes/api/og/skills.png'
 import { Route as ApiOgCollectionsPngRouteImport } from './routes/api/og/collections.png'
@@ -288,6 +289,11 @@ const AuthedLayoutDashboardFeedbacksRoute =
     path: '/feedbacks',
     getParentRoute: () => AuthedLayoutDashboardRouteRoute,
   } as any)
+const ApiSkillsSkillIdViewRoute = ApiSkillsSkillIdViewRouteImport.update({
+  id: '/api/skills/$skillId/view',
+  path: '/api/skills/$skillId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOgTagsPngRoute = ApiOgTagsPngRouteImport.update({
   id: '/api/og/tags/png',
   path: '/api/og/tags/png',
@@ -434,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
   '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
   '/api/og/categories/$slug/png': typeof ApiOgCategoriesSlugPngRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/api/og/collections/png': typeof ApiOgCollectionsPngRoute
   '/api/og/skills/png': typeof ApiOgSkillsPngRoute
   '/api/og/tags/png': typeof ApiOgTagsPngRoute
+  '/api/skills/$skillId/view': typeof ApiSkillsSkillIdViewRoute
   '/_publicLayout/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren
   '/_publicLayout/skill/$author/$repo/$slug': typeof PublicLayoutSkillAuthorRepoSlugRoute
   '/api/og/authors/$handle/png': typeof ApiOgAuthorsHandlePngRoute
@@ -614,6 +623,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/skills/$author/$repo/$slug'
     | '/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
@@ -672,6 +682,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
     | '/api/og/categories/$slug/png'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/api/og/collections/png'
     | '/api/og/skills/png'
     | '/api/og/tags/png'
+    | '/api/skills/$skillId/view'
     | '/_publicLayout/skills/$author/$repo/$slug'
     | '/_publicLayout/skill/$author/$repo/$slug'
     | '/api/og/authors/$handle/png'
@@ -764,6 +776,7 @@ export interface RootRouteChildren {
   ApiOgCollectionsPngRoute: typeof ApiOgCollectionsPngRoute
   ApiOgSkillsPngRoute: typeof ApiOgSkillsPngRoute
   ApiOgTagsPngRoute: typeof ApiOgTagsPngRoute
+  ApiSkillsSkillIdViewRoute: typeof ApiSkillsSkillIdViewRoute
   ApiOgAuthorsHandlePngRoute: typeof ApiOgAuthorsHandlePngRoute
   ApiOgCategoriesSlugPngRoute: typeof ApiOgCategoriesSlugPngRoute
   ApiOgCollectionsSlugPngRoute: typeof ApiOgCollectionsSlugPngRoute
@@ -1060,6 +1073,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLayoutDashboardFeedbacksRouteImport
       parentRoute: typeof AuthedLayoutDashboardRouteRoute
     }
+    '/api/skills/$skillId/view': {
+      id: '/api/skills/$skillId/view'
+      path: '/api/skills/$skillId/view'
+      fullPath: '/api/skills/$skillId/view'
+      preLoaderRoute: typeof ApiSkillsSkillIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/og/tags/png': {
       id: '/api/og/tags/png'
       path: '/api/og/tags/png'
@@ -1345,6 +1365,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOgCollectionsPngRoute: ApiOgCollectionsPngRoute,
   ApiOgSkillsPngRoute: ApiOgSkillsPngRoute,
   ApiOgTagsPngRoute: ApiOgTagsPngRoute,
+  ApiSkillsSkillIdViewRoute: ApiSkillsSkillIdViewRoute,
   ApiOgAuthorsHandlePngRoute: ApiOgAuthorsHandlePngRoute,
   ApiOgCategoriesSlugPngRoute: ApiOgCategoriesSlugPngRoute,
   ApiOgCollectionsSlugPngRoute: ApiOgCollectionsSlugPngRoute,

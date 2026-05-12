@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useSetAtom } from "jotai";
 
 import { PageHero } from "@/components/page-hero";
@@ -13,7 +14,6 @@ import { BrowseStatsRow } from "@/components/browse-stats-row";
 import { SearchFocusBackdrop } from "@/components/search-focus-backdrop";
 import { SemanticSearchResults } from "@/components/semantic-search-results";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { orpc } from "@/lib/orpc";
 import { getSkillsBrowseMeta } from "@/functions/skills/get-skills-browse-meta";
@@ -75,7 +75,7 @@ function RouteComponent() {
   const [browseResultCount, setBrowseResultCount] = useState(0);
   const [searchDraft, setSearchDraft] = useState(search.q ?? "");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const debouncedSearchDraft = useDebouncedValue(searchDraft, 320);
+  const [debouncedSearchDraft] = useDebouncedValue(searchDraft, { wait: 320 });
   const isSearchMode = search.mode === "search" || Boolean(search.q);
   const semanticQueryText = debouncedSearchDraft.trim();
   const browseFilters = normalizeSkillsBrowseFilters({

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { pacerDevtoolsPlugin } from "@tanstack/react-pacer-devtools";
 
 import appCss from "../styles.css?url";
 import type { orpc } from "@/lib/orpc";
@@ -105,6 +106,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               name: "Tanstack Router",
               render: <TanStackRouterDevtoolsPanel />,
             },
+            pacerDevtoolsPlugin(),
           ]}
         />
         <Scripts />

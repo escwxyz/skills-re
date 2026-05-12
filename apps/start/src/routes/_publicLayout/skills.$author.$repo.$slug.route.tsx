@@ -1,4 +1,12 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useDebouncedCallback } from "@tanstack/react-pacer";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+  useLocation,
+} from "@tanstack/react-router";
 import { z } from "zod/v4";
 
 import { InstallTabs } from "@/components/install-tabs";
@@ -9,7 +17,7 @@ import { SkillDetailTabs } from "@/components/skill-detail-tabs";
 import { SkillTag } from "@/components/skill-tag";
 import { SkillVersionPanel } from "@/components/skill-version-panel";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
-import { recordSkillViewFn } from "@/functions/skills/record-skill-view";
+import { recordSkillView } from "@/functions/skills/record-skill-view";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
@@ -26,17 +34,28 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ location, params }) => {
     const data = await getSkillBase({ data: { skillSlug: params.slug } });
     if (!data) {
       throw redirect({ to: "/skills" });
     }
-    recordSkillViewFn({
-      data: {
-        path: `/skills/${params.author}/${params.repo}/${params.slug}`,
-        skillId: data.skill.id,
-      },
-    });
+
+    const canonicalAuthor = data.skill.authorHandle;
+    const canonicalRepo = data.skill.repoName;
+    if (params.author !== canonicalAuthor || params.repo !== canonicalRepo) {
+      throw redirect({
+        hash: location.hash,
+        params: {
+          author: canonicalAuthor,
+          repo: canonicalRepo,
+          slug: params.slug,
+        },
+        replace: true,
+        search: location.search,
+        to: "/skills/$author/$repo/$slug",
+      });
+    }
+
     return data;
   },
   validateSearch: searchSchema,
@@ -60,12 +79,42 @@ function RouteComponent() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const location = useLocation();
 
   const locale = getLocale();
   const { author, repo, slug } = Route.useParams();
   const { skill } = data;
   const selectedSnapshotId = search.snapshotId ?? null;
   const latestVersion = data.skill.latestVersion ?? "latest";
+  const debouncedRecordSkillView = useDebouncedCallback(
+    async (view: { path: string; skillId: string }) => {
+      try {
+        await recordSkillView(view);
+      } catch (error) {
+        console.error("[skill.view] failed", {
+          error: error instanceof Error ? error.message : String(error),
+          skillId: view.skillId,
+        });
+      }
+    },
+    {
+      key: `skill-view:${skill.id}`,
+      leading: true,
+      trailing: false,
+      wait: 1000,
+    },
+  );
+
+  useEffect(() => {
+    if (!skill.id) {
+      return;
+    }
+
+    debouncedRecordSkillView({
+      path: location.pathname,
+      skillId: skill.id,
+    });
+  }, [debouncedRecordSkillView, location.pathname, skill.id]);
 
   return (
     <>
