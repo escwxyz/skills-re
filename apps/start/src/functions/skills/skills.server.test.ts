@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  fetchSkillFileContent,
   fetchSkillCheckSaved,
   fetchSkillVersionHistory,
   fetchSkillsBrowseInitialPage,
@@ -17,6 +18,7 @@ import {
 
 type ResolveSkillBaseClient = Parameters<typeof resolveSkillBase>[0]["client"];
 type FetchSkillVersionHistoryClient = Parameters<typeof fetchSkillVersionHistory>[0]["client"];
+type FetchSkillFileContentClient = Parameters<typeof fetchSkillFileContent>[0]["client"];
 type FetchSkillCheckSavedClient = Parameters<typeof fetchSkillCheckSaved>[0]["client"];
 type SaveSkillClient = Parameters<typeof saveSkillToDashboard>[0]["client"];
 type UnsaveSkillClient = Parameters<typeof unsaveSkillFromDashboard>[0]["client"];
@@ -244,6 +246,34 @@ describe("fetchSkillsBrowsePagination", () => {
         },
       },
     ]);
+  });
+});
+
+describe("fetchSkillFileContent", () => {
+  test("renders markdown without frontmatter and keeps the raw source available", async () => {
+    const client = {
+      snapshots: {
+        readSnapshotFileContent: () =>
+          Promise.resolve({
+            bytesRead: 72,
+            content: `---\nname: Example\ndescription: Example\n---\n\n# Title\n\n## Getting Started\n`,
+            isTruncated: false,
+            offset: 0,
+            totalBytes: 72,
+          }),
+      },
+    } satisfies FetchSkillFileContentClient;
+
+    const result = await fetchSkillFileContent({
+      client,
+      path: "skills/use-skills/SKILL.md",
+      snapshotId: "snapshot-1",
+    });
+
+    expect(result.rawContent).toContain("name: Example");
+    expect(result.tocItems).toEqual([{ slug: "getting-started", title: "Getting Started" }]);
+    expect(result.html).not.toContain("name: Example");
+    expect(result.html).toContain('<h2 id="getting-started" tabindex="-1">Getting Started</h2>');
   });
 });
 

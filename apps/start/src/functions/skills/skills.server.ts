@@ -223,13 +223,18 @@ export const fetchSkillFileContent = async (input: {
     path: input.path,
     snapshotId: input.snapshotId,
   });
+  const isMarkdown = /\.(md|mdx)$/i.test(input.path);
+  const parsed = isMarkdown ? parseSkillMarkdownDocument(content.content) : null;
+  const renderSource = parsed?.body ?? content.content;
 
   return {
     html: await renderContentAsync({
-      content: content.content,
+      content: renderSource,
       path: input.path,
     }),
     isTruncated: content.isTruncated,
+    rawContent: content.content,
+    tocItems: parsed?.tocItems ?? [],
     totalBytes: content.totalBytes,
   };
 };
