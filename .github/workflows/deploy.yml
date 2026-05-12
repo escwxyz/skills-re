@@ -96,6 +96,7 @@ jobs:
           SKILL_AUDIT_GITHUB_WORKFLOW_REF: ${{ vars.SKILL_AUDIT_GITHUB_WORKFLOW_REF }}
           PULL_REQUEST: ${{ github.event.number }}
           GITHUB_SHA: ${{ github.sha }}
+          TEST_USER: ${{ vars.TEST_USER }}
 
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
