@@ -15,24 +15,18 @@ export const SkillDetailActions = ({ snapshotId, slug, version }: Props) => {
   const { currentUser } = useRouteContext({ from: "__root__" });
 
   return (
-    <div>
-      <div className="text-muted-text font-mono text-[9.5px] tracking-[0.18em] mb-2.5 uppercase">
-        {m.skill_actions_snapshot_actions()}
-      </div>
+    <div className="flex flex-col gap-2">
+      <SkillArchiveDownloadButton
+        ariaLabel={m.skill_actions_download_archive({ version })}
+        className="w-full"
+        snapshotId={snapshotId}
+        title={m.skill_actions_download_archive({ version })}
+      >
+        {m.skill_actions_download_archive({ version })}
+      </SkillArchiveDownloadButton>
 
-      <div className="flex flex-col gap-2">
-        <SkillArchiveDownloadButton
-          ariaLabel={m.skill_actions_download_archive({ version })}
-          className="w-full"
-          snapshotId={snapshotId}
-          title={m.skill_actions_download_archive({ version })}
-        >
-          {m.skill_actions_download_archive({ version })}
-        </SkillArchiveDownloadButton>
-
-        <SaveSkillButton slug={slug} />
-        {currentUser ? null : <ClaimAuthorButton slug={slug} />}
-      </div>
+      <SaveSkillButton slug={slug} />
+      {currentUser ? null : <ClaimAuthorButton slug={slug} />}
     </div>
   );
 };

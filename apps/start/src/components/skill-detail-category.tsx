@@ -25,7 +25,7 @@ export const SkillDetailCategory = ({ categorySlug, className }: Props) => {
       to="/categories/$slug"
       params={{ slug: categorySlug }}
       className={cn(
-        "group inline-flex items-center gap-2 rounded border bg-muted/20 px-3 py-1.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-muted/40",
+        "group inline-flex items-center gap-2 border bg-muted/20 px-3 py-1.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-muted/40",
         className,
       )}
     >

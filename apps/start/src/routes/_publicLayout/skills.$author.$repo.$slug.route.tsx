@@ -114,15 +114,15 @@ function RouteComponent() {
 
   return (
     <>
-      <SkillBreadcrumb
-        skill={{
-          id: skill.id,
-          slug: skill.slug,
-          authorHandle: skill.authorHandle,
-        }}
-      />
       <section className="grid grid-cols-1 border-b lg:grid-cols-[1fr_380px]">
         <div className="border-border border-b px-5 pb-8 pt-8 md:px-7 md:pt-10 lg:border-r lg:border-b-0">
+          <SkillBreadcrumb
+            skill={{
+              id: skill.id,
+              slug: skill.slug,
+              authorHandle: skill.authorHandle,
+            }}
+          />
           <h1 className="font-display m-0 mb-4 mt-3.5 text-[clamp(52px,8vw,96px)] font-normal leading-[.95] tracking-[-.02em]">
             {skill.title}
             {skill.isVerified ? (
