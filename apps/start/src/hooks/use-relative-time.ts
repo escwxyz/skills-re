@@ -46,7 +46,49 @@ export function useCurrentTime(timestamp: number, dateNow = Date.now) {
 }
 
 export function useTimeDifference(timestamp: number, dateNow = Date.now) {
-  return timestamp - useCurrentTime(timestamp, dateNow);
+  return getTimeDifference(timestamp, useCurrentTime(timestamp, dateNow));
+}
+
+export function getTimeDifference(timestamp: number, now = Date.now()) {
+  return now - timestamp;
+}
+
+export function shouldUseRelativeTimeHook(timestamp: number, now = Date.now()) {
+  return Math.abs(getTimeDifference(timestamp, now)) < hour;
+}
+
+export function formatRelativeTime(
+  timestamp: number,
+  locale: Intl.UnicodeBCP47LocaleIdentifier | Intl.UnicodeBCP47LocaleIdentifier[] = "en",
+  now = Date.now(),
+) {
+  const relativeTime = getTimeDifference(timestamp, now);
+  const elapsed = Math.abs(relativeTime);
+
+  let intl: Intl.RelativeTimeFormat | null = null;
+  try {
+    intl = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  } catch {
+    intl = null;
+  }
+
+  if (!intl) {
+    return fallback(elapsed);
+  }
+
+  const sign = Math.sign(-relativeTime);
+  if (elapsed < minute) {
+    return intl.format(sign * Math.round(elapsed / second), "second");
+  } else if (elapsed < hour) {
+    return intl.format(sign * Math.round(elapsed / minute), "minute");
+  } else if (elapsed < day) {
+    return intl.format(sign * Math.round(elapsed / hour), "hour");
+  } else if (elapsed < month) {
+    return intl.format(sign * Math.round(elapsed / day), "day");
+  } else if (elapsed < year) {
+    return intl.format(sign * Math.round(elapsed / month), "month");
+  }
+  return intl.format(sign * Math.round(elapsed / year), "year");
 }
 
 export default function useRelativeTime(
@@ -56,35 +98,7 @@ export default function useRelativeTime(
 ) {
   const now = useCurrentTime(timestamp, dateNow);
 
-  const intl = useMemo(() => {
-    try {
-      return new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-    } catch {
-      return null;
-    }
-  }, [locale]);
-
-  return useMemo(() => {
-    const relativeTime = now - timestamp;
-    const elapsed = Math.abs(relativeTime);
-    if (!intl) {
-      return fallback(elapsed);
-    }
-
-    const sign = Math.sign(-relativeTime);
-    if (elapsed < minute) {
-      return intl.format(sign * Math.round(elapsed / second), "second");
-    } else if (elapsed < hour) {
-      return intl.format(sign * Math.round(elapsed / minute), "minute");
-    } else if (elapsed < day) {
-      return intl.format(sign * Math.round(elapsed / hour), "hour");
-    } else if (elapsed < month) {
-      return intl.format(sign * Math.round(elapsed / day), "day");
-    } else if (elapsed < year) {
-      return intl.format(sign * Math.round(elapsed / month), "month");
-    }
-    return intl.format(sign * Math.round(elapsed / year), "year");
-  }, [now, timestamp, intl]);
+  return useMemo(() => formatRelativeTime(timestamp, locale, now), [now, timestamp, locale]);
 }
 
 const fallback = (elapsed: number) => {
