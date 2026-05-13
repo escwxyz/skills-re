@@ -20,6 +20,7 @@ export function getRouter() {
     },
     defaultErrorComponent: ErrorComponent,
     defaultNotFoundComponent: NotFound,
+    defaultViewTransition: true,
   });
 
   setupRouterSsrQueryIntegration({

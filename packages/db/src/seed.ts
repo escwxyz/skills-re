@@ -141,6 +141,15 @@ const generateSkillContent = (skill: SkillDef, repo: RepoDef): string =>
     `Repository: ${repo.nameWithOwner}`,
   ].join("\n");
 
+const generateSkillContentForVersion = (skill: SkillDef, repo: RepoDef, version: string): string =>
+  generateSkillContent(
+    {
+      ...skill,
+      version,
+    },
+    repo,
+  );
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -321,6 +330,13 @@ interface SkillDef {
   viewsAllTime: number;
   createdDaysAgo: number;
   ownedByTestUser?: boolean;
+  versionHistory?: {
+    createdDaysAgo: number;
+    description?: string;
+    snapshotId: SnapshotId;
+    sourceCommitUrl?: string;
+    version: string;
+  }[];
 }
 
 const findCategory = (slug: string) => {
@@ -338,6 +354,9 @@ const findRepo = (ownerHandle: string) => {
   }
   return repo;
 };
+
+const buildMockCommitUrl = (repo: RepoDef, skill: SkillDef, version: string) =>
+  `https://github.com/${repo.ownerHandle}/${repo.name}/commit/${skill.slug}-${version}`;
 
 const SKILLS: SkillDef[] = [
   // --- code-craft (10) ---
@@ -357,6 +376,23 @@ const SKILLS: SkillDef[] = [
     viewsAllTime: 54_000,
     createdDaysAgo: 180,
     ownedByTestUser: true,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.2.0",
+        createdDaysAgo: 210,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.1.0",
+        createdDaysAgo: 250,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 300,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -374,6 +410,18 @@ const SKILLS: SkillDef[] = [
     viewsAllTime: 47_200,
     createdDaysAgo: 120,
     ownedByTestUser: true,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "2.0.0",
+        createdDaysAgo: 150,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.5.0",
+        createdDaysAgo: 185,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -1039,6 +1087,7 @@ async function main() {
       hash: nanoid(40),
       directoryPath: skill.slug,
       entryPath: `${skill.slug}/skill.md`,
+      sourceCommitUrl: buildMockCommitUrl(repo, skill, skill.version),
       version: skill.version,
       isDeprecated: false,
       createdAtMs: skillCreatedAt,
@@ -1059,6 +1108,38 @@ async function main() {
       size: Buffer.byteLength(content, "utf-8"),
       contentType: "text/markdown; charset=utf-8",
     });
+
+    for (const versionSnapshot of skill.versionHistory ?? []) {
+      const versionContent = generateSkillContentForVersion(skill, repo, versionSnapshot.version);
+      const versionR2Key = `${repo.ownerHandle}/${repo.name}/${skill.slug}/${versionSnapshot.version}/skill.md`;
+      uploadToR2(versionR2Key, versionContent);
+
+      await db.insert(schema.snapshotsTable).values({
+        id: versionSnapshot.snapshotId,
+        skillId: skill.id,
+        name: skill.title,
+        description: versionSnapshot.description ?? skill.description,
+        hash: nanoid(40),
+        directoryPath: skill.slug,
+        entryPath: `${skill.slug}/skill.md`,
+        sourceCommitUrl:
+          versionSnapshot.sourceCommitUrl ??
+          buildMockCommitUrl(repo, skill, versionSnapshot.version),
+        version: versionSnapshot.version,
+        isDeprecated: false,
+        createdAtMs: daysAgo(versionSnapshot.createdDaysAgo),
+        syncTime: daysAgo(versionSnapshot.createdDaysAgo),
+      });
+
+      await db.insert(schema.snapshotFilesTable).values({
+        snapshotId: versionSnapshot.snapshotId,
+        path: normalizedPath,
+        r2Key: versionR2Key,
+        fileHash: createHash("sha256").update(versionContent).digest("hex"),
+        size: Buffer.byteLength(versionContent, "utf-8"),
+        contentType: "text/markdown; charset=utf-8",
+      });
+    }
   }
 
   // 5. Skills–Tags associations

@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  fetchSkillChangelog,
   fetchSkillFileContent,
   fetchSkillCheckSaved,
   fetchSkillVersionHistory,
@@ -17,6 +18,7 @@ import {
 } from "./skills.server";
 
 type ResolveSkillBaseClient = Parameters<typeof resolveSkillBase>[0]["client"];
+type FetchSkillChangelogClient = Parameters<typeof fetchSkillChangelog>[0]["client"];
 type FetchSkillVersionHistoryClient = Parameters<typeof fetchSkillVersionHistory>[0]["client"];
 type FetchSkillFileContentClient = Parameters<typeof fetchSkillFileContent>[0]["client"];
 type FetchSkillCheckSavedClient = Parameters<typeof fetchSkillCheckSaved>[0]["client"];
@@ -515,5 +517,111 @@ describe("fetchSkillVersionHistory", () => {
     ]);
 
     expect(calls).toEqual([{ limit: 3, skillId: "skill-1" }]);
+  });
+});
+
+describe("fetchSkillChangelog", () => {
+  test("maps snapshots into changelog entries and version history metadata", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      skills: {
+        getByPath: (input?: { authorHandle?: string; repoName?: string; skillSlug?: string }) => {
+          calls.push({ getByPath: input ?? {} });
+          return Promise.resolve({
+            description: "skill description",
+            id: "skill-1",
+            latestVersion: "v2",
+            title: "Skill Title",
+          });
+        },
+        resolvePathBySlug: (input?: { slug?: string }) => {
+          calls.push({ resolvePathBySlug: input ?? {} });
+          return Promise.resolve({
+            authorHandle: "author",
+            repoName: "repo",
+            skillSlug: input?.slug ?? "skill",
+          });
+        },
+      },
+      snapshots: {
+        listBySkill: (input?: { limit?: number; skillId?: string }) => {
+          calls.push({ listBySkill: input ?? {} });
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [
+              {
+                description: "current snapshot",
+                entryPath: "SKILL.md",
+                hash: "abcdef123456",
+                id: "snapshot-1",
+                sourceCommitDate: 1710000000000,
+                sourceCommitMessage: "feat: add skill",
+                sourceCommitUrl: "https://github.com/acme/skills/commit/abc123",
+                syncTime: 1710000001000,
+                version: "v1",
+              },
+              {
+                description: "older snapshot",
+                entryPath: "README.md",
+                hash: "123456abcdef",
+                id: "snapshot-2",
+                syncTime: 1710000002000,
+                version: "v2",
+              },
+            ],
+          });
+        },
+      },
+    } as unknown as FetchSkillChangelogClient;
+
+    await expect(
+      fetchSkillChangelog({ client, selectedSnapshotId: "snapshot-2", skillSlug: "skill" }),
+    ).resolves.toEqual({
+      currentSnapshotId: "snapshot-2",
+      entries: [
+        {
+          body: "current snapshot",
+          date: 1710000000000,
+          isCurrent: false,
+          shaLabel: "abcdef1",
+          snapshotId: "snapshot-1",
+          sourceCommitUrl: "https://github.com/acme/skills/commit/abc123",
+          title: "feat: add skill",
+          version: "v1",
+        },
+        {
+          body: "older snapshot",
+          date: 1710000002000,
+          isCurrent: true,
+          shaLabel: "123456a",
+          snapshotId: "snapshot-2",
+          sourceCommitUrl: undefined,
+          title: "older snapshot",
+          version: "v2",
+        },
+      ],
+      skillDescription: "skill description",
+      skillId: "skill-1",
+      skillTitle: "Skill Title",
+      versions: [
+        {
+          date: 1710000000000,
+          entryPath: "SKILL.md",
+          label: "current",
+          snapshotId: "snapshot-1",
+          sourceCommitUrl: "https://github.com/acme/skills/commit/abc123",
+          version: "v1",
+        },
+        {
+          date: 1710000002000,
+          entryPath: "README.md",
+          label: undefined,
+          snapshotId: "snapshot-2",
+          sourceCommitUrl: undefined,
+          version: "v2",
+        },
+      ],
+    });
   });
 });

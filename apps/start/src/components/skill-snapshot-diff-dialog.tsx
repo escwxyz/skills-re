@@ -55,6 +55,8 @@ interface Props {
   currentSnapshotId: string | null;
   skillId: string;
   versions: SkillVersionHistoryItem[];
+  triggerClassName?: string;
+  triggerLabel?: string;
 }
 
 const getCompareSnapshotId = (
@@ -168,7 +170,13 @@ const renderDiffBody = (params: {
   );
 };
 
-export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }: Props) => {
+export const SkillSnapshotDiffDialog = ({
+  currentSnapshotId,
+  skillId,
+  triggerClassName,
+  triggerLabel,
+  versions,
+}: Props) => {
   const [open, setOpen] = useState(false);
   const [compareSnapshotId, setCompareSnapshotId] = useState<string | null>(
     getCompareSnapshotId(versions, currentSnapshotId),
@@ -218,11 +226,11 @@ export const SkillSnapshotDiffDialog = ({ currentSnapshotId, skillId, versions }
       <DialogTrigger
         render={
           <Button
-            className="w-full justify-between tracking-[.12em]"
+            className={cn("w-full justify-between tracking-[.12em]", triggerClassName)}
             disabled={!canCompare}
             variant="outline"
           >
-            {skill_snapshot_diff_compare_button()}
+            {triggerLabel ?? skill_snapshot_diff_compare_button()}
           </Button>
         }
       />

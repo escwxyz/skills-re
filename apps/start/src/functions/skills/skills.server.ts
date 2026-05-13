@@ -21,6 +21,7 @@ interface SnapshotRecord {
   id: string;
   sourceCommitDate?: number | null;
   sourceCommitMessage?: string | null;
+  sourceCommitUrl?: string | null;
   syncTime: number;
   version: string;
 }
@@ -145,10 +146,22 @@ export const fetchSkillChangelog = async (input: {
       isCurrent: snapshot.id === currentSnapshot?.id || (!input.selectedSnapshotId && index === 0),
       shaLabel: snapshot.hash.slice(0, 7),
       title: snapshot.sourceCommitMessage?.trim() || snapshot.description,
+      snapshotId: snapshot.id,
+      sourceCommitUrl: snapshot.sourceCommitUrl ?? undefined,
       version: snapshot.version,
     })),
+    currentSnapshotId: currentSnapshot?.id ?? null,
+    skillId: skill.id,
     skillDescription: skill.description,
     skillTitle: skill.title,
+    versions: snapshots.map((snapshot, index) => ({
+      date: snapshot.sourceCommitDate ?? snapshot.syncTime,
+      entryPath: snapshot.entryPath,
+      label: index === 0 ? "current" : undefined,
+      snapshotId: snapshot.id,
+      sourceCommitUrl: snapshot.sourceCommitUrl ?? undefined,
+      version: snapshot.version,
+    })),
   };
 };
 

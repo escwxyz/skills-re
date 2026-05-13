@@ -9,5 +9,6 @@ export interface SkillVersionHistoryItem {
   entryPath?: string;
   label?: string;
   snapshotId: string;
+  sourceCommitUrl?: string;
   version: string;
 }

@@ -215,30 +215,18 @@ function RouteComponent() {
           </div> */}
 
           <SkillVersionPanel
+            author={author}
             onSnapshotChange={(id) => {
               navigate({
                 replace: true,
                 search: (prev) => ({ ...prev, snapshotId: id }),
               });
             }}
+            repo={repo}
             skillId={data.skill.id}
             snapshotId={selectedSnapshotId}
+            slug={slug}
           />
-
-          {/* <div className="p-[18px_22px]">
-            <div className="mb-2.5 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
-              {skill_detail_tags()}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {skill.tags && skill.tags.length > 0 ? (
-                skill.tags.map((tag) => <SkillTag key={tag}>{tag}</SkillTag>)
-              ) : (
-                <span className="font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">
-                  {skill_detail_no_tags()}
-                </span>
-              )}
-            </div>
-          </div> */}
         </div>
       </section>
 
