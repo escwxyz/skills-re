@@ -14,6 +14,7 @@ import { SkillActivityMetrics } from "@/components/skill-activity-metrics";
 import { SkillDetailActions } from "@/components/skill-detail-actions";
 import { SkillDetailTabActions } from "@/components/skill-detail-tab-actions";
 import { SkillDetailTabs } from "@/components/skill-detail-tabs";
+import { SkillDetailMetadata } from "@/components/skill-detail-metadata";
 import { SkillVersionPanel } from "@/components/skill-version-panel";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { recordSkillView } from "@/functions/skills/record-skill-view";
@@ -139,74 +140,22 @@ function RouteComponent() {
 
           <SkillDetailCategory categorySlug={(skill.primaryCategory ?? "other") as CategorySlug} />
           <SkillDetailTags tags={skill.tags} />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-4.5 md:grid-cols-4">
-            <SkillActivityMetrics skillId={data.skill.id} />
-
-            {/* {layout.metaItems.map((item) => (
-              <div key={`${item.label}-${item.value}`}>
-                <div className="text-muted-foreground font-mono text-[10px] uppercase tracking-[.16em]">
-                  {{
-                    Author: skill_detail_meta_author(),
-                    Category: skill_detail_meta_category(),
-                    License: skill_detail_meta_license(),
-                    Published: skill_detail_meta_published(),
-                    Repository: skill_detail_meta_repository(),
-                    Updated: skill_detail_meta_updated(),
-                    Version: skill_detail_meta_version(),
-                  }[item.label] ?? item.label}
-                </div>
-                <div
-                  className={cn(
-                    "mt-1",
-                    item.mono ? "font-mono text-[13px]" : "font-serif text-[15px]",
-                  )}
-                >
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline underline-offset-3"
-                    >
-                      {item.value}
-                    </a>
-                  ) : (
-                    item.value
-                  )}
-                </div>
-              </div>
-            ))} */}
-          </div>
+          <SkillActivityMetrics
+            auditScore={skill.staticAudit?.overallScore ?? null}
+            skillId={data.skill.id}
+          />
         </div>
 
         <div className="border-border border-t lg:border-t-0">
-          <div className="border-border border-b p-[18px_22px]">
-            <InstallTabs slug={skill.slug} />
-          </div>
-
-          {/**
-           * todo : This part is duplicated with the SkillActivityMetrics component,
-           */}
-          {/* <div className="border-border border-b p-[18px_22px]">
-            <div className="mb-2.5 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
-              {skill_detail_performance_metrics()}
-            </div>
-            <div
-              className="grid gap-3"
-              style={{
-                gridTemplateColumns: `repeat(${Math.min(Math.max(layout.metricItems.length, 1), 2)}, 1fr)`,
-              }}
-            >
-              {layout.metricItems.map((item) => (
-                <div key={item.label} className="py-[8px_2px]">
-                  <div className="text-muted-foreground font-mono text-[9.5px] uppercase tracking-[.16em]">
-                    {item.label}
-                  </div>
-                  <div className="font-display mt-1.5 text-[28px] leading-none">{item.value}</div>
-                </div>
-              ))}
-            </div>
-          </div> */}
+          <SkillDetailMetadata
+            authorHandle={skill.authorHandle}
+            forkCount={skill.forkCount}
+            license={skill.license}
+            repoName={skill.repoName}
+            repoUrl={skill.repoUrl}
+            stargazerCount={skill.stargazerCount}
+            updatedAt={skill.updatedAt}
+          />
 
           <SkillVersionPanel
             author={author}
@@ -221,6 +170,9 @@ function RouteComponent() {
             snapshotId={selectedSnapshotId}
             slug={slug}
           />
+          <div className="border-border border-b p-[18px_22px]">
+            <InstallTabs slug={skill.slug} />
+          </div>
           <div className="border-border border-b p-[18px_22px]">
             <SkillDetailActions
               snapshotId={selectedSnapshotId}
