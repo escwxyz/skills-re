@@ -46,7 +46,7 @@ interface Props {
 export const Footer = ({ className }: Props) => (
   <footer
     className={cn(
-      "border-border mx-auto mt-7.5 mb-1.5 grid w-full grid-cols-1 gap-8 border-t-[3px] px-4 md:px-6 py-10 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr]",
+      "border-border mx-auto mt-7.5 mb-1.5 grid w-full grid-cols-1 gap-8 border-t px-4 md:px-6 py-10 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr]",
       className,
     )}
   >

@@ -119,6 +119,7 @@ function RouteComponent() {
           <SkillBreadcrumb
             skill={{
               id: skill.id,
+              repoName: skill.repoName,
               slug: skill.slug,
               authorHandle: skill.authorHandle,
             }}
