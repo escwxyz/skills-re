@@ -582,6 +582,8 @@
   "skill_detail_current": "当前",
   "skill_detail_download_archive": "下载归档 (v{version})",
   "skill_detail_file_tree": "文件树",
+  "skill_detail_file_tree_collapse": "收起文件树",
+  "skill_detail_file_tree_expand": "展开文件树",
   "skill_detail_frontmatter": "Frontmatter",
   "skill_detail_frontmatter_allowed_tools": "allowed-tools",
   "skill_detail_frontmatter_compatibility": "compatibility",

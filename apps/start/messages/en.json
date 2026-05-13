@@ -582,6 +582,8 @@
   "skill_detail_current": "current",
   "skill_detail_download_archive": "Download Archive (v{version})",
   "skill_detail_file_tree": "File Tree",
+  "skill_detail_file_tree_collapse": "Collapse tree",
+  "skill_detail_file_tree_expand": "Expand tree",
   "skill_detail_frontmatter": "Frontmatter",
   "skill_detail_frontmatter_allowed_tools": "allowed-tools",
   "skill_detail_frontmatter_compatibility": "compatibility",

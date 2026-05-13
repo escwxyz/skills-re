@@ -31,4 +31,24 @@ description: Example
       { slug: "whats-new", title: "What's New?" },
     ]);
   });
+
+  test("ignores headings inside fenced code blocks", () => {
+    const parsed = parseSkillMarkdownDocument(`---
+name: Example
+description: Example
+---
+
+## Visible Heading
+
+\`\`\`md
+## Hidden Heading
+\`\`\`
+
+~~~txt
+### Also Hidden
+~~~
+`);
+
+    expect(parsed.tocItems).toEqual([{ slug: "visible-heading", title: "Visible Heading" }]);
+  });
 });

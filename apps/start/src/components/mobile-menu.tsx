@@ -21,7 +21,7 @@ import { buttonVariants } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: m.mobile_menu_skills(), to: "/skills" },
   { label: m.mobile_menu_categories(), to: "/categories" },
-  { label: m.mobile_menu_collections(), to: "/collections" },
+  // { label: m.mobile_menu_collections(), to: "/collections" },
   { label: m.mobile_menu_tags(), to: "/tags" },
   { label: m.mobile_menu_authors(), to: "/authors" },
 ];

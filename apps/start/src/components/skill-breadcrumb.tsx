@@ -30,6 +30,9 @@ export const SkillBreadcrumb = ({ skill }: Props) => (
     <span>/</span>
     <SkillSlugSwitcher authorHandle={skill.authorHandle} currentSlug={skill.slug} />
 
+    {/**
+     * todo: follow our old repo
+     */}
     <div className="ml-auto flex items-center gap-3">
       {skill.tags.length > 0 && (
         <span className="text-muted-text hidden items-center gap-1 sm:flex">

@@ -2,8 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
-import { useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod/v4";
 
 import { FileEmptyState, SkillFileContent } from "@/components/skill-file-content";
@@ -11,6 +10,7 @@ import { SkillMdToc } from "@/components/skill-md-toc";
 import { getSkillFileTree } from "@/functions/skills/get-skill-file-tree";
 import { getSkillFileContent } from "@/functions/skills/get-skill-file-content";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
+import { cn } from "@/lib/utils";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
@@ -20,8 +20,6 @@ const searchSchema = z.object({
   path: z.string().optional(),
   snapshotId: z.string().optional(),
 });
-
-const MOBILE_TREE_HEIGHT = "14rem";
 
 const getParentFolderPaths = (path: string) => {
   const segments = path.split("/").filter(Boolean);
@@ -45,6 +43,8 @@ const isTreeRowVisible = (rowPath: string, collapsedFolders: Set<string>) => {
 
   return true;
 };
+
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/file-tree")({
   loaderDeps: ({ search }) => ({ snapshotId: search.snapshotId }),
@@ -86,6 +86,19 @@ function RouteComponent() {
   const getContent = useServerFn(getSkillFileContent);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() => new Set());
+  const [isTreeExpanded, setIsTreeExpanded] = useState(false);
+
+  useIsomorphicLayoutEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const syncTreeState = () => {
+      setIsTreeExpanded(mediaQuery.matches);
+    };
+
+    syncTreeState();
+    mediaQuery.addEventListener("change", syncTreeState);
+    return () => mediaQuery.removeEventListener("change", syncTreeState);
+  }, []);
 
   const { data: fileContent, isLoading } = useQuery({
     enabled: Boolean(activePath && data.snapshotId),
@@ -117,69 +130,113 @@ function RouteComponent() {
   };
 
   return (
-    <div
-      className="grid min-h-160 grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_220px] lg:items-start"
-      style={{ "--skill-file-tree-mobile-height": MOBILE_TREE_HEIGHT } as CSSProperties}
-    >
-      <aside className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-10 h-[var(--skill-file-tree-mobile-height)] overflow-y-auto bg-paper-2 lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:border-r">
-        {data.rows.length > 0 ? (
-          <div className="py-4">
-            {visibleRows.map((row) =>
-              row.type === "folder" ? (
-                <button
-                  key={row.path}
-                  type="button"
-                  className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
-                  style={{ paddingLeft: `${20 + row.depth * 18}px` }}
-                  aria-expanded={!collapsedFolders.has(row.path)}
-                  aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
-                  onClick={() => toggleFolder(row.path)}
-                >
-                  {collapsedFolders.has(row.path) ? (
-                    <CaretRightIcon aria-hidden className="size-3 shrink-0" />
-                  ) : (
-                    <CaretDownIcon aria-hidden className="size-3 shrink-0" />
-                  )}
-                  <span className="truncate">{row.name}</span>
-                </button>
-              ) : (
-                <Link
-                  key={row.path}
-                  to="/skills/$author/$repo/$slug/file-tree"
-                  params={{ author, repo, slug }}
-                  search={{ path: row.path, snapshotId: search.snapshotId }}
-                  hash="skill-tabs"
-                  className={[
-                    "flex items-baseline justify-between gap-3 px-5 py-1.5 font-mono text-[11px] no-underline transition-colors",
-                    row.path === activePath
-                      ? "bg-ink text-paper"
-                      : "text-ink-2 hover:bg-paper hover:no-underline",
-                  ].join(" ")}
-                  style={{ paddingLeft: `${20 + row.depth * 18}px` }}
-                >
-                  <span className="truncate">{row.name}</span>
-                  {row.size !== undefined && (
-                    <span
-                      className={[
-                        "shrink-0 tabular-nums",
-                        row.path === activePath ? "opacity-60" : "text-muted-text",
-                      ].join(" ")}
+    <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
+      <aside
+        className={cn(
+          "w-full border-b border-border bg-background lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden",
+          isTreeExpanded ? "lg:w-75" : "lg:w-12",
+        )}
+      >
+        <div
+          className={cn(
+            "sticky top-[calc(var(--header-height)+3.5rem)] z-30 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-4 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-0",
+            !isTreeExpanded && "lg:justify-center",
+          )}
+        >
+          <span
+            className={cn(
+              "font-mono text-[11px] uppercase tracking-[.18em] text-muted-text",
+              !isTreeExpanded && "lg:hidden",
+            )}
+          >
+            {m.skill_detail_file_tree()}
+          </span>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center justify-center text-muted-text transition-colors hover:text-foreground"
+            aria-label={
+              isTreeExpanded
+                ? m.skill_detail_file_tree_collapse()
+                : m.skill_detail_file_tree_expand()
+            }
+            title={
+              isTreeExpanded
+                ? m.skill_detail_file_tree_collapse()
+                : m.skill_detail_file_tree_expand()
+            }
+            onClick={() => setIsTreeExpanded((current) => !current)}
+          >
+            <CaretRightIcon
+              aria-hidden
+              className={cn("size-4 transition-transform", isTreeExpanded ? "rotate-90" : "")}
+            />
+          </button>
+        </div>
+
+        {isTreeExpanded ? (
+          <div className="bg-background lg:h-[calc(100svh-var(--header-height)-3.5rem-3.5rem)] lg:overflow-y-auto lg:bg-paper-2">
+            {data.rows.length > 0 ? (
+              <div className="py-4">
+                {visibleRows.map((row) =>
+                  row.type === "folder" ? (
+                    <button
+                      key={row.path}
+                      type="button"
+                      className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
+                      style={{ paddingLeft: `${20 + row.depth * 18}px` }}
+                      aria-expanded={!collapsedFolders.has(row.path)}
+                      aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
+                      onClick={() => toggleFolder(row.path)}
                     >
-                      {formatFileSize(row.size)}
-                    </span>
-                  )}
-                </Link>
-              ),
+                      {collapsedFolders.has(row.path) ? (
+                        <CaretRightIcon aria-hidden className="size-3 shrink-0" />
+                      ) : (
+                        <CaretDownIcon aria-hidden className="size-3 shrink-0" />
+                      )}
+                      <span className="truncate">{row.name}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      key={row.path}
+                      to="/skills/$author/$repo/$slug/file-tree"
+                      params={{ author, repo, slug }}
+                      search={{ path: row.path, snapshotId: search.snapshotId }}
+                      hash="skill-tabs"
+                      className={[
+                        "flex items-baseline justify-between gap-3 px-5 py-1.5 font-mono text-[11px] no-underline transition-colors",
+                        row.path === activePath
+                          ? "bg-ink text-paper"
+                          : "text-ink-2 hover:bg-paper hover:no-underline",
+                      ].join(" ")}
+                      style={{ paddingLeft: `${20 + row.depth * 18}px` }}
+                    >
+                      <span className="truncate">{row.name}</span>
+                      {row.size !== undefined && (
+                        <span
+                          className={[
+                            "shrink-0 tabular-nums",
+                            row.path === activePath ? "opacity-60" : "text-muted-text",
+                          ].join(" ")}
+                        >
+                          {formatFileSize(row.size)}
+                        </span>
+                      )}
+                    </Link>
+                  ),
+                )}
+              </div>
+            ) : (
+              <div className="text-ink-2 px-5 py-6 text-sm">
+                {m.skill_file_tree_sidebar_empty()}
+              </div>
             )}
           </div>
-        ) : (
-          <div className="text-ink-2 px-5 py-6 text-sm">{m.skill_file_tree_sidebar_empty()}</div>
-        )}
+        ) : null}
       </aside>
 
       <div
         ref={contentScrollRef}
-        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto lg:border-r"
+        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:flex-1 lg:overflow-y-auto lg:border-r"
       >
         {activePath && data.snapshotId ? (
           <SkillFileContent activePath={activePath} data={fileContent} isLoading={isLoading} />

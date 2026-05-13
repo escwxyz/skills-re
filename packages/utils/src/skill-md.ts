@@ -67,6 +67,8 @@ const readFrontmatterValue = (
   return undefined;
 };
 
+const isFenceLine = (line: string) => /^\s*(```|~~~)/.test(line);
+
 export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
   const values: Record<string, string | string[] | undefined> = {};
   const metadata: Record<string, string> = {};
@@ -154,8 +156,18 @@ export const parseSkillMarkdownDocument = (source: string) => {
   const body = lines.join("\n").trim();
   const tocItems: SkillTocItem[] = [];
   const headingCounts = new Map<string, number>();
+  let inFenceBlock = false;
 
   for (const line of body.split(/\r?\n/)) {
+    if (isFenceLine(line)) {
+      inFenceBlock = !inFenceBlock;
+      continue;
+    }
+
+    if (inFenceBlock) {
+      continue;
+    }
+
     const headingMatch = line.match(/^(#{2,6})\s+(.+?)(?:\s+#+\s*)?$/);
     const title = headingMatch?.[2]?.trim();
 

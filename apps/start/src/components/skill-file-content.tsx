@@ -46,7 +46,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
 
   return (
     <>
-      <div className="border-border sticky top-[calc(var(--header-height)+3.5rem+var(--skill-file-tree-mobile-height))] z-20 flex items-start justify-between gap-4 border-b bg-background/95 px-5 py-4 backdrop-blur-sm lg:top-0">
+      <div className="border-border sticky top-[calc(var(--header-height)+3.5rem)] z-20 flex items-start justify-between gap-4 border-b bg-background/95 px-5 py-4 backdrop-blur-sm lg:top-0">
         <div className="min-w-0 font-mono text-xs text-muted-foreground">
           <div className="truncate">{activePath}</div>
           <div className="hidden mt-1 lg:block">{metaLabel}</div>
@@ -63,11 +63,11 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
           {m.skill_file_tree_content_truncated_notice()}
         </div>
       )}
-      <div data-skill-md-content className="overflow-x-auto px-5 py-6">
+      <div data-skill-md-content className="overflow-x-hidden px-5 py-6">
         {isRendered ? (
           <article
             className={cn(
-              "prose [&_code]:wrap-break-word wrap-break-word w-full max-w-none prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_pre]:overflow-x-auto prose-headings:scroll-mt-24",
+              "prose w-full max-w-none break-words prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_a]:break-words [&_code]:break-words [&_img]:max-w-full [&_li]:break-words [&_p]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto prose-headings:scroll-mt-24",
               resolved === "dark" ? "prose-invert" : "",
             )}
             dangerouslySetInnerHTML={{ __html: data.html }}
@@ -75,7 +75,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
         ) : (
           <pre
             className={cn(
-              "w-full whitespace-pre-wrap wrap-break-word font-mono text-[13px] leading-[1.65] text-foreground/80",
+              "w-full min-w-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.65] text-foreground/80",
               resolved === "dark" ? "text-foreground/85" : "",
             )}
           >
