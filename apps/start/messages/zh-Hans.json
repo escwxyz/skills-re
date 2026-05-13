@@ -622,6 +622,7 @@
   "skill_file_tree_content_empty_description": "此快照没有可读的文件预览。",
   "skill_file_tree_content_truncated": "已截断",
   "skill_file_tree_content_truncated_notice": "正在显示此文件的截断预览。",
+  "skill_file_tree_content_bytes": "字节",
   "skill_file_tree_content_raw": "原始",
   "skill_file_tree_content_rendered": "渲染后",
   "skill_file_tree_sidebar_description": "浏览此技能的最新公开快照。",

@@ -14,20 +14,17 @@ import { SkillActivityMetrics } from "@/components/skill-activity-metrics";
 import { SkillDetailActions } from "@/components/skill-detail-actions";
 import { SkillDetailTabActions } from "@/components/skill-detail-tab-actions";
 import { SkillDetailTabs } from "@/components/skill-detail-tabs";
-import { SkillTag } from "@/components/skill-tag";
 import { SkillVersionPanel } from "@/components/skill-version-panel";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { recordSkillView } from "@/functions/skills/record-skill-view";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
-import {
-  skill_detail_tags,
-  skill_detail_no_tags,
-  skill_detail_verified,
-} from "@/paraglide/messages";
+import { skill_detail_verified } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
-import { getCategoryTitle } from "@/utils/category-data";
+import { SkillDetailTags } from "@/components/skill-detail-tags";
+import { SkillDetailCategory } from "@/components/skill-detail-category";
+import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -81,7 +78,6 @@ function RouteComponent() {
   const navigate = useNavigate({ from: Route.fullPath });
   const location = useLocation();
 
-  const locale = getLocale();
   const { author, repo, slug } = Route.useParams();
   const { skill } = data;
   const selectedSnapshotId = search.snapshotId ?? null;
@@ -123,11 +119,6 @@ function RouteComponent() {
           id: skill.id,
           slug: skill.slug,
           authorHandle: skill.authorHandle,
-          categorySlug: skill.primaryCategory || "other",
-          categoryLabel: skill.primaryCategory
-            ? getCategoryTitle(skill.primaryCategory, locale)
-            : getCategoryTitle("other", locale),
-          tags: skill.tags || [],
         }}
       />
       <section className="grid grid-cols-1 border-b lg:grid-cols-[1fr_380px]">
@@ -145,6 +136,8 @@ function RouteComponent() {
             {skill.description}
           </p>
 
+          <SkillDetailCategory categorySlug={(skill.primaryCategory ?? "other") as CategorySlug} />
+          <SkillDetailTags tags={skill.tags} />
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-4.5 md:grid-cols-4">
             {/* {layout.metaItems.map((item) => (
               <div key={`${item.label}-${item.value}`}>
@@ -232,7 +225,7 @@ function RouteComponent() {
             snapshotId={selectedSnapshotId}
           />
 
-          <div className="p-[18px_22px]">
+          {/* <div className="p-[18px_22px]">
             <div className="mb-2.5 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
               {skill_detail_tags()}
             </div>
@@ -245,7 +238,7 @@ function RouteComponent() {
                 </span>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
 

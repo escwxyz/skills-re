@@ -4,7 +4,6 @@ import { useState } from "react";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { formatInteger } from "@/utils/format";
-import { getFileKindLabel } from "@/utils/get-file-kind-lable";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -37,8 +36,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
   }
 
   const metaLabel = [
-    getFileKindLabel(activePath),
-    `${formatInteger(data.totalBytes, locale)} bytes`,
+    `${formatInteger(data.totalBytes, locale)} ${m.skill_file_tree_content_bytes()}`,
     data.isTruncated ? m.skill_file_tree_content_truncated() : null,
   ]
     .filter(Boolean)
@@ -67,7 +65,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
         {isRendered ? (
           <article
             className={cn(
-              "prose w-full max-w-none break-words prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_a]:break-words [&_code]:break-words [&_img]:max-w-full [&_li]:break-words [&_p]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto prose-headings:scroll-mt-24",
+              "prose w-full max-w-none wrap-break-word prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_a]:wrap-break-word [&_code]:wrap-break-word [&_img]:max-w-full [&_li]:wrap-break-word [&_p]:wrap-break-word [&_pre]:max-w-full [&_pre]:overflow-x-auto prose-headings:scroll-mt-24",
               resolved === "dark" ? "prose-invert" : "",
             )}
             dangerouslySetInnerHTML={{ __html: data.html }}
@@ -75,7 +73,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
         ) : (
           <pre
             className={cn(
-              "w-full min-w-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.65] text-foreground/80",
+              "w-full min-w-0 whitespace-pre-wrap wrap-break-word font-mono text-[13px] leading-[1.65] text-foreground/80",
               resolved === "dark" ? "text-foreground/85" : "",
             )}
           >
