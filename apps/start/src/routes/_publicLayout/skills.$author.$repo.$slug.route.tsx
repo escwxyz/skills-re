@@ -140,6 +140,8 @@ function RouteComponent() {
           <SkillDetailCategory categorySlug={(skill.primaryCategory ?? "other") as CategorySlug} />
           <SkillDetailTags tags={skill.tags} />
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-4.5 md:grid-cols-4">
+            <SkillActivityMetrics skillId={data.skill.id} />
+
             {/* {layout.metaItems.map((item) => (
               <div key={`${item.label}-${item.value}`}>
                 <div className="text-muted-foreground font-mono text-[10px] uppercase tracking-[.16em]">
@@ -175,8 +177,6 @@ function RouteComponent() {
               </div>
             ))} */}
           </div>
-
-          <SkillActivityMetrics skillId={data.skill.id} />
         </div>
 
         <div className="border-border border-t lg:border-t-0">
@@ -184,13 +184,6 @@ function RouteComponent() {
             <InstallTabs slug={skill.slug} />
           </div>
 
-          <div className="border-border border-b p-[18px_22px]">
-            <SkillDetailActions
-              snapshotId={selectedSnapshotId}
-              slug={skill.slug}
-              version={latestVersion}
-            />
-          </div>
           {/**
            * todo : This part is duplicated with the SkillActivityMetrics component,
            */}
@@ -228,6 +221,13 @@ function RouteComponent() {
             snapshotId={selectedSnapshotId}
             slug={slug}
           />
+          <div className="border-border border-b p-[18px_22px]">
+            <SkillDetailActions
+              snapshotId={selectedSnapshotId}
+              slug={skill.slug}
+              version={latestVersion}
+            />
+          </div>
         </div>
       </section>
 

@@ -49,6 +49,7 @@ function RouteComponent() {
   return (
     <>
       <PageHero
+        alignItems="center"
         eyebrow={String(author_page_eyebrow())}
         description={String(author_page_description({ handle }))}
         media={
@@ -62,18 +63,16 @@ function RouteComponent() {
                 <span className="text-editorial-green"> · ● {author_page_verified()}</span>
               )}
             </div>
-            {githubUrl && (
-              <div className="mt-6 flex flex-wrap justify-center gap-2.5">
-                <a
-                  href={githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
-                >
-                  {author_page_github_profile()} <ArrowRightIcon />
-                </a>
-              </div>
-            )}
+            {githubUrl ? (
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 flex flex-wrap justify-center gap-2.5 border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
+              >
+                {author_page_github_profile()} <ArrowRightIcon />
+              </a>
+            ) : null}
           </div>
         }
       >

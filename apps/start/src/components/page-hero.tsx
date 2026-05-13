@@ -14,6 +14,7 @@ interface PageHeroProps {
   descriptionItalic?: boolean;
   stats?: Stat[];
   borderThick?: boolean;
+  alignItems?: "start" | "center" | "end";
   children: ReactNode;
   media?: ReactNode;
   aside?: ReactNode;
@@ -42,6 +43,7 @@ export const PageHero = ({
   descriptionItalic = false,
   stats,
   borderThick = false,
+  alignItems = "end",
   children,
   media,
   aside,
@@ -64,7 +66,10 @@ export const PageHero = ({
   return (
     <section
       className={cn(
-        "grid grid-cols-1 items-end gap-8 p-10",
+        "grid grid-cols-1 gap-8 p-10",
+        alignItems === "start" && "items-start",
+        alignItems === "center" && "items-center",
+        alignItems === "end" && "items-end",
         gridColumns,
         borderThick ? "border-border border-b-[3px]" : "border-border border-b",
         className,
