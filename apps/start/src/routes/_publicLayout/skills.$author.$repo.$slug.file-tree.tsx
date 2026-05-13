@@ -133,13 +133,13 @@ function RouteComponent() {
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
       <aside
         className={cn(
-          "w-full border-b border-border bg-background lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden",
+          "sticky top-[calc(var(--header-height)+3.5rem)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden",
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >
         <div
           className={cn(
-            "sticky top-[calc(var(--header-height)+3.5rem)] z-30 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-4 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-0",
+            "flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-4 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
             !isTreeExpanded && "lg:justify-center",
           )}
         >
@@ -168,7 +168,7 @@ function RouteComponent() {
           >
             <CaretRightIcon
               aria-hidden
-              className={cn("size-4 transition-transform", isTreeExpanded ? "rotate-90" : "")}
+              className={cn("size-4 transition-transform", isTreeExpanded ? "rotate-180" : "")}
             />
           </button>
         </div>
