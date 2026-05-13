@@ -116,7 +116,7 @@ function RouteComponent() {
   return (
     <>
       <section className="grid grid-cols-1 border-b lg:grid-cols-[1fr_380px]">
-        <div className="border-border border-b px-5 pb-8 pt-8 md:px-7 md:pt-10 lg:border-r lg:border-b-0">
+        <div className="border-border border-b px-4 pb-8 pt-8 md:px-6 md:pt-10 lg:border-r lg:border-b-0">
           <SkillBreadcrumb
             skill={{
               id: skill.id,
@@ -125,7 +125,7 @@ function RouteComponent() {
               authorHandle: skill.authorHandle,
             }}
           />
-          <h1 className="font-display m-0 mb-4 mt-3.5 text-[clamp(52px,8vw,96px)] font-normal leading-[.95] tracking-[-.02em]">
+          <h1 className="font-display m-0 mb-4 mt-3.5 text-4xl md:text-5xl lg:text-6xl font-normal">
             {skill.title}
             {skill.isVerified ? (
               <span className="border-border text-muted-foreground ml-3 inline-flex align-middle text-[10px] uppercase tracking-[.12em]">
@@ -146,7 +146,7 @@ function RouteComponent() {
           />
         </div>
 
-        <div className="border-border border-t lg:border-t-0">
+        <div className="border-border border-t lg:border-t-0 px-4 md:px-6">
           <SkillDetailMetadata
             authorHandle={skill.authorHandle}
             forkCount={skill.forkCount}
@@ -170,10 +170,10 @@ function RouteComponent() {
             snapshotId={selectedSnapshotId}
             slug={slug}
           />
-          <div className="border-border border-b p-[18px_22px]">
+          <div className="border-border border-b py-6">
             <InstallTabs slug={skill.slug} />
           </div>
-          <div className="border-border border-b p-[18px_22px]">
+          <div className="border-border border-b py-6">
             <SkillDetailActions
               snapshotId={selectedSnapshotId}
               slug={skill.slug}

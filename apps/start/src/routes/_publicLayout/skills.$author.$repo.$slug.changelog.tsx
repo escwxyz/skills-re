@@ -7,6 +7,7 @@ import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getSkillChangelog } from "@/functions/skills/get-skill-changelog";
+import { TimeValue } from "@/components/time-value";
 
 const resolveCommitUrl = (url?: string | null) => {
   if (!url) {
@@ -51,6 +52,8 @@ function RouteComponent() {
 
   const { currentSnapshotId } = data;
 
+  const locale = getLocale();
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-10 md:py-12">
       <div className="border-border mb-10  border-b pb-8">
@@ -78,11 +81,12 @@ function RouteComponent() {
                 key={`${entry.version}-${index}`}
                 className={[
                   index < data.entries.length - 1 ? "border-border border-b" : "",
-                  "py-10 first:pt-0",
+                  "py-9 first:pt-0",
                 ].join(" ")}
               >
                 <div className="mb-5 flex flex-wrap items-baseline justify-between gap-4">
                   <div className="flex flex-wrap items-center gap-3">
+                    {/** TODO */}
                     <span
                       className={`flex items-center gap-1.5 font-mono text-sm tracking-wide ${entry.isCurrent ? "text-editorial-red" : "text-ink"}`}
                     >
@@ -102,8 +106,7 @@ function RouteComponent() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="whitespace-nowrap font-mono text-[11px] tracking-[.06em] text-muted-foreground">
-                      {/** todo: format */}
-                      {entry.date}
+                      <TimeValue time={entry.date} locale={locale} />
                     </span>
                     {commitUrl ? (
                       <a
@@ -120,13 +123,15 @@ function RouteComponent() {
                   </div>
                 </div>
 
-                <h3 className="mb-3.5 font-display text-[clamp(22px,3vw,30px)] leading-tight tracking-tight">
+                <h3 className="mb-2.5 font-display text-[clamp(1.15rem,2vw,1.65rem)] font-normal leading-[1.05] tracking-tight">
                   {entry.title}
                 </h3>
 
-                <p className="m-0 max-w-170 font-serif text-base leading-relaxed text-muted-foreground">
-                  {entry.body}
-                </p>
+                {entry.body ? (
+                  <p className="m-0 max-w-170 font-serif text-[15px] leading-[1.75] text-muted-foreground md:text-base">
+                    {entry.body}
+                  </p>
+                ) : null}
               </div>
             );
           })}

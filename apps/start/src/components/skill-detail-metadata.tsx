@@ -13,10 +13,11 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
+
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
-import { formatDate } from "@/utils/format";
 import { getAuthorDisplayName, getAvatarLabel } from "@/utils/author-shared";
+import { TimeValue } from "./time-value";
 
 interface Props {
   authorHandle: string;
@@ -61,10 +62,9 @@ export const SkillDetailMetadata = ({
   const authorName = author ? getAuthorDisplayName(author) : `@${authorHandle}`;
   const avatarLabel = author ? getAvatarLabel(author) : authorHandle.trim().charAt(0).toUpperCase();
   const repoLabel = `${authorHandle}/${repoName}`;
-  const updatedLabel = updatedAt ? formatDate(updatedAt, locale, { dateStyle: "medium" }) : "—";
 
   return (
-    <div className="border-border border-b p-[18px_22px]">
+    <div className="border-border border-b py-6">
       <div className="mb-3 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
         {String(m.skill_detail_metadata_title())}
       </div>
@@ -72,7 +72,7 @@ export const SkillDetailMetadata = ({
       <div className="divide-border/70 divide-y border-t border-border/70">
         <Row
           icon={
-            <Avatar size="sm" className="size-4 border-0 shadow-none rounded-none after:hidden">
+            <Avatar className="size-4 border-0 shadow-none rounded-none after:hidden">
               {author?.avatarUrl ? (
                 <AvatarImage className="rounded-none" alt={authorName} src={author.avatarUrl} />
               ) : null}
@@ -100,7 +100,7 @@ export const SkillDetailMetadata = ({
                 href={repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 transition-colors hover:text-muted-foreground"
+                className="ml-auto flex max-w-full items-center justify-end gap-1 overflow-hidden transition-colors hover:text-muted-foreground"
               >
                 <span className="min-w-0 truncate">{repoLabel}</span>
                 <ArrowUpRightIcon className="size-3 shrink-0" />
@@ -126,7 +126,7 @@ export const SkillDetailMetadata = ({
         <Row
           icon={<ClockIcon className="size-4" />}
           label={String(m.skill_detail_meta_updated())}
-          value={updatedLabel}
+          value={updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
         />
 
         <Row

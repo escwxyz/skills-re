@@ -13,6 +13,8 @@ import {
   skill_version_view_full_changelog,
 } from "@/paraglide/messages";
 import type { SkillVersionHistoryItem } from "@/utils/types";
+import { TimeValue } from "./time-value";
+import { getLocale } from "@/paraglide/runtime";
 
 interface Props {
   author: string;
@@ -33,6 +35,8 @@ const VersionHistoryList = ({
 }) => {
   const currentVersion =
     versions.find((version) => version.label === "current") ?? versions[0] ?? null;
+
+  const locale = getLocale();
 
   return (
     <div>
@@ -61,7 +65,7 @@ const VersionHistoryList = ({
                   {isSelected && !isCurrent ? ` (${skill_version_selected()})` : ""}
                 </span>
                 <span className="shrink-0 text-[10px] tracking-[.06em] text-muted-foreground">
-                  {version.date}
+                  <TimeValue time={version.date} locale={locale} />
                 </span>
               </div>
               {index < versions.length - 1 ? (
@@ -106,7 +110,7 @@ export const SkillVersionPanel = ({
     null;
 
   return (
-    <div className="border-border border-b p-[18px_22px]">
+    <div className="border-border border-b py-6">
       <div className="mb-5">
         <VersionHistoryList selectedSnapshotId={selectedSnapshotId} versions={versions} />
       </div>

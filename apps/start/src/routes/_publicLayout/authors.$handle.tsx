@@ -4,6 +4,7 @@ import { ArrowRightIcon } from "@phosphor-icons/react";
 import { AuthorSkillList } from "@/components/author-skill-list";
 import { AuthorStats } from "@/components/author-stats";
 import { PageHero } from "@/components/page-hero";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
 import { buildAuthorOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
@@ -54,9 +55,21 @@ function RouteComponent() {
         description={String(author_page_description({ handle }))}
         media={
           <div className="flex flex-col items-center justify-center px-2">
-            <div className="bg-foreground text-background border-background font-display flex size-60 items-center justify-center border-[6px] border-double text-[120px] italic [outline:1px_solid_var(--foreground)]">
-              {avatarLabel}
-            </div>
+            {/**
+             * Author Image
+             */}
+            <Avatar className="size-60 overflow-hidden rounded-none border-[6px] border-double border-background bg-foreground shadow-none after:rounded-none">
+              {author.avatarUrl ? (
+                <AvatarImage
+                  className="rounded-none object-cover"
+                  alt={name}
+                  src={author.avatarUrl}
+                />
+              ) : null}
+              <AvatarFallback className="rounded-none bg-foreground font-display text-[120px] italic text-background">
+                {avatarLabel}
+              </AvatarFallback>
+            </Avatar>
             <div className="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.14em] uppercase">
               @{handle}
               {isVerified && (
@@ -68,7 +81,7 @@ function RouteComponent() {
                 href={githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 flex flex-wrap justify-center gap-2.5 border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
+                className="mt-6 flex flex-wrap justify-center items-center gap-2.5 border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
               >
                 {author_page_github_profile()} <ArrowRightIcon />
               </a>

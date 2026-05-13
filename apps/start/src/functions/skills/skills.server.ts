@@ -39,6 +39,26 @@ export const resolveSnapshot = (snapshots: SnapshotRecord[], snapshotId?: string
   );
 };
 
+const splitCommitMessage = (value?: string | null) => {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return {
+      body: null,
+      title: null,
+    };
+  }
+
+  const [titleLine = "", ...bodyLines] = normalized.split(/\r?\n/);
+  const title = titleLine.trim();
+  const body = bodyLines.join("\n").trim();
+
+  return {
+    body: body || null,
+    title: title || null,
+  };
+};
+
 interface ResolvePathSkillClient {
   skills: Pick<AppRouterClient["skills"], "resolvePathBySlug" | "getByPath">;
 }
@@ -140,16 +160,21 @@ export const fetchSkillChangelog = async (input: {
   const currentSnapshot = resolveSnapshot(snapshots, input.selectedSnapshotId);
 
   return {
-    entries: snapshots.map((snapshot, index) => ({
-      body: snapshot.description,
-      date: snapshot.sourceCommitDate ?? snapshot.syncTime,
-      isCurrent: snapshot.id === currentSnapshot?.id || (!input.selectedSnapshotId && index === 0),
-      shaLabel: snapshot.hash.slice(0, 7),
-      title: snapshot.sourceCommitMessage?.trim() || snapshot.description,
-      snapshotId: snapshot.id,
-      sourceCommitUrl: snapshot.sourceCommitUrl ?? undefined,
-      version: snapshot.version,
-    })),
+    entries: snapshots.map((snapshot, index) => {
+      const commitMessage = splitCommitMessage(snapshot.sourceCommitMessage);
+
+      return {
+        body: commitMessage.body,
+        date: snapshot.sourceCommitDate ?? snapshot.syncTime,
+        isCurrent:
+          snapshot.id === currentSnapshot?.id || (!input.selectedSnapshotId && index === 0),
+        shaLabel: snapshot.hash.slice(0, 7),
+        title: commitMessage.title ?? snapshot.version,
+        snapshotId: snapshot.id,
+        sourceCommitUrl: snapshot.sourceCommitUrl ?? undefined,
+        version: snapshot.version,
+      };
+    }),
     currentSnapshotId: currentSnapshot?.id ?? null,
     skillId: skill.id,
     skillDescription: skill.description,

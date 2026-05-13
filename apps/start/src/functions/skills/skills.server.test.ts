@@ -556,7 +556,7 @@ describe("fetchSkillChangelog", () => {
                 hash: "abcdef123456",
                 id: "snapshot-1",
                 sourceCommitDate: 1710000000000,
-                sourceCommitMessage: "feat: add skill",
+                sourceCommitMessage: "feat: add skill\n\nAdd skill parsing details",
                 sourceCommitUrl: "https://github.com/acme/skills/commit/abc123",
                 syncTime: 1710000001000,
                 version: "v1",
@@ -581,7 +581,7 @@ describe("fetchSkillChangelog", () => {
       currentSnapshotId: "snapshot-2",
       entries: [
         {
-          body: "current snapshot",
+          body: "Add skill parsing details",
           date: 1710000000000,
           isCurrent: false,
           shaLabel: "abcdef1",
@@ -591,13 +591,13 @@ describe("fetchSkillChangelog", () => {
           version: "v1",
         },
         {
-          body: "older snapshot",
+          body: null,
           date: 1710000002000,
           isCurrent: true,
           shaLabel: "123456a",
           snapshotId: "snapshot-2",
           sourceCommitUrl: undefined,
-          title: "older snapshot",
+          title: "v2",
           version: "v2",
         },
       ],

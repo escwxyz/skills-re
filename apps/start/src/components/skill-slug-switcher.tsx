@@ -148,7 +148,7 @@ const SkillSlugSwitcherDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         className={cn(
-          "border-border hover:bg-paper-2 data-popup-open:bg-paper-2 flex min-w-0 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none",
+          "border-border hover:bg-paper-2 data-popup-open:bg-paper-2 flex min-w-0 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none w-fit!",
           className,
         )}
       >
