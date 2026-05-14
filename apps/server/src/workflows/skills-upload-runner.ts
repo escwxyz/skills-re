@@ -125,22 +125,16 @@ export const runSkillsUploadWorkflow = async (
   deps: RunSkillsUploadWorkflowDeps = {},
 ) => {
   try {
-    const payload = await step.do(
-      "load-upload-payload",
-      workflowStepRetryPolicy.skillsUploadPipeline,
-      async () => await loadStagedSkillsUploadPayload(deps.snapshotFilesBucket, event.payload),
-    );
+    // Load the staged payload outside step.do so we never persist the full repo payload
+    // as a workflow step result. That payload can exceed the workflow serialization limit.
+    const payload = await loadStagedSkillsUploadPayload(deps.snapshotFilesBucket, event.payload);
 
     const { repo } = payload;
     if (!repo) {
       throw new Error("Repo metadata is required for skill upload.");
     }
 
-    const preparedSkills = await step.do(
-      "prepare-upload-skills",
-      workflowStepRetryPolicy.skillsUploadPipeline,
-      async () => await prepareUploadSkills(payload.skills),
-    );
+    const preparedSkills = await prepareUploadSkills(payload.skills);
 
     const repoId = await step.do(
       "ensure-upload-repo",

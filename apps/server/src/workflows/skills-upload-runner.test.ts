@@ -153,8 +153,6 @@ describe("runSkillsUploadWorkflow", () => {
     );
 
     expect(stepNames).toEqual([
-      "load-upload-payload",
-      "prepare-upload-skills",
       "ensure-upload-repo",
       "resolve-upload-skill-slug-0",
       "create-upload-skill-0",
