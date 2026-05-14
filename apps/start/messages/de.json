@@ -448,6 +448,7 @@
   "input_label": "Repository-URL",
   "input_placeholder": "https://github.com/benutzername/repo",
   "install_tabs_copy": "Kopieren",
+  "install_tabs_cli_tool": "CLI-Tool",
   "install_tabs_install_global": "install --global",
   "language_switcher_languages": "Sprachen",
   "language_switcher_locale_de": "Deutsch",

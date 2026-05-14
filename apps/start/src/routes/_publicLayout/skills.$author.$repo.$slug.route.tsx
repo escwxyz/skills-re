@@ -10,7 +10,6 @@ import {
 import { z } from "zod/v4";
 
 import { InstallTabs } from "@/components/install-tabs";
-import { SkillActivityMetrics } from "@/components/skill-activity-metrics";
 import { SkillDetailActions } from "@/components/skill-detail-actions";
 import { SkillDetailTabActions } from "@/components/skill-detail-tab-actions";
 import { SkillDetailTabs } from "@/components/skill-detail-tabs";
@@ -140,10 +139,18 @@ function RouteComponent() {
 
           <SkillDetailCategory categorySlug={(skill.primaryCategory ?? "other") as CategorySlug} />
           <SkillDetailTags tags={skill.tags} />
-          <SkillActivityMetrics
-            auditScore={skill.staticAudit?.overallScore ?? null}
-            skillId={data.skill.id}
-          />
+
+          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-2">
+            <InstallTabs author={author} repo={repo} slug={skill.slug} />
+
+            <div className="mt-6">
+              <SkillDetailActions
+                snapshotId={selectedSnapshotId}
+                slug={skill.slug}
+                version={latestVersion}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="border-border border-t lg:border-t-0 px-4 md:px-6">
@@ -156,6 +163,11 @@ function RouteComponent() {
             stargazerCount={skill.stargazerCount}
             updatedAt={skill.updatedAt}
           />
+
+          {/* <SkillActivityMetrics
+            auditScore={skill.staticAudit?.overallScore ?? null}
+            skillId={data.skill.id}
+          /> */}
 
           <SkillVersionPanel
             author={author}
@@ -170,16 +182,6 @@ function RouteComponent() {
             snapshotId={selectedSnapshotId}
             slug={slug}
           />
-          <div className="border-border border-b py-6">
-            <InstallTabs author={author} repo={repo} slug={skill.slug} />
-          </div>
-          <div className="border-border border-b py-6">
-            <SkillDetailActions
-              snapshotId={selectedSnapshotId}
-              slug={skill.slug}
-              version={latestVersion}
-            />
-          </div>
         </div>
       </section>
 

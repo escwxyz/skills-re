@@ -448,6 +448,7 @@
   "input_label": "仓库地址",
   "input_placeholder": "https://github.com/username/repo",
   "install_tabs_copy": "复制",
+  "install_tabs_cli_tool": "CLI 工具",
   "install_tabs_install_global": "install --global",
   "language_switcher_languages": "语言",
   "language_switcher_locale_de": "德语",
