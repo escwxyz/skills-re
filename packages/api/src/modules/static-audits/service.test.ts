@@ -283,4 +283,121 @@ describe("static audits service", () => {
 
     expect(dispatchCalls).toEqual([[]]);
   });
+
+  test("ingests a static audit report into the database", async () => {
+    const upsertCalls: unknown[] = [];
+
+    const service = createStaticAuditsService({
+      findSnapshotIdForStaticAudit: () => Promise.resolve(null),
+      findStaticAuditByIdempotencyKey: () =>
+        Promise.resolve({
+          id: asStaticAuditId("audit-1"),
+        }),
+      upsertStaticAudit: async (input) => {
+        upsertCalls.push(input);
+        return asStaticAuditId("audit-1");
+      },
+    });
+
+    await expect(
+      service.ingest({
+        evaluation: {
+          is_blocked: false,
+          overall_score: 91,
+          risk_level: "low",
+          safe_to_publish: true,
+          status: "pass",
+        },
+        meta: {
+          generated_at: "2024-01-01T00:00:00.000Z",
+          pipeline: "github-actions-submit",
+          pipeline_run_id: "run-1",
+          rules_version: "static-rules-v1",
+          source_hash: "hash-1",
+          source_ref: "main",
+          source_type: "github",
+        },
+        security_audit: {
+          files_scanned: 3,
+          findings: [],
+          risk_factors: [],
+          summary: "No findings",
+          total_lines: 42,
+        },
+        target: {
+          owner: "acme",
+          repo: "skills",
+          snapshot_id: asSnapshotId("snapshot-1"),
+          skill_root_path: "skills/acme/widget",
+        },
+      }),
+    ).resolves.toEqual({
+      auditId: asStaticAuditId("audit-1"),
+      reason: undefined,
+      status: "pass",
+      upserted: false,
+    });
+
+    expect(upsertCalls).toHaveLength(1);
+    expect(upsertCalls[0]).toMatchObject({
+      auditJson: JSON.stringify({
+        evaluation: {
+          is_blocked: false,
+          overall_score: 91,
+          risk_level: "low",
+          safe_to_publish: true,
+          status: "pass",
+        },
+        meta: {
+          generated_at: "2024-01-01T00:00:00.000Z",
+          pipeline: "github-actions-submit",
+          pipeline_run_id: "run-1",
+          rules_version: "static-rules-v1",
+          source_hash: "hash-1",
+          source_ref: "main",
+          source_type: "github",
+        },
+        security_audit: {
+          files_scanned: 3,
+          findings: [],
+          risk_factors: [],
+          summary: "No findings",
+          total_lines: 42,
+        },
+        target: {
+          owner: "acme",
+          repo: "skills",
+          snapshot_id: asSnapshotId("snapshot-1"),
+          skill_root_path: "skills/acme/widget",
+        },
+      }),
+      entryPath: undefined,
+      filesScanned: 3,
+      findingsJson: "[]",
+      generatedAt: 1_704_067_200_000,
+      idempotencyKey: "snapshot-1:hash-1:static-rules-v1",
+      isBlocked: false,
+      modelVersion: undefined,
+      overallScore: 91,
+      pipeline: "github-actions-submit",
+      pipelineRunId: "run-1",
+      reason: undefined,
+      repoName: "skills",
+      repoOwner: "acme",
+      reportR2Key: undefined,
+      riskFactorsJson: "[]",
+      riskLevel: "low",
+      rulesVersion: "static-rules-v1",
+      safeToPublish: true,
+      skillRootPath: "skills/acme/widget",
+      snapshotId: asSnapshotId("snapshot-1"),
+      sourceHash: "hash-1",
+      sourceRef: "main",
+      sourceType: "github",
+      status: "pass",
+      summary: "No findings",
+      totalLines: 42,
+      treeHash: undefined,
+    });
+  });
 });

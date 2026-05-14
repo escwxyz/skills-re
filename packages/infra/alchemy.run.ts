@@ -329,6 +329,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_REPO: alchemy.env.SKILL_AUDIT_GITHUB_REPO ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
+    AUTOMATION_API_TOKEN: alchemy.secret.env.AUTOMATION_API_TOKEN ?? "",
     TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,

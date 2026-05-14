@@ -49,6 +49,9 @@
     "db:seed:reset": "bun run packages/db/src/seed.ts --reset",
     "deploy": "turbo -F @skills-re/infra deploy",
     "destroy": "turbo -F @skills-re/infra destroy",
+    "audit:write-targets": "bun scripts/audit/write-dispatch-targets.ts",
+    "audit:run": "bun scripts/audit/run-skill-scanner-audit.ts",
+    "audit:ingest": "bun scripts/audit/ingest-audits.ts",
     "check": "bun ./scripts/ultracite-run.mjs check",
     "fix": "bun ./scripts/ultracite-run.mjs fix"
   },

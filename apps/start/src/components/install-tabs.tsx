@@ -15,9 +15,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { m } from "@/paraglide/messages";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type Cli = "npx" | "bunx" | "pnpm";
 export type CliTool = "skills.sh" | "openskills";
@@ -159,13 +159,13 @@ interface PickerProps {
 }
 
 const CliToolPickerResponsive = ({ cliTool, onSelect }: PickerProps) => {
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isMobile = useIsMobile();
 
-  if (isDesktop) {
-    return <CliToolDropdown cliTool={cliTool} onSelect={onSelect} />;
+  if (isMobile) {
+    return <CliToolDialog cliTool={cliTool} onSelect={onSelect} />;
   }
 
-  return <CliToolDialog cliTool={cliTool} onSelect={onSelect} />;
+  return <CliToolDropdown cliTool={cliTool} onSelect={onSelect} />;
 };
 
 export const InstallTabs = ({ author, repo, slug }: Props) => {
