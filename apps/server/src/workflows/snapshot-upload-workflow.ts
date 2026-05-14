@@ -40,6 +40,10 @@ export class SnapshotUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
       instanceId: event.instanceId,
       run: () =>
         runSnapshotUploadWorkflow(event, step, {
+          snapshotFilesBucket: {
+            delete: r2.deleteSnapshotFileObject,
+            get: r2.getSnapshotArchiveStagingObject,
+          },
           runUploadSnapshotFiles: (input) => snapshotsService.runUploadSnapshotFilesPipeline(input),
         }),
       workflowName: "skills-re-v1-snapshot-upload",

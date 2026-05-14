@@ -26,45 +26,106 @@ export interface SnapshotUploadWorkflowStagingPayload {
   stagingKey: string;
 }
 
-export type SnapshotUploadWorkflowPayload =
-  | SnapshotUploadWorkflowStagingPayload
-  | SnapshotUploadContentPayload;
+export type SnapshotUploadWorkflowPayload = SnapshotUploadWorkflowStagingPayload;
+
+export interface SnapshotUploadStagingReader {
+  delete(key: string): Promise<void>;
+  get(key: string): Promise<{ text(): Promise<string> } | null>;
+}
+
+export interface SnapshotUploadStagingBucket extends SnapshotUploadStagingReader {
+  put(
+    key: string,
+    value: string,
+    options?: { httpMetadata?: { contentType?: string } },
+  ): Promise<unknown>;
+}
 
 type SnapshotUploadWorkflowEnv = Env & {
+  SNAPSHOT_FILES?: SnapshotUploadStagingBucket;
   SNAPSHOT_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotUploadWorkflowPayload>;
 };
 
-const isStagingPayload = (
-  input: SnapshotUploadWorkflowPayload,
-): input is SnapshotUploadWorkflowStagingPayload =>
-  typeof (input as { stagingKey?: unknown }).stagingKey === "string";
-
 export const getSnapshotUploadStagingKey = (input: SnapshotUploadWorkflowPayload) =>
-  isStagingPayload(input) ? input.stagingKey : null;
+  input.stagingKey;
 
-export const loadStagedSnapshotUploadPayload = (
-  input: SnapshotUploadWorkflowPayload,
-): Promise<SnapshotUploadContentPayload> => {
-  if (!isStagingPayload(input)) {
-    const inlineValidated = snapshotUploadContentPayloadSchema.safeParse(input);
-    if (!inlineValidated.success) {
-      return Promise.reject(
-        new Error("[snapshot-upload:validate-inline-payload] invalid legacy payload shape"),
-      );
-    }
-    return Promise.resolve(inlineValidated.data);
-  }
-
-  return Promise.reject(new Error("Snapshot upload staging is not configured."));
+const buildStagingKey = () => {
+  const day = new Date().toISOString().slice(0, 10);
+  return `snapshot-upload/staging/${day}/${crypto.randomUUID()}.json`;
 };
 
-export const cleanupStagedSnapshotUploadPayload = (_input: SnapshotUploadWorkflowPayload) => {
-  void _input;
+export const stageSnapshotUploadPayload = async (
+  bucket: SnapshotUploadStagingBucket,
+  payload: SnapshotUploadContentPayload,
+): Promise<SnapshotUploadWorkflowStagingPayload> => {
+  const key = buildStagingKey();
+  await bucket.put(key, JSON.stringify(payload), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" },
+  });
+  return { stagingKey: key };
+};
+
+export const loadStagedSnapshotUploadPayload = async (
+  bucket: SnapshotUploadStagingReader | null | undefined,
+  input: SnapshotUploadWorkflowPayload,
+): Promise<SnapshotUploadContentPayload> => {
+  if (!bucket) {
+    throw new Error("Snapshot upload staging is not configured.");
+  }
+
+  const object = await bucket.get(input.stagingKey);
+  if (!object) {
+    throw new Error("[snapshot-upload:load-from-r2] staging payload not found");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await object.text());
+  } catch {
+    throw new Error("[snapshot-upload:parse-staged-json] failed to parse JSON");
+  }
+
+  const validated = snapshotUploadContentPayloadSchema.safeParse(parsed);
+  if (!validated.success) {
+    throw new Error("[snapshot-upload:validate-staged-payload] invalid payload shape");
+  }
+
+  return validated.data;
+};
+
+export const cleanupStagedSnapshotUploadPayload = async (
+  bucket: SnapshotUploadStagingReader | null | undefined,
+  input: SnapshotUploadWorkflowPayload,
+) => {
+  if (!bucket) {
+    return;
+  }
+
+  await bucket.delete(input.stagingKey);
 };
 
 export const getSnapshotUploadWorkflowScheduler = (
   env: SnapshotUploadWorkflowEnv,
 ): SnapshotUploadScheduler | null => {
   const binding = env.SNAPSHOT_UPLOAD_WORKFLOW;
-  return binding ? makeWorkflowScheduler("snapshot-upload", binding) : null;
+  if (!binding) {
+    return null;
+  }
+
+  const bucket = env.SNAPSHOT_FILES;
+  return {
+    async enqueue(payload) {
+      if (!bucket) {
+        throw new Error("Snapshot upload staging is not configured.");
+      }
+
+      const stagedPayload = await stageSnapshotUploadPayload(bucket, payload);
+      try {
+        return await makeWorkflowScheduler("snapshot-upload", binding).enqueue(stagedPayload);
+      } catch (error) {
+        await cleanupStagedSnapshotUploadPayload(bucket, stagedPayload);
+        throw error;
+      }
+    },
+  };
 };

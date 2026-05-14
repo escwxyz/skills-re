@@ -1,7 +1,10 @@
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 
-import { loadStagedSnapshotUploadPayload } from "./snapshot-upload";
-import type { SnapshotUploadWorkflowPayload } from "./snapshot-upload";
+import {
+  cleanupStagedSnapshotUploadPayload,
+  loadStagedSnapshotUploadPayload,
+} from "./snapshot-upload";
+import type { SnapshotUploadStagingReader, SnapshotUploadWorkflowPayload } from "./snapshot-upload";
 
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
@@ -12,6 +15,7 @@ export interface WorkflowStep {
 }
 
 export interface SnapshotUploadWorkflowDeps {
+  snapshotFilesBucket?: SnapshotUploadStagingReader | null;
   runUploadSnapshotFiles: (input: {
     files: { content: string; path: string }[];
     snapshotId: string;
@@ -24,8 +28,17 @@ export const runSnapshotUploadWorkflow = (
   deps: SnapshotUploadWorkflowDeps,
 ) =>
   step.do("upload-snapshot-files", workflowStepRetryPolicy.snapshotUpload, async () => {
-    const uploadPayload = await loadStagedSnapshotUploadPayload(event.payload);
+    const uploadPayload = await loadStagedSnapshotUploadPayload(
+      deps.snapshotFilesBucket,
+      event.payload,
+    );
     await deps.runUploadSnapshotFiles(uploadPayload);
+
+    try {
+      await cleanupStagedSnapshotUploadPayload(deps.snapshotFilesBucket, event.payload);
+    } catch (error) {
+      console.warn("[snapshot-upload] failed to cleanup staged payload", { error });
+    }
 
     return {
       filesCount: uploadPayload.files.length,
