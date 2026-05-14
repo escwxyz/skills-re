@@ -10,6 +10,8 @@ import {
   setSkillLatestSnapshot,
 } from "@skills-re/api/modules/snapshots/repo";
 import { ensureRepo } from "@skills-re/api/modules/repos/service";
+import { createStaticAuditWorkflowTarget } from "@skills-re/api/modules/static-audits/workflow-target";
+import type { StaticAuditWorkflowTarget } from "@skills-re/api/modules/static-audits/workflow-target";
 import {
   createSkill,
   checkSkillExistingBySlug,
@@ -57,6 +59,17 @@ export interface RunSkillsUploadWorkflowDeps {
   setSkillLatestSnapshot?: typeof setSkillLatestSnapshot;
   snapshotUploadScheduler?: SnapshotUploadScheduler | null;
   syncSkillTags?: typeof syncSkillTags;
+  dispatchStaticAuditWorkflow?: (targets: StaticAuditWorkflowTarget[]) => Promise<
+    | {
+        dispatched: false;
+        reason: string;
+      }
+    | {
+        dispatched: true;
+        repository: string;
+        workflowFile: string;
+      }
+  >;
   updateSkillAiSearchItemId?: typeof updateSkillAiSearchItemId;
   uploadSnapshotFiles?: typeof uploadSnapshotFiles;
 }
@@ -74,6 +87,9 @@ const normalizeUploadFilePath = (value: string) =>
     .trim()
     .replace(/^\.\/+/, "")
     .replace(/^\/+/, "");
+
+const formatErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 const findSkillMdContent = (
   skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number],
@@ -147,6 +163,7 @@ export const runSkillsUploadWorkflow = async (
 
     const [authorHandle = "", repoName = ""] = repo.nameWithOwner.split("/");
     const createdSkillIds: string[] = [];
+    const auditTargets: StaticAuditWorkflowTarget[] = [];
     let firstWorkId: string | null = null;
     const usedSlugs = new Set<string>();
     const syncTime = Date.now();
@@ -208,6 +225,17 @@ export const runSkillsUploadWorkflow = async (
             syncTime,
             version: skill.preferredVersion ?? "0.0.1",
           }),
+      );
+
+      auditTargets.push(
+        createStaticAuditWorkflowTarget({
+          owner: authorHandle,
+          repo: repoName,
+          skillRootPath: skill.directoryPath,
+          snapshotId,
+          sourceCommitSha: skill.initialSnapshot.sourceCommitSha,
+          sourceRef: skill.initialSnapshot.sourceRef,
+        }),
       );
 
       const upload = await step.do(
@@ -336,6 +364,36 @@ export const runSkillsUploadWorkflow = async (
         },
       );
     }
+
+    await step.do(
+      "dispatch-static-audit",
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () => {
+        const dispatchStaticAuditWorkflow =
+          deps.dispatchStaticAuditWorkflow ??
+          (() => ({
+            dispatched: false as const,
+            reason: "missing-dispatch-runtime",
+          }));
+
+        try {
+          const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
+          if (!auditDispatch.dispatched && auditDispatch.reason !== "no-targets") {
+            console.warn("[skills-upload] static audit workflow not dispatched", {
+              createdSkillsCount: createdSkillIds.length,
+              reason: auditDispatch.reason,
+              step: "dispatch-static-audit",
+            });
+          }
+        } catch (error) {
+          console.warn("[skills-upload] failed to dispatch static audit workflow", {
+            createdSkillsCount: createdSkillIds.length,
+            message: formatErrorMessage(error),
+            step: "dispatch-static-audit",
+          });
+        }
+      },
+    );
 
     const snapshotHistory = deps.snapshotHistory ?? null;
     const recentCommits = payload.recentCommits ?? null;
