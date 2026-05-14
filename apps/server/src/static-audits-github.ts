@@ -39,6 +39,16 @@ const DEFAULT_WORKFLOW_FILE = "skill-audit-submit.yml";
 const DEFAULT_WORKFLOW_REF = "main";
 const GITHUB_HOSTS = new Set(["github.com", "www.github.com"]);
 
+const summarizeTargets = (targets: StaticAuditWorkflowTarget[]) =>
+  targets.map((target) => ({
+    owner: target.owner,
+    repo: target.repo,
+    skillRootPath: target.skillRootPath ?? null,
+    snapshotId: target.snapshotId ?? null,
+    sourceCommitSha: target.sourceCommitSha ?? null,
+    sourceRef: target.sourceRef ?? null,
+  }));
+
 const getRepoPairFromSegments = (segments: string[]) => {
   const owner = segments.at(0);
   const repo = segments.at(1);
@@ -156,7 +166,13 @@ export const createStaticAuditGithubRuntime = (
     async dispatchStaticAuditWorkflow(
       targets: StaticAuditWorkflowTarget[],
     ): Promise<StaticAuditWorkflowDispatchOutcome> {
+      console.info("[static-audits] dispatch requested", {
+        targetCount: targets.length,
+        targets: summarizeTargets(targets),
+      });
+
       if (targets.length === 0) {
+        console.info("[static-audits] dispatch skipped: no targets");
         return {
           dispatched: false as const,
           reason: "no-targets",
@@ -164,11 +180,23 @@ export const createStaticAuditGithubRuntime = (
       }
 
       if (!config) {
+        console.warn("[static-audits] dispatch skipped: missing GitHub config", {
+          targetCount: targets.length,
+          workflowFile: env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? DEFAULT_WORKFLOW_FILE,
+          workflowRef: env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? DEFAULT_WORKFLOW_REF,
+        });
         return {
           dispatched: false as const,
           reason: "missing-config",
         };
       }
+
+      console.info("[static-audits] dispatching GitHub workflow", {
+        repository: `${config.owner}/${config.repo}`,
+        targetCount: targets.length,
+        workflowFile: config.workflowFile,
+        workflowRef: config.ref,
+      });
 
       const response = await fetchImpl(buildWorkflowDispatchApiUrl(config), {
         body: JSON.stringify({
@@ -183,6 +211,13 @@ export const createStaticAuditGithubRuntime = (
       });
 
       if (!response.ok) {
+        console.warn("[static-audits] GitHub workflow dispatch failed", {
+          repository: `${config.owner}/${config.repo}`,
+          status: response.status,
+          targetCount: targets.length,
+          workflowFile: config.workflowFile,
+          workflowRef: config.ref,
+        });
         throw new Error(
           describeDispatchError(
             {
@@ -193,6 +228,13 @@ export const createStaticAuditGithubRuntime = (
           ),
         );
       }
+
+      console.info("[static-audits] GitHub workflow dispatch succeeded", {
+        repository: `${config.owner}/${config.repo}`,
+        targetCount: targets.length,
+        workflowFile: config.workflowFile,
+        workflowRef: config.ref,
+      });
 
       return {
         dispatched: true as const,

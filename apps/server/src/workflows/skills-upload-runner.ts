@@ -371,13 +371,34 @@ export const runSkillsUploadWorkflow = async (
             reason: "missing-dispatch-runtime",
           }));
 
+        console.info("[skills-upload] preparing static audit dispatch", {
+          createdSkillsCount: createdSkillIds.length,
+          auditTargetsCount: auditTargets.length,
+          auditTargets: auditTargets.map((target) => ({
+            owner: target.owner,
+            repo: target.repo,
+            skillRootPath: target.skillRootPath ?? null,
+            snapshotId: target.snapshotId ?? null,
+            sourceCommitSha: target.sourceCommitSha ?? null,
+            sourceRef: target.sourceRef ?? null,
+          })),
+        });
+
         try {
           const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
-          if (!auditDispatch.dispatched && auditDispatch.reason !== "no-targets") {
+          if (auditDispatch.dispatched) {
+            console.info("[skills-upload] static audit workflow dispatched", {
+              createdSkillsCount: createdSkillIds.length,
+              repository: auditDispatch.repository,
+              step: "dispatch-static-audit",
+              workflowFile: auditDispatch.workflowFile,
+            });
+          } else {
             console.warn("[skills-upload] static audit workflow not dispatched", {
               createdSkillsCount: createdSkillIds.length,
               reason: auditDispatch.reason,
               step: "dispatch-static-audit",
+              targetCount: auditTargets.length,
             });
           }
         } catch (error) {
