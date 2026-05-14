@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle ? `Changelog · ${loaderData.skillTitle}` : undefined,
+      title: loaderData?.skillTitle
+        ? `${m.skill_detail_changelog()} · ${loaderData.skillTitle}`
+        : undefined,
       locale: getLocale(),
     }),
   component: RouteComponent,

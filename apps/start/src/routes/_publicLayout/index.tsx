@@ -17,8 +17,8 @@ export const Route = createFileRoute("/_publicLayout/")({
   head: () =>
     createSeo({
       canonicalPath: "/",
-      // i18n
-      title: "The Registry of Agent Skills",
+      description: m.home_meta_description(),
+      title: m.home_meta_title(),
       locale: getLocale(),
     }),
   component: App,

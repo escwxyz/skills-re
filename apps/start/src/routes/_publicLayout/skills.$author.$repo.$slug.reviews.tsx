@@ -1,5 +1,3 @@
-"use client";
-
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -33,8 +31,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      // i18n
-      title: loaderData?.skillTitle ? `Reviews · ${loaderData.skillTitle}` : undefined,
+      title: loaderData?.skillTitle
+        ? `${m.skill_detail_review_tab()} · ${loaderData.skillTitle}`
+        : undefined,
       locale: getLocale(),
     }),
   component: RouteComponent,

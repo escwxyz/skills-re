@@ -5,14 +5,18 @@ import { PageHero } from "@/components/page-hero";
 import { getCollectionsList } from "@/functions/collections/get-collections-list";
 import { OG_COLLECTIONS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
+import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_publicLayout/collections/")({
   loader: () => getCollectionsList(),
   head: () =>
     createSeo({
       canonicalPath: "/collections",
+      description: m.collections_meta_description(),
       image: OG_COLLECTIONS_IMAGE_PATH,
-      title: "Collections",
+      title: m.collections_meta_title(),
+      locale: getLocale(),
     }),
   component: RouteComponent,
 });
@@ -24,10 +28,10 @@ function RouteComponent() {
     <>
       <PageHero
         eyebrow="§ Curated Collections"
-        description="Curated sets of skills that work well together. Built by the desk and the community — each one tested, each one argued over."
+        description={m.collections_meta_description()}
         borderThick
       >
-        Hand-picked <em>skill stacks.</em>
+        {m.collections_meta_title()}
       </PageHero>
 
       <div className="px-4 pb-15 md:px-6">

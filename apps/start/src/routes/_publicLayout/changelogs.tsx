@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { TimeValue } from "@/components/time-value";
+import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getChangelogData } from "@/functions/get-changelog-data";
 import { createSeo } from "@/lib/seo";
@@ -11,8 +12,9 @@ export const Route = createFileRoute("/_publicLayout/changelogs")({
   head: () =>
     createSeo({
       canonicalPath: "/changelogs",
-      description: "New features, improvements, and fixes to the skills.re registry.",
-      title: "Changelog",
+      description: m.changelogs_meta_description(),
+      title: m.changelogs_meta_title(),
+      locale: getLocale(),
     }),
   component: RouteComponent,
 });
@@ -39,9 +41,9 @@ function RouteComponent() {
         <p className="text-muted-foreground mb-2 font-mono text-[10.5px] tracking-[.14em] uppercase">
           § Platform
         </p>
-        <h1 className="font-display text-5xl font-normal">Changelog</h1>
+        <h1 className="font-display text-5xl font-normal">{m.changelogs_meta_title()}</h1>
         <p className="text-muted-foreground mt-4 font-serif text-lg leading-relaxed">
-          New features, improvements, and fixes — in order of release.
+          {m.changelogs_meta_description()}
         </p>
       </div>
 

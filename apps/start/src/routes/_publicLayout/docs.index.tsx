@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getLocale } from "@/paraglide/runtime";
 import { getDocsList } from "@/functions/get-docs-list";
 import { createSeo } from "@/lib/seo";
+import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_publicLayout/docs/")({
   loader: () => getDocsList({ data: { locale: getLocale() } }),
   head: () =>
     createSeo({
       canonicalPath: "/docs",
-      title: "Documentation",
+      description: m.docs_meta_description(),
+      title: m.docs_meta_title(),
+      locale: getLocale(),
     }),
   component: RouteComponent,
 });
@@ -20,11 +23,11 @@ function RouteComponent() {
     <div className="mx-auto max-w-6xl px-6 py-16">
       <div className="mb-10 border-b pb-8">
         <p className="text-muted-foreground mb-2 font-mono text-[10.5px] tracking-[.14em] uppercase">
-          Registry
+          {m.docs_meta_title()}
         </p>
-        <h1 className="font-display text-5xl font-normal">Documentation</h1>
+        <h1 className="font-display text-5xl font-normal">{m.docs_meta_title()}</h1>
         <p className="text-muted-foreground mt-4 font-serif text-lg leading-relaxed">
-          Everything you need to install, use, and publish skills for AI agents.
+          {m.docs_meta_description()}
         </p>
       </div>
 

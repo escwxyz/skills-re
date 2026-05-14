@@ -17,6 +17,8 @@ import { Route as R404RouteImport } from './routes/404'
 import { Route as PublicLayoutIndexRouteImport } from './routes/_publicLayout/index'
 import { Route as SitemapTaxonomyDotxmlRouteImport } from './routes/sitemap.taxonomy[.]xml'
 import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static[.]xml'
+import { Route as SitemapDocsDotxmlRouteImport } from './routes/sitemap.docs[.]xml'
+import { Route as SitemapCollectionsDotxmlRouteImport } from './routes/sitemap.collections[.]xml'
 import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
 import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
 import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
@@ -108,6 +110,17 @@ const SitemapStaticDotxmlRoute = SitemapStaticDotxmlRouteImport.update({
   path: '/sitemap/static.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDocsDotxmlRoute = SitemapDocsDotxmlRouteImport.update({
+  id: '/sitemap/docs.xml',
+  path: '/sitemap/docs.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapCollectionsDotxmlRoute =
+  SitemapCollectionsDotxmlRouteImport.update({
+    id: '/sitemap/collections.xml',
+    path: '/sitemap/collections.xml',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
   id: '/sitemap/authors.xml',
   path: '/sitemap/authors.xml',
@@ -411,6 +424,8 @@ export interface FileRoutesByFullPath {
   '/terms': typeof PublicLayoutTermsRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
+  '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
@@ -470,6 +485,8 @@ export interface FileRoutesByTo {
   '/terms': typeof PublicLayoutTermsRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
+  '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
@@ -531,6 +548,8 @@ export interface FileRoutesById {
   '/_publicLayout/terms': typeof PublicLayoutTermsRoute
   '/robots/txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
+  '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
+  '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/_publicLayout/': typeof PublicLayoutIndexRoute
@@ -594,6 +613,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/robots/txt'
     | '/sitemap/authors.xml'
+    | '/sitemap/collections.xml'
+    | '/sitemap/docs.xml'
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/dashboard/feedbacks'
@@ -653,6 +674,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/robots/txt'
     | '/sitemap/authors.xml'
+    | '/sitemap/collections.xml'
+    | '/sitemap/docs.xml'
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/dashboard/feedbacks'
@@ -713,6 +736,8 @@ export interface FileRouteTypes {
     | '/_publicLayout/terms'
     | '/robots/txt'
     | '/sitemap/authors.xml'
+    | '/sitemap/collections.xml'
+    | '/sitemap/docs.xml'
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/_publicLayout/'
@@ -768,6 +793,8 @@ export interface RootRouteChildren {
   DotwellKnownApiCatalogRoute: typeof DotwellKnownApiCatalogRoute
   RobotsTxtRoute: typeof RobotsTxtRoute
   SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
+  SitemapCollectionsDotxmlRoute: typeof SitemapCollectionsDotxmlRoute
+  SitemapDocsDotxmlRoute: typeof SitemapDocsDotxmlRoute
   SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
   SitemapTaxonomyDotxmlRoute: typeof SitemapTaxonomyDotxmlRoute
   SitemapSkillsPageRoute: typeof SitemapSkillsPageRoute
@@ -840,6 +867,20 @@ declare module '@tanstack/react-router' {
       path: '/sitemap/static.xml'
       fullPath: '/sitemap/static.xml'
       preLoaderRoute: typeof SitemapStaticDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/docs.xml': {
+      id: '/sitemap/docs.xml'
+      path: '/sitemap/docs.xml'
+      fullPath: '/sitemap/docs.xml'
+      preLoaderRoute: typeof SitemapDocsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/collections.xml': {
+      id: '/sitemap/collections.xml'
+      path: '/sitemap/collections.xml'
+      fullPath: '/sitemap/collections.xml'
+      preLoaderRoute: typeof SitemapCollectionsDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap/authors.xml': {
@@ -1357,6 +1398,8 @@ const rootRouteChildren: RootRouteChildren = {
   DotwellKnownApiCatalogRoute: DotwellKnownApiCatalogRoute,
   RobotsTxtRoute: RobotsTxtRoute,
   SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
+  SitemapCollectionsDotxmlRoute: SitemapCollectionsDotxmlRoute,
+  SitemapDocsDotxmlRoute: SitemapDocsDotxmlRoute,
   SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
   SitemapTaxonomyDotxmlRoute: SitemapTaxonomyDotxmlRoute,
   SitemapSkillsPageRoute: SitemapSkillsPageRoute,
