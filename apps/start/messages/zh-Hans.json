@@ -532,6 +532,7 @@
   "preview_skipped_invalid_skills": "已跳过的无效技能：",
   "preview_title": "仓库预览",
   "preview_untitled_skill": "未命名的 SKILL.md",
+  "preview_diagnostics": "诊断信息",
   "rail_fetch": "获取",
   "rail_submit": "提交",
   "reviews_page_empty": "该技能暂无公开评价。",

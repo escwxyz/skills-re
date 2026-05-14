@@ -532,6 +532,7 @@
   "preview_skipped_invalid_skills": "Übersprungene ungültige Skills:",
   "preview_title": "Repository-Vorschau",
   "preview_untitled_skill": "Unbenanntes SKILL.md",
+  "preview_diagnostics": "Diagnose",
   "rail_fetch": "Abrufen",
   "rail_submit": "Einreichen",
   "reviews_page_empty": "Für diese Skill sind noch keine öffentlichen Bewertungen verfügbar.",

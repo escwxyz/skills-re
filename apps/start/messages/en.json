@@ -532,6 +532,7 @@
   "preview_skipped_invalid_skills": "Skipped invalid skills:",
   "preview_title": "Repository Preview",
   "preview_untitled_skill": "Untitled SKILL.md",
+  "preview_diagnostics": "Diagnostics",
   "rail_fetch": "Fetch",
   "rail_submit": "Submit",
   "reviews_page_empty": "No public reviews are available for this skill yet.",
