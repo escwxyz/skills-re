@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
+import { getFileIconForPath } from "@/utils/file-icon";
 import { formatFileSize } from "@/utils/format";
 
 const searchSchema = z.object({
@@ -129,6 +130,8 @@ function RouteComponent() {
     });
   };
 
+  const getFileIcon = (path: string) => getFileIconForPath(path);
+
   return (
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
       <aside
@@ -177,25 +180,31 @@ function RouteComponent() {
           <div className="bg-background lg:h-[calc(100svh-var(--header-height)-3.5rem-3.5rem)] lg:overflow-y-auto lg:bg-paper-2">
             {data.rows.length > 0 ? (
               <div className="py-4">
-                {visibleRows.map((row) =>
-                  row.type === "folder" ? (
-                    <button
-                      key={row.path}
-                      type="button"
-                      className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
-                      style={{ paddingLeft: `${20 + row.depth * 18}px` }}
-                      aria-expanded={!collapsedFolders.has(row.path)}
-                      aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
-                      onClick={() => toggleFolder(row.path)}
-                    >
-                      {collapsedFolders.has(row.path) ? (
-                        <CaretRightIcon aria-hidden className="size-3 shrink-0" />
-                      ) : (
-                        <CaretDownIcon aria-hidden className="size-3 shrink-0" />
-                      )}
-                      <span className="truncate">{row.name}</span>
-                    </button>
-                  ) : (
+                {visibleRows.map((row) => {
+                  if (row.type === "folder") {
+                    return (
+                      <button
+                        key={row.path}
+                        type="button"
+                        className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
+                        style={{ paddingLeft: `${20 + row.depth * 18}px` }}
+                        aria-expanded={!collapsedFolders.has(row.path)}
+                        aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
+                        onClick={() => toggleFolder(row.path)}
+                      >
+                        {collapsedFolders.has(row.path) ? (
+                          <CaretRightIcon aria-hidden className="size-3 shrink-0" />
+                        ) : (
+                          <CaretDownIcon aria-hidden className="size-3 shrink-0" />
+                        )}
+                        <span className="truncate">{row.name}</span>
+                      </button>
+                    );
+                  }
+
+                  const FileIcon = getFileIcon(row.path);
+
+                  return (
                     <Link
                       key={row.path}
                       to="/skills/$author/$repo/$slug/file-tree"
@@ -203,14 +212,23 @@ function RouteComponent() {
                       search={{ path: row.path, snapshotId: search.snapshotId }}
                       hash="skill-tabs"
                       className={[
-                        "flex items-baseline justify-between gap-3 px-5 py-1.5 font-mono text-[11px] no-underline transition-colors",
+                        "flex items-baseline justify-between gap-2 px-5 py-1.5 font-mono text-[11px] no-underline transition-colors",
                         row.path === activePath
                           ? "bg-ink text-paper"
                           : "text-ink-2 hover:bg-paper hover:no-underline",
                       ].join(" ")}
                       style={{ paddingLeft: `${20 + row.depth * 18}px` }}
                     >
-                      <span className="truncate">{row.name}</span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <FileIcon
+                          aria-hidden
+                          className={[
+                            "size-3.5 shrink-0",
+                            row.path === activePath ? "text-current" : "text-success/80",
+                          ].join(" ")}
+                        />
+                        <span className="truncate">{row.name}</span>
+                      </span>
                       {row.size !== undefined && (
                         <span
                           className={[
@@ -222,8 +240,8 @@ function RouteComponent() {
                         </span>
                       )}
                     </Link>
-                  ),
-                )}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-ink-2 px-5 py-6 text-sm">

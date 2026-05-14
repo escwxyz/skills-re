@@ -311,7 +311,23 @@ export const fetchSKillFileTree = async (input: {
     snapshotId: snapshot.id,
   });
 
-  const filePaths = treeEntries
+  const rootPath = snapshot.entryPath.replace(/\/[^/]+$/, "");
+  const toRelativeRootPath = (path: string) => {
+    if (rootPath.length > 0 && path.startsWith(`${rootPath}/`)) {
+      return path.slice(rootPath.length + 1);
+    } else if (path === rootPath) {
+      return path.split("/").at(-1) ?? path;
+    }
+
+    return path;
+  };
+
+  const relativeTreeEntries = treeEntries.map((entry) => ({
+    ...entry,
+    path: toRelativeRootPath(entry.path),
+  }));
+
+  const filePaths = relativeTreeEntries
     .map((entry) => entry.path)
     .toSorted((left, right) => left.localeCompare(right));
 
@@ -320,12 +336,12 @@ export const fetchSKillFileTree = async (input: {
 
   if (filePaths.includes("SKILL.md")) {
     defaultActivePath = "SKILL.md";
-  } else if (filePaths.includes(snapshot.entryPath)) {
-    defaultActivePath = snapshot.entryPath;
+  } else if (filePaths.includes(toRelativeRootPath(snapshot.entryPath))) {
+    defaultActivePath = toRelativeRootPath(snapshot.entryPath);
   }
   return {
     defaultActivePath: defaultActivePath ?? null,
-    rows: buildFileTreeRows(treeEntries, defaultActivePath ?? ""),
+    rows: buildFileTreeRows(relativeTreeEntries, defaultActivePath ?? ""),
     skillDescription: skill.description,
     skillTitle: skill.title,
     snapshotId: snapshot.id,
