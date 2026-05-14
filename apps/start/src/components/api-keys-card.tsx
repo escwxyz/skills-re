@@ -156,7 +156,7 @@ export function ApiKeysCard() {
             </p>
             <p className="mt-2">
               <span className="font-medium">{m.dashboard_settings_api_secret()}</span>{" "}
-              <code className="break-all rounded bg-background px-2 py-1 text-[12px]">
+              <code className="break-all rounded-none bg-background px-2 py-1 text-[12px]">
                 {createdSecret}
               </code>
             </p>

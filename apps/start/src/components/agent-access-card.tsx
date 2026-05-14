@@ -28,6 +28,7 @@ export function AgentAccessCard() {
       }
       return (await response.json()) as AgentConfiguration;
     },
+    // select
   });
 
   return (
@@ -45,7 +46,7 @@ export function AgentAccessCard() {
         <p className="text-[13px] leading-[1.6] text-foreground/80">
           {m.dashboard_settings_agent_description()}{" "}
           {m.dashboard_settings_agent_discovery_path_prefix()}{" "}
-          <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[12px]">
+          <code className="mx-1 rounded-none bg-muted px-1.5 py-0.5 text-[12px]">
             /.well-known/agent-configuration
           </code>
         </p>

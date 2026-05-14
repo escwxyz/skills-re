@@ -4,6 +4,7 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { asSkillId } from "@skills-re/db/utils";
 import { createAiSearchItemsRuntime } from "../ai-search";
 import { createGithubSnapshotHistoryHelpers } from "../github-history";
+import { createStaticAuditGithubRuntime } from "../static-audits-github";
 import { createSnapshotsHistoryRuntime } from "../snapshots-history";
 import { getSnapshotUploadWorkflowScheduler } from "./snapshot-upload";
 import { getSkillsTaggingWorkflowScheduler } from "./skills-tagging-scheduler";
@@ -29,6 +30,7 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
   run(event: Readonly<WorkflowEvent<SkillsUploadWorkflowPayload>>, step: WorkflowStep) {
     const aiSearchItems = createAiSearchItemsRuntime(this.env as never) ?? undefined;
     const githubHistory = createGithubSnapshotHistoryHelpers(this.env);
+    const staticAuditRuntime = createStaticAuditGithubRuntime(this.env);
     const snapshotUploadScheduler = getSnapshotUploadWorkflowScheduler(this.env);
     const snapshotHistory = createSnapshotsHistoryRuntime({
       createHistoricalSnapshot: createHistoricalSnapshotRunner({
@@ -55,6 +57,7 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
       run: () =>
         runSkillsUploadWorkflow(event, step, {
           aiSearchItems,
+          dispatchStaticAuditWorkflow: staticAuditRuntime.dispatchStaticAuditWorkflow,
           scheduleSkillsTagging: getSkillsTaggingWorkflowScheduler(this.env),
           snapshotFilesBucket: this.env.SNAPSHOT_FILES,
           snapshotHistory,

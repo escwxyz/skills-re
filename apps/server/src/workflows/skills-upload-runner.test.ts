@@ -16,6 +16,7 @@ describe("runSkillsUploadWorkflow", () => {
       createSnapshot: [] as unknown[],
       deprecateSnapshotsBeyondLimit: [] as unknown[],
       ensureRepo: [] as unknown[],
+      dispatchStaticAuditWorkflow: [] as unknown[],
       scheduleSkillsTagging: [] as unknown[],
       setSkillLatestSnapshot: [] as unknown[],
       syncSkillTags: [] as unknown[],
@@ -109,6 +110,14 @@ describe("runSkillsUploadWorkflow", () => {
           calls.ensureRepo.push(input);
           return Promise.resolve("repo-1");
         },
+        dispatchStaticAuditWorkflow: (targets: unknown) => {
+          calls.dispatchStaticAuditWorkflow.push(targets);
+          return Promise.resolve({
+            dispatched: true as const,
+            repository: "acme/skills-audit",
+            workflowFile: "skill-audit-submit.yml",
+          });
+        },
         scheduleSkillsTagging: {
           enqueue: (input: unknown) => {
             calls.scheduleSkillsTagging.push(input);
@@ -157,6 +166,7 @@ describe("runSkillsUploadWorkflow", () => {
       "upload-skill-ai-search-0",
       "link-skill-ai-search-0",
       "schedule-upload-skill-tagging-0",
+      "dispatch-static-audit",
       "create-upload-historical-snapshots",
       "cleanup-staging",
     ]);
@@ -268,6 +278,18 @@ describe("runSkillsUploadWorkflow", () => {
         triggerCategorizationAfterTagging: true,
       },
     ]);
+    expect(calls.dispatchStaticAuditWorkflow).toEqual([
+      [
+        {
+          owner: "acme",
+          repo: "skills",
+          skillRootPath: "skills/acme/widget",
+          snapshotId: "snapshot-1",
+          sourceCommitSha: "commit-1",
+          sourceRef: "main",
+        },
+      ],
+    ]);
     expect(calls.createHistoricalSnapshots).toEqual([
       {
         commits: [
@@ -350,6 +372,12 @@ describe("runSkillsUploadWorkflow", () => {
         setSkillLatestSnapshot: () => Promise.resolve(),
         syncSkillTags: () => Promise.resolve([]),
         updateSkillAiSearchItemId: () => Promise.reject(new Error("transient db failure")),
+        dispatchStaticAuditWorkflow: () =>
+          Promise.resolve({
+            dispatched: true as const,
+            repository: "acme/skills-audit",
+            workflowFile: "skill-audit-submit.yml",
+          }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
       } as never,
     );
@@ -433,6 +461,12 @@ describe("runSkillsUploadWorkflow", () => {
         setSkillLatestSnapshot: () => Promise.resolve(),
         syncSkillTags: () => Promise.resolve([]),
         updateSkillAiSearchItemId: () => Promise.resolve(),
+        dispatchStaticAuditWorkflow: () =>
+          Promise.resolve({
+            dispatched: true as const,
+            repository: "acme/skills-audit",
+            workflowFile: "skill-audit-submit.yml",
+          }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
       } as never,
     );

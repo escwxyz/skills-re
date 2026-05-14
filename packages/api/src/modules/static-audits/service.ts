@@ -1,7 +1,14 @@
+import { createHash } from "node:crypto";
+
 import { staticAuditReportSchema } from "@skills-re/contract/static-audits";
 import type { StaticAuditReport } from "@skills-re/contract/static-audits";
 
-import type { getLatestStaticAuditBySnapshot, listSnapshotsMissingStaticAudits } from "./repo";
+import type {
+  findStaticAuditByIdempotencyKey,
+  getLatestStaticAuditBySnapshot,
+  listSnapshotsMissingStaticAudits,
+  upsertStaticAudit,
+} from "./repo";
 import { createStaticAuditWorkflowTarget } from "./workflow-target";
 import type { StaticAuditWorkflowTarget } from "./workflow-target";
 
@@ -10,6 +17,15 @@ type StaticAuditFinding = StaticAuditReport["security_audit"]["findings"][number
 interface StaticAuditsServiceDeps {
   countSnapshotsMissingStaticAudits: (input: { maxSyncTime?: number }) => Promise<number>;
   createStaticAuditWorkflowTarget: typeof createStaticAuditWorkflowTarget;
+  findSnapshotIdForStaticAudit: (input: {
+    entryPath?: string;
+    owner: string;
+    repo: string;
+    skillRootPath?: string;
+  }) => Promise<string | null>;
+  findStaticAuditByIdempotencyKey: (
+    idempotencyKey: string,
+  ) => Promise<Awaited<ReturnType<typeof findStaticAuditByIdempotencyKey>>>;
   getLatestStaticAuditBySnapshot: (
     snapshotId: string,
   ) => Promise<Awaited<ReturnType<typeof getLatestStaticAuditBySnapshot>>>;
@@ -29,6 +45,7 @@ interface StaticAuditsServiceDeps {
         workflowFile: string;
       }
   >;
+  upsertStaticAudit: typeof upsertStaticAudit;
 }
 
 const defaultDeps: StaticAuditsServiceDeps = {
@@ -37,6 +54,14 @@ const defaultDeps: StaticAuditsServiceDeps = {
     return await countSnapshotsMissingStaticAudits(input);
   },
   createStaticAuditWorkflowTarget,
+  findSnapshotIdForStaticAudit: async (input) => {
+    const { findSnapshotIdForStaticAudit } = await import("./repo");
+    return await findSnapshotIdForStaticAudit(input);
+  },
+  findStaticAuditByIdempotencyKey: async (idempotencyKey) => {
+    const { findStaticAuditByIdempotencyKey } = await import("./repo");
+    return await findStaticAuditByIdempotencyKey(idempotencyKey);
+  },
   getLatestStaticAuditBySnapshot: async (snapshotId) => {
     const { getLatestStaticAuditBySnapshot } = await import("./repo");
     return await getLatestStaticAuditBySnapshot(snapshotId);
@@ -50,6 +75,10 @@ const defaultDeps: StaticAuditsServiceDeps = {
     dispatched: false as const,
     reason: "missing-dispatch-runtime",
   }),
+  upsertStaticAudit: async (input) => {
+    const { upsertStaticAudit } = await import("./repo");
+    return await upsertStaticAudit(input);
+  },
 };
 
 const parsePersistedFindings = (findingsJson: string) => {
@@ -122,6 +151,64 @@ const parseAuditJson = (auditJson: string): StaticAuditReport | null => {
     return null;
   }
 };
+
+const toTimestamp = (generatedAt: string): number => {
+  const parsed = Date.parse(generatedAt);
+  if (Number.isNaN(parsed)) {
+    throw new TypeError("Invalid generated_at timestamp.");
+  }
+  return parsed;
+};
+
+const buildFallbackIdempotencyKey = (input: {
+  owner: string;
+  repo: string;
+  sourceHash: string;
+  sourceRef?: string;
+  skillRootPath?: string;
+  sourceType: string;
+  rulesVersion: string;
+}) =>
+  createHash("sha256")
+    .update(
+      [
+        input.owner,
+        input.repo,
+        input.skillRootPath ?? "root",
+        input.sourceRef ?? "unknown",
+        input.sourceHash,
+        input.sourceType,
+        input.rulesVersion,
+      ].join(":"),
+    )
+    .digest("hex");
+
+const resolveSnapshotId = async (report: StaticAuditReport, deps: StaticAuditsServiceDeps) => {
+  const directSnapshotId = report.target.snapshot_id?.trim();
+  if (directSnapshotId) {
+    return directSnapshotId;
+  }
+
+  return await deps.findSnapshotIdForStaticAudit({
+    entryPath: report.target.entry_path,
+    owner: report.target.owner,
+    repo: report.target.repo,
+    skillRootPath: report.target.skill_root_path,
+  });
+};
+
+const buildIdempotencyKey = (report: StaticAuditReport, snapshotId?: string | null) =>
+  snapshotId
+    ? `${snapshotId}:${report.meta.source_hash}:${report.meta.rules_version}`
+    : buildFallbackIdempotencyKey({
+        owner: report.target.owner,
+        repo: report.target.repo,
+        rulesVersion: report.meta.rules_version,
+        skillRootPath: report.target.skill_root_path,
+        sourceHash: report.meta.source_hash,
+        sourceRef: report.meta.source_ref,
+        sourceType: report.meta.source_type,
+      });
 
 const buildStaticAuditReport = (row: PersistedStaticAuditRow, findings: StaticAuditFinding[]) => {
   if (!row) {
@@ -223,6 +310,57 @@ export const createStaticAuditsService = (overrides: Partial<StaticAuditsService
         skippedMissingCommitShaCount: 0,
         targetSnapshotIds: snapshots.map((snapshot) => snapshot.snapshotId),
         workflowFile: "workflowFile" in dispatch ? dispatch.workflowFile : undefined,
+      };
+    },
+
+    async ingest(report: StaticAuditReport) {
+      const generatedAt = toTimestamp(report.meta.generated_at);
+      const snapshotId = await resolveSnapshotId(report, deps);
+      const idempotencyKey = buildIdempotencyKey(report, snapshotId);
+      const existing = await deps.findStaticAuditByIdempotencyKey(idempotencyKey);
+
+      const savedId = await deps.upsertStaticAudit({
+        auditJson: JSON.stringify(report),
+        entryPath: report.target.entry_path,
+        filesScanned: report.security_audit.files_scanned,
+        findingsJson: JSON.stringify(report.security_audit.findings),
+        generatedAt,
+        idempotencyKey,
+        isBlocked: report.evaluation.is_blocked,
+        modelVersion: report.meta.model_version,
+        overallScore: report.evaluation.overall_score,
+        pipeline: report.meta.pipeline,
+        pipelineRunId: report.meta.pipeline_run_id,
+        reason:
+          report.evaluation.safe_to_publish || report.evaluation.status === "pass"
+            ? undefined
+            : "blocked-by-static-audit",
+        repoName: report.target.repo,
+        repoOwner: report.target.owner,
+        reportR2Key: undefined,
+        riskFactorsJson: JSON.stringify(report.security_audit.risk_factors),
+        riskLevel: report.evaluation.risk_level,
+        rulesVersion: report.meta.rules_version,
+        safeToPublish: report.evaluation.safe_to_publish,
+        skillRootPath: report.target.skill_root_path,
+        snapshotId,
+        sourceHash: report.meta.source_hash,
+        sourceRef: report.meta.source_ref,
+        sourceType: report.meta.source_type,
+        status: report.evaluation.status,
+        summary: report.security_audit.summary,
+        totalLines: report.security_audit.total_lines,
+        treeHash: report.meta.tree_hash,
+      });
+
+      return {
+        auditId: savedId,
+        reason:
+          report.evaluation.safe_to_publish || report.evaluation.status === "pass"
+            ? undefined
+            : "blocked-by-static-audit",
+        status: report.evaluation.status,
+        upserted: !existing,
       };
     },
   };

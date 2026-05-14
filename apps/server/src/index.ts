@@ -8,6 +8,7 @@ import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
+import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
@@ -143,6 +144,10 @@ app.get("/skills/download", async (c) => {
     },
   );
 });
+app.post(
+  "/skills/audits/ingest",
+  async (c) => await createStaticAuditIngestResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
+);
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [

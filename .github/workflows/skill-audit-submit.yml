@@ -1,0 +1,105 @@
+name: Skill scanner audit (Submit)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipeline_run_id:
+        description: Correlation id for this submit audit batch
+        required: false
+        type: string
+      targets_json:
+        description: JSON array of audit targets
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  SKILL_SCANNER_DELAY_MS: ${{ vars.SKILL_SCANNER_DELAY_MS }}
+  SKILL_SCANNER_ENABLE_LLM: ${{ vars.SKILL_SCANNER_ENABLE_LLM }}
+  SKILL_SCANNER_ENABLE_META: ${{ vars.SKILL_SCANNER_ENABLE_META }}
+  SKILL_SCANNER_ENABLE_VIRUSTOTAL: ${{ vars.SKILL_SCANNER_ENABLE_VIRUSTOTAL }}
+  SKILL_SCANNER_LLM_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  SKILL_SCANNER_POLICY: ${{ vars.SKILL_SCANNER_POLICY }}
+  SKILL_SCANNER_VT_UPLOAD_FILES: ${{ vars.SKILL_SCANNER_VT_UPLOAD_FILES }}
+  VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25.1.0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Configure scanner defaults
+        run: |
+          if [ -z "${SKILL_SCANNER_POLICY}" ]; then
+            echo "SKILL_SCANNER_POLICY=balanced" >> "$GITHUB_ENV"
+          fi
+          if [ -z "${SKILL_SCANNER_ENABLE_LLM}" ]; then
+            if [ -n "${SKILL_SCANNER_LLM_API_KEY}" ]; then
+              echo "SKILL_SCANNER_ENABLE_LLM=true" >> "$GITHUB_ENV"
+            else
+              echo "SKILL_SCANNER_ENABLE_LLM=false" >> "$GITHUB_ENV"
+            fi
+          fi
+          if [ -z "${SKILL_SCANNER_ENABLE_META}" ]; then
+            if [ -n "${SKILL_SCANNER_LLM_API_KEY}" ]; then
+              echo "SKILL_SCANNER_ENABLE_META=true" >> "$GITHUB_ENV"
+            else
+              echo "SKILL_SCANNER_ENABLE_META=false" >> "$GITHUB_ENV"
+            fi
+          fi
+          if [ -z "${SKILL_SCANNER_ENABLE_VIRUSTOTAL}" ]; then
+            if [ -n "${VIRUSTOTAL_API_KEY}" ]; then
+              echo "SKILL_SCANNER_ENABLE_VIRUSTOTAL=true" >> "$GITHUB_ENV"
+            else
+              echo "SKILL_SCANNER_ENABLE_VIRUSTOTAL=false" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install skill-scanner
+        run: python -m pip install --upgrade pip cisco-ai-skill-scanner
+
+      - name: Warn on VirusTotal API usage
+        if: env.SKILL_SCANNER_ENABLE_VIRUSTOTAL == 'true'
+        run: |
+          echo "::warning::VirusTotal public API terms prohibit business/commercial workflow usage. Only keep VirusTotal enabled here if this key is approved for CI automation."
+
+      - name: Write audit targets
+        env:
+          AUDIT_TARGETS_JSON: ${{ inputs.targets_json }}
+        run: bun run audit:write-targets -- --targets-json "$AUDIT_TARGETS_JSON" --output review-runs/latest/audits/skill-scanner/submit/targets.json
+
+      - name: Run static audit
+        run: bun run audit:run -- --targets review-runs/latest/audits/skill-scanner/submit/targets.json --output-dir review-runs/latest/audits/skill-scanner/submit --pipeline "github-actions-submit" --pipeline-run-id "${{ inputs.pipeline_run_id || github.run_id }}" --fail-on-block false --verbose
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-scanner-submit-reports
+          path: review-runs/latest/audits/skill-scanner/submit
+
+      - name: Ingest static audits
+        env:
+          AUTOMATION_API_TOKEN: ${{ secrets.AUTOMATION_API_TOKEN }}
+          PUBLISH_BASE_URL: ${{ vars.PUBLISH_BASE_URL || vars.PUBLIC_SERVER_URL }}
+        run: bun run audit:ingest -- --index review-runs/latest/audits/skill-scanner/submit/index.json --only-pass false --base-url "${PUBLISH_BASE_URL}"
