@@ -1,6 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { setResponseHeader } from "@tanstack/react-start/server";
-
 import { getHomePageData } from "@/functions/get-home-page-data";
 import { createSeo } from "@/lib/seo";
 import { getLocale } from "@/paraglide/runtime";
@@ -14,17 +12,7 @@ import { BlogSection } from "@/components/blog-section";
 import { HowItWorks } from "@/components/how-it-works";
 
 export const Route = createFileRoute("/_publicLayout/")({
-  loader: async () => {
-    setResponseHeader(
-      "Link",
-      [
-        '</.well-known/api-catalog>; rel="api-catalog"',
-        '</.well-known/agent-configuration>; rel="agent-configuration"',
-      ].join(", "),
-    );
-
-    return await getHomePageData({ data: {} });
-  },
+  loader: () => getHomePageData({ data: {} }),
   head: () =>
     createSeo({
       canonicalPath: "/",
