@@ -3,7 +3,6 @@ import { DurableObject } from "cloudflare:workers";
 
 const WINDOW_SECONDS = 60;
 const MAX_PER_WINDOW = 1;
-const MAX_TOTAL = 5;
 
 export class SubmitRateLimiter extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
@@ -16,19 +15,13 @@ export class SubmitRateLimiter extends DurableObject<Env> {
 
   private async checkAndRecord(): Promise<RateLimitResult> {
     const now = Date.now();
-    const [windowStart, windowCount, totalCount] = await Promise.all([
+    const [windowStart, windowCount] = await Promise.all([
       this.ctx.storage.get<number>("ws"),
       this.ctx.storage.get<number>("wc"),
-      this.ctx.storage.get<number>("tc"),
     ]);
 
     const ws = windowStart ?? now;
     const wc = windowCount ?? 0;
-    const tc = totalCount ?? 0;
-
-    if (tc >= MAX_TOTAL) {
-      return { allowed: false, reason: "total_limit" };
-    }
 
     const windowExpired = now >= ws + WINDOW_SECONDS * 1000;
     const effectiveWs = windowExpired ? now : ws;
@@ -42,7 +35,6 @@ export class SubmitRateLimiter extends DurableObject<Env> {
     await Promise.all([
       this.ctx.storage.put("ws", effectiveWs),
       this.ctx.storage.put("wc", effectiveWc + 1),
-      this.ctx.storage.put("tc", tc + 1),
     ]);
 
     return { allowed: true };

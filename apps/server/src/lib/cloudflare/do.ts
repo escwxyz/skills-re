@@ -1,5 +1,5 @@
 export interface RateLimitResult {
   allowed: boolean;
-  reason?: "window_limit" | "total_limit";
+  reason?: "window_limit";
   retryAfterSeconds?: number;
 }
