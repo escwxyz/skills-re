@@ -61,6 +61,11 @@ export const searchRateLimiter: MiddlewareHandler<{
 
   if (result && !result.allowed) {
     c.header("Retry-After", String(result.retryAfterSeconds));
+    c.get("workerLogger")?.warn("search-rate-limiter: rate limited", {
+      ip,
+      reason: result.reason,
+      retryAfterSeconds: result.retryAfterSeconds,
+    });
     return c.json(
       {
         code: "RATE_LIMITED",

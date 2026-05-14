@@ -119,7 +119,6 @@ export function createSeo({
       href: "/apple-touch-icon.png",
     },
     { rel: "manifest", href: "/site.webmanifest" },
-    // { rel: "api-catalog", href: "/.well-known/api-catalog" },
   ];
 
   if (pathWithoutLocale) {
