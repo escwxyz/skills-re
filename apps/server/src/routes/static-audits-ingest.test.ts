@@ -42,7 +42,7 @@ const buildReport = () => ({
 describe("createStaticAuditIngestResponse", () => {
   test("rejects missing automation tokens", async () => {
     const response = await createStaticAuditIngestResponse(
-      new Request("https://example.com/api/skills/audits/ingest", {
+      new Request("https://example.com/skills/audits/ingest", {
         method: "POST",
       }),
       "expected-token",
@@ -54,7 +54,7 @@ describe("createStaticAuditIngestResponse", () => {
 
   test("ingests a valid audit payload", async () => {
     const response = await createStaticAuditIngestResponse(
-      new Request("https://example.com/api/skills/audits/ingest", {
+      new Request("https://example.com/skills/audits/ingest", {
         body: JSON.stringify(buildReport()),
         headers: {
           "content-type": "application/json",

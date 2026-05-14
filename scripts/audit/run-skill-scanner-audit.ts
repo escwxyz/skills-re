@@ -44,8 +44,6 @@ const DEFAULT_LLM_MODEL_ROTATION = [
   "gemini/gemini-2.5-flash-lite",
   "gemini/gemini-2.5-flash",
 ] as const;
-const OPENCLAW_OWNER = "openclaw";
-const OPENCLAW_REPO = "skills";
 const MODEL_UNAVAILABLE_ERROR_HINTS = [
   "404",
   "deprecated",
@@ -368,11 +366,6 @@ const runCommand = async (
     });
   });
 
-const isOpenclawSkillTarget = (target: AuditTargetRecord): boolean =>
-  target.owner.toLowerCase() === OPENCLAW_OWNER &&
-  target.repo.toLowerCase() === OPENCLAW_REPO &&
-  Boolean(target.skillRootPath);
-
 const runGit = async (
   gitArgs: readonly string[],
   options: { cwd: string; verbose: boolean },
@@ -409,7 +402,7 @@ const cloneAuditTargetRepo = async (input: {
   repoDir: string;
   verbose: boolean;
 }): Promise<{
-  resolvedSkillRootPath?: string;
+  resolvedSkillRootPath: string;
 }> => {
   const repoUrl = `https://github.com/${input.target.owner}/${input.target.repo}.git`;
   await runGit(
@@ -476,20 +469,9 @@ const cloneAuditTargetRepo = async (input: {
     return { resolvedSkillRootPath };
   }
 
-  if (isOpenclawSkillTarget(input.target)) {
-    logVerbose(
-      input.verbose,
-      "openclaw target path unresolved; keeping markdown-only sparse checkout",
-    );
-  }
-
-  await runGit(
-    getAuditTargetCheckoutArgs(input.target.sourceCommitSha),
-    { cwd: input.repoDir, verbose: input.verbose },
-    "git checkout failed",
+  throw new Error(
+    `skill root path could not be resolved for ${input.target.owner}/${input.target.repo}: no SKILL.md found at expected locations`,
   );
-
-  return {};
 };
 
 const computeSourceHash = async (repoDir: string, scanDir: string, verbose: boolean) => {

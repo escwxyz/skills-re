@@ -6,7 +6,16 @@ export const verifyAutomationToken = (
 ): { ok: true } | { ok: false; response: Response } => {
   const normalizedExpectedToken = expectedToken?.trim();
   if (!normalizedExpectedToken) {
-    return { ok: true };
+    return {
+      ok: false,
+      response: Response.json(
+        {
+          error: "unauthorized",
+          message: "Missing or invalid automation token.",
+        },
+        { status: 401 },
+      ),
+    };
   }
 
   const providedToken = request.headers.get(AUTOMATION_TOKEN_HEADER);
