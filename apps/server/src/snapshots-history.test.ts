@@ -28,14 +28,14 @@ describe("createSnapshotsHistoryRuntime", () => {
             files: [
               {
                 content: "skill content",
-                path: "skill.md",
+                path: "SKILL.md",
               },
             ],
           }),
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "skills/acme/widget/skill.md",
+              path: "skills/acme/widget/SKILL.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -46,7 +46,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         Promise.resolve([
           {
             directoryPath: "skills/acme/widget",
-            entryPath: "skills/acme/widget/skill.md",
+            entryPath: "skills/acme/widget/SKILL.md",
             id: "skill-1",
             latestDescription: "Widget skill",
             latestName: "widget",
@@ -86,11 +86,11 @@ describe("createSnapshotsHistoryRuntime", () => {
       {
         description: "Widget skill",
         directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
+        entryPath: "skills/acme/widget/SKILL.md",
         files: [
           {
             content: "skill content",
-            path: "skills/acme/widget/skill.md",
+            path: "skills/acme/widget/SKILL.md",
           },
         ],
         name: "widget",
@@ -104,11 +104,11 @@ describe("createSnapshotsHistoryRuntime", () => {
       {
         description: "Widget skill",
         directoryPath: "skills/acme/widget/",
-        entryPath: "skills/acme/widget/skill.md",
+        entryPath: "skills/acme/widget/SKILL.md",
         files: [
           {
             content: "skill content",
-            path: "skills/acme/widget/skill.md",
+            path: "skills/acme/widget/SKILL.md",
           },
         ],
         name: "widget",
@@ -147,7 +147,7 @@ describe("createSnapshotsHistoryRuntime", () => {
             files: [
               {
                 content: "skill content",
-                path: "skill.md",
+                path: "SKILL.md",
               },
             ],
           });
@@ -155,7 +155,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "content/widget/skill.md",
+              path: "content/widget/SKILL.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -166,7 +166,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         Promise.resolve([
           {
             directoryPath: "content/widget",
-            entryPath: "content/widget/skill.md",
+            entryPath: "content/widget/SKILL.md",
             id: "skill-1",
             latestDescription: "Widget skill",
             latestName: "widget",
@@ -207,7 +207,7 @@ describe("createSnapshotsHistoryRuntime", () => {
       directoryPath: "content/widget/",
       files: [
         {
-          path: "content/widget/skill.md",
+          path: "content/widget/SKILL.md",
         },
       ],
     });
@@ -231,14 +231,14 @@ describe("createSnapshotsHistoryRuntime", () => {
             files: [
               {
                 content: "skill content",
-                path: "skill.md",
+                path: "SKILL.md",
               },
             ],
           }),
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "skills/acme/widget/skill.md",
+              path: "skills/acme/widget/SKILL.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -249,7 +249,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         Promise.resolve([
           {
             directoryPath: "skills/acme/widget",
-            entryPath: "skills/acme/widget/skill.md",
+            entryPath: "skills/acme/widget/SKILL.md",
             id: "skill-1",
             latestDescription: "Widget skill",
             latestName: "widget",
@@ -302,14 +302,14 @@ describe("createSnapshotsHistoryRuntime", () => {
             files: [
               {
                 content: "skill content",
-                path: "skill.md",
+                path: "SKILL.md",
               },
             ],
           }),
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "skills/acme/widget/skill.md",
+              path: "skills/acme/widget/SKILL.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -320,7 +320,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         Promise.resolve([
           {
             directoryPath: "skills/acme/widget",
-            entryPath: "skills/acme/widget/skill.md",
+            entryPath: "skills/acme/widget/SKILL.md",
             id: "skill-1",
             latestDescription: "Widget skill",
             latestName: "widget",
@@ -380,14 +380,14 @@ describe("createSnapshotsHistoryRuntime", () => {
             files: [
               {
                 content: "skill content",
-                path: "skill.md",
+                path: "SKILL.md",
               },
             ],
           }),
         fetchTree: () =>
           Promise.resolve([
             {
-              path: "skills/acme/widget/skill.md",
+              path: "skills/acme/widget/SKILL.md",
               sha: "tree-sha-1",
               type: "blob",
             },
@@ -398,7 +398,7 @@ describe("createSnapshotsHistoryRuntime", () => {
         Promise.resolve([
           {
             directoryPath: "skills/acme/widget",
-            entryPath: "skills/acme/widget/skill.md",
+            entryPath: "skills/acme/widget/SKILL.md",
             id: "skill-1",
             latestDescription: "Widget skill",
             latestName: "widget",

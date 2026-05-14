@@ -132,17 +132,17 @@ describe("createGithubFetchRuntime", () => {
                 {
                   tree: [
                     {
-                      path: "skills/alpha/skill.md",
+                      path: "skills/alpha/SKILL.md",
                       sha: "blob-a",
                       type: "blob",
                     },
                     {
-                      path: "skills/.vendor/skill.md",
+                      path: "skills/.vendor/SKILL.md",
                       sha: "blob-hidden",
                       type: "blob",
                     },
                     {
-                      path: "skills/beta/skill.md",
+                      path: "skills/beta/SKILL.md",
                       sha: "blob-b",
                       type: "blob",
                     },
@@ -211,12 +211,12 @@ describe("createGithubFetchRuntime", () => {
       invalidSkills: [],
       skills: [
         {
-          skillMdPath: "skills/alpha/skill.md",
+          skillMdPath: "skills/alpha/SKILL.md",
           skillRootPath: "skills/alpha",
           skillTitle: "alpha-skill",
         },
         {
-          skillMdPath: "skills/beta/skill.md",
+          skillMdPath: "skills/beta/SKILL.md",
           skillRootPath: "skills/beta",
           skillTitle: "beta-skill",
         },
@@ -283,7 +283,7 @@ describe("createGithubFetchRuntime", () => {
                 {
                   tree: [
                     {
-                      path: "skills/example/skill.md",
+                      path: "skills/example/SKILL.md",
                       sha: "blob-1",
                       type: "blob",
                     },
@@ -350,7 +350,7 @@ describe("createGithubFetchRuntime", () => {
           files: [
             {
               content: `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
-              path: "skill.md",
+              path: "SKILL.md",
             },
           ],
           frontmatter: {
@@ -359,7 +359,7 @@ describe("createGithubFetchRuntime", () => {
           },
           skillDescription: "Example skill",
           skillMdContent: `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
-          skillMdPath: "skills/example/skill.md",
+          skillMdPath: "skills/example/SKILL.md",
           skillRootPath: "skills/example",
           skillTitle: "example-skill",
         },
@@ -367,7 +367,7 @@ describe("createGithubFetchRuntime", () => {
       stargazerCount: 2,
       tree: [
         {
-          path: "skills/example/skill.md",
+          path: "skills/example/SKILL.md",
           sha: "blob-1",
           type: "blob",
         },
@@ -377,6 +377,113 @@ describe("createGithubFetchRuntime", () => {
     expect(
       requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
     ).toBe(true);
+  });
+
+  test("detects a root SKILL.md file as a publishable skill", async () => {
+    const requests: Request[] = [];
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  default_branch: "main",
+                  forks_count: 1,
+                  full_name: "acme/skills",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/skills/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "SKILL.md",
+                      sha: "blob-root",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-root")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(
+                    `---\nname: root-skill\ndescription: Root skill\n---\n# Root`,
+                  ),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.fetchRepo({
+        githubUrl: "https://github.com/acme/skills",
+      }),
+    ).resolves.toMatchObject({
+      invalidSkills: [],
+      skills: [
+        {
+          skillMdPath: "SKILL.md",
+          skillRootPath: "",
+          skillTitle: "root-skill",
+        },
+      ],
+    });
+
+    expect(requests.length).toBeGreaterThan(0);
   });
 
   test("logs invalid skill roots when frontmatter is missing", async () => {
@@ -437,7 +544,7 @@ describe("createGithubFetchRuntime", () => {
                 {
                   tree: [
                     {
-                      path: "skills/example/skill.md",
+                      path: "skills/example/SKILL.md",
                       sha: "blob-1",
                       type: "blob",
                     },
@@ -474,7 +581,7 @@ describe("createGithubFetchRuntime", () => {
       invalidSkills: [
         {
           message: "Invalid skill frontmatter.",
-          skillMdPath: "skill.md",
+          skillMdPath: "SKILL.md",
           skillRootPath: "skills/example",
         },
       ],

@@ -35,6 +35,7 @@ import {
 
 import {
   buildSkillDuplicateFingerprintFromSkillMd,
+  SKILL_FILENAME,
   normalizeSkillRootPath,
 } from "../github-skill-utils";
 
@@ -302,7 +303,7 @@ export const runSkillsUploadWorkflow = async (
             );
           })
         : skill.initialSnapshot.files.find(
-            (file) => file.path.split("/").at(-1)?.toLowerCase() === "skill.md",
+            (file) => file.path.split("/").at(-1) === SKILL_FILENAME,
           );
 
       const aiSearchItemId = await step.do(

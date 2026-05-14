@@ -48,6 +48,41 @@ export interface RepoPreview {
   skills: SkillPreview[];
 }
 
+const normalizeMessage = (value: string) => value.trim().replace(/[.。]+$/, "");
+
+const buildPreviewDiagnostics = (preview: RepoPreview, messages: typeof m) => {
+  if (preview.skills.length > 0) {
+    return [];
+  }
+
+  if (preview.invalidSkills.length > 0) {
+    const details = preview.invalidSkills.map(
+      (skill) => `- ${skill.skillMdPath}: ${normalizeMessage(skill.message)}`,
+    );
+
+    return [
+      preview.requestedSkillPath
+        ? messages.logs_no_publishable_skills_under({
+            path: preview.requestedSkillPath,
+          })
+        : messages.logs_no_publishable_skills({}),
+      messages.logs_found_invalid_skill_like_folders({}),
+      ...details,
+    ];
+  }
+
+  return [
+    preview.requestedSkillPath
+      ? messages.logs_no_publishable_skills_under({
+          path: preview.requestedSkillPath,
+        })
+      : messages.logs_no_publishable_skills({}),
+    messages.logs_no_recognized_skill_roots({}),
+  ];
+};
+
+const formatSkillRootPathLabel = (value: string) => (value.length > 0 ? value : "/");
+
 function dotClass(status: FetchStatus | SubmitStatus): string {
   if (status === "fetching" || status === "submitting") {
     return "bg-muted-text animate-pulse";
@@ -125,6 +160,7 @@ export const GithubSubmitForm = () => {
           onSuccess: (data) => {
             const validSkillPaths = data.skills.map((skill) => skill.skillRootPath);
             const folderName = data.requestedSkillPath ?? m.preview_skill_root_path_fallback({});
+            const diagnostics = buildPreviewDiagnostics(data, m);
 
             addLogs(
               `> ${m.logs_repository_summary({
@@ -141,6 +177,7 @@ export const GithubSubmitForm = () => {
                     count: data.invalidSkills.length,
                   })}`
                 : `> ${m.logs_no_invalid_skills_skipped({})}`,
+              ...diagnostics.map((line) => `> ${line}`),
               validSkillPaths.length > 0
                 ? `> ${m.logs_review_and_choose({})}`
                 : `> ${m.logs_no_publishable_skills({})}`,
@@ -268,6 +305,7 @@ export const GithubSubmitForm = () => {
         total: repoPreview.skills.length,
       })
     : m.preview_no_preview_yet({});
+  const previewDiagnostics = repoPreview ? buildPreviewDiagnostics(repoPreview, m) : [];
 
   const statusItems = [
     {
@@ -422,6 +460,18 @@ export const GithubSubmitForm = () => {
                   {m.preview_skipped_invalid_skills()} {repoPreview.invalidSkills.length}
                 </p>
               )}
+              {previewDiagnostics.length > 0 && (
+                <div className="mt-3 border border-amber-500/30 bg-amber-500/8 p-3">
+                  <p className="font-mono text-[10px] tracking-[.14em] uppercase text-amber-600">
+                    Diagnostic
+                  </p>
+                  <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed text-ink-2">
+                    {previewDiagnostics.map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <form.AppField name="selectedSkillRootPaths">
@@ -454,7 +504,8 @@ export const GithubSubmitForm = () => {
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {repoPreview.skills.map((skill) => {
                       const isSelected = field.state.value.includes(skill.skillRootPath);
-                      const checkboxId = `skill-${skill.skillRootPath}`;
+                      const checkboxId = `skill-${skill.skillRootPath || "repo-root"}`;
+                      const skillRootPathLabel = formatSkillRootPathLabel(skill.skillRootPath);
 
                       return (
                         <CardLabel key={skill.skillMdPath} htmlFor={checkboxId}>
@@ -465,6 +516,9 @@ export const GithubSubmitForm = () => {
                               </FieldTitle>
                               <p className="truncate font-mono text-[10px] tracking-widest text-muted-text">
                                 {skill.skillMdPath}
+                              </p>
+                              <p className="font-mono text-[10px] tracking-widest text-muted-text">
+                                Root: {skillRootPathLabel}
                               </p>
                               {skill.skillDescription && (
                                 <p className="mt-1 text-[12px] leading-relaxed text-ink-2">
@@ -508,7 +562,7 @@ export const GithubSubmitForm = () => {
                     >
                       <p className="font-mono text-[11px] text-ink">{skill.skillMdPath}</p>
                       <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
-                        {skill.skillRootPath}
+                        {formatSkillRootPathLabel(skill.skillRootPath)}
                       </p>
                       <p className="mt-2 text-[12px] leading-relaxed text-ink-2">{skill.message}</p>
                     </div>

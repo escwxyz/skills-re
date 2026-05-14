@@ -3,7 +3,7 @@ import type { SkillFrontmatterData } from "@skills-re/utils";
 
 export type { SkillFrontmatterData as ParsedFrontmatter } from "@skills-re/utils";
 
-export const SKILL_FILENAME = "skill.md";
+export const SKILL_FILENAME = "SKILL.md";
 
 export interface SkillDuplicateFingerprint {
   frontmatterHash: string;
@@ -35,6 +35,8 @@ export const parseFrontmatter = (content: string): SkillFrontmatterData | null =
 
 const hasDotfileSegment = (path: string) =>
   path.split("/").some((segment) => segment.startsWith(".") && segment !== "." && segment !== "..");
+
+const isSkillMarkdownFile = (path: string) => path.split("/").at(-1) === SKILL_FILENAME;
 
 export const hashTextSha256 = async (value: string) => {
   const encoded = new TextEncoder().encode(value);
@@ -96,15 +98,15 @@ export const discoverSkillRoots = <
     .filter((entry) => entry.type === "blob")
     .filter((entry) => !hasDotfileSegment(entry.path))
     .filter((entry) => {
-      if (!entry.path.toLowerCase().endsWith(`/${SKILL_FILENAME}`)) {
+      if (!isSkillMarkdownFile(entry.path)) {
         return false;
       }
       if (!requestedPrefix.length) {
         return true;
       }
+      const normalizedEntryPath = normalizeSkillRootPath(entry.path);
       return (
-        entry.path === `${requestedPath}/${SKILL_FILENAME}` ||
-        entry.path.startsWith(requestedPrefix)
+        normalizedEntryPath === requestedPath || normalizedEntryPath.startsWith(requestedPrefix)
       );
     })
     .map((entry) => ({

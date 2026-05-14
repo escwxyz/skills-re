@@ -82,12 +82,12 @@ describe("createGithubSubmitRuntime", () => {
                 {
                   tree: [
                     {
-                      path: "skills/example/skill.md",
+                      path: "skills/example/SKILL.md",
                       sha: "blob-1",
                       type: "blob",
                     },
                     {
-                      path: "skills/.vendor/skill.md",
+                      path: "skills/.vendor/SKILL.md",
                       sha: "blob-hidden",
                       type: "blob",
                     },
@@ -150,13 +150,13 @@ describe("createGithubSubmitRuntime", () => {
           {
             description: "Example skill",
             directoryPath: "skills/example/",
-            entryPath: "skills/example/skill.md",
+            entryPath: "skills/example/SKILL.md",
             frontmatterHash: expect.any(String),
             initialSnapshot: {
               files: [
                 {
                   content: `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
-                  path: "skill.md",
+                  path: "SKILL.md",
                 },
               ],
               sourceCommitDate: 1_704_153_600_000,
@@ -166,7 +166,7 @@ describe("createGithubSubmitRuntime", () => {
               sourceRef: "main",
               tree: [
                 {
-                  path: "skill.md",
+                  path: "SKILL.md",
                   sha: "blob-1",
                   size: undefined,
                   type: "blob",
@@ -175,7 +175,7 @@ describe("createGithubSubmitRuntime", () => {
             },
             license: "MIT",
             slug: "example-skill",
-            sourceLocator: "github:acme/skills/skills/example/skill.md",
+            sourceLocator: "github:acme/skills/skills/example/SKILL.md",
             sourceType: "github",
             skillContentHash: expect.any(String),
             title: "example-skill",
@@ -188,5 +188,120 @@ describe("createGithubSubmitRuntime", () => {
     expect(
       requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
     ).toBe(true);
+  });
+
+  test("supports a root SKILL.md file when building the upload payload", async () => {
+    const requests: Request[] = [];
+    const runtime = createGithubSubmitRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+          requests.push(request);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  archived: false,
+                  default_branch: "main",
+                  disabled: false,
+                  fork: false,
+                  forks_count: 1,
+                  full_name: "acme/skills",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/skills/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "SKILL.md",
+                      sha: "blob-root",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-root")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(
+                    `---\nname: root-skill\ndescription: Root skill\n---\n# Root`,
+                  ),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.buildPayload({
+        owner: "acme",
+        repo: "skills",
+      }),
+    ).resolves.toMatchObject({
+      payload: {
+        skills: [
+          {
+            directoryPath: "",
+            entryPath: "SKILL.md",
+            slug: "root-skill",
+            sourceLocator: "github:acme/skills/SKILL.md",
+            title: "root-skill",
+          },
+        ],
+      },
+      reason: undefined,
+    });
+
+    expect(requests.length).toBeGreaterThan(0);
   });
 });

@@ -60,7 +60,7 @@ const buildSubmitSkill = async (
     tree,
   });
   const skillMd = filesResponse.files.find(
-    (file) => file.path.split("/").at(-1)?.toLowerCase() === SKILL_FILENAME,
+    (file) => file.path.split("/").at(-1) === SKILL_FILENAME,
   );
   if (!skillMd) {
     logger?.debug("github.submit.skill.skipped", {
@@ -84,7 +84,7 @@ const buildSubmitSkill = async (
   const normalizedRoot = normalizeSkillRootPath(root.skillRootPath);
   return {
     description: frontmatter.description,
-    directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : normalizedRoot,
+    directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : "",
     entryPath: root.skillMdPath,
     frontmatterHash: fingerprint.frontmatterHash,
     initialSnapshot: {

@@ -198,13 +198,13 @@ export function createGithubFetchRuntime(
           tree,
         });
         const skillMd = filesResponse.files.find(
-          (file) => file.path.split("/").at(-1)?.toLowerCase() === SKILL_FILENAME,
+          (file) => file.path.split("/").at(-1) === SKILL_FILENAME,
         );
         if (!skillMd) {
           return {
             kind: "invalid" as const,
             invalidSkill: {
-              message: "Missing skill.md file.",
+              message: "Missing SKILL.md file.",
               skillMdPath: root.skillMdPath,
               skillRootPath: root.skillRootPath,
             },

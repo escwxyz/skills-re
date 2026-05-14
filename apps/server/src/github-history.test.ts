@@ -45,7 +45,7 @@ describe("createGithubSnapshotHistoryHelpers", () => {
             type: "blob",
           },
           {
-            path: "skills/src/keep/skill.md",
+            path: "skills/src/keep/SKILL.md",
             sha: "sha-3",
             type: "blob",
           },
@@ -54,7 +54,7 @@ describe("createGithubSnapshotHistoryHelpers", () => {
       ),
     ).toEqual([
       {
-        path: "src/keep/skill.md",
+        path: "src/keep/SKILL.md",
         sha: "sha-3",
         type: "blob",
       },
@@ -92,7 +92,7 @@ describe("createGithubSnapshotHistoryHelpers", () => {
           skillRootPath: "skills",
           tree: [
             {
-              path: "skills/demo/skill.md",
+              path: "skills/demo/SKILL.md",
               sha: "blob-1",
               type: "blob",
             },
@@ -102,7 +102,7 @@ describe("createGithubSnapshotHistoryHelpers", () => {
         files: [
           {
             content: "emoji 😀 and こんにちは",
-            path: "demo/skill.md",
+            path: "demo/SKILL.md",
           },
         ],
       });
@@ -156,27 +156,27 @@ describe("createGithubSnapshotHistoryHelpers", () => {
       skillRootPath: "skills",
       tree: [
         {
-          path: "skills/one/skill.md",
+          path: "skills/one/SKILL.md",
           sha: "blob-1",
           type: "blob",
         },
         {
-          path: "skills/two/skill.md",
+          path: "skills/two/SKILL.md",
           sha: "blob-2",
           type: "blob",
         },
         {
-          path: "skills/three/skill.md",
+          path: "skills/three/SKILL.md",
           sha: "blob-3",
           type: "blob",
         },
         {
-          path: "skills/four/skill.md",
+          path: "skills/four/SKILL.md",
           sha: "blob-4",
           type: "blob",
         },
         {
-          path: "skills/five/skill.md",
+          path: "skills/five/SKILL.md",
           sha: "blob-5",
           type: "blob",
         },
@@ -221,23 +221,23 @@ describe("createGithubSnapshotHistoryHelpers", () => {
       files: [
         {
           content: "---\nname: one\ndescription: one\n---\n# one",
-          path: "one/skill.md",
+          path: "one/SKILL.md",
         },
         {
           content: "---\nname: skill\ndescription: skill\n---\n# skill",
-          path: "two/skill.md",
+          path: "two/SKILL.md",
         },
         {
           content: "---\nname: skill\ndescription: skill\n---\n# skill",
-          path: "three/skill.md",
+          path: "three/SKILL.md",
         },
         {
           content: "---\nname: skill\ndescription: skill\n---\n# skill",
-          path: "four/skill.md",
+          path: "four/SKILL.md",
         },
         {
           content: "---\nname: skill\ndescription: skill\n---\n# skill",
-          path: "five/skill.md",
+          path: "five/SKILL.md",
         },
       ],
     });

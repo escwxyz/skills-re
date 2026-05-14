@@ -50,12 +50,12 @@ describe("runSkillsUploadWorkflow", () => {
             {
               description: "Widget skill",
               directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/skill.md",
+              entryPath: "skills/acme/widget/SKILL.md",
               initialSnapshot: {
                 files: [
                   {
                     content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
-                    path: "skills/acme/widget/skill.md",
+                    path: "skills/acme/widget/SKILL.md",
                   },
                 ],
                 sourceCommitDate: 1,
@@ -65,14 +65,14 @@ describe("runSkillsUploadWorkflow", () => {
                 sourceRef: "main",
                 tree: [
                   {
-                    path: "skills/acme/widget/skill.md",
+                    path: "skills/acme/widget/SKILL.md",
                     sha: "sha-1",
                     type: "blob",
                   },
                 ],
               },
               slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/skill.md",
+              sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
               sourceType: "github",
               tags: ["AI Tools"],
               title: "Widget",
@@ -205,7 +205,7 @@ describe("runSkillsUploadWorkflow", () => {
       {
         description: "Widget skill",
         directoryPath: "skills/acme/widget",
-        entryPath: "skills/acme/widget/skill.md",
+        entryPath: "skills/acme/widget/SKILL.md",
         frontmatterHash: expect.any(String),
         hash: expect.any(String),
         name: "Widget",
@@ -224,7 +224,7 @@ describe("runSkillsUploadWorkflow", () => {
         files: [
           {
             content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
-            path: "skills/acme/widget/skill.md",
+            path: "skills/acme/widget/SKILL.md",
           },
         ],
         snapshotId: "snapshot-1",
@@ -327,12 +327,12 @@ describe("runSkillsUploadWorkflow", () => {
             {
               description: "Widget skill",
               directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/skill.md",
+              entryPath: "skills/acme/widget/SKILL.md",
               initialSnapshot: {
                 files: [
                   {
                     content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
-                    path: "skills/acme/widget/skill.md",
+                    path: "skills/acme/widget/SKILL.md",
                   },
                 ],
                 sourceCommitDate: 1,
@@ -340,14 +340,14 @@ describe("runSkillsUploadWorkflow", () => {
                 sourceRef: "main",
                 tree: [
                   {
-                    path: "skills/acme/widget/skill.md",
+                    path: "skills/acme/widget/SKILL.md",
                     sha: "sha-1",
                     type: "blob",
                   },
                 ],
               },
               slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/skill.md",
+              sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
               sourceType: "github",
               title: "Widget",
             },
@@ -410,16 +410,16 @@ describe("runSkillsUploadWorkflow", () => {
             {
               description: "Widget skill",
               directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/docs/skill.md",
+              entryPath: "skills/acme/widget/docs/SKILL.md",
               initialSnapshot: {
                 files: [
                   {
                     content: "---\nname: wrong\ndescription: Wrong file\n---\n# Wrong file",
-                    path: "skills/acme/widget/skill.md",
+                    path: "skills/acme/widget/SKILL.md",
                   },
                   {
                     content: "---\nname: right\ndescription: Right file\n---\n# Right file",
-                    path: "skills/acme/widget/docs/skill.md",
+                    path: "skills/acme/widget/docs/SKILL.md",
                   },
                 ],
                 sourceCommitDate: 1,
@@ -427,14 +427,14 @@ describe("runSkillsUploadWorkflow", () => {
                 sourceRef: "main",
                 tree: [
                   {
-                    path: "skills/acme/widget/docs/skill.md",
+                    path: "skills/acme/widget/docs/SKILL.md",
                     sha: "sha-1",
                     type: "blob",
                   },
                 ],
               },
               slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/docs/skill.md",
+              sourceLocator: "github:acme/skills/skills/acme/widget/docs/SKILL.md",
               sourceType: "github",
               title: "Widget",
             },
