@@ -12,6 +12,7 @@ export const Route = createFileRoute("/robots.txt")({
         const robotsTxt = [
           "User-agent: *",
           "Allow: /",
+          "Content-Signal: ai-train=no, search=yes, ai-input=no",
           ...disallowedPaths.map((path) => `Disallow: ${path}`),
           "",
           `Sitemap: ${new URL("/sitemap.xml", SITE_URL).href}`,

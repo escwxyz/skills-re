@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as PublicLayoutRouteImport } from './routes/_publicLayout'
 import { Route as AuthedLayoutRouteImport } from './routes/_authedLayout'
 import { Route as R500RouteImport } from './routes/500'
@@ -20,7 +21,6 @@ import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static
 import { Route as SitemapDocsDotxmlRouteImport } from './routes/sitemap.docs[.]xml'
 import { Route as SitemapCollectionsDotxmlRouteImport } from './routes/sitemap.collections[.]xml'
 import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
-import { Route as RobotsTxtRouteImport } from './routes/robots[.]txt'
 import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
 import { Route as PublicLayoutSubmitRouteImport } from './routes/_publicLayout/submit'
 import { Route as PublicLayoutPrivacyRouteImport } from './routes/_publicLayout/privacy'
@@ -77,6 +77,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicLayoutRoute = PublicLayoutRouteImport.update({
   id: '/_publicLayout',
   getParentRoute: () => rootRouteImport,
@@ -124,11 +129,6 @@ const SitemapCollectionsDotxmlRoute =
 const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
   id: '/sitemap/authors.xml',
   path: '/sitemap/authors.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RobotsTxtRoute = RobotsTxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicLayoutTermsRoute = PublicLayoutTermsRouteImport.update({
@@ -411,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/404': typeof R404Route
   '/500': typeof R500Route
   '/': typeof PublicLayoutIndexRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
@@ -422,7 +423,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -473,6 +473,7 @@ export interface FileRoutesByTo {
   '/404': typeof R404Route
   '/500': typeof R500Route
   '/': typeof PublicLayoutIndexRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
@@ -483,7 +484,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -535,6 +535,7 @@ export interface FileRoutesById {
   '/500': typeof R500Route
   '/_authedLayout': typeof AuthedLayoutRouteWithChildren
   '/_publicLayout': typeof PublicLayoutRouteWithChildren
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authedLayout/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
@@ -546,7 +547,6 @@ export interface FileRoutesById {
   '/_publicLayout/privacy': typeof PublicLayoutPrivacyRoute
   '/_publicLayout/submit': typeof PublicLayoutSubmitRoute
   '/_publicLayout/terms': typeof PublicLayoutTermsRoute
-  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -600,6 +600,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/dashboard'
     | '/.well-known/agent-configuration'
@@ -611,7 +612,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -662,6 +662,7 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/.well-known/agent-configuration'
     | '/.well-known/api-catalog'
@@ -672,7 +673,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -723,6 +723,7 @@ export interface FileRouteTypes {
     | '/500'
     | '/_authedLayout'
     | '/_publicLayout'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/_authedLayout/dashboard'
     | '/.well-known/agent-configuration'
@@ -734,7 +735,6 @@ export interface FileRouteTypes {
     | '/_publicLayout/privacy'
     | '/_publicLayout/submit'
     | '/_publicLayout/terms'
-    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -788,10 +788,10 @@ export interface RootRouteChildren {
   R500Route: typeof R500Route
   AuthedLayoutRoute: typeof AuthedLayoutRouteWithChildren
   PublicLayoutRoute: typeof PublicLayoutRouteWithChildren
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownAgentConfigurationRoute: typeof DotwellKnownAgentConfigurationRoute
   DotwellKnownApiCatalogRoute: typeof DotwellKnownApiCatalogRoute
-  RobotsTxtRoute: typeof RobotsTxtRoute
   SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
   SitemapCollectionsDotxmlRoute: typeof SitemapCollectionsDotxmlRoute
   SitemapDocsDotxmlRoute: typeof SitemapDocsDotxmlRoute
@@ -818,6 +818,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_publicLayout': {
@@ -888,13 +895,6 @@ declare module '@tanstack/react-router' {
       path: '/sitemap/authors.xml'
       fullPath: '/sitemap/authors.xml'
       preLoaderRoute: typeof SitemapAuthorsDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsTxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_publicLayout/terms': {
@@ -1393,10 +1393,10 @@ const rootRouteChildren: RootRouteChildren = {
   R500Route: R500Route,
   AuthedLayoutRoute: AuthedLayoutRouteWithChildren,
   PublicLayoutRoute: PublicLayoutRouteWithChildren,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownAgentConfigurationRoute: DotwellKnownAgentConfigurationRoute,
   DotwellKnownApiCatalogRoute: DotwellKnownApiCatalogRoute,
-  RobotsTxtRoute: RobotsTxtRoute,
   SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
   SitemapCollectionsDotxmlRoute: SitemapCollectionsDotxmlRoute,
   SitemapDocsDotxmlRoute: SitemapDocsDotxmlRoute,
