@@ -26,9 +26,7 @@ export interface SnapshotUploadWorkflowStagingPayload {
   stagingKey: string;
 }
 
-export type SnapshotUploadWorkflowPayload =
-  | SnapshotUploadWorkflowStagingPayload
-  | SnapshotUploadContentPayload;
+export type SnapshotUploadWorkflowPayload = SnapshotUploadWorkflowStagingPayload;
 
 export interface SnapshotUploadStagingReader {
   delete(key: string): Promise<void>;
@@ -48,13 +46,8 @@ type SnapshotUploadWorkflowEnv = Env & {
   SNAPSHOT_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotUploadWorkflowPayload>;
 };
 
-const isStagingPayload = (
-  input: SnapshotUploadWorkflowPayload,
-): input is SnapshotUploadWorkflowStagingPayload =>
-  typeof (input as { stagingKey?: unknown }).stagingKey === "string";
-
 export const getSnapshotUploadStagingKey = (input: SnapshotUploadWorkflowPayload) =>
-  isStagingPayload(input) ? input.stagingKey : null;
+  input.stagingKey;
 
 const buildStagingKey = () => {
   const day = new Date().toISOString().slice(0, 10);
@@ -76,14 +69,6 @@ export const loadStagedSnapshotUploadPayload = async (
   bucket: SnapshotUploadStagingReader | null | undefined,
   input: SnapshotUploadWorkflowPayload,
 ): Promise<SnapshotUploadContentPayload> => {
-  if (!isStagingPayload(input)) {
-    const inlineValidated = snapshotUploadContentPayloadSchema.safeParse(input);
-    if (!inlineValidated.success) {
-      throw new Error("[snapshot-upload:validate-inline-payload] invalid legacy payload shape");
-    }
-    return inlineValidated.data;
-  }
-
   if (!bucket) {
     throw new Error("Snapshot upload staging is not configured.");
   }
@@ -112,7 +97,7 @@ export const cleanupStagedSnapshotUploadPayload = async (
   bucket: SnapshotUploadStagingReader | null | undefined,
   input: SnapshotUploadWorkflowPayload,
 ) => {
-  if (!isStagingPayload(input) || !bucket) {
+  if (!bucket) {
     return;
   }
 

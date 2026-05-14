@@ -33,7 +33,12 @@ export const runSnapshotUploadWorkflow = (
       event.payload,
     );
     await deps.runUploadSnapshotFiles(uploadPayload);
-    await cleanupStagedSnapshotUploadPayload(deps.snapshotFilesBucket, event.payload);
+
+    try {
+      await cleanupStagedSnapshotUploadPayload(deps.snapshotFilesBucket, event.payload);
+    } catch (error) {
+      console.warn("[snapshot-upload] failed to cleanup staged payload", { error });
+    }
 
     return {
       filesCount: uploadPayload.files.length,

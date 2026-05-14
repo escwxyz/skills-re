@@ -74,13 +74,7 @@ export interface SkillsUploadWorkflowStagingPayload {
 
 export type SkillsUploadContentPayload = z.infer<typeof skillsUploadContentPayloadSchema>;
 
-/**
- * Workflow params are either a staging reference (normal path) or the full content
- * payload (legacy inline path, kept for in-flight workflows created before R2 staging).
- */
-export type SkillsUploadWorkflowPayload =
-  | SkillsUploadWorkflowStagingPayload
-  | SkillsUploadContentPayload;
+export type SkillsUploadWorkflowPayload = SkillsUploadWorkflowStagingPayload;
 
 /**
  * Minimal structural interface so callers in tests don't need the full CF runtime.
@@ -98,13 +92,8 @@ export interface SkillsStagingBucket {
 
 const SKILLS_UPLOAD_STAGING_PREFIX = "skills-upload/staging";
 
-const isStagingPayload = (
-  input: SkillsUploadWorkflowPayload,
-): input is SkillsUploadWorkflowStagingPayload =>
-  typeof (input as { stagingKey?: unknown }).stagingKey === "string";
-
-export const getSkillsUploadStagingKey = (input: SkillsUploadWorkflowPayload): string | null =>
-  isStagingPayload(input) ? input.stagingKey : null;
+export const getSkillsUploadStagingKey = (input: SkillsUploadWorkflowPayload): string =>
+  input.stagingKey;
 
 const buildStagingKey = () => {
   const day = new Date().toISOString().slice(0, 10);
@@ -127,20 +116,10 @@ export const stageSkillsUploadPayload = async (
   return { stagingKey: key };
 };
 
-/** Resolves the full content payload from R2 staging or, for legacy inline payloads, validates and returns it directly. */
 export const loadStagedSkillsUploadPayload = async (
   bucket: SkillsStagingBucket | null | undefined,
   input: SkillsUploadWorkflowPayload,
 ): Promise<SkillsUploadContentPayload> => {
-  if (!isStagingPayload(input)) {
-    // Inline payloads predate R2 staging. Accept them so in-flight workflows aren't broken.
-    const inlineValidated = skillsUploadContentPayloadSchema.safeParse(input);
-    if (!inlineValidated.success) {
-      throw new Error("[skills-upload:validate-inline-payload] invalid legacy payload shape");
-    }
-    return inlineValidated.data;
-  }
-
   if (!bucket) {
     throw new Error("[skills-upload:load-from-r2] staging bucket not configured");
   }
@@ -164,12 +143,11 @@ export const loadStagedSkillsUploadPayload = async (
   return validated.data;
 };
 
-/** Deletes the R2 staging object after the workflow has finished processing it. No-op for inline payloads. */
 export const cleanupStagedSkillsUploadPayload = async (
   bucket: SkillsStagingBucket | null | undefined,
   input: SkillsUploadWorkflowPayload,
 ): Promise<void> => {
-  if (!isStagingPayload(input) || !bucket) {
+  if (!bucket) {
     return;
   }
   await bucket.delete(input.stagingKey);

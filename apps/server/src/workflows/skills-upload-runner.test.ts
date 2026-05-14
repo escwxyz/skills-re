@@ -3,11 +3,13 @@
 import { describe, expect, test } from "bun:test";
 
 import { runSkillsUploadWorkflow } from "./skills-upload-runner";
+import { stageSkillsUploadPayload } from "./skills-upload";
 import { createWorkflowStepStub } from "./test-support";
 
 describe("runSkillsUploadWorkflow", () => {
   test("runs the upload pipeline as separate workflow steps", async () => {
     const stepNames: string[] = [];
+    const storage = new Map<string, string>();
     const calls = {
       aiSearchItemUpload: [] as unknown[],
       aiSearchItemUpdate: [] as unknown[],
@@ -22,63 +24,85 @@ describe("runSkillsUploadWorkflow", () => {
       syncSkillTags: [] as unknown[],
       uploadSnapshotFiles: [] as unknown[],
     };
+    const bucket = {
+      delete(key: string) {
+        storage.delete(key);
+        return Promise.resolve();
+      },
+      get(key: string) {
+        const value = storage.get(key);
+        return Promise.resolve(
+          value
+            ? {
+                text: () => Promise.resolve(value),
+              }
+            : null,
+        );
+      },
+      put(key: string, value: string) {
+        storage.set(key, value);
+        return Promise.resolve({});
+      },
+    };
+
+    const stagedPayload = await stageSkillsUploadPayload(bucket, {
+      recentCommits: [
+        {
+          sha: "head",
+        },
+        {
+          sha: "parent",
+        },
+      ],
+      repo: {
+        createdAt: 1,
+        defaultBranch: "main",
+        forks: 1,
+        license: "MIT",
+        nameWithOwner: "acme/skills",
+        owner: {
+          handle: "acme",
+        },
+        stars: 2,
+        updatedAt: 2,
+      },
+      skills: [
+        {
+          description: "Widget skill",
+          directoryPath: "skills/acme/widget",
+          entryPath: "skills/acme/widget/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
+                path: "skills/acme/widget/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 1,
+            sourceCommitMessage: "feat: add widget",
+            sourceCommitSha: "commit-1",
+            sourceCommitUrl: "https://github.com/acme/skills/commit/commit-1",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/acme/widget/SKILL.md",
+                sha: "sha-1",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
+          sourceType: "github",
+          tags: ["AI Tools"],
+          title: "Widget",
+        },
+      ],
+    });
 
     const result = await runSkillsUploadWorkflow(
       {
-        payload: {
-          recentCommits: [
-            {
-              sha: "head",
-            },
-            {
-              sha: "parent",
-            },
-          ],
-          repo: {
-            createdAt: 1,
-            defaultBranch: "main",
-            forks: 1,
-            license: "MIT",
-            nameWithOwner: "acme/skills",
-            owner: {
-              handle: "acme",
-            },
-            stars: 2,
-            updatedAt: 2,
-          },
-          skills: [
-            {
-              description: "Widget skill",
-              directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/SKILL.md",
-              initialSnapshot: {
-                files: [
-                  {
-                    content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
-                    path: "skills/acme/widget/SKILL.md",
-                  },
-                ],
-                sourceCommitDate: 1,
-                sourceCommitMessage: "feat: add widget",
-                sourceCommitSha: "commit-1",
-                sourceCommitUrl: "https://github.com/acme/skills/commit/commit-1",
-                sourceRef: "main",
-                tree: [
-                  {
-                    path: "skills/acme/widget/SKILL.md",
-                    sha: "sha-1",
-                    type: "blob",
-                  },
-                ],
-              },
-              slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
-              sourceType: "github",
-              tags: ["AI Tools"],
-              title: "Widget",
-            },
-          ],
-        },
+        payload: stagedPayload,
       } as never,
       createWorkflowStepStub({
         onDo: (name) => {
@@ -149,6 +173,7 @@ describe("runSkillsUploadWorkflow", () => {
           calls.uploadSnapshotFiles.push(input);
           return Promise.resolve({ workId: "snapshot-upload-1" });
         },
+        snapshotFilesBucket: bucket,
       } as never,
     );
 
@@ -306,51 +331,75 @@ describe("runSkillsUploadWorkflow", () => {
   });
 
   test("keeps ai search linking failures non-blocking", async () => {
+    const storage = new Map<string, string>();
+    const bucket = {
+      delete(key: string) {
+        storage.delete(key);
+        return Promise.resolve();
+      },
+      get(key: string) {
+        const value = storage.get(key);
+        return Promise.resolve(
+          value
+            ? {
+                text: () => Promise.resolve(value),
+              }
+            : null,
+        );
+      },
+      put(key: string, value: string) {
+        storage.set(key, value);
+        return Promise.resolve({});
+      },
+    };
+
+    const stagedPayload = await stageSkillsUploadPayload(bucket, {
+      repo: {
+        createdAt: 1,
+        defaultBranch: "main",
+        forks: 1,
+        license: "MIT",
+        nameWithOwner: "acme/skills",
+        owner: {
+          handle: "acme",
+        },
+        stars: 2,
+        updatedAt: 2,
+      },
+      skills: [
+        {
+          description: "Widget skill",
+          directoryPath: "skills/acme/widget",
+          entryPath: "skills/acme/widget/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
+                path: "skills/acme/widget/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 1,
+            sourceCommitSha: "commit-1",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/acme/widget/SKILL.md",
+                sha: "sha-1",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
+          sourceType: "github",
+          title: "Widget",
+        },
+      ],
+    });
+
     const result = await runSkillsUploadWorkflow(
       {
-        payload: {
-          repo: {
-            createdAt: 1,
-            defaultBranch: "main",
-            forks: 1,
-            license: "MIT",
-            nameWithOwner: "acme/skills",
-            owner: {
-              handle: "acme",
-            },
-            stars: 2,
-            updatedAt: 2,
-          },
-          skills: [
-            {
-              description: "Widget skill",
-              directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/SKILL.md",
-              initialSnapshot: {
-                files: [
-                  {
-                    content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
-                    path: "skills/acme/widget/SKILL.md",
-                  },
-                ],
-                sourceCommitDate: 1,
-                sourceCommitSha: "commit-1",
-                sourceRef: "main",
-                tree: [
-                  {
-                    path: "skills/acme/widget/SKILL.md",
-                    sha: "sha-1",
-                    type: "blob",
-                  },
-                ],
-              },
-              slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
-              sourceType: "github",
-              title: "Widget",
-            },
-          ],
-        },
+        payload: stagedPayload,
       } as never,
       createWorkflowStepStub() as never,
       {
@@ -377,6 +426,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        snapshotFilesBucket: bucket,
       } as never,
     );
 
@@ -388,56 +438,79 @@ describe("runSkillsUploadWorkflow", () => {
 
   test("prefers the declared entry path for ai search file selection", async () => {
     const aiSearchUploads: { content: string; key: string }[] = [];
+    const storage = new Map<string, string>();
+    const bucket = {
+      delete(key: string) {
+        storage.delete(key);
+        return Promise.resolve();
+      },
+      get(key: string) {
+        const value = storage.get(key);
+        return Promise.resolve(
+          value
+            ? {
+                text: () => Promise.resolve(value),
+              }
+            : null,
+        );
+      },
+      put(key: string, value: string) {
+        storage.set(key, value);
+        return Promise.resolve({});
+      },
+    };
+
+    const stagedPayload = await stageSkillsUploadPayload(bucket, {
+      repo: {
+        createdAt: 1,
+        defaultBranch: "main",
+        forks: 1,
+        license: "MIT",
+        nameWithOwner: "acme/skills",
+        owner: {
+          handle: "acme",
+        },
+        stars: 2,
+        updatedAt: 2,
+      },
+      skills: [
+        {
+          description: "Widget skill",
+          directoryPath: "skills/acme/widget",
+          entryPath: "skills/acme/widget/docs/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: wrong\ndescription: Wrong file\n---\n# Wrong file",
+                path: "skills/acme/widget/SKILL.md",
+              },
+              {
+                content: "---\nname: right\ndescription: Right file\n---\n# Right file",
+                path: "skills/acme/widget/docs/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 1,
+            sourceCommitSha: "commit-1",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/acme/widget/docs/SKILL.md",
+                sha: "sha-1",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/acme/widget/docs/SKILL.md",
+          sourceType: "github",
+          title: "Widget",
+        },
+      ],
+    });
 
     await runSkillsUploadWorkflow(
       {
-        payload: {
-          repo: {
-            createdAt: 1,
-            defaultBranch: "main",
-            forks: 1,
-            license: "MIT",
-            nameWithOwner: "acme/skills",
-            owner: {
-              handle: "acme",
-            },
-            stars: 2,
-            updatedAt: 2,
-          },
-          skills: [
-            {
-              description: "Widget skill",
-              directoryPath: "skills/acme/widget",
-              entryPath: "skills/acme/widget/docs/SKILL.md",
-              initialSnapshot: {
-                files: [
-                  {
-                    content: "---\nname: wrong\ndescription: Wrong file\n---\n# Wrong file",
-                    path: "skills/acme/widget/SKILL.md",
-                  },
-                  {
-                    content: "---\nname: right\ndescription: Right file\n---\n# Right file",
-                    path: "skills/acme/widget/docs/SKILL.md",
-                  },
-                ],
-                sourceCommitDate: 1,
-                sourceCommitSha: "commit-1",
-                sourceRef: "main",
-                tree: [
-                  {
-                    path: "skills/acme/widget/docs/SKILL.md",
-                    sha: "sha-1",
-                    type: "blob",
-                  },
-                ],
-              },
-              slug: "widget",
-              sourceLocator: "github:acme/skills/skills/acme/widget/docs/SKILL.md",
-              sourceType: "github",
-              title: "Widget",
-            },
-          ],
-        },
+        payload: stagedPayload,
       } as never,
       createWorkflowStepStub() as never,
       {
@@ -466,6 +539,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        snapshotFilesBucket: bucket,
       } as never,
     );
 

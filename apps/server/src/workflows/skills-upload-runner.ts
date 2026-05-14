@@ -419,10 +419,12 @@ export const runSkillsUploadWorkflow = async (
       workId: firstWorkId ?? `upload-${crypto.randomUUID()}`,
     };
   } finally {
-    // Cleanup runs as its own step so it is retried independently of the pipeline
-    // and doesn't roll back a successfully completed upload if deletion fails.
-    await step.do("cleanup-staging", workflowStepRetryPolicy.skillsUploadPipeline, async () => {
-      await cleanupStagedSkillsUploadPayload(deps.snapshotFilesBucket, event.payload);
-    });
+    try {
+      await step.do("cleanup-staging", workflowStepRetryPolicy.skillsUploadPipeline, async () => {
+        await cleanupStagedSkillsUploadPayload(deps.snapshotFilesBucket, event.payload);
+      });
+    } catch (error) {
+      console.warn("[skills-upload] failed to cleanup staged payload", { error });
+    }
   }
 };

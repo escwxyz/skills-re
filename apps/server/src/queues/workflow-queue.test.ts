@@ -99,6 +99,66 @@ describe("processWorkflowQueueBatch", () => {
     expect(acked).toBe(true);
   });
 
+  test("rejects legacy inline skills-upload queue messages", async () => {
+    let acked = false;
+    let createCalled = false;
+    const logger = {
+      error() {},
+      info() {},
+      warn() {},
+      debug() {},
+      child() {
+        return this;
+      },
+    };
+
+    await processWorkflowQueueBatch(
+      {
+        messages: [
+          {
+            ack() {
+              acked = true;
+            },
+            body: {
+              kind: "skills-upload",
+              payload: {
+                repo: {
+                  createdAt: 1,
+                  defaultBranch: "main",
+                  forks: 1,
+                  license: "MIT",
+                  nameWithOwner: "acme/skills",
+                  owner: {
+                    handle: "acme",
+                  },
+                  stars: 2,
+                  updatedAt: 2,
+                },
+                skills: [],
+              },
+              workflowId: "workflow-1",
+            },
+            retry() {
+              throw new Error("should not retry invalid messages");
+            },
+          },
+        ],
+      } as never,
+      {
+        SKILLS_UPLOAD_WORKFLOW: {
+          create() {
+            createCalled = true;
+            return Promise.resolve({ id: "workflow-1" });
+          },
+        },
+      } as never,
+      logger as never,
+    );
+
+    expect(acked).toBe(true);
+    expect(createCalled).toBe(false);
+  });
+
   test("safely logs cyclic invalid queue bodies before acking", async () => {
     const originalConsoleError = console.error;
     const logs: unknown[] = [];

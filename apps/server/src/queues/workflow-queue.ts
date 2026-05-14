@@ -31,63 +31,9 @@ export interface SkillsTaggingWorkflowPayload {
   triggerCategorizationAfterTagging?: boolean;
 }
 
-export type SkillsUploadWorkflowPayload =
-  | {
-      stagingKey: string;
-    }
-  | {
-      recentCommits?: {
-        committedDate?: string | null;
-        message?: string | null;
-        sha: string;
-        url?: string | null;
-      }[];
-      repo?: {
-        createdAt: number;
-        defaultBranch: string;
-        forks: number;
-        license: string;
-        nameWithOwner: string;
-        owner: {
-          avatarUrl?: string | null;
-          handle: string;
-          name?: string | null;
-        };
-        stars: number;
-        updatedAt: number;
-      };
-      skills: {
-        description: string;
-        directoryPath: string;
-        entryPath: string;
-        frontmatterHash?: string;
-        initialSnapshot: {
-          files: {
-            content: string;
-            path: string;
-          }[];
-          sourceCommitDate: number;
-          sourceCommitMessage?: string;
-          sourceCommitSha: string;
-          sourceCommitUrl?: string;
-          sourceRef: string;
-          tree: {
-            path: string;
-            sha: string;
-            size?: number;
-            type: "blob" | "tree";
-          }[];
-        };
-        license?: string;
-        preferredVersion?: string;
-        skillContentHash?: string;
-        slug: string;
-        sourceLocator: string;
-        sourceType: "github" | "upload";
-        tags?: string[];
-        title: string;
-      }[];
-    };
+export interface SkillsUploadWorkflowPayload {
+  stagingKey: string;
+}
 
 interface WorkflowCreateBinding<TPayload> {
   create: (input: { id: string; params: TPayload }) => Promise<{ id: string }>;
@@ -189,19 +135,22 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
   if (!isObjectRecord(value)) {
     return false;
   }
-
+  if (typeof value.kind !== "string" || typeof value.workflowId !== "string") {
+    return false;
+  }
+  if (!isObjectRecord(value.payload)) {
+    return false;
+  }
+  if (value.kind === "snapshot-upload" || value.kind === "skills-upload") {
+    return typeof (value.payload as Record<string, unknown>).stagingKey === "string";
+  }
   return (
-    typeof value.kind === "string" &&
-    typeof value.workflowId === "string" &&
-    isObjectRecord(value.payload) &&
-    (value.kind === "evaluation" ||
-      value.kind === "repo-snapshot-sync" ||
-      value.kind === "repo-stats-sync" ||
-      value.kind === "snapshot-archive-upload" ||
-      value.kind === "snapshot-upload" ||
-      value.kind === "skills-categorization" ||
-      value.kind === "skills-tagging" ||
-      value.kind === "skills-upload")
+    value.kind === "evaluation" ||
+    value.kind === "repo-snapshot-sync" ||
+    value.kind === "repo-stats-sync" ||
+    value.kind === "snapshot-archive-upload" ||
+    value.kind === "skills-categorization" ||
+    value.kind === "skills-tagging"
   );
 };
 
