@@ -298,16 +298,28 @@ export async function findSkillByPath(input: {
       slug: skillsTable.slug,
       stargazerCount: reposTable.stars,
       syncTime: skillsTable.syncTime,
+      tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
       title: skillsTable.title,
       updatedAt: skillsTable.updatedAt,
       viewsAllTime: skillsTable.viewsAllTime,
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(skillsTagsTable, eq(skillsTagsTable.skillId, skillsTable.id))
+    .leftJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
     .where(and(...clauses))
+    .groupBy(skillsTable.id)
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    tags: row.tags ? row.tags.split(",").filter(Boolean) : [],
+  };
 }
 
 export async function checkSkillExistingBySlug(slug: string) {

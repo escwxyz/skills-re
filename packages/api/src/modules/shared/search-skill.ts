@@ -19,6 +19,7 @@ export interface SearchSkillRow {
   title: string;
   updatedAt: number;
   viewsAllTime: number;
+  tags?: string[];
 }
 
 export const toSearchSkillItem = (row: SearchSkillRow) => ({
@@ -46,4 +47,5 @@ export const toSearchSkillItem = (row: SearchSkillRow) => ({
   title: row.title,
   updatedAt: row.updatedAt,
   viewsAllTime: row.viewsAllTime,
+  tags: row.tags?.length ? row.tags : undefined,
 });

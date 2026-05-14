@@ -63,6 +63,7 @@ interface SkillPathRow {
   title: string;
   updatedAt: number;
   viewsAllTime: number;
+  tags?: string[];
 }
 
 interface SkillHistoryInfoRow {

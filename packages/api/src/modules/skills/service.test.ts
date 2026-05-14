@@ -276,6 +276,52 @@ describe("skills service", () => {
     ).rejects.toThrow("Your account must be linked to GitHub before claiming.");
   });
 
+  test("includes skill tags when resolving a public skill by path", async () => {
+    const service = createSkillsService({
+      findSkillByPath: (input) =>
+        Promise.resolve(
+          input.authorHandle === "acme" && input.skillSlug === "widget"
+            ? {
+                authorHandle: "acme",
+                createdAt: 11,
+                description: "Widget skill",
+                downloadsAllTime: 22,
+                downloadsTrending: 33,
+                forkCount: 44,
+                id: "skill-1",
+                isVerified: true,
+                latestVersion: "1.0.0",
+                license: "MIT",
+                primaryCategory: "productivity",
+                repoName: "skills",
+                repoUrl: "https://github.com/acme/skills",
+                slug: "widget",
+                stargazerCount: 55,
+                syncTime: 66,
+                tags: ["automation", "workflow"],
+                title: "Widget",
+                updatedAt: 77,
+                viewsAllTime: 88,
+              }
+            : null,
+        ),
+    });
+
+    await expect(
+      service.getByPath({
+        authorHandle: "acme",
+        repoName: "skills",
+        skillSlug: "widget",
+      }),
+    ).resolves.toMatchObject({
+      authorHandle: "acme",
+      repoName: "skills",
+      slug: "widget",
+      tags: ["automation", "workflow"],
+      title: "Widget",
+    });
+  });
+
   test("resolves ai search results into the public search shape", async () => {
     const service = createSkillsService({
       findSkillByPath: (input) =>
@@ -298,6 +344,7 @@ describe("skills service", () => {
                 slug: "widget",
                 stargazerCount: 55,
                 syncTime: 66,
+                tags: ["automation"],
                 title: "Widget",
                 updatedAt: 77,
                 viewsAllTime: 88,
