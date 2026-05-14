@@ -28,19 +28,16 @@ export const runSnapshotUploadWorkflow = (
   deps: SnapshotUploadWorkflowDeps,
 ) =>
   step.do("upload-snapshot-files", workflowStepRetryPolicy.snapshotUpload, async () => {
-    try {
-      const uploadPayload = await loadStagedSnapshotUploadPayload(
-        deps.snapshotFilesBucket,
-        event.payload,
-      );
-      await deps.runUploadSnapshotFiles(uploadPayload);
+    const uploadPayload = await loadStagedSnapshotUploadPayload(
+      deps.snapshotFilesBucket,
+      event.payload,
+    );
+    await deps.runUploadSnapshotFiles(uploadPayload);
+    await cleanupStagedSnapshotUploadPayload(deps.snapshotFilesBucket, event.payload);
 
-      return {
-        filesCount: uploadPayload.files.length,
-        snapshotId: uploadPayload.snapshotId,
-        status: "uploaded",
-      } as const;
-    } finally {
-      await cleanupStagedSnapshotUploadPayload(deps.snapshotFilesBucket, event.payload);
-    }
+    return {
+      filesCount: uploadPayload.files.length,
+      snapshotId: uploadPayload.snapshotId,
+      status: "uploaded",
+    } as const;
   });
