@@ -20,7 +20,7 @@ import { Route as SitemapStaticDotxmlRouteImport } from './routes/sitemap.static
 import { Route as SitemapDocsDotxmlRouteImport } from './routes/sitemap.docs[.]xml'
 import { Route as SitemapCollectionsDotxmlRouteImport } from './routes/sitemap.collections[.]xml'
 import { Route as SitemapAuthorsDotxmlRouteImport } from './routes/sitemap.authors[.]xml'
-import { Route as RobotsTxtRouteImport } from './routes/robots.txt'
+import { Route as RobotsTxtRouteImport } from './routes/robots[.]txt'
 import { Route as PublicLayoutTermsRouteImport } from './routes/_publicLayout/terms'
 import { Route as PublicLayoutSubmitRouteImport } from './routes/_publicLayout/submit'
 import { Route as PublicLayoutPrivacyRouteImport } from './routes/_publicLayout/privacy'
@@ -127,8 +127,8 @@ const SitemapAuthorsDotxmlRoute = SitemapAuthorsDotxmlRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsTxtRoute = RobotsTxtRouteImport.update({
-  id: '/robots/txt',
-  path: '/robots/txt',
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicLayoutTermsRoute = PublicLayoutTermsRouteImport.update({
@@ -422,7 +422,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/robots/txt': typeof RobotsTxtRoute
+  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -483,7 +483,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicLayoutPrivacyRoute
   '/submit': typeof PublicLayoutSubmitRoute
   '/terms': typeof PublicLayoutTermsRoute
-  '/robots/txt': typeof RobotsTxtRoute
+  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -546,7 +546,7 @@ export interface FileRoutesById {
   '/_publicLayout/privacy': typeof PublicLayoutPrivacyRoute
   '/_publicLayout/submit': typeof PublicLayoutSubmitRoute
   '/_publicLayout/terms': typeof PublicLayoutTermsRoute
-  '/robots/txt': typeof RobotsTxtRoute
+  '/robots.txt': typeof RobotsTxtRoute
   '/sitemap/authors.xml': typeof SitemapAuthorsDotxmlRoute
   '/sitemap/collections.xml': typeof SitemapCollectionsDotxmlRoute
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
@@ -611,7 +611,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/robots/txt'
+    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -672,7 +672,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/submit'
     | '/terms'
-    | '/robots/txt'
+    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -734,7 +734,7 @@ export interface FileRouteTypes {
     | '/_publicLayout/privacy'
     | '/_publicLayout/submit'
     | '/_publicLayout/terms'
-    | '/robots/txt'
+    | '/robots.txt'
     | '/sitemap/authors.xml'
     | '/sitemap/collections.xml'
     | '/sitemap/docs.xml'
@@ -890,10 +890,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapAuthorsDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/robots/txt': {
-      id: '/robots/txt'
-      path: '/robots/txt'
-      fullPath: '/robots/txt'
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsTxtRouteImport
       parentRoute: typeof rootRouteImport
     }
