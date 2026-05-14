@@ -1,5 +1,5 @@
-import { staticAuditReportSchema } from "../../../../packages/contract/src/static-audits";
-import { staticAuditsService } from "../../../../packages/api/src/modules/static-audits/service";
+import { staticAuditReportSchema } from "@skills-re/contract/static-audits";
+import { staticAuditsService } from "@skills-re/api/modules/static-audits/service";
 
 import { verifyAutomationToken } from "../lib/automation-token";
 
