@@ -39,10 +39,8 @@ jobs:
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
-      - name: Generate Paraglide output
-        run: bun --cwd=apps/start run generate:paraglide
       - name: Type check
-        run: bun run check-types
+        run: bunx turbo check-types --filter='!start'
 
   build:
     name: Build
