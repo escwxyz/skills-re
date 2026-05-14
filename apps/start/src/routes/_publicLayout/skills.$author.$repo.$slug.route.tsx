@@ -171,7 +171,7 @@ function RouteComponent() {
             slug={slug}
           />
           <div className="border-border border-b py-6">
-            <InstallTabs slug={skill.slug} />
+            <InstallTabs author={author} repo={repo} slug={skill.slug} />
           </div>
           <div className="border-border border-b py-6">
             <SkillDetailActions

@@ -9,6 +9,7 @@ export interface SearchSkillRow {
   isVerified: boolean;
   latestVersion: string | null;
   license: string | null;
+  ownerAvatarUrl: string | null;
   primaryCategory: string | null;
   repoName: string;
   repoUrl: string | null;
@@ -22,6 +23,7 @@ export interface SearchSkillRow {
 
 export const toSearchSkillItem = (row: SearchSkillRow) => ({
   author: {
+    avatarUrl: row.ownerAvatarUrl ?? undefined,
     githubUrl: `https://github.com/${row.authorHandle}`,
     handle: row.authorHandle,
   },

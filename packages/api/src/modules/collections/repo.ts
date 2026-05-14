@@ -27,6 +27,7 @@ const toSkillRows = () => ({
   latestVersion: skillsTable.latestVersion,
   latestSnapshotId: skillsTable.latestSnapshotId,
   license: reposTable.license,
+  ownerAvatarUrl: reposTable.ownerAvatarUrl,
   primaryCategory: skillsTable.primaryCategory,
   repoName: reposTable.name,
   repoUrl: reposTable.url,

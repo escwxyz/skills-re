@@ -53,6 +53,7 @@ interface SkillPathRow {
   isVerified: boolean;
   latestVersion: string | null;
   license: string | null;
+  ownerAvatarUrl: string | null;
   primaryCategory: string | null;
   repoName: string;
   repoUrl: string | null;
@@ -117,6 +118,7 @@ interface SearchSkillRow {
   isVerified: boolean;
   latestVersion: string | null;
   license: string | null;
+  ownerAvatarUrl: string | null;
   primaryCategory: string | null;
   repoName: string;
   repoUrl: string | null;

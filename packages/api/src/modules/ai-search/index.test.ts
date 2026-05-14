@@ -16,6 +16,7 @@ const resolvedSkill: SearchSkillRow = {
   isVerified: true,
   latestVersion: "1.0.0",
   license: null,
+  ownerAvatarUrl: null,
   primaryCategory: "code-craft",
   repoName: "skills",
   repoUrl: null,

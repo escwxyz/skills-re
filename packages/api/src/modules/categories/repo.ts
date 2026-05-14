@@ -23,6 +23,7 @@ const toTopSkillRows = () => ({
   isVerified: skillsTable.isVerified,
   latestVersion: skillsTable.latestVersion,
   license: reposTable.license,
+  ownerAvatarUrl: reposTable.ownerAvatarUrl,
   primaryCategory: skillsTable.primaryCategory,
   repoName: reposTable.name,
   repoUrl: reposTable.url,
