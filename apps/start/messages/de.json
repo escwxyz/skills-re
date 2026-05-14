@@ -725,6 +725,8 @@
   "submit_hero_description": "Ein Skill ist ein Ordner. Er enthält eine skill.md, optionales Scaffolding und eine Evals-Datei. Signiere ihn, beschreibe ihn und gib ihn an den Index weiter. Kein Build-Schritt. Keine Manifest-Akrobatik.",
   "submit_hero_eyebrow": "§ Für Autoren",
   "submit_hero_title": "Veröffentliche ein Skill.",
+  "submit_meta_description": "Reiche deinen Skill beim Registry ein. Ein Skill ist ein Ordner mit einer skill.md, optionalem Scaffolding und einer Evals-Datei. Kein Build-Schritt erforderlich.",
+  "submit_meta_title": "Skill einreichen",
   "submit_skill_tabs_github_subtitle": "Über Repository-URL",
   "submit_skill_tabs_github_title": "GitHub-Import",
   "submit_skill_tabs_manual_subtitle": "Demnächst verfügbar",

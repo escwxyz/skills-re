@@ -1,9 +1,9 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
 
+import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
-import type { Locale } from "@/paraglide/runtime";
 import { getCategoryTitle } from "@/utils/category-data";
-import { formatDate } from "@/utils/format";
 import type { BrowseSkillItem } from "@/utils/types";
 import { StarIcon } from "@phosphor-icons/react";
 
@@ -54,21 +54,17 @@ export const getBrowseSkillAuthorHandle = (skill: BrowseSkillItem) => {
   return "unknown-author";
 };
 
-export const getBrowseSkillUpdatedAtLabel = (skill: BrowseSkillItem, locale?: Locale) =>
-  formatDate(skill.updatedAt ?? skill.createdAt ?? Date.now(), locale, {
-    dateStyle: "medium",
-  });
-
 export const SkillCardBrowse = ({ skill }: Props) => {
   const locale = getLocale();
   const authorLabel = getBrowseSkillAuthorLabel(skill);
   const authorHandle = getBrowseSkillAuthorHandle(skill);
-  const updatedAtLabel = getBrowseSkillUpdatedAtLabel(skill, locale);
+  const authorAvatarUrl = skill.author?.avatarUrl;
   const categoryLabel = skill.primaryCategory
     ? getCategoryTitle(skill.primaryCategory, locale)
     : getCategoryTitle("other", locale);
   const starsLabel = typeof skill.stargazerCount === "number" ? String(skill.stargazerCount) : null;
   const auditScore = skill.staticAudit?.overallScore;
+  const updatedAt = skill.updatedAt ?? skill.createdAt ?? null;
   const initial = (authorLabel ?? "?").charAt(0).toUpperCase();
   const tags = skill.tags ?? [];
 
@@ -83,7 +79,9 @@ export const SkillCardBrowse = ({ skill }: Props) => {
           <span className="text-muted-text">{categoryLabel}</span>
         </Link>
 
-        <span className="text-muted-text">{updatedAtLabel}</span>
+        <span className="text-muted-text">
+          {updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
+        </span>
       </div>
 
       <Link
@@ -118,9 +116,20 @@ export const SkillCardBrowse = ({ skill }: Props) => {
             aria-label={`View ${authorLabel || "author"} profile`}
             params={{ handle: authorHandle }}
             to="/authors/$handle"
-            className="bg-ink text-paper flex size-5 shrink-0 items-center justify-center font-mono text-[9px] no-underline transition-transform hover:scale-105 hover:no-underline"
+            className="no-underline transition-transform hover:scale-105 hover:no-underline"
           >
-            {initial}
+            <Avatar className="size-5 rounded-none border-0 bg-background shadow-none after:rounded-none">
+              {authorAvatarUrl ? (
+                <AvatarImage
+                  className="rounded-none object-cover"
+                  alt={authorLabel}
+                  src={authorAvatarUrl}
+                />
+              ) : null}
+              <AvatarFallback className="rounded-none bg-ink font-mono text-[9px] text-paper">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
           </Link>
           <span className="text-muted-text max-w-30 truncate font-mono text-[10px]">
             {authorLabel}

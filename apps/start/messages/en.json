@@ -726,6 +726,8 @@
   "submit_hero_description": "A skill is a folder. It holds a skill.md, optional scaffolding, and an evals file. Sign it, describe it, and hand it to the index. No build step. No manifest gymnastics.",
   "submit_hero_eyebrow": "§ For Authors",
   "submit_hero_title": "Publish a skill.",
+  "submit_meta_description": "Submit your skill to the registry. A skill is a folder with a skill.md, optional scaffolding, and an evals file. No build step required.",
+  "submit_meta_title": "Submit a Skill",
   "submit_skill_tabs_github_subtitle": "Via repository URL",
   "submit_skill_tabs_github_title": "GitHub Import",
   "submit_skill_tabs_manual_subtitle": "Coming soon",

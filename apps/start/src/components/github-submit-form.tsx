@@ -61,7 +61,7 @@ function dotClass(status: FetchStatus | SubmitStatus): string {
     return "bg-editorial-green";
   }
 
-  return "bg-rule";
+  return "bg-border";
 }
 
 export const GithubSubmitForm = () => {
@@ -353,10 +353,10 @@ export const GithubSubmitForm = () => {
                   />
                   <Button
                     className={cn(
-                      "whitespace-nowrap border border-border px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
+                      "whitespace-nowrap border border-border px-5 py-2.5 font-mono text-xs uppercase transition-colors",
                       fetchStatus === "fetching" || submitStatus === "submitting"
                         ? "cursor-not-allowed text-muted-text"
-                        : "text-ink hover:bg-paper-2",
+                        : "text-primary-foreground bg-primary",
                     )}
                     disabled={fetchStatus === "fetching" || submitStatus === "submitting"}
                     type="submit"

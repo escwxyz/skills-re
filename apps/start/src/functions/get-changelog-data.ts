@@ -29,7 +29,6 @@ export const getChangelogData = createServerFn({ method: "GET" })
       bodyHtml: entry.html,
       changes: entry.changes,
       dateIso: entry.date.toISOString(),
-      dateLabel: entry.date.toLocaleDateString(locale, { dateStyle: "long" }),
       description: entry.description,
       isStable: entry.isStable,
       title: entry.title,

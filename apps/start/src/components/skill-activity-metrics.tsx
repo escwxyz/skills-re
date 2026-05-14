@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSkillDownloadMetrics } from "@/functions/skills/get-skill-download-metrics";
 import { getSkillViewMetrics } from "@/functions/skills/get-skill-view-metrics";
+import { TimeValue } from "@/components/time-value";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { formatCompactNumber } from "@/utils/format";
@@ -51,11 +52,7 @@ const MetricCard = ({
           <span>
             {m.skill_activity_metrics_updated()}{" "}
             <b className="text-foreground font-medium">
-              {new Intl.DateTimeFormat(locale, {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              }).format(new Date(metrics.updatedAt))}
+              <TimeValue locale={locale} time={metrics.updatedAt} />
             </b>
           </span>
         </div>

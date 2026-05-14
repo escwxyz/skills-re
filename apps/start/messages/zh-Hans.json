@@ -724,6 +724,8 @@
   "submit_hero_description": "Skill 是一个文件夹。它包含 skill.md、可选脚手架和一个 evals 文件。为它签名、描述它，并交给索引。没有构建步骤，也不需要清单折腾。",
   "submit_hero_eyebrow": "§ 面向作者",
   "submit_hero_title": "发布一个 skill。",
+  "submit_meta_description": "将你的 skill 提交到注册表。Skill 是一个包含 skill.md、可选脚手架和 evals 文件的文件夹。无需构建步骤。",
+  "submit_meta_title": "提交 Skill",
   "submit_skill_tabs_github_subtitle": "通过仓库地址",
   "submit_skill_tabs_github_title": "GitHub 导入",
   "submit_skill_tabs_manual_subtitle": "即将推出",

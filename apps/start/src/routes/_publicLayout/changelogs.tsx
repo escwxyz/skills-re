@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
 import { getChangelogData } from "@/functions/get-changelog-data";
 import { createSeo } from "@/lib/seo";
@@ -29,6 +31,7 @@ const TYPE_CLASS: Record<string, string> = {
 
 function RouteComponent() {
   const entries = Route.useLoaderData();
+  const locale = getLocale();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -67,7 +70,7 @@ function RouteComponent() {
                 dateTime={entry.dateIso}
                 className="text-muted-foreground ml-auto font-mono text-[10.5px] tracking-[.08em] uppercase"
               >
-                {entry.dateLabel}
+                <TimeValue locale={locale} time={entry.dateIso} />
               </time>
             </div>
 

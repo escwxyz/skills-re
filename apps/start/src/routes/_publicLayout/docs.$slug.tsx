@@ -1,5 +1,6 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
+import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
 import { getDocData } from "@/functions/get-doc-data";
 import { createSeo } from "@/lib/seo";
@@ -22,6 +23,7 @@ function RouteComponent() {
     throw notFound();
   }
 
+  const locale = getLocale();
   const { slug } = Route.useParams();
   const currentIndex = data.nav.findIndex((d) => d.slug === slug);
   const prev = data.nav[currentIndex - 1];
@@ -74,11 +76,11 @@ function RouteComponent() {
                 {data.description}
               </p>
             )}
-            {data.updatedAtLabel && (
+            {data.updatedAt ? (
               <p className="text-muted-foreground mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase">
-                Last updated {data.updatedAtLabel}
+                Last updated <TimeValue locale={locale} time={data.updatedAt} />
               </p>
-            )}
+            ) : null}
           </div>
 
           <article

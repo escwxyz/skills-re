@@ -34,9 +34,7 @@ export const getDocData = createServerFn({ method: "GET" })
       category: doc.category ?? null,
       slug,
       title: doc.title,
-      updatedAtLabel: doc.updatedAt
-        ? doc.updatedAt.toLocaleDateString(locale, { dateStyle: "long" })
-        : null,
+      updatedAt: doc.updatedAt ? doc.updatedAt.getTime() : null,
       nav: entries.map((d) => ({
         slug: d._meta.path.split("/")[1] ?? "",
         title: d.title,

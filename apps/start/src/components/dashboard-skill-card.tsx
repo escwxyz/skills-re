@@ -1,8 +1,8 @@
 import type { DashboardMySkillsData } from "@/functions/dashboard/get-dashboard-my-skills";
+import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildSkillDetailPath } from "@/lib/skill-path";
-import { formatDate } from "@/utils/format";
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon, CodeIcon } from "@phosphor-icons/react";
 import { m } from "@/paraglide/messages";
@@ -16,9 +16,6 @@ export function DashboardSkillCard({ skill }: { skill: SkillItem }) {
     repoName: skill.repoName ?? "unknown-repo",
     skillSlug: skill.slug,
   });
-  const updatedLabel = skill.updatedAt
-    ? formatDate(skill.updatedAt, locale, { dateStyle: "medium" })
-    : null;
 
   return (
     <Card className="rounded-none border bg-background">
@@ -29,9 +26,9 @@ export function DashboardSkillCard({ skill }: { skill: SkillItem }) {
               <span className="truncate font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
                 {[skill.authorHandle, skill.repoName].filter(Boolean).join(" / ") || skill.slug}
               </span>
-              {updatedLabel ? (
+              {skill.updatedAt ? (
                 <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text/60">
-                  {updatedLabel}
+                  <TimeValue locale={locale} time={skill.updatedAt} />
                 </span>
               ) : null}
             </div>

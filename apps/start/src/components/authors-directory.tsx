@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import type { Locale } from "@/paraglide/runtime";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { cn } from "@/lib/utils";
 import { formatInteger } from "@/utils/format";
@@ -75,16 +76,25 @@ export const AuthorsDirectory = ({
                 params={{ handle: author.handle }}
                 className="border-border grid grid-cols-[56px_1fr] items-start gap-3.5 border-r border-b p-5 no-underline transition-colors hover:bg-muted"
               >
-                <div
+                <Avatar
                   className={cn(
-                    "flex size-12 items-center justify-center border font-display text-[24px] italic",
+                    "size-12 rounded-none border font-display shadow-none after:rounded-none",
                     author.isVerified
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border",
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-foreground",
                   )}
                 >
-                  {getAvatarLabel(author)}
-                </div>
+                  {author.avatarUrl ? (
+                    <AvatarImage
+                      className="rounded-none object-cover"
+                      alt={author.name ?? author.handle}
+                      src={author.avatarUrl}
+                    />
+                  ) : null}
+                  <AvatarFallback className="rounded-none bg-transparent text-[24px] italic text-current">
+                    {getAvatarLabel(author)}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <h4 className="font-display m-0 mb-0.5 text-[22px] font-normal leading-[1.1]">
                     @{author.handle}

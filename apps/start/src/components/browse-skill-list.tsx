@@ -1,5 +1,7 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TimeValue } from "@/components/time-value";
 import { Link } from "@tanstack/react-router";
 
 import { buildSkillDetailPath } from "@/lib/skill-path";
@@ -11,7 +13,6 @@ import type { BrowseSkillItem } from "@/utils/types";
 import {
   getBrowseSkillAuthorHandle,
   getBrowseSkillAuthorLabel,
-  getBrowseSkillUpdatedAtLabel,
 } from "@/components/skill-card-browse";
 
 interface Props {
@@ -36,7 +37,9 @@ export const BrowseSkillList = ({ skills }: Props) => {
         skills.map((skill) => {
           const authorLabel = getBrowseSkillAuthorLabel(skill);
           const authorHandle = getBrowseSkillAuthorHandle(skill);
-          const updatedAtLabel = getBrowseSkillUpdatedAtLabel(skill, locale);
+          const authorAvatarUrl = skill.author?.avatarUrl;
+          const authorInitial = (authorLabel ?? "?").charAt(0).toUpperCase();
+          const updatedAt = skill.updatedAt ?? skill.createdAt ?? null;
           const categoryLabel = getCategoryTitle(skill.primaryCategory ?? "other", locale);
           const downloadsLabel = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
           const starsLabel =
@@ -59,13 +62,31 @@ export const BrowseSkillList = ({ skills }: Props) => {
                 <div className="mt-1 line-clamp-1 text-muted-text text-xs">{skill.description}</div>
               </div>
               <div className="min-w-0">
-                <div className="truncate font-medium text-ink">{authorLabel}</div>
-                <div className="mt-1 truncate text-muted-text text-xs">{authorHandle}</div>
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar className="size-5 shrink-0 rounded-none border-0 bg-background shadow-none after:rounded-none">
+                    {authorAvatarUrl ? (
+                      <AvatarImage
+                        className="rounded-none object-cover"
+                        alt={authorLabel}
+                        src={authorAvatarUrl}
+                      />
+                    ) : null}
+                    <AvatarFallback className="rounded-none bg-ink font-mono text-[9px] text-paper">
+                      {authorInitial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-ink">{authorLabel}</div>
+                    <div className="mt-1 truncate text-muted-text text-xs">{authorHandle}</div>
+                  </div>
+                </div>
               </div>
               <div className="truncate text-muted-text text-xs">{categoryLabel}</div>
               <div className="truncate font-mono text-muted-text text-xs">{downloadsLabel}</div>
               <div className="truncate font-mono text-muted-text text-xs">{starsLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">{updatedAtLabel}</div>
+              <div className="truncate font-mono text-muted-text text-xs">
+                {updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
+              </div>
             </Link>
           );
         })

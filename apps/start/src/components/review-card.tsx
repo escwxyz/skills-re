@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 
 import { StarIcon } from "@phosphor-icons/react";
 
+import { TimeValue } from "@/components/time-value";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-import { formatDate } from "@/utils/format";
 import { getLocale } from "@/paraglide/runtime";
 import { renderMarkdownAsync } from "@/lib/markdown";
 
@@ -55,7 +54,7 @@ export const ReviewCard = ({
           <b className="font-semibold text-ink">{authorName}</b>
         </div>
         <div className="text-muted-foreground md:text-muted-foreground">
-          {formatDate(createdAt, locale)}
+          <TimeValue locale={locale} time={createdAt} />
           {versionLabel ? ` · ${versionLabel}` : ""}
         </div>
       </div>
