@@ -3,11 +3,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   fetchAuthorsPagination,
+  fetchAuthorRepos,
   fetchAuthorSkillsPagination,
   fetchAuthorSkillsStats,
 } from "./authors.server";
 
 type AuthorsPaginationClient = Parameters<typeof fetchAuthorsPagination>[0]["client"];
+type AuthorReposClient = Parameters<typeof fetchAuthorRepos>[0]["client"];
 type AuthorSkillsPaginationClient = Parameters<typeof fetchAuthorSkillsPagination>[0]["client"];
 type AuthorSkillsStatsClient = Parameters<typeof fetchAuthorSkillsStats>[0]["client"];
 
@@ -67,7 +69,7 @@ describe("fetchAuthorsPagination", () => {
 });
 
 describe("fetchAuthorSkillsPagination", () => {
-  test("forwards handle, cursor, limit, and sort to the public skill search contract", async () => {
+  test("forwards handle, repoName, cursor, limit, and sort to the public skill search contract", async () => {
     const calls: Array<Record<string, unknown>> = [];
     const client = {
       skills: {
@@ -75,6 +77,7 @@ describe("fetchAuthorSkillsPagination", () => {
           authorHandle?: string;
           cursor?: string;
           limit?: number;
+          repoName?: string;
           sort?: "downloads-all-time";
         }) => {
           calls.push(input ?? {});
@@ -101,6 +104,7 @@ describe("fetchAuthorSkillsPagination", () => {
         cursor: "cursor-1",
         handle: "acme",
         limit: 24,
+        repoName: "skills",
       }),
     ).resolves.toEqual({
       continueCursor: "cursor-2",
@@ -121,7 +125,61 @@ describe("fetchAuthorSkillsPagination", () => {
         authorHandle: "acme",
         cursor: "cursor-1",
         limit: 24,
+        repoName: "skills",
         sort: "downloads-all-time",
+      },
+    ]);
+  });
+});
+
+describe("fetchAuthorRepos", () => {
+  test("forwards handle, cursor, and limit to the public repo contract", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      repos: {
+        listByOwner: (input?: { cursor?: string; limit?: number; ownerHandle?: string }) => {
+          calls.push(input ?? {});
+          return Promise.resolve({
+            continueCursor: "cursor-2",
+            isDone: false,
+            repos: [
+              {
+                nameWithOwner: "acme/widget",
+                repoName: "widget",
+                repoOwner: "acme",
+                skillCount: 3,
+              },
+            ],
+          });
+        },
+      },
+    } as unknown as AuthorReposClient;
+
+    await expect(
+      fetchAuthorRepos({
+        client,
+        cursor: "cursor-1",
+        handle: "acme",
+        limit: 6,
+      }),
+    ).resolves.toEqual({
+      continueCursor: "cursor-2",
+      isDone: false,
+      repos: [
+        {
+          nameWithOwner: "acme/widget",
+          repoName: "widget",
+          repoOwner: "acme",
+          skillCount: 3,
+        },
+      ],
+    });
+
+    expect(calls).toEqual([
+      {
+        cursor: "cursor-1",
+        limit: 6,
+        ownerHandle: "acme",
       },
     ]);
   });

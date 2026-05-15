@@ -489,6 +489,7 @@ export async function updateSkillAiSearchItemId(input: {
 export async function listReposPageBySyncTime(input?: { cursor?: string; limit?: number }) {
   const limit = input?.limit ?? defaultLimit;
   const cursor = decodeRepoCursor(input?.cursor);
+  const skillCountExpr = sql<number>`count(distinct ${skillsTable.id})`;
 
   const rows = await db
     .select({
@@ -500,16 +501,35 @@ export async function listReposPageBySyncTime(input?: { cursor?: string; limit?:
       ownerAvatarUrl: reposTable.ownerAvatarUrl,
       ownerHandle: reposTable.ownerHandle,
       ownerName: reposTable.ownerName,
+      skillCount: skillCountExpr,
       stars: reposTable.stars,
       syncTime: reposTable.syncTime,
       updatedAt: reposTable.updatedAt,
       url: reposTable.url,
     })
     .from(reposTable)
+    .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
     .where(
       cursor
-        ? sql`(${reposTable.syncTime}, ${reposTable.id}) < (${cursor.syncTime}, ${cursor.id})`
-        : sql`1 = 1`,
+        ? and(
+            eq(skillsTable.visibility, "public"),
+            sql`(${reposTable.syncTime}, ${reposTable.id}) < (${cursor.syncTime}, ${cursor.id})`,
+          )
+        : eq(skillsTable.visibility, "public"),
+    )
+    .groupBy(
+      reposTable.forks,
+      reposTable.id,
+      reposTable.license,
+      reposTable.name,
+      reposTable.nameWithOwner,
+      reposTable.ownerAvatarUrl,
+      reposTable.ownerHandle,
+      reposTable.ownerName,
+      reposTable.stars,
+      reposTable.syncTime,
+      reposTable.updatedAt,
+      reposTable.url,
     )
     .orderBy(desc(reposTable.syncTime), desc(reposTable.id))
     .limit(limit + 1);
@@ -531,6 +551,7 @@ export async function listReposPageBySyncTime(input?: { cursor?: string; limit?:
       nameWithOwner: row.nameWithOwner,
       repoName: row.name,
       repoOwner: row.ownerHandle,
+      skillCount: row.skillCount,
     })),
   };
 }
@@ -542,6 +563,7 @@ interface SearchSkillsPageInput {
   limit?: number;
   minAuditScore?: number;
   minScore?: number;
+  repoName?: string;
   query?: string;
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
@@ -611,6 +633,7 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
   const sort = input?.sort ?? "newest";
   const query = input?.query?.trim();
   const trimmedAuthorHandle = input?.authorHandle?.trim();
+  const trimmedRepoName = input?.repoName?.trim();
   const categories = (input?.categories ?? []).map((value) => value.trim()).filter(Boolean);
   const tags = (input?.tags ?? []).map((value) => value.trim()).filter(Boolean);
 
@@ -618,6 +641,10 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
 
   if (trimmedAuthorHandle) {
     clauses.push(eq(reposTable.ownerHandle, trimmedAuthorHandle));
+  }
+
+  if (trimmedRepoName) {
+    clauses.push(eq(reposTable.name, trimmedRepoName));
   }
 
   if (categories.length > 0) {

@@ -98,11 +98,12 @@ const skillHistoryInfoInputSchema = z.object({
   skillIds: z.array(z.string().min(1)),
 });
 
-const searchSkillsInputSchema = z.object({
+export const searchSkillsInputSchema = z.object({
   authorHandle: z.string().min(1).optional(),
   categories: z.array(z.string().min(1)).optional(),
   cursor: z.string().optional(),
   limit: z.number().int().min(1).max(100).optional(),
+  repoName: z.string().min(1).optional(),
   query: z.string().trim().min(1).optional(),
   rewriteQuery: z.boolean().optional(),
   sort: z

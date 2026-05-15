@@ -50,16 +50,22 @@ interface AuthorSkillsPaginationClient {
   skills: Pick<AppRouterClient["skills"], "search">;
 }
 
+interface AuthorReposClient {
+  repos: Pick<AppRouterClient["repos"], "listByOwner">;
+}
+
 export const fetchAuthorSkillsPagination = async (input: {
   client: AuthorSkillsPaginationClient;
   cursor?: string;
   handle: string;
   limit?: number;
+  repoName?: string;
 }) => {
   const result = await input.client.skills.search({
     authorHandle: input.handle,
     cursor: input.cursor,
     limit: input.limit ?? 5,
+    repoName: input.repoName,
     sort: "downloads-all-time",
   });
 
@@ -69,6 +75,18 @@ export const fetchAuthorSkillsPagination = async (input: {
     page: result.page,
   };
 };
+
+export const fetchAuthorRepos = async (input: {
+  client: AuthorReposClient;
+  cursor?: string;
+  handle: string;
+  limit?: number;
+}) =>
+  await input.client.repos.listByOwner({
+    cursor: input.cursor,
+    limit: input.limit ?? 100,
+    ownerHandle: input.handle,
+  });
 
 export const fetchAuthorSkillsStats = async (input: {
   client: AuthorSkillsPaginationClient;

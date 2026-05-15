@@ -43,6 +43,7 @@ import {
   listFeedback,
   listMineFeedback,
   listIndexableTags,
+  listReposByOwner,
   listReposPage,
   listMineReviews,
   checkSavedSkillByUser,
@@ -336,6 +337,29 @@ export const appRouter = {
     checkExisting: publicProcedure.repos.checkExisting.handler(({ input }) =>
       checkExistingRepo(input),
     ),
+    listByOwner: publicProcedure.repos.listByOwner.handler(async ({ input }) => {
+      const page = (await listReposByOwner(input)) as {
+        continueCursor: string;
+        isDone: boolean;
+        repos: {
+          nameWithOwner: string;
+          repoName: string;
+          repoOwner: string;
+          skillCount: number;
+        }[];
+      };
+
+      return {
+        continueCursor: page.continueCursor,
+        isDone: page.isDone,
+        repos: page.repos.map((repo) => ({
+          nameWithOwner: repo.nameWithOwner,
+          repoName: repo.repoName,
+          repoOwner: repo.repoOwner,
+          skillCount: repo.skillCount,
+        })),
+      };
+    }),
     listPage: publicProcedure.repos.listPage.handler(({ input }) => listReposPage(input)),
     updateStats: adminProcedure.repos.updateStats.handler(({ input }) => updateRepoStats(input)),
     syncStats: adminProcedure.repos.syncStats.handler(({ input }) => syncRepoStats(input)),

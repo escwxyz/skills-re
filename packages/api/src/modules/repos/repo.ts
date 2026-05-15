@@ -1,9 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 import { asRepoId } from "@skills-re/db/utils";
+import { skillsTable } from "@skills-re/db/schema/skills";
 import { reposTable } from "@skills-re/db/schema/repos";
 
 import { db } from "../shared/db";
+import { defaultLimit } from "../shared/pagination";
+import { decodeRepoCursor, encodeRepoCursor } from "./cursor";
 
 export async function findRepoByNameWithOwner(nameWithOwner: string) {
   const rows = await db
@@ -83,6 +86,72 @@ export async function findRepoById(id: string) {
   return {
     ...row,
     updatedAt: row.updatedAt,
+  };
+}
+
+export async function listReposByOwner(input: {
+  ownerHandle: string;
+  cursor?: string;
+  limit?: number;
+}) {
+  const limit = input.limit ?? defaultLimit;
+  const cursor = decodeRepoCursor(input.cursor);
+  const skillCountExpr = sql<number>`count(distinct ${skillsTable.id})`;
+
+  const rows = await db
+    .select({
+      id: reposTable.id,
+      nameWithOwner: reposTable.nameWithOwner,
+      ownerHandle: reposTable.ownerHandle,
+      repoName: reposTable.name,
+      skillCount: skillCountExpr,
+      syncTime: reposTable.syncTime,
+    })
+    .from(reposTable)
+    .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .where(
+      and(
+        eq(reposTable.ownerHandle, input.ownerHandle),
+        eq(skillsTable.visibility, "public"),
+        cursor
+          ? sql`(${reposTable.syncTime}, ${reposTable.id}) < (${cursor.syncTime}, ${cursor.id})`
+          : sql`1 = 1`,
+      ),
+    )
+    .groupBy(
+      reposTable.id,
+      reposTable.nameWithOwner,
+      reposTable.ownerHandle,
+      reposTable.name,
+      reposTable.syncTime,
+    )
+    .orderBy(
+      desc(skillCountExpr),
+      desc(reposTable.syncTime),
+      asc(reposTable.name),
+      asc(reposTable.id),
+    )
+    .limit(limit + 1);
+
+  const page = rows.slice(0, limit);
+  const next = page.at(-1) ?? null;
+
+  return {
+    continueCursor: encodeRepoCursor(
+      rows.length > limit && next
+        ? {
+            id: next.id,
+            syncTime: next.syncTime,
+          }
+        : null,
+    ),
+    isDone: rows.length <= limit,
+    repos: page.map((row) => ({
+      nameWithOwner: row.nameWithOwner,
+      repoName: row.repoName,
+      repoOwner: row.ownerHandle,
+      skillCount: row.skillCount,
+    })),
   };
 }
 

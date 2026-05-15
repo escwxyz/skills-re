@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ReactNode } from "react";
 import {
   ClockIcon,
@@ -43,98 +44,94 @@ const Row = ({ icon, label, value }: { icon: ReactNode; label: string; value: Re
   </div>
 );
 
-export const SkillDetailMetadata = ({
-  authorHandle,
-  forkCount,
-  license,
-  repoName,
-  repoUrl,
-  stargazerCount,
-  updatedAt,
-}: Props) => {
-  const locale = getLocale();
-  const getAuthor = useServerFn(getAuthorDetail);
-  const { data: author } = useQuery({
-    queryKey: ["skillDetailMetadataAuthor", authorHandle],
-    queryFn: () => getAuthor({ data: { handle: authorHandle } }),
-  });
+export const SkillDetailMetadata = memo(
+  ({ authorHandle, forkCount, license, repoName, repoUrl, stargazerCount, updatedAt }: Props) => {
+    const locale = getLocale();
+    const getAuthor = useServerFn(getAuthorDetail);
+    const { data: author } = useQuery({
+      queryKey: ["skillDetailMetadataAuthor", authorHandle],
+      queryFn: () => getAuthor({ data: { handle: authorHandle } }),
+    });
 
-  const authorName = author ? getAuthorDisplayName(author) : `@${authorHandle}`;
-  const avatarLabel = author ? getAvatarLabel(author) : authorHandle.trim().charAt(0).toUpperCase();
-  const repoLabel = `${authorHandle}/${repoName}`;
+    const authorName = author ? getAuthorDisplayName(author) : `@${authorHandle}`;
+    const avatarLabel = author
+      ? getAvatarLabel(author)
+      : authorHandle.trim().charAt(0).toUpperCase();
+    const repoLabel = `${authorHandle}/${repoName}`;
 
-  return (
-    <div className="border-border border-b py-6">
-      <div className="mb-3 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
-        {String(m.skill_detail_metadata_title())}
-      </div>
+    return (
+      <div className="border-border border-b py-6">
+        <div className="mb-3 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
+          {String(m.skill_detail_metadata_title())}
+        </div>
 
-      <div className="divide-border/70 divide-y border-t border-border/70">
-        <Row
-          icon={
-            <Avatar className="size-4 border-0 shadow-none rounded-none after:hidden">
-              {author?.avatarUrl ? (
-                <AvatarImage className="rounded-none" alt={authorName} src={author.avatarUrl} />
-              ) : null}
-              <AvatarFallback className="text-[9px] rounded-none">{avatarLabel}</AvatarFallback>
-            </Avatar>
-          }
-          label={String(m.skill_detail_meta_author())}
-          value={
-            <Link
-              to="/authors/$handle"
-              params={{ handle: authorHandle }}
-              className="inline-flex items-center gap-1 transition-colors hover:text-muted-foreground"
-            >
-              <span className="truncate">{authorName}</span>
-            </Link>
-          }
-        />
-
-        <Row
-          icon={<GithubLogoIcon className="size-4" />}
-          label={String(m.skill_detail_meta_repository())}
-          value={
-            repoUrl ? (
-              <a
-                href={repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-auto flex max-w-full items-center justify-end gap-1 overflow-hidden transition-colors hover:text-muted-foreground"
+        <div className="divide-border/70 divide-y border-t border-border/70">
+          <Row
+            icon={
+              <Avatar className="size-4 border-0 shadow-none rounded-none after:hidden">
+                {author?.avatarUrl ? (
+                  <AvatarImage className="rounded-none" alt={authorName} src={author.avatarUrl} />
+                ) : null}
+                <AvatarFallback className="text-[9px] rounded-none">{avatarLabel}</AvatarFallback>
+              </Avatar>
+            }
+            label={String(m.skill_detail_meta_author())}
+            value={
+              <Link
+                to="/authors/$handle"
+                params={{ handle: authorHandle }}
+                className="inline-flex items-center gap-1 transition-colors hover:text-muted-foreground"
               >
-                <span className="min-w-0 truncate">{repoLabel}</span>
-                <ArrowUpRightIcon className="size-3 shrink-0" />
-              </a>
-            ) : (
-              repoLabel
-            )
-          }
-        />
+                <span className="truncate">{authorName}</span>
+              </Link>
+            }
+          />
 
-        <Row
-          icon={<StarIcon className="size-4" />}
-          label="GitHub Stars"
-          value={Intl.NumberFormat(locale).format(stargazerCount ?? 0)}
-        />
+          <Row
+            icon={<GithubLogoIcon className="size-4" />}
+            label={String(m.skill_detail_meta_repository())}
+            value={
+              repoUrl ? (
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto flex max-w-full items-center justify-end gap-1 overflow-hidden transition-colors hover:text-muted-foreground"
+                >
+                  <span className="min-w-0 truncate">{repoLabel}</span>
+                  <ArrowUpRightIcon className="size-3 shrink-0" />
+                </a>
+              ) : (
+                repoLabel
+              )
+            }
+          />
 
-        <Row
-          icon={<GitForkIcon className="size-4" />}
-          label="GitHub Forks"
-          value={Intl.NumberFormat(locale).format(forkCount ?? 0)}
-        />
+          <Row
+            icon={<StarIcon className="size-4" />}
+            label="GitHub Stars"
+            value={Intl.NumberFormat(locale).format(stargazerCount ?? 0)}
+          />
 
-        <Row
-          icon={<ClockIcon className="size-4" />}
-          label={String(m.skill_detail_meta_updated())}
-          value={updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
-        />
+          <Row
+            icon={<GitForkIcon className="size-4" />}
+            label="GitHub Forks"
+            value={Intl.NumberFormat(locale).format(forkCount ?? 0)}
+          />
 
-        <Row
-          icon={<FileTextIcon className="size-4" />}
-          label={String(m.skill_detail_meta_license())}
-          value={license ?? "No license"}
-        />
+          <Row
+            icon={<ClockIcon className="size-4" />}
+            label={String(m.skill_detail_meta_updated())}
+            value={updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
+          />
+
+          <Row
+            icon={<FileTextIcon className="size-4" />}
+            label={String(m.skill_detail_meta_license())}
+            value={license ?? "No license"}
+          />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  },
+);

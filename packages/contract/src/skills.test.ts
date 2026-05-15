@@ -10,7 +10,7 @@ import {
   skillListItemSchema,
   skillPathSchema,
 } from "./common/content";
-import { skillsContract } from "./skills";
+import { searchSkillsInputSchema, skillsContract } from "./skills";
 
 describe("skills contract", () => {
   test("accepts a public skill list item payload", () => {
@@ -114,6 +114,18 @@ describe("skills contract", () => {
       id: "skill-1",
       slug: "widget",
       title: "Widget",
+    });
+  });
+
+  test("accepts a public skill search payload with a repo filter", () => {
+    expect(
+      searchSkillsInputSchema.parse({
+        authorHandle: "acme",
+        repoName: "skills",
+      }),
+    ).toEqual({
+      authorHandle: "acme",
+      repoName: "skills",
     });
   });
 

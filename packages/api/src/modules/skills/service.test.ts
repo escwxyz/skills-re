@@ -180,6 +180,73 @@ describe("skills service", () => {
     });
   });
 
+  test("forwards repo filters to the public skill search contract", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        calls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "Widget skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-1",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: null,
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "widget",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "Widget",
+              updatedAt: 123,
+              viewsAllTime: 42,
+            } as any,
+          ],
+        } as any);
+      },
+    });
+
+    await expect(
+      service.search({
+        authorHandle: "acme",
+        repoName: "skills",
+      }),
+    ).resolves.toMatchObject({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          author: {
+            avatarUrl: undefined,
+            githubUrl: "https://github.com/acme",
+            handle: "acme",
+          },
+          repoName: "skills",
+          slug: "widget",
+          title: "Widget",
+        },
+      ],
+    });
+
+    expect(calls).toEqual([
+      {
+        authorHandle: "acme",
+        repoName: "skills",
+      },
+    ]);
+  });
+
   test("claims a skill when the authenticated github handle matches the repo owner", async () => {
     const claimed: { skillId: string; userId: string }[] = [];
     const service = createSkillsService({

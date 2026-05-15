@@ -1,11 +1,16 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+// oxlint-disable no-nested-ternary
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { ArrowRightIcon } from "@phosphor-icons/react";
+import { z } from "zod/v4";
+import { useEffect } from "react";
 
 import { AuthorSkillList } from "@/components/author-skill-list";
 import { AuthorStats } from "@/components/author-stats";
+import { AuthorRepoList } from "@/components/author-repo-list";
 import { PageHero } from "@/components/page-hero";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
+import { getAuthorRepos } from "@/functions/authors/get-author-repos";
 import { buildAuthorOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import {
@@ -17,35 +22,75 @@ import {
 import { getLocale } from "@/paraglide/runtime";
 import { getAuthorDisplayName, getAvatarLabel } from "@/utils/author-shared";
 
+const authorSearchSchema = z.object({
+  repo: z.string().trim().min(1).optional(),
+});
+
 export const Route = createFileRoute("/_publicLayout/authors/$handle")({
+  validateSearch: authorSearchSchema,
   loader: async ({ params }) => {
-    const author = await getAuthorDetail({ data: { handle: params.handle } });
+    const [author, reposPage] = await Promise.all([
+      getAuthorDetail({ data: { handle: params.handle } }),
+      getAuthorRepos({ data: { handle: params.handle, limit: 100 } }),
+    ]);
 
     if (!author) {
       throw redirect({ to: "/authors" });
     }
 
-    return author;
+    return {
+      author,
+      reposPage,
+    };
   },
   head: ({ loaderData }) =>
     createSeo({
-      canonicalPath: loaderData ? `/authors/${loaderData.handle}` : "/authors",
+      canonicalPath: loaderData ? `/authors/${loaderData.author.handle}` : "/authors",
       description: loaderData
-        ? String(author_page_description({ handle: loaderData.handle }))
+        ? String(author_page_description({ handle: loaderData.author.handle }))
         : undefined,
-      image: loaderData ? buildAuthorOgImagePath(loaderData.handle) : undefined,
-      title: loaderData?.name ?? loaderData?.handle,
+      image: loaderData ? buildAuthorOgImagePath(loaderData.author.handle) : undefined,
+      title: loaderData?.author.name ?? `@${loaderData?.author.handle}`,
       locale: getLocale(),
     }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const author = Route.useLoaderData();
+  const { author, reposPage } = Route.useLoaderData();
+  const { repo: selectedRepoName } = Route.useSearch();
+  const navigate = useNavigate({ from: "/authors/$handle" });
+  const activeRepoName = selectedRepoName
+    ? reposPage.repos.some((repo) => repo.repoName === selectedRepoName)
+      ? selectedRepoName
+      : undefined
+    : undefined;
 
   const { handle, githubUrl, isVerified, repoCount, skillCount } = author;
   const name = getAuthorDisplayName(author);
   const avatarLabel = getAvatarLabel(author);
+
+  useEffect(() => {
+    if (selectedRepoName && !activeRepoName) {
+      void navigate({
+        replace: true,
+        search: (prev) => ({
+          ...prev,
+          repo: undefined,
+        }),
+      });
+    }
+  }, [activeRepoName, navigate, selectedRepoName]);
+
+  const handleSelectRepo = (nextRepoName?: string) => {
+    void navigate({
+      replace: true,
+      search: (prev) => ({
+        ...prev,
+        repo: nextRepoName,
+      }),
+    });
+  };
 
   return (
     <>
@@ -55,9 +100,6 @@ function RouteComponent() {
         description={String(author_page_description({ handle }))}
         media={
           <div className="flex flex-col items-center justify-center px-2">
-            {/**
-             * Author Image
-             */}
             <Avatar className="size-60 overflow-hidden rounded-none border-[6px] border-double border-background bg-foreground shadow-none after:rounded-none">
               {author.avatarUrl ? (
                 <AvatarImage
@@ -98,11 +140,16 @@ function RouteComponent() {
         skillCount={skillCount ?? undefined}
       />
 
-      <div className="border-border grid grid-cols-1 border-b lg:grid-cols-[2.3fr_1fr]">
+      <div className="border-border grid grid-cols-1 border-b lg:grid-cols-[2.3fr_1fr] lg:items-start">
         <div className="border-border border-b lg:border-r lg:border-b-0">
-          <AuthorSkillList handle={handle} />
+          <AuthorSkillList handle={handle} repoName={activeRepoName} />
         </div>
-        {/* <AuthorActivity items={activity} /> */}
+        <AuthorRepoList
+          onSelectRepo={handleSelectRepo}
+          repoCount={repoCount ?? reposPage.repos.length}
+          repos={reposPage.repos}
+          selectedRepoName={activeRepoName}
+        />
       </div>
     </>
   );

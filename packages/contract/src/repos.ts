@@ -4,7 +4,7 @@ import { baseContract } from "./common/base";
 import {
   repoDuplicateInputSchema,
   repoDuplicateResultSchema,
-  repoListItemSchema,
+  repoListPageSchema,
   repoStatsSyncInputSchema,
   repoStatsSyncResultSchema,
   repoStatsUpdateInputSchema,
@@ -34,13 +34,25 @@ const reposListContract = baseContract
     summary: "List repositories",
   })
   .input(repoListInputSchema)
-  .output(
-    z.object({
-      continueCursor: z.string(),
-      isDone: z.boolean(),
-      repos: z.array(repoListItemSchema),
-    }),
-  );
+  .output(repoListPageSchema);
+
+const repoListByOwnerInputSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  ownerHandle: githubOwnerSchema,
+});
+
+const reposListByOwnerContract = baseContract
+  .route({
+    description: "Returns repositories owned by a specific author handle.",
+    method: "GET",
+    path: "/repos/by-owner",
+    tags: ["Repos"],
+    successDescription: "Paginated repositories for an author",
+    summary: "List repositories by owner",
+  })
+  .input(repoListByOwnerInputSchema)
+  .output(repoListPageSchema);
 
 const repoDuplicateContract = baseContract
   .route({
@@ -117,6 +129,7 @@ export const reposContract = {
   checkDuplicated: repoDuplicateContract,
   checkExisting: repoExistingContract,
   enqueueRepoStatsSync: repoStatsEnqueueContract,
+  listByOwner: reposListByOwnerContract,
   listPage: reposListContract,
   syncStats: repoStatsSyncContract,
   updateStats: repoStatsUpdateContract,

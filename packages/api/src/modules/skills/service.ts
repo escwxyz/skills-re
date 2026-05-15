@@ -138,6 +138,7 @@ interface SearchSkillsPageInput {
   limit?: number;
   minAuditScore?: number;
   minScore?: number;
+  repoName?: string;
   query?: string;
   rewriteQuery?: boolean;
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";

@@ -39,6 +39,7 @@ describe("repos service", () => {
               nameWithOwner: "acme/widget",
               repoName: "widget",
               repoOwner: "acme",
+              skillCount: 3,
             },
           ],
         };
@@ -64,6 +65,7 @@ describe("repos service", () => {
           nameWithOwner: "acme/widget",
           repoName: "widget",
           repoOwner: "acme",
+          skillCount: 3,
         },
       ],
     });
@@ -75,6 +77,71 @@ describe("repos service", () => {
           syncTime: 123,
         }),
         limit: 10,
+      },
+    ]);
+  });
+
+  test("lists repos by owner with cursor pagination", async () => {
+    const calls: { cursor?: string; limit?: number; ownerHandle: string }[] = [];
+    const service = createReposService({
+      listReposByOwner: (input) => {
+        calls.push({
+          cursor: input.cursor,
+          limit: input.limit,
+          ownerHandle: input.ownerHandle,
+        });
+
+        return Promise.resolve({
+          continueCursor: encodeRepoCursor({
+            id: "repo-2",
+            syncTime: 456,
+          }),
+          isDone: false,
+          repos: [
+            {
+              nameWithOwner: "acme/widget",
+              repoName: "widget",
+              repoOwner: "acme",
+              skillCount: 3,
+            },
+          ],
+        });
+      },
+    });
+
+    await expect(
+      service.listByOwner({
+        cursor: encodeRepoCursor({
+          id: "repo-1",
+          syncTime: 123,
+        }),
+        limit: 10,
+        ownerHandle: "acme",
+      }),
+    ).resolves.toEqual({
+      continueCursor: encodeRepoCursor({
+        id: "repo-2",
+        syncTime: 456,
+      }),
+      isDone: false,
+      repos: [
+        {
+          nameWithOwner: "acme/widget",
+          repoName: "widget",
+          repoOwner: "acme",
+          skillCount: 3,
+        },
+      ],
+    });
+
+    expect(calls).toEqual([
+      {
+        cursor: encodeRepoCursor({
+          id: "repo-1",
+          syncTime: 123,
+        }),
+        limit: 10,
+        ownerHandle: "acme",
       },
     ]);
   });

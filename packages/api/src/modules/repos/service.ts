@@ -48,6 +48,17 @@ export interface RepoStatsSyncScheduler {
   enqueue(input: RepoStatsSyncSchedulerInput): Promise<{ workId: string }>;
 }
 
+export interface RepoListByOwnerPage {
+  continueCursor: string;
+  isDone: boolean;
+  repos: {
+    nameWithOwner: string;
+    repoName: string;
+    repoOwner: string;
+    skillCount: number;
+  }[];
+}
+
 export interface ReposServiceDeps {
   checkDuplicatedRepo: (input: {
     repoOwner: string;
@@ -96,6 +107,11 @@ export interface ReposServiceDeps {
     id: string;
     updatedAt?: number;
   } | null>;
+  listReposByOwner: (input: {
+    cursor?: string;
+    limit?: number;
+    ownerHandle: string;
+  }) => Promise<RepoListByOwnerPage>;
   fetchSkillFilesForRoot: (input: {
     owner: string;
     repo: string;
@@ -124,7 +140,12 @@ export interface ReposServiceDeps {
   listReposPageBySyncTime: (input?: { cursor?: string; limit?: number }) => Promise<{
     continueCursor: string;
     isDone: boolean;
-    repos: { nameWithOwner: string; repoName: string; repoOwner: string }[];
+    repos: {
+      nameWithOwner: string;
+      repoName: string;
+      repoOwner: string;
+      skillCount: number;
+    }[];
   }>;
   listRepoSkillSnapshotHeadsByRepoId: (repoId: string) => Promise<
     {
@@ -256,6 +277,10 @@ const defaultDeps: ReposServiceDeps = {
     const { findRepoByNameWithOwner } = await import("./repo");
     return await findRepoByNameWithOwner(nameWithOwner);
   },
+  listReposByOwner: async (input) => {
+    const { listReposByOwner } = await import("./repo");
+    return await listReposByOwner(input);
+  },
   createSnapshot: async (input) => {
     const { createSnapshot } = await import("../snapshots/repo");
     return await createSnapshot({
@@ -366,6 +391,20 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         cursor: input?.cursor,
         limit: input?.limit,
       });
+
+      return {
+        continueCursor: page.continueCursor,
+        isDone: page.isDone,
+        repos: page.repos,
+      };
+    },
+
+    async listByOwner(input: {
+      cursor?: string;
+      limit?: number;
+      ownerHandle: string;
+    }): Promise<RepoListByOwnerPage> {
+      const page = await deps.listReposByOwner(input);
 
       return {
         continueCursor: page.continueCursor,
@@ -659,6 +698,12 @@ export const getById = (id: string) => reposService.getById(id);
 
 export const listPage = (input?: { cursor?: string; limit?: number }) =>
   reposService.listPage(input);
+
+export const listByOwner = (input: {
+  cursor?: string;
+  limit?: number;
+  ownerHandle: string;
+}): Promise<RepoListByOwnerPage> => reposService.listByOwner(input);
 
 export const syncStats = (input?: { cursor?: string; limit?: number }) =>
   reposService.syncStats(input);

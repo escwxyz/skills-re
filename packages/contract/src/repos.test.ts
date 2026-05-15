@@ -7,6 +7,7 @@ import {
   repoDuplicateInputSchema,
   repoDuplicateResultSchema,
   repoListItemSchema,
+  repoListPageSchema,
   repoStatsSyncResultSchema,
   repoStatsUpdateInputSchema,
 } from "./common/content";
@@ -32,11 +33,41 @@ describe("repos contract", () => {
         nameWithOwner: "example/example-repo",
         repoName: "example-repo",
         repoOwner: "example",
+        skillCount: 3,
       }),
     ).toEqual({
       nameWithOwner: "example/example-repo",
       repoName: "example-repo",
       repoOwner: "example",
+      skillCount: 3,
+    });
+  });
+
+  test("accepts a paginated repository list payload", () => {
+    expect(
+      repoListPageSchema.parse({
+        continueCursor: "",
+        isDone: true,
+        repos: [
+          {
+            nameWithOwner: "example/example-repo",
+            repoName: "example-repo",
+            repoOwner: "example",
+            skillCount: 3,
+          },
+        ],
+      }),
+    ).toEqual({
+      continueCursor: "",
+      isDone: true,
+      repos: [
+        {
+          nameWithOwner: "example/example-repo",
+          repoName: "example-repo",
+          repoOwner: "example",
+          skillCount: 3,
+        },
+      ],
     });
   });
 
@@ -80,6 +111,7 @@ describe("repos contract", () => {
   test("exposes the repos routes used by the API layer", () => {
     expect(reposContract.checkDuplicated).toBeDefined();
     expect(reposContract.checkExisting).toBeDefined();
+    expect(reposContract.listByOwner).toBeDefined();
     expect(reposContract.listPage).toBeDefined();
     expect(reposContract.updateStats).toBeDefined();
     expect(reposContract.syncStats).toBeDefined();

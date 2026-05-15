@@ -93,9 +93,10 @@ const SkillRow = ({ skill }: { skill: AuthorSkillRowData }) => {
 
 interface Props {
   handle: string;
+  repoName?: string;
 }
 
-export const AuthorSkillList = ({ handle }: Props) => {
+export const AuthorSkillList = ({ handle, repoName }: Props) => {
   const locale = getLocale();
   const getSkills = useServerFn(getAuthorSkills);
 
@@ -109,9 +110,10 @@ export const AuthorSkillList = ({ handle }: Props) => {
           cursor: typeof pageParam === "string" ? pageParam : undefined,
           handle,
           limit: 24,
+          repoName,
         },
       }),
-    queryKey: ["authorSkills", handle],
+    queryKey: ["authorSkills", handle, repoName ?? "all"],
     refetchInterval: 6 * 60 * 60 * 1000,
   });
 
@@ -127,8 +129,15 @@ export const AuthorSkillList = ({ handle }: Props) => {
 
   return (
     <div className="py-9 pr-6 pl-4 md:pr-8 md:pl-6">
-      <div className="border-border mb-5 flex items-baseline justify-between border-b pb-3">
-        <h3 className="font-display m-0 text-[32px] font-normal">{author_skills_title()}</h3>
+      <div className="border-border sticky top-(--header-height) z-20 mb-5 flex items-baseline justify-between border-b bg-background pb-3">
+        <div>
+          <h3 className="font-display m-0 text-[32px] font-normal">{author_skills_title()}</h3>
+          {repoName ? (
+            <div className="text-muted-foreground mt-1 font-mono text-[10px] tracking-[.14em] uppercase">
+              Filtered by {repoName}
+            </div>
+          ) : null}
+        </div>
         <div className="text-muted-foreground font-mono text-[10.5px] tracking-[.14em] uppercase">
           {author_skills_total_sorted({ count: String(skills.length) })}
         </div>

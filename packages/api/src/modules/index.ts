@@ -67,6 +67,7 @@ export {
   enqueueStatsSync as enqueueRepoStatsSync,
   ensureRepo,
   getById as getRepoById,
+  listByOwner as listReposByOwner,
   listPage as listReposPage,
   syncRepoSnapshots,
   syncStats as syncRepoStats,

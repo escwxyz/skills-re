@@ -154,6 +154,13 @@ export const repoListItemSchema = z.object({
   nameWithOwner: z.string(),
   repoName: githubRepoSchema,
   repoOwner: githubOwnerSchema,
+  skillCount: z.number().int().nonnegative(),
+});
+
+export const repoListPageSchema = z.object({
+  continueCursor: z.string(),
+  isDone: z.boolean(),
+  repos: z.array(repoListItemSchema),
 });
 
 export const repoDuplicateInputSchema = z.object({
