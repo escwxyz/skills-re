@@ -100,7 +100,7 @@ function RouteComponent() {
         description={String(author_page_description({ handle }))}
         media={
           <div className="flex flex-col items-center justify-center px-2">
-            <Avatar className="size-60 overflow-hidden rounded-none border-[6px] border-double border-background bg-foreground shadow-none after:rounded-none">
+            <Avatar className="size-60 overflow-hidden rounded-none border-4 border-double border-background bg-foreground shadow-none after:rounded-none">
               {author.avatarUrl ? (
                 <AvatarImage
                   className="rounded-none object-cover"
@@ -108,11 +108,11 @@ function RouteComponent() {
                   src={author.avatarUrl}
                 />
               ) : null}
-              <AvatarFallback className="rounded-none bg-foreground font-display text-[120px] italic text-background">
+              <AvatarFallback className="rounded-none bg-foreground font-display text-8xl italic text-background">
                 {avatarLabel}
               </AvatarFallback>
             </Avatar>
-            <div className="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.14em] uppercase">
+            <div className="text-muted-foreground mt-6 font-mono text-xs uppercase">
               @{handle}
               {isVerified && (
                 <span className="text-editorial-green"> · ● {author_page_verified()}</span>
