@@ -8,7 +8,7 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server"
   },
   "dependencies": {
-    "@cloudflare/tanstack-ai": "^0.1.1",
+    "@cloudflare/tanstack-ai": "^0.1.9",
     "@hono/mcp": "^0.2.5",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@orpc/openapi": "catalog:",
@@ -20,7 +20,8 @@
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
     "@skills-re/utils": "workspace:*",
-    "@tanstack/ai-groq": "^0.1.8",
+    "@tanstack/ai-gemini": "^0.10.4",
+    "@tanstack/ai-groq": "^0.2.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",

@@ -1,7 +1,7 @@
-import { createGeminiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
 import { createGroqText } from "@tanstack/ai-groq";
 
 import type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
+import { createGeminiChat, createWorkersAiChat } from "./lib/ai-clients";
 
 interface CreateAiTasksRuntimeOptions {
   createGeminiChat?: typeof createGeminiChat;

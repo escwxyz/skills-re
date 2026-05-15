@@ -2,10 +2,10 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { createGeminiChat, createWorkersAiChat } from "@cloudflare/tanstack-ai";
 import type { createGroqText as createGroqTextAdapter } from "@tanstack/ai-groq";
 
 import { createAiTasksRuntime } from "./ai-tasks";
+import type { createGeminiChat, createWorkersAiChat } from "./lib/ai-clients";
 
 interface GroqCallRecord {
   apiKey: string;
