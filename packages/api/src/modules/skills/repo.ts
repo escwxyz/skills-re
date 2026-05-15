@@ -627,56 +627,44 @@ const getSearchSortExpression = (sort: NonNullable<SearchSkillsPageInput["sort"]
   }
 };
 
+function buildSearchWhereClauses(input: SearchSkillsPageInput) {
+  const trimmedAuthorHandle = input.authorHandle?.trim();
+  const trimmedRepoName = input.repoName?.trim();
+  const categories = (input.categories ?? []).map((v) => v.trim()).filter(Boolean);
+  const tags = (input.tags ?? []).map((v) => v.trim()).filter(Boolean);
+  const queryPattern = input.query?.trim() ? `%${input.query.trim().toLowerCase()}%` : null;
+
+  return [
+    eq(skillsTable.visibility, "public"),
+    trimmedAuthorHandle ? eq(reposTable.ownerHandle, trimmedAuthorHandle) : null,
+    trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
+    categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
+    queryPattern
+      ? sql`(
+          lower(${skillsTable.title}) like ${queryPattern}
+          or lower(${skillsTable.description}) like ${queryPattern}
+          or lower(${skillsTable.slug}) like ${queryPattern}
+          or lower(${reposTable.name}) like ${queryPattern}
+          or lower(${reposTable.ownerHandle}) like ${queryPattern}
+        )`
+      : null,
+    tags.length > 0
+      ? inArray(
+          skillsTable.id,
+          db
+            .select({ skillId: skillsTagsTable.skillId })
+            .from(skillsTagsTable)
+            .innerJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
+            .where(inArray(tagsTable.slug, tags)),
+        )
+      : null,
+  ].filter(isDefined);
+}
+
 export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
   const limit = input?.limit ?? defaultLimit;
   const offset = decodeSearchCursor(input?.cursor);
   const sort = input?.sort ?? "newest";
-  const query = input?.query?.trim();
-  const trimmedAuthorHandle = input?.authorHandle?.trim();
-  const trimmedRepoName = input?.repoName?.trim();
-  const categories = (input?.categories ?? []).map((value) => value.trim()).filter(Boolean);
-  const tags = (input?.tags ?? []).map((value) => value.trim()).filter(Boolean);
-
-  const clauses = [eq(skillsTable.visibility, "public")];
-
-  if (trimmedAuthorHandle) {
-    clauses.push(eq(reposTable.ownerHandle, trimmedAuthorHandle));
-  }
-
-  if (trimmedRepoName) {
-    clauses.push(eq(reposTable.name, trimmedRepoName));
-  }
-
-  if (categories.length > 0) {
-    clauses.push(inArray(skillsTable.primaryCategory, categories));
-  }
-
-  if (query) {
-    const queryPattern = `%${query.toLowerCase()}%`;
-    clauses.push(
-      sql`(
-        lower(${skillsTable.title}) like ${queryPattern}
-        or lower(${skillsTable.description}) like ${queryPattern}
-        or lower(${skillsTable.slug}) like ${queryPattern}
-        or lower(${reposTable.name}) like ${queryPattern}
-        or lower(${reposTable.ownerHandle}) like ${queryPattern}
-      )`,
-    );
-  }
-
-  const taggedSkillIds = tags.length
-    ? db
-        .select({
-          skillId: skillsTagsTable.skillId,
-        })
-        .from(skillsTagsTable)
-        .innerJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
-        .where(inArray(tagsTable.slug, tags))
-    : null;
-
-  if (taggedSkillIds) {
-    clauses.push(inArray(skillsTable.id, taggedSkillIds));
-  }
 
   const rows = await db
     .select({
@@ -703,7 +691,7 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
-    .where(and(...clauses))
+    .where(and(...buildSearchWhereClauses(input ?? {})))
     .orderBy(getSearchSortExpression(sort), desc(skillsTable.id))
     .limit(limit + 1)
     .offset(offset);

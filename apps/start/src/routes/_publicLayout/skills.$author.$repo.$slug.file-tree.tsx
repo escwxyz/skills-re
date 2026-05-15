@@ -136,7 +136,7 @@ function RouteComponent() {
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
       <aside
         className={cn(
-          "sticky top-[calc(var(--header-height)+3.5rem)] z-0 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)+3.5rem+1px)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden lg:z-0",
+          "sticky top-[calc(var(--header-height)+3.5rem)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)+3.5rem+1px)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden lg:z-0",
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >

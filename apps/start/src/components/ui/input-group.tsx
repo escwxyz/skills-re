@@ -1,3 +1,4 @@
+// oxlint-disable jsx_a11y/click-events-have-key-events
 "use client";
 
 import * as React from "react";
