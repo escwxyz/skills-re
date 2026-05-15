@@ -17,7 +17,7 @@ export const getHomePageData = createServerFn({ method: "GET" })
     const client = createServerORPCClient();
 
     const [categories, featuredSkills] = await Promise.all([
-      client.categories.list({ all: true, limit: 8 }),
+      client.categories.list({ all: false, limit: 8 }),
       client.skills.search({
         limit: 5,
         sort: "downloads-all-time",
