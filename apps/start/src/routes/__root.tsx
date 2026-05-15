@@ -5,9 +5,6 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { pacerDevtoolsPlugin } from "@tanstack/react-pacer-devtools";
 
 import appCss from "../styles.css?url";
 import type { orpc } from "@/lib/orpc";
@@ -97,18 +94,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider initial={themeState} disableTransition={false}>
           {children}
         </ThemeProvider>
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            pacerDevtoolsPlugin(),
-          ]}
-        />
         <Scripts />
       </body>
     </html>

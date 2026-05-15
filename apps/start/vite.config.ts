@@ -1,6 +1,5 @@
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { defineConfig } from "vite";
-import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import viteTsConfigPaths from "vite-tsconfig-paths";
@@ -48,7 +47,6 @@ const config = defineConfig({
         },
       ],
     }),
-    devtools(),
     alchemy(),
     // this is the plugin that enables path aliases, remove it for vite 8.0
     viteTsConfigPaths({
