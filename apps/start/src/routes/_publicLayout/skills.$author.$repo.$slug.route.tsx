@@ -24,9 +24,10 @@ import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
+import { ReviewRatingTrigger } from "@/components/review-rating-trigger";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Rating, RatingItem } from "@/components/ui/rating/rating";
+import { WriteReviewDialog } from "@/components/write-review-cta";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -148,11 +149,7 @@ function RouteComponent() {
               />
               <SkillDetailTags tags={skill.tags} />
             </div>
-            <Rating defaultValue={0}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <RatingItem key={i} />
-              ))}
-            </Rating>
+            <ReviewRatingTrigger skillId={skill.id} />
           </div>
 
           <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -208,6 +205,7 @@ function RouteComponent() {
       <div>
         <Outlet />
       </div>
+      <WriteReviewDialog />
     </>
   );
 }
