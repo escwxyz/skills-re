@@ -155,7 +155,7 @@ function ScrollSpy(props: ScrollSpyProps) {
     (sectionId: string) =>
       scrollContainer
         ? scrollContainer.querySelector<HTMLElement>(`#${CSS.escape(sectionId)}`)
-        : document.querySelector(`#${sectionId}`),
+        : document.querySelector<HTMLElement>(`#${CSS.escape(sectionId)}`),
     [scrollContainer],
   );
 
