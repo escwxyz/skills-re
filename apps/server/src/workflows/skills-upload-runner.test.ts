@@ -262,6 +262,7 @@ describe("runSkillsUploadWorkflow", () => {
         skillId: "skill-1",
         snapshotId: "snapshot-1",
         syncTime: expect.any(Number),
+        version: "0.0.1",
       },
     ]);
     expect(calls.syncSkillTags).toEqual([

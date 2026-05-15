@@ -74,6 +74,7 @@ export const searchSkillListItemSchema = z.object({
   forkCount: z.number().optional(),
   id: idSchema,
   isVerified: z.boolean().optional(),
+  latestSnapshotId: z.string().optional(),
   latestVersion: z.string().optional(),
   latestSnapshotTotalBytes: z.number().int().nonnegative().optional(),
   license: z.string().optional(),

@@ -289,6 +289,7 @@ export async function findSkillByPath(input: {
       forkCount: reposTable.forks,
       id: skillsTable.id,
       isVerified: skillsTable.isVerified,
+      latestSnapshotId: skillsTable.latestSnapshotId,
       latestVersion: skillsTable.latestVersion,
       license: reposTable.license,
       ownerAvatarUrl: reposTable.ownerAvatarUrl,

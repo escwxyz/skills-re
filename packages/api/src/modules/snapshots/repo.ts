@@ -126,6 +126,7 @@ export async function setSkillLatestSnapshot(
     skillId: string;
     snapshotId: string;
     syncTime?: number;
+    version: string;
   },
   database = db,
 ) {
@@ -137,6 +138,7 @@ export async function setSkillLatestSnapshot(
       latestCommitSha: input.latestCommitSha ?? null,
       latestCommitUrl: input.latestCommitUrl ?? null,
       latestSnapshotId: asSnapshotId(input.snapshotId),
+      latestVersion: input.version,
       syncTime: input.syncTime ?? Date.now(),
     })
     .where(eq(skillsTable.id, asSkillId(input.skillId)));

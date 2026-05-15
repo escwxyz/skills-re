@@ -19,6 +19,8 @@ import {
 } from "@/paraglide/messages";
 import { cn } from "@/lib/utils";
 import type { SkillVersionHistoryItem } from "@/utils/types";
+import { TimeValue } from "@/components/time-value";
+import { getLocale } from "@/paraglide/runtime";
 
 interface Props {
   onSnapshotChange: (snapshotId: string) => void;
@@ -110,7 +112,7 @@ export const SkillVersionDialog = ({
                         {isCurrent ? ` · ${skill_version_current_badge()}` : ""}
                       </span>
                       <span className="truncate font-mono text-[10px] text-muted-foreground">
-                        {version.date}
+                        <TimeValue locale={getLocale()} time={version.date} />
                       </span>
                     </span>
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">

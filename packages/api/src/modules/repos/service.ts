@@ -617,6 +617,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           ? Date.parse(headCommit.committedDate)
           : null;
         const commitMessage = truncateCommitMessage(headCommit.message);
+        const nextVersion = deriveNextSnapshotVersion(skill.latestVersion);
         const snapshotId = await activeDeps.createSnapshot({
           description: skill.latestDescription,
           directoryPath: skill.directoryPath,
@@ -629,7 +630,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           sourceCommitSha: overview.headSha,
           sourceCommitUrl: headCommit.url ?? null,
           syncTime: committedDate ?? Date.now(),
-          version: deriveNextSnapshotVersion(skill.latestVersion),
+          version: nextVersion,
         });
 
         await activeDeps.uploadSnapshotFiles({
@@ -643,6 +644,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           latestCommitUrl: headCommit.url ?? null,
           skillId: skill.skillId,
           snapshotId,
+          version: nextVersion,
         });
         await activeDeps.deprecateSnapshotsBeyondLimit({
           keepLatest: 3,
