@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LoadMore } from "@/components/load-more";
 import { getAuthorSkills } from "@/functions/authors/get-author-skills";
 import {
+  author_skills_filtered_by,
   author_skills_none,
   author_skills_title,
   author_skills_total_sorted,
@@ -131,14 +132,14 @@ export const AuthorSkillList = ({ handle, repoName }: Props) => {
     <div className="py-9 pr-6 pl-4 md:pr-8 md:pl-6">
       <div className="border-border sticky top-(--header-height) z-20 mb-5 flex items-baseline justify-between border-b bg-background pb-3">
         <div>
-          <h3 className="font-display m-0 text-[32px] font-normal">{author_skills_title()}</h3>
+          <h3 className="font-display m-0 text-2xl font-normal">{author_skills_title()}</h3>
           {repoName ? (
-            <div className="text-muted-foreground mt-1 font-mono text-[10px] tracking-[.14em] uppercase">
-              Filtered by {repoName}
+            <div className="text-muted-foreground mt-1 font-mono text-xs uppercase">
+              {author_skills_filtered_by({ repoName })}
             </div>
           ) : null}
         </div>
-        <div className="text-muted-foreground font-mono text-[10.5px] tracking-[.14em] uppercase">
+        <div className="text-muted-foreground font-mono text-xs uppercase">
           {author_skills_total_sorted({ count: String(skills.length) })}
         </div>
       </div>
