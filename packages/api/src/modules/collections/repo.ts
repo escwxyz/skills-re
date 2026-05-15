@@ -232,13 +232,19 @@ export async function replaceCollectionSkills(
       return;
     }
 
-    await tx.insert(collectionsSkillsTable).values(
-      input.skillIds.map((skillId, index) => ({
-        collectionId: input.collectionId,
-        skillId,
-        position: index,
-      })),
-    );
+    // D1 caps each statement at 100 bound parameters. This join table insert uses
+    // 3 binds per row, so keep the chunk size low enough to stay under the limit.
+    const BATCH_SIZE = 33;
+    for (let i = 0; i < input.skillIds.length; i += BATCH_SIZE) {
+      const batch = input.skillIds.slice(i, i + BATCH_SIZE);
+      await tx.insert(collectionsSkillsTable).values(
+        batch.map((skillId, index) => ({
+          collectionId: input.collectionId,
+          skillId,
+          position: i + index,
+        })),
+      );
+    }
   });
 }
 

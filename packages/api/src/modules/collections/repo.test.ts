@@ -103,4 +103,46 @@ describe("collections repo", () => {
 
     expect(operations).toEqual(["begin", "delete", "insert", "rollback"]);
   });
+
+  test("chunks collection skill upserts to stay under D1 parameter limits", async () => {
+    const batches: unknown[][] = [];
+    const tx = {
+      delete: () => ({
+        where: () => Promise.resolve(),
+      }),
+      insert: () => ({
+        values: (value: unknown[]) => {
+          batches.push(value);
+          return Promise.resolve();
+        },
+      }),
+    };
+    const database = {
+      transaction: async (callback: (trx: typeof tx) => Promise<void>) => {
+        await callback(tx);
+      },
+    };
+
+    await replaceCollectionSkills(
+      {
+        collectionId: asCollectionId("collection-1"),
+        skillIds: Array.from({ length: 34 }, (_, index) => asSkillId(`skill-${index + 1}`)),
+      },
+      database as never,
+    );
+
+    expect(batches).toHaveLength(2);
+    expect(batches[0]).toHaveLength(33);
+    expect(batches[1]).toHaveLength(1);
+    expect(batches[0][0]).toMatchObject({
+      collectionId: "collection-1",
+      position: 0,
+      skillId: "skill-1",
+    });
+    expect(batches[1][0]).toMatchObject({
+      collectionId: "collection-1",
+      position: 33,
+      skillId: "skill-34",
+    });
+  });
 });

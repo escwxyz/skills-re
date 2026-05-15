@@ -343,18 +343,27 @@ export async function listSkillTags(skillId: SkillId) {
   return rows.map((row) => row.slug);
 }
 
-export async function addSkillTagLinks(input: { skillId: SkillId; tagIds: TagId[] }) {
+export async function addSkillTagLinks(
+  input: { skillId: SkillId; tagIds: TagId[] },
+  database = db,
+) {
   if (input.tagIds.length === 0) {
     return;
   }
 
-  await db.insert(skillsTagsTable).values(
-    input.tagIds.map((tagId) => ({
-      createdAt: Date.now(),
-      skillId: input.skillId,
-      tagId,
-    })),
-  );
+  // D1 caps each statement at 100 bound parameters. This join table insert uses
+  // 3 binds per row, so keep the chunk size low enough to stay under the limit.
+  const BATCH_SIZE = 33;
+  for (let i = 0; i < input.tagIds.length; i += BATCH_SIZE) {
+    const batch = input.tagIds.slice(i, i + BATCH_SIZE);
+    await database.insert(skillsTagsTable).values(
+      batch.map((tagId) => ({
+        createdAt: Date.now(),
+        skillId: input.skillId,
+        tagId,
+      })),
+    );
+  }
 }
 
 export async function removeSkillTagLinks(input: { skillId: SkillId; tagIds: TagId[] }) {

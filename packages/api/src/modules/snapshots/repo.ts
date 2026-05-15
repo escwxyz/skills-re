@@ -196,7 +196,9 @@ export async function upsertSnapshotFiles(
     return;
   }
 
-  const BATCH_SIZE = 25;
+  // D1 caps each statement at 100 bound parameters. This insert uses 7 binds per row,
+  // so keep the chunk size low enough to stay under the limit.
+  const BATCH_SIZE = 14;
   for (let i = 0; i < files.length; i += BATCH_SIZE) {
     const batch = files.slice(i, i + BATCH_SIZE);
     await database

@@ -4,7 +4,12 @@ import { describe, expect, test } from "bun:test";
 
 import { asSkillId, asSnapshotId } from "@skills-re/db/utils";
 
-import { createSnapshot, deprecateSnapshotsBeyondLimit, setSkillLatestSnapshot } from "./repo";
+import {
+  createSnapshot,
+  deprecateSnapshotsBeyondLimit,
+  setSkillLatestSnapshot,
+  upsertSnapshotFiles,
+} from "./repo";
 
 describe("snapshots repo", () => {
   test("creates a snapshot row with snapshot defaults", async () => {
@@ -135,5 +140,45 @@ describe("snapshots repo", () => {
     );
 
     expect(deprecations).toHaveLength(1);
+  });
+
+  test("chunks snapshot file upserts to stay under D1 parameter limits", async () => {
+    const batches: unknown[][] = [];
+    const database = {
+      insert: () => ({
+        values: (value: unknown[]) => {
+          batches.push(value);
+          return {
+            onConflictDoUpdate: () => Promise.resolve(),
+          };
+        },
+      }),
+    };
+
+    await upsertSnapshotFiles(
+      asSnapshotId("snapshot-1"),
+      Array.from({ length: 15 }, (_, index) => ({
+        contentType: index % 2 === 0 ? "text/plain; charset=utf-8" : null,
+        fileHash: `${index}`.padStart(64, "0"),
+        path: `skills/acme/widget/file-${index}.md`,
+        r2Key: `snapshots/acme/widget/file-${index}.md`,
+        size: index + 1,
+        sourceSha: index % 3 === 0 ? `sha-${index}` : null,
+      })),
+      database as never,
+    );
+
+    expect(batches).toHaveLength(2);
+    expect(batches[0]).toHaveLength(14);
+    expect(batches[1]).toHaveLength(1);
+    expect(batches[0][0]).toMatchObject({
+      contentType: "text/plain; charset=utf-8",
+      fileHash: "0000000000000000000000000000000000000000000000000000000000000000",
+      path: "skills/acme/widget/file-0.md",
+      r2Key: "snapshots/acme/widget/file-0.md",
+      size: 1,
+      snapshotId: "snapshot-1",
+      sourceSha: "sha-0",
+    });
   });
 });
