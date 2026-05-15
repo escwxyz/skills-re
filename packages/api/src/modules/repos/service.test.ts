@@ -435,7 +435,7 @@ describe("repos service", () => {
       latestCommitUrl?: string | null;
       skillId: string;
       snapshotId: string;
-      syncTime?: number;
+      version?: string;
     }[] = [];
     const deprecated: { keepLatest: number; skillId: string }[] = [];
 
@@ -554,7 +554,7 @@ describe("repos service", () => {
         latestCommitUrl: "https://github.com/acme/widget/commit/sha-1",
         skillId: "skill-1",
         snapshotId: "snapshot-1",
-        syncTime: undefined,
+        version: "1.2.4",
       },
     ]);
     expect(deprecated).toEqual([

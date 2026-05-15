@@ -25,6 +25,8 @@ import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Rating, RatingItem } from "@/components/ui/rating/rating";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -78,9 +80,11 @@ function RouteComponent() {
   const navigate = useNavigate({ from: Route.fullPath });
   const location = useLocation();
 
+  const isMobile = useIsMobile();
+
   const { author, repo, slug } = Route.useParams();
   const { skill } = data;
-  const selectedSnapshotId = search.snapshotId ?? null;
+  const selectedSnapshotId = search.snapshotId ?? skill.latestSnapshotId ?? null;
   const latestVersion = data.skill.latestVersion ?? "latest";
   const debouncedRecordSkillView = useDebouncedCallback(
     async (view: { path: string; skillId: string }) => {
@@ -115,7 +119,7 @@ function RouteComponent() {
   return (
     <>
       <section className="grid grid-cols-1 border-b lg:grid-cols-[1fr_380px]">
-        <div className="border-border border-b px-4 pb-8 pt-8 md:px-6 md:pt-10 lg:border-r lg:border-b-0">
+        <div className="border-border border-b px-4 pb-8 pt-8 md:px-6 md:pt-10 lg:border-r lg:border-b-0 space-y-4">
           <SkillBreadcrumb
             skill={{
               id: skill.id,
@@ -127,23 +131,36 @@ function RouteComponent() {
           <h1 className="font-display m-0 mb-4 mt-3.5 text-4xl md:text-5xl lg:text-6xl font-normal">
             {skill.title}
             {skill.isVerified ? (
-              <span className="border-border text-muted-foreground ml-3 inline-flex align-middle text-[10px] uppercase tracking-[.12em]">
+              <span className="border-border text-muted-foreground ml-3 inline-flex align-middle text-xs uppercase">
                 {skill_detail_verified()}
               </span>
             ) : null}
           </h1>
 
-          <p className="text-ink-2 m-0 mb-7 max-w-170 font-serif text-[18px] leading-[1.6]">
+          <p className="text-muted-foreground m-0 mb-7 max-w-170 font-serif text-lg">
             {skill.description}
           </p>
 
-          <SkillDetailCategory categorySlug={(skill.primaryCategory ?? "other") as CategorySlug} />
-          <SkillDetailTags tags={skill.tags} />
+          <div className="flex justify-between items-center">
+            <div className="space-y-4">
+              <SkillDetailCategory
+                categorySlug={(skill.primaryCategory ?? "other") as CategorySlug}
+              />
+              <SkillDetailTags tags={skill.tags} />
+            </div>
+            <Rating defaultValue={0}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <RatingItem key={i} />
+              ))}
+            </Rating>
+          </div>
 
-          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-2">
-            <InstallTabs author={author} repo={repo} slug={skill.slug} />
+          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="col-span-2">TODO</div>
 
-            <div className="mt-6">
+            <div className="col-span-1 space-y-4">
+              {isMobile ? null : <InstallTabs author={author} repo={repo} slug={skill.slug} />}
+
               <SkillDetailActions
                 snapshotId={selectedSnapshotId}
                 slug={skill.slug}
@@ -164,11 +181,6 @@ function RouteComponent() {
             updatedAt={skill.updatedAt}
           />
 
-          {/* <SkillActivityMetrics
-            auditScore={skill.staticAudit?.overallScore ?? null}
-            skillId={data.skill.id}
-          /> */}
-
           <SkillVersionPanel
             author={author}
             onSnapshotChange={(id) => {
@@ -187,7 +199,7 @@ function RouteComponent() {
 
       <div
         id="skill-tabs"
-        className="scroll-mt-(--header-height) sticky top-(--header-height) z-20 flex border-b border-border bg-background font-mono text-[11px] uppercase tracking-[.14em]"
+        className="scroll-mt-(--header-height) sticky top-(--header-height) z-20 flex h-(--header-height) border-b border-border bg-background font-mono text-xs uppercase"
       >
         <SkillDetailTabs author={author} repo={repo} snapshotId={selectedSnapshotId} slug={slug} />
         <SkillDetailTabActions snapshotId={selectedSnapshotId} skillSlug={slug} />

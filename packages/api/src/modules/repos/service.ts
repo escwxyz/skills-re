@@ -168,7 +168,7 @@ export interface ReposServiceDeps {
     latestCommitUrl?: string | null;
     skillId: string;
     snapshotId: string;
-    syncTime?: number;
+    version?: string;
   }) => Promise<void>;
   uploadSnapshotFiles: (input: {
     files: { content: string; path: string }[];

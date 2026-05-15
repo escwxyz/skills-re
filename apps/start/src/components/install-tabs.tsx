@@ -182,7 +182,7 @@ export const InstallTabs = ({ author, repo, slug }: Props) => {
   };
 
   return (
-    <div className="border border-border font-mono text-xs">
+    <div className="border border-border font-mono text-xs w-full">
       <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[10.5px] tracking-wide text-muted-foreground">
         <span>
           <span className="mr-1 text-(--editorial-red)">$</span>

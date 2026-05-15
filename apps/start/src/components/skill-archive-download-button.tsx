@@ -1,52 +1,39 @@
-import type { ReactNode } from "react";
-
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { downloadSkillArchive } from "@/functions/skills/download-skill-archive";
-import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
+import { DownloadSimpleIcon } from "@phosphor-icons/react";
+import { memo } from "react";
 
-interface Props {
-  ariaLabel: string;
-  children: ReactNode;
-  className?: string;
-  snapshotId: string | null;
-  size?: "lg" | "icon-sm";
-  title: string;
-}
+export const SkillArchiveDownloadButton = memo(
+  ({
+    snapshotId,
+    compact = false,
+    version,
+  }: {
+    snapshotId: string;
+    compact?: boolean;
+    version?: string;
+  }) => {
+    const renderLabel = () => {
+      if (version && !compact) {
+        return m.skill_actions_download_archive({ version });
+      }
 
-export const SkillArchiveDownloadButton = ({
-  ariaLabel,
-  children,
-  className,
-  snapshotId,
-  size = "lg",
-  title,
-}: Props) => {
-  if (!snapshotId) {
+      return null;
+    };
     return (
-      <span
-        aria-disabled="true"
-        aria-label={ariaLabel}
-        className={cn(buttonVariants({ size, variant: "outline" }), className)}
-        title={title}
-      >
-        {children}
-      </span>
+      <form action={downloadSkillArchive.url} method="post">
+        <input name="snapshotId" type="hidden" value={snapshotId} />
+        <Button
+          size={compact ? "icon-sm" : "lg"}
+          type="submit"
+          variant={compact ? "ghost" : "default"}
+          className="w-full max-w-md"
+        >
+          <DownloadSimpleIcon aria-hidden className="size-4" />
+          {renderLabel()}
+        </Button>
+      </form>
     );
-  }
-
-  return (
-    <form action={downloadSkillArchive.url} method="post">
-      <input name="snapshotId" type="hidden" value={snapshotId} />
-      <Button
-        aria-label={ariaLabel}
-        className={className}
-        size={size}
-        title={title}
-        type="submit"
-        variant="outline"
-      >
-        {children}
-      </Button>
-    </form>
-  );
-};
+  },
+);

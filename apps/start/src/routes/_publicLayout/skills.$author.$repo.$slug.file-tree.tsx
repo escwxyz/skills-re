@@ -142,7 +142,7 @@ function RouteComponent() {
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-4 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
+            "flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
             !isTreeExpanded && "lg:justify-center",
           )}
         >

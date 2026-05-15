@@ -55,6 +55,7 @@ describe("collections service", () => {
             latestSnapshotId: asSnapshotId("snapshot-1"),
             latestVersion: "1.2.3",
             license: "MIT",
+            ownerAvatarUrl: null,
             primaryCategory: "ops",
             position: 0,
             repoName: "skills",
@@ -78,6 +79,7 @@ describe("collections service", () => {
             latestSnapshotId: null,
             latestVersion: "0.9.0",
             license: "Apache-2.0",
+            ownerAvatarUrl: null,
             primaryCategory: "writing",
             position: 1,
             repoName: "skills",
@@ -131,6 +133,7 @@ describe("collections service", () => {
       skills: [
         {
           author: {
+            avatarUrl: undefined,
             githubUrl: "https://github.com/acme",
             handle: "acme",
           },
@@ -142,6 +145,7 @@ describe("collections service", () => {
           forkCount: 8,
           id: "skill-1",
           isVerified: true,
+          latestSnapshotId: "snapshot-1",
           latestVersion: "1.2.3",
           latestSnapshotTotalBytes: 1536,
           license: "MIT",
@@ -167,6 +171,7 @@ describe("collections service", () => {
         },
         {
           author: {
+            avatarUrl: undefined,
             githubUrl: "https://github.com/acme",
             handle: "acme",
           },
@@ -178,6 +183,7 @@ describe("collections service", () => {
           forkCount: 3,
           id: "skill-2",
           isVerified: false,
+          latestSnapshotId: undefined,
           latestVersion: "0.9.0",
           license: "Apache-2.0",
           primaryCategory: "writing",
