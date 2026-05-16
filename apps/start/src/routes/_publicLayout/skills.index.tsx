@@ -174,6 +174,7 @@ function RouteComponent() {
 
     void navigate({
       replace: true,
+      resetScroll: false,
       search: (prev) => ({
         ...prev,
         mode: "search",
@@ -189,6 +190,7 @@ function RouteComponent() {
     submitTimerRef.current = setTimeout(() => {
       void navigate({
         replace: true,
+        resetScroll: false,
         search: (prev) => ({
           ...prev,
           mode: "search",
@@ -202,6 +204,7 @@ function RouteComponent() {
     setSearchDraft("");
     void navigate({
       replace: true,
+      resetScroll: false,
       search: (prev) => ({
         ...prev,
         mode: undefined,

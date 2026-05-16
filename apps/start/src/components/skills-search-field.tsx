@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
+import { Form } from "./ui/form";
 
 interface SkillsSearchFieldProps {
   active: boolean;
@@ -45,14 +46,16 @@ export const SkillsSearchField = ({
 
   return (
     <form.AppForm>
-      <form
+      <Form
         className={cn(
           "relative grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center transition-colors",
           active ? "bg-background" : "bg-transparent",
         )}
         onSubmit={(event) => {
           event.preventDefault();
-          if (!disabled) onSubmit();
+          if (!disabled) {
+            onSubmit();
+          }
         }}
       >
         <MagnifyingGlassIcon className="ml-5 size-4 text-muted-text" />
@@ -92,7 +95,7 @@ export const SkillsSearchField = ({
             <XIcon />
           </Button>
         ) : null}
-      </form>
+      </Form>
     </form.AppForm>
   );
 };
