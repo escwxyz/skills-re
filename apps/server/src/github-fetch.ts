@@ -8,7 +8,12 @@ import {
 } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
-import { SKILL_FILENAME, discoverSkillRoots, parseFrontmatter } from "./github-skill-utils";
+import {
+  SKILL_FILENAME,
+  dedupeSkillsByIdentity,
+  discoverSkillRoots,
+  parseFrontmatter,
+} from "./github-skill-utils";
 import { parseGithubRepoUrl } from "./github-url";
 import type { WorkerLogger } from "./worker-logger";
 
@@ -257,6 +262,11 @@ export function createGithubFetchRuntime(
         invalidSkills.push(result.invalidSkill);
       }
 
+      const dedupedSkills = dedupeSkillsByIdentity(skills, {
+        getIdentity: (skill) => skill.skillTitle,
+        getSkillRootPath: (skill) => skill.skillRootPath,
+      });
+
       const result = {
         branch: overview.defaultBranch,
         commitDate: overview.commits[0]?.committedDate ?? null,
@@ -276,7 +286,7 @@ export function createGithubFetchRuntime(
         repoUpdatedAt: overview.repo.updatedAt,
         repoUrl: overview.repo.url,
         requestedSkillPath: parsed.skillPath ?? null,
-        skills,
+        skills: dedupedSkills,
         stargazerCount: overview.repo.stargazerCount,
         tree,
       };
@@ -285,7 +295,7 @@ export function createGithubFetchRuntime(
         invalidSkillsCount: invalidSkills.length,
         owner: parsed.owner,
         repo: parsed.repo,
-        skillsCount: skills.length,
+        skillsCount: dedupedSkills.length,
         treeEntriesCount: tree.length,
       });
 

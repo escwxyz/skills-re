@@ -30,6 +30,69 @@ export const normalizeRelativePath = (value: string) => {
 export const normalizeSkillRootPath = (value: string) =>
   normalizeRelativePath(value).replace(/^\/+/, "").replace(/\/+$/, "");
 
+const normalizeSkillIdentity = (value: string) => value.trim().toLowerCase();
+
+const getSkillRootPriority = (skillRootPath: string) => {
+  const normalizedRoot = normalizeSkillRootPath(skillRootPath);
+  if (normalizedRoot.length === 0) {
+    return 0;
+  }
+  if (normalizedRoot === "skills" || normalizedRoot.startsWith("skills/")) {
+    return 1;
+  }
+  return 2;
+};
+
+const shouldPreferSkillRoot = (candidateRootPath: string, currentRootPath: string) => {
+  const candidatePriority = getSkillRootPriority(candidateRootPath);
+  const currentPriority = getSkillRootPriority(currentRootPath);
+  if (candidatePriority !== currentPriority) {
+    return candidatePriority < currentPriority;
+  }
+
+  const candidateSegments = normalizeSkillRootPath(candidateRootPath).split("/").filter(Boolean);
+  const currentSegments = normalizeSkillRootPath(currentRootPath).split("/").filter(Boolean);
+  return candidateSegments.length < currentSegments.length;
+};
+
+export const dedupeSkillsByIdentity = <T>(
+  skills: readonly T[],
+  options: {
+    getIdentity: (skill: T) => string;
+    getSkillRootPath: (skill: T) => string;
+  },
+) => {
+  const selectedByIdentity = new Map<string, { index: number; skill: T }>();
+  const uniqueSkills: { index: number; skill: T }[] = [];
+
+  for (const [index, skill] of skills.entries()) {
+    const identity = normalizeSkillIdentity(options.getIdentity(skill));
+    if (identity.length === 0) {
+      uniqueSkills.push({ index, skill });
+      continue;
+    }
+
+    const existing = selectedByIdentity.get(identity);
+    if (!existing) {
+      selectedByIdentity.set(identity, { index, skill });
+      continue;
+    }
+
+    if (
+      shouldPreferSkillRoot(
+        options.getSkillRootPath(skill),
+        options.getSkillRootPath(existing.skill),
+      )
+    ) {
+      selectedByIdentity.set(identity, { index, skill });
+    }
+  }
+
+  return [...selectedByIdentity.values(), ...uniqueSkills]
+    .toSorted((left, right) => left.index - right.index)
+    .map((entry) => entry.skill);
+};
+
 export const parseFrontmatter = (content: string): SkillFrontmatterData | null =>
   parseSkillMarkdownDocument(content).frontmatter;
 

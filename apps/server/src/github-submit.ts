@@ -6,6 +6,7 @@ import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import {
   buildSkillDuplicateFingerprint,
   SKILL_FILENAME,
+  dedupeSkillsByIdentity,
   discoverSkillRoots,
   normalizeSkillRootPath,
   parseFrontmatter,
@@ -163,7 +164,13 @@ const buildPayloadFromOverview = async (input: {
       buildSubmitSkill(input, overview, headSha, tree, root, snapshotHelpers, log),
     ),
   );
-  const skills = skillResults.filter((skill): skill is NonNullable<typeof skill> => skill !== null);
+  const skills = dedupeSkillsByIdentity(
+    skillResults.filter((skill): skill is NonNullable<typeof skill> => skill !== null),
+    {
+      getIdentity: (skill) => skill.slug,
+      getSkillRootPath: (skill) => skill.directoryPath,
+    },
+  );
 
   if (skills.length === 0) {
     log?.warn("github.submit.rejected", { reason: "no-valid-skills" });
