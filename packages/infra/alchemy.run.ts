@@ -54,6 +54,11 @@ const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
 const aiSearch = await AiSearch("skills-re-ai-search", {
   name: "skills-re-ai-search",
   adopt: true,
+  // https://developers.cloudflare.com/ai-search/configuration/indexing/hybrid-search/
+  indexMethod: {
+    vector: true,
+    keyword: true,
+  },
 });
 
 const archiveFilesBucket = await R2Bucket("skills-re-archives", {
