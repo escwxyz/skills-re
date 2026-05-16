@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SealCheckIcon } from "@phosphor-icons/react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AuthorsDirectory } from "@/components/authors-directory";
 import { PageHero } from "@/components/page-hero";
 import { getAuthorsInitial } from "@/functions/authors/get-authors-inital";
@@ -108,11 +109,16 @@ function RouteComponent() {
                 № {String(index + 1).padStart(2, "0")}
               </div>
 
-              {index === 0 && (
-                <div className="bg-foreground text-background border-background font-display mb-5 flex size-30 items-center justify-center border-4 border-double text-[64px] italic [outline:1px_solid_var(--foreground)]">
+              <Avatar className="font-display mb-5 size-30 rounded-none border-4 border-double border-background [outline:1px_solid_var(--foreground)] after:hidden">
+                <AvatarImage
+                  src={author.avatarUrl ?? undefined}
+                  alt={getAuthorDisplayName(author)}
+                  className="rounded-none"
+                />
+                <AvatarFallback className="rounded-none bg-foreground font-display text-[64px] italic text-background">
                   {getAvatarLabel(author)}
-                </div>
-              )}
+                </AvatarFallback>
+              </Avatar>
 
               <div className="text-muted-foreground mb-3 font-mono text-[10.5px] tracking-[.14em] uppercase">
                 {authors_index_public_author()}
