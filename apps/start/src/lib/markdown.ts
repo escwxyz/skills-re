@@ -8,11 +8,7 @@ import { slugifyHeadingBase } from "@skills-re/utils";
 
 export type ResolvedTheme = "dark" | "light";
 
-// Change themes to match current color schema
-const SHIKI_THEME = {
-  dark: "github-dark",
-  light: "github-light",
-} as const satisfies Record<ResolvedTheme, string>;
+const DUAL_THEMES = { light: "github-light", dark: "github-dark" } as const;
 
 const languageAliases: Record<string, string> = {
   bash: "shellscript",
@@ -137,8 +133,6 @@ const getHighlighter = () => {
   return highlighterPromise;
 };
 
-const resolveShikiTheme = (theme?: ResolvedTheme | null) => SHIKI_THEME[theme ?? "dark"];
-
 const normalizeLanguage = (language?: string | null) => {
   if (!language) {
     return "text";
@@ -185,7 +179,7 @@ const ensureLanguageLoaded = async (language?: string | null) => {
   return highlighter.getLoadedLanguages().includes(normalized) ? normalized : "text";
 };
 
-const createRenderer = (theme: "github-dark" | "github-light") => {
+const createRenderer = () => {
   const md = createMarkdownItAsync({ breaks: true, html: false, linkify: true, typographer: true });
 
   const headingCounts = new Map<string, number>();
@@ -231,22 +225,16 @@ const createRenderer = (theme: "github-dark" | "github-light") => {
       async (code, options) => {
         const highlighter = await getHighlighter();
         const resolvedLanguage = await ensureLanguageLoaded(options.lang);
-        return highlighter.codeToHtml(code, { ...options, lang: resolvedLanguage, theme });
+        return highlighter.codeToHtml(code, { lang: resolvedLanguage, themes: DUAL_THEMES });
       },
-      { theme },
+      { themes: DUAL_THEMES },
     ),
   );
 
   return md;
 };
 
-const rendererByTheme: Record<
-  "github-dark" | "github-light",
-  ReturnType<typeof createRenderer> | null
-> = {
-  "github-dark": null,
-  "github-light": null,
-};
+let renderer: ReturnType<typeof createRenderer> | null = null;
 
 const DISALLOWED_BLOCK_ELEMENTS = /<(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi;
 const DISALLOWED_VOID_TAGS = /<(?:link|meta|base)[^>]*\/?>/gi;
@@ -263,12 +251,11 @@ export const sanitizeRenderedHtml = (html: string) =>
     .replace(SRCDOC_ATTRIBUTES, "")
     .replace(UNSAFE_URL_ATTRIBUTES, ' $1="#"');
 
-export const renderMarkdownAsync = async (content: string, theme?: ResolvedTheme | null) => {
-  const shikiTheme = resolveShikiTheme(theme);
-  if (!rendererByTheme[shikiTheme]) {
-    rendererByTheme[shikiTheme] = createRenderer(shikiTheme);
+export const renderMarkdownAsync = async (content: string) => {
+  if (!renderer) {
+    renderer = createRenderer();
   }
-  return sanitizeRenderedHtml(await rendererByTheme[shikiTheme].renderAsync(content));
+  return sanitizeRenderedHtml(await renderer.renderAsync(content));
 };
 
 const getLanguageFromPath = (path?: string | null) => {
@@ -282,17 +269,13 @@ const getLanguageFromPath = (path?: string | null) => {
   return extensionToLanguage[path.slice(dotIndex + 1).toLowerCase()] ?? null;
 };
 
-const renderCodeAsync = async (
-  content: string,
-  language?: string | null,
-  theme?: ResolvedTheme | null,
-) => {
+const renderCodeAsync = async (content: string, language?: string | null) => {
   const highlighter = await getHighlighter();
   const resolvedLanguage = await ensureLanguageLoaded(language);
   return sanitizeRenderedHtml(
     highlighter.codeToHtml(content, {
       lang: resolvedLanguage,
-      theme: resolveShikiTheme(theme),
+      themes: DUAL_THEMES,
     }),
   );
 };
@@ -301,18 +284,16 @@ export const renderContentAsync = async ({
   content,
   path,
   isMarkdown,
-  theme,
 }: {
   content: string;
   path?: string | null;
   isMarkdown?: boolean | null;
-  theme?: ResolvedTheme | null;
 }) => {
   const shouldRenderMarkdown = isMarkdown ?? path?.toLowerCase().endsWith(".md") ?? false;
 
   if (shouldRenderMarkdown) {
-    return await renderMarkdownAsync(content, theme);
+    return await renderMarkdownAsync(content);
   }
 
-  return await renderCodeAsync(content, getLanguageFromPath(path), theme);
+  return await renderCodeAsync(content, getLanguageFromPath(path));
 };

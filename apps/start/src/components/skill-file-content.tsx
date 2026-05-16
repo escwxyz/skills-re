@@ -4,8 +4,6 @@ import { useState } from "react";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { formatInteger } from "@/utils/format";
-import { useTheme } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 
 interface Props {
@@ -23,7 +21,6 @@ export interface SkillFileContentData {
 }
 
 export function SkillFileContent({ activePath, data, isLoading }: Props) {
-  const { resolved } = useTheme();
   const locale = getLocale();
   const [isRendered, setIsRendered] = useState(true);
 
@@ -64,19 +61,11 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
       <div data-skill-md-content className="overflow-x-hidden px-5 py-6">
         {isRendered ? (
           <article
-            className={cn(
-              "prose w-full max-w-none wrap-break-word prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_a]:wrap-break-word [&_code]:wrap-break-word [&_img]:max-w-full [&_li]:wrap-break-word [&_p]:wrap-break-word [&_pre]:max-w-full [&_pre]:overflow-x-auto prose-headings:scroll-mt-24",
-              resolved === "dark" ? "prose-invert" : "",
-            )}
+            className="prose dark:prose-invert w-full max-w-none wrap-break-word prose-headings:font-display font-sans text-foreground/80 leading-relaxed [&_a]:wrap-break-word [&_code]:wrap-break-word [&_img]:max-w-full [&_li]:wrap-break-word [&_p]:wrap-break-word [&_pre]:max-w-full [&_pre]:overflow-x-auto prose-headings:scroll-mt-24"
             dangerouslySetInnerHTML={{ __html: data.html }}
           />
         ) : (
-          <pre
-            className={cn(
-              "w-full min-w-0 whitespace-pre-wrap wrap-break-word font-mono text-[13px] leading-[1.65] text-foreground/80",
-              resolved === "dark" ? "text-foreground/85" : "",
-            )}
-          >
+          <pre className="w-full min-w-0 whitespace-pre-wrap wrap-break-word font-mono text-[13px] leading-[1.65] text-foreground/80 dark:text-foreground/85">
             {data.rawContent}
           </pre>
         )}
