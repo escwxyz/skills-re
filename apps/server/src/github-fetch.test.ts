@@ -597,6 +597,111 @@ describe("createGithubFetchRuntime", () => {
     expect(requests.length).toBeGreaterThan(0);
   });
 
+  test("reads skill metadata from a leading markdown table", async () => {
+    const skillMd = `| name | caveman |
+| --- | --- |
+| description | Ultra-compressed communication mode. Cuts token usage ~75%. |
+
+Respond terse like smart caveman.`;
+    const runtime = createGithubFetchRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+
+          if (request.url.endsWith("/repos/acme/caveman")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  default_branch: "main",
+                  forks_count: 1,
+                  full_name: "acme/caveman",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/caveman/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/caveman/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/caveman/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "skills/caveman/SKILL.md",
+                      sha: "blob-caveman",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/caveman/git/blobs/blob-caveman")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(skillMd),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.fetchRepo({
+        githubUrl: "https://github.com/acme/caveman",
+      }),
+    ).resolves.toMatchObject({
+      invalidSkills: [],
+      skills: [
+        {
+          skillDescription: "Ultra-compressed communication mode. Cuts token usage ~75%.",
+          skillTitle: "caveman",
+        },
+      ],
+    });
+  });
+
   test("logs invalid skill roots when frontmatter is missing", async () => {
     const logs: CapturedLog[] = [];
     const runtime = createGithubFetchRuntime(

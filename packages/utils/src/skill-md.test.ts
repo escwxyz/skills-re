@@ -32,6 +32,20 @@ description: Example
     ]);
   });
 
+  test("reads skill metadata from a leading markdown table", () => {
+    const parsed = parseSkillMarkdownDocument(`| name | caveman |
+| description | Ultra-compressed communication mode. Cuts token usage ~75%. |
+
+Respond terse like smart caveman.
+`);
+
+    expect(parsed.frontmatter).toMatchObject({
+      description: "Ultra-compressed communication mode. Cuts token usage ~75%.",
+      name: "caveman",
+    });
+    expect(parsed.body).toBe("Respond terse like smart caveman.");
+  });
+
   test("ignores headings inside fenced code blocks", () => {
     const parsed = parseSkillMarkdownDocument(`---
 name: Example

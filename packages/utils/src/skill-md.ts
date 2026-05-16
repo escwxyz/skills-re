@@ -69,6 +69,105 @@ const readFrontmatterValue = (
 
 const isFenceLine = (line: string) => /^\s*(```|~~~)/.test(line);
 
+const parseMarkdownTableRow = (line: string): string[] | null => {
+  const trimmed = line.trim();
+  if (!(trimmed.startsWith("|") && trimmed.includes("|", 1))) {
+    return null;
+  }
+
+  const withoutOuterPipes = trimmed.replace(/^\|/, "").replace(/\|$/, "");
+  const cells = withoutOuterPipes
+    .split("|")
+    .map((cell) => stripWrappingQuotes(cell.trim().replaceAll("\\|", "|")));
+  return cells.length >= 2 ? cells : null;
+};
+
+const isMarkdownTableSeparatorRow = (cells: string[]) =>
+  cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
+
+const isMetadataHeaderRow = (cells: string[]) => {
+  const [keyCell, valueCell] = cells;
+  if (!(keyCell && valueCell)) {
+    return false;
+  }
+
+  const key = normalizeFrontmatterKey(keyCell);
+  const value = normalizeFrontmatterKey(valueCell);
+  return (
+    ["field", "key", "metadata", "property"].includes(key) && ["content", "value"].includes(value)
+  );
+};
+
+const parseLeadingMetadataTable = (
+  source: string,
+): { frontmatter: SkillFrontmatterData; tableEndIndex: number } | null => {
+  const lines = source.split(/\r?\n/);
+  let firstTableLineIndex = 0;
+  while (firstTableLineIndex < lines.length && lines[firstTableLineIndex]?.trim() === "") {
+    firstTableLineIndex += 1;
+  }
+
+  const rows: string[][] = [];
+  let tableEndIndex = firstTableLineIndex;
+  for (; tableEndIndex < lines.length; tableEndIndex += 1) {
+    const line = lines[tableEndIndex];
+    if (line === undefined) {
+      break;
+    }
+    if (line.trim() === "" && rows.length > 0) {
+      break;
+    }
+
+    const row = parseMarkdownTableRow(line);
+    if (!row) {
+      break;
+    }
+    rows.push(row);
+  }
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const values: Record<string, string> = {};
+  for (const [index, row] of rows.entries()) {
+    if (isMarkdownTableSeparatorRow(row) || (index === 0 && isMetadataHeaderRow(row))) {
+      continue;
+    }
+
+    const [rawKey, ...valueCells] = row;
+    if (!rawKey) {
+      continue;
+    }
+    const key = normalizeFrontmatterKey(rawKey);
+    const value = valueCells.join("|").trim();
+    if (value.length > 0) {
+      values[key] = value;
+    }
+  }
+
+  const name = readFrontmatterValue(values, "name");
+  const description = readFrontmatterValue(values, "description");
+  if (!name || !description) {
+    return null;
+  }
+
+  while (tableEndIndex < lines.length && lines[tableEndIndex]?.trim() === "") {
+    tableEndIndex += 1;
+  }
+
+  return {
+    frontmatter: {
+      allowedTools: readFrontmatterValue(values, "allowed-tools", "allowedtools"),
+      compatibility: readFrontmatterValue(values, "compatibility"),
+      description,
+      license: readFrontmatterValue(values, "license"),
+      name,
+    },
+    tableEndIndex,
+  };
+};
+
 export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | null => {
   const values: Record<string, string | string[] | undefined> = {};
   const metadata: Record<string, string> = {};
@@ -139,9 +238,17 @@ export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | nu
 export const parseSkillMarkdownDocument = (source: string) => {
   const frontmatterMatch = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?/);
   const frontmatterContent = frontmatterMatch?.[1];
+  const tableFrontmatter = frontmatterMatch ? null : parseLeadingMetadataTable(source);
   const frontmatter =
-    frontmatterContent !== undefined ? parseSkillFrontmatter(frontmatterContent) : null;
-  const withoutFrontmatter = frontmatterMatch ? source.slice(frontmatterMatch[0].length) : source;
+    frontmatterContent !== undefined
+      ? parseSkillFrontmatter(frontmatterContent)
+      : (tableFrontmatter?.frontmatter ?? null);
+  let withoutFrontmatter = source;
+  if (frontmatterMatch) {
+    withoutFrontmatter = source.slice(frontmatterMatch[0].length);
+  } else if (tableFrontmatter) {
+    withoutFrontmatter = source.split(/\r?\n/).slice(tableFrontmatter.tableEndIndex).join("\n");
+  }
   const lines = withoutFrontmatter.split(/\r?\n/);
   const firstContentIndex = lines.findIndex((line) => line.trim().length > 0);
   const firstLine = firstContentIndex !== -1 ? lines[firstContentIndex] : undefined;
