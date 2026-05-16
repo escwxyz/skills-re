@@ -10,7 +10,6 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { isMobileMenuOpenAtom } from "@/atoms/app";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { m } from "@/paraglide/messages";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -109,13 +108,11 @@ export const MobileMenu = () => {
               to="/submit"
               className={cn(
                 "no-underline! inline-flex font-mono",
-                buttonVariants({ variant: "link", size: "lg" }),
+                buttonVariants({ variant: "ghost", size: "lg" }),
               )}
             >
               <CloudArrowUpIcon />
-              <span className="uppercase">{m.header_submit()}</span>
             </Link>
-            <LanguageSwitcher />
           </div>
         </DrawerFooter>
       </DrawerContent>

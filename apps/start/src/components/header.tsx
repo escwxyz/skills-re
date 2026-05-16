@@ -1,14 +1,12 @@
 import { m } from "@/paraglide/messages";
 import { Link, useRouteContext } from "@tanstack/react-router";
 import { MobileMenu } from "@/components/mobile-menu";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useSetAtom } from "jotai";
 import { LoginDialog } from "@/components/login-dialog";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { DesktopMenu } from "@/components/desktop-menu";
 import { NavUser } from "@/components/nav-user";
 
@@ -30,8 +28,13 @@ export const Header = () => {
           <i>.re</i>
         </Link>
         <div className="flex items-center justify-end gap-2 md:gap-4.5">
-          <ThemeToggle className="hidden md:block" />
-          <LanguageSwitcher className="hidden md:flex" />
+          <Link
+            to="/skills"
+            search={{ mode: "search" }}
+            className={cn("no-underline", buttonVariants({ variant: "ghost" }))}
+          >
+            <MagnifyingGlassIcon />
+          </Link>
           <Link
             to="/submit"
             className={cn(
@@ -41,13 +44,6 @@ export const Header = () => {
           >
             <CloudArrowUpIcon />
             <span className="normal-case">{m.header_submit()}</span>
-          </Link>
-          <Link
-            to="/skills"
-            search={{ mode: "search" }}
-            className={cn("no-underline md:hidden", buttonVariants({ variant: "link" }))}
-          >
-            <MagnifyingGlassIcon />
           </Link>
           {currentUser ? (
             <NavUser currentUser={currentUser} />
