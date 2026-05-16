@@ -10,6 +10,7 @@ import { buildFileTreeRows } from "@/view-models/build-file-tree-rows";
 import { splitLegacyReviewContent } from "@/view-models/split-legacy-review-content";
 import type { AppRouterClient } from "@skills-re/api";
 import { parseSkillMarkdownDocument } from "@skills-re/utils";
+import { isRateLimitedError } from "@/utils/is-rate-limited-error";
 
 export type { NormalizedSkillsBrowseFilters } from "@/utils/browse";
 export { normalizeSkillsBrowseFilters } from "@/utils/browse";
@@ -610,4 +611,66 @@ export const fetchSkillsBrowsePagination = async (
     isDone: searchResult.isDone,
     page: searchResult.page,
   };
+};
+
+type SkillsSearchResult = Awaited<ReturnType<AppRouterClient["skills"]["search"]>>;
+type SerializableSkillsSearchResult = Omit<SkillsSearchResult, "ai"> & {
+  ai?: {
+    resolvedSkillsCount: number;
+    resultCount: number;
+  };
+};
+
+interface SkillsSearchClient {
+  skills: Pick<AppRouterClient["skills"], "search">;
+}
+
+export type FetchSkillsSearchResult =
+  | {
+      data: SerializableSkillsSearchResult;
+      status: "ok";
+    }
+  | {
+      message: string;
+      status: "rate_limited";
+    };
+
+export const fetchSkillsSearch = async (input: {
+  client: SkillsSearchClient;
+  limit?: number;
+  query: string;
+  rewriteQuery?: boolean;
+}): Promise<FetchSkillsSearchResult> => {
+  try {
+    const result = await input.client.skills.search({
+      limit: input.limit,
+      query: input.query,
+      rewriteQuery: input.rewriteQuery,
+    });
+
+    return {
+      data: result.ai
+        ? {
+            ...result,
+            ai: {
+              resultCount: result.ai.resultCount,
+              resolvedSkillsCount: result.ai.resolvedSkillsCount,
+            },
+          }
+        : result,
+      status: "ok",
+    };
+  } catch (error) {
+    if (isRateLimitedError(error)) {
+      return {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Search rate limit exceeded. Please sign in to continue.",
+        status: "rate_limited",
+      };
+    }
+
+    throw error;
+  }
 };

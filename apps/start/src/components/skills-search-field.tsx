@@ -9,6 +9,7 @@ import { m } from "@/paraglide/messages";
 
 interface SkillsSearchFieldProps {
   active: boolean;
+  disabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
   isSearching?: boolean;
   onChange: (value: string) => void;
@@ -20,6 +21,7 @@ interface SkillsSearchFieldProps {
 
 export const SkillsSearchField = ({
   active,
+  disabled,
   inputRef,
   isSearching,
   onChange,
@@ -32,6 +34,9 @@ export const SkillsSearchField = ({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (disabled) {
+      return;
+    }
     onSubmit();
   };
 
@@ -47,7 +52,8 @@ export const SkillsSearchField = ({
       <input
         ref={inputRef}
         aria-label={m.skills_browse_controls_search_placeholder()}
-        className="h-full min-w-0 border-0 bg-transparent px-3 font-mono text-sm tracking-widest uppercase text-ink outline-none placeholder:text-ink-2/70"
+        className="h-full min-w-0 border-0 bg-transparent px-3 font-mono text-sm tracking-widest uppercase text-ink outline-none placeholder:text-ink-2/70 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         onFocus={onFocus}
         placeholder={m.skills_browse_controls_search_placeholder()}
@@ -61,6 +67,7 @@ export const SkillsSearchField = ({
         <Button
           aria-label="Clear search"
           className="h-full w-(--header-height) rounded-none border-l border-border"
+          disabled={disabled}
           onClick={onClear}
           size="icon-sm"
           type="button"

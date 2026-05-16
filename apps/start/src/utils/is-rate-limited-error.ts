@@ -8,6 +8,7 @@ export const isRateLimitedError = (error: unknown) => {
   return (
     normalized.includes("rate_limited") ||
     normalized.includes("429") ||
-    normalized.includes("too many requests")
+    normalized.includes("too many requests") ||
+    normalized.includes("rate limit exceeded")
   );
 };

@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { z } from "zod/v4";
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useSetAtom } from "jotai";
+import { useServerFn } from "@tanstack/react-start";
 
 import { PageHero } from "@/components/page-hero";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
@@ -13,10 +14,15 @@ import { BrowseSkillsGrid } from "@/components/browse-skills-grid";
 import { BrowseStatsRow } from "@/components/browse-stats-row";
 import { SearchFocusBackdrop } from "@/components/search-focus-backdrop";
 import { SemanticSearchResults } from "@/components/semantic-search-results";
-import { isLoginDialogOpenAtom } from "@/atoms/app";
+import {
+  isLoginDialogOpenAtom,
+  loginDialogDescriptionAtom,
+  loginDialogTitleAtom,
+} from "@/atoms/app";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { orpc } from "@/lib/orpc";
 import { getSkillsBrowseMeta } from "@/functions/skills/get-skills-browse-meta";
+import { getSkillsSearch } from "@/functions/skills/get-skills-search";
+import type { FetchSkillsSearchResult } from "@/functions/skills/skills.server";
 import { formatInteger } from "@/utils/format";
 import { getBrowseSortLabel, normalizeSkillsBrowseFilters } from "@/utils/browse";
 import { m } from "@/paraglide/messages";
@@ -44,6 +50,8 @@ const filterSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional(),
 });
 
+type SemanticSearchData = Extract<FetchSkillsSearchResult, { status: "ok" }>["data"];
+
 export const Route = createFileRoute("/_publicLayout/skills/")({
   validateSearch: filterSchema,
   loaderDeps: ({ search }) => ({
@@ -69,15 +77,21 @@ function RouteComponent() {
   const browseMeta = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/skills/" });
+  const { currentUser } = useRouteContext({ from: "__root__" });
   const isMobile = useIsMobile();
   const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
+  const setLoginDialogTitle = useSetAtom(loginDialogTitleAtom);
+  const setLoginDialogDescription = useSetAtom(loginDialogDescriptionAtom);
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
   const [browseResultCount, setBrowseResultCount] = useState(0);
+  const [isSearchBlocked, setIsSearchBlocked] = useState(false);
   const [searchDraft, setSearchDraft] = useState(search.q ?? "");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [debouncedSearchDraft] = useDebouncedValue(searchDraft, { wait: 320 });
   const isSearchMode = search.mode === "search" || Boolean(search.q);
   const semanticQueryText = debouncedSearchDraft.trim();
+  const searchSkills = useServerFn(getSkillsSearch);
+  const isSearchInputLocked = isSearchBlocked && currentUser === null;
   const browseFilters = normalizeSkillsBrowseFilters({
     category: search.category,
     q: search.q,
@@ -85,15 +99,25 @@ function RouteComponent() {
     tag: [...new Set([...(search.tag ?? []), ...(search.tags ?? [])])],
   });
 
-  const semanticQuery = useQuery({
-    ...orpc.skills.search.queryOptions({
-      input: {
-        limit: 24,
-        query: semanticQueryText,
-        rewriteQuery: true,
-      },
-    }),
-    enabled: isSearchMode && semanticQueryText.length > 0,
+  const semanticQuery = useQuery<SemanticSearchData, Error>({
+    enabled: isSearchMode && semanticQueryText.length > 0 && !isSearchInputLocked,
+    queryFn: async () => {
+      const result = (await searchSkills({
+        data: {
+          limit: 24,
+          query: semanticQueryText,
+          rewriteQuery: true,
+        },
+      })) as FetchSkillsSearchResult;
+
+      if (result.status === "rate_limited") {
+        throw new Error(result.message);
+      }
+
+      return result.data;
+    },
+    queryKey: ["skills-semantic-search", semanticQueryText],
+    retry: false,
   });
 
   useEffect(() => {
@@ -130,10 +154,24 @@ function RouteComponent() {
   }, [debouncedSearchDraft, isSearchMode, navigate, search.q]);
 
   useEffect(() => {
-    if (semanticQuery.error && isRateLimitedSearchError(semanticQuery.error)) {
+    if (
+      currentUser === null &&
+      semanticQuery.error &&
+      isRateLimitedSearchError(semanticQuery.error)
+    ) {
+      setIsSearchBlocked(true);
+      setLoginDialogTitle("Search limit reached");
+      setLoginDialogDescription(semanticQuery.error.message);
       setLoginDialogOpen(true);
     }
-  }, [semanticQuery.error, setLoginDialogOpen]);
+  }, [
+    currentUser,
+    semanticQuery.error,
+    setLoginDialogDescription,
+    setLoginDialogOpen,
+    setLoginDialogTitle,
+    setIsSearchBlocked,
+  ]);
   const semanticItems = semanticQuery.data?.page ?? [];
   const semanticMeta = semanticQuery.data?.ai
     ? {
@@ -141,10 +179,6 @@ function RouteComponent() {
         resultCount: semanticQuery.data.ai.resultCount,
       }
     : undefined;
-  const visibleSemanticError =
-    semanticQuery.error && !isRateLimitedSearchError(semanticQuery.error)
-      ? semanticQuery.error
-      : null;
 
   const enterSearchMode = () => {
     if (isSearchMode) {
@@ -239,12 +273,13 @@ function RouteComponent() {
               onSearchFocus={enterSearchMode}
               onSearchSubmit={submitSearch}
               onToggleFilters={() => setFiltersOpen((value) => !value)}
+              searchDisabled={isSearchInputLocked}
               searchValue={searchDraft}
             />
 
             {isSearchMode ? (
               <SemanticSearchResults
-                error={visibleSemanticError}
+                error={semanticQuery.error}
                 isLoading={semanticQuery.isFetching}
                 items={semanticItems}
                 meta={semanticMeta}

@@ -3,7 +3,12 @@ import { useAtom } from "jotai";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
 
-import { isLoginDialogOpenAtom, loginDialogOnlyGithubAtom } from "@/atoms/app";
+import {
+  isLoginDialogOpenAtom,
+  loginDialogDescriptionAtom,
+  loginDialogOnlyGithubAtom,
+  loginDialogTitleAtom,
+} from "@/atoms/app";
 import { authClient } from "@/lib/auth-client";
 
 import { EmailOtpForm } from "@/components/email-otp-form";
@@ -50,6 +55,8 @@ interface LoginDialogProps {
 export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
   const [isOpen, setIsOpen] = useAtom(isLoginDialogOpenAtom);
   const [isGithubOnlyMode, setGithubOnlyMode] = useAtom(loginDialogOnlyGithubAtom);
+  const [customDescription, setCustomDescription] = useAtom(loginDialogDescriptionAtom);
+  const [customTitle, setCustomTitle] = useAtom(loginDialogTitleAtom);
   const [view, setView] = useState<"options" | "email">("options");
 
   const isMobile = useIsMobile();
@@ -93,6 +100,8 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
         if (!open) {
           resetEmailFlow();
           setGithubOnlyMode(false);
+          setCustomTitle(null);
+          setCustomDescription(null);
         }
       }}
       open={isOpen}
@@ -108,12 +117,13 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
       <DialogContent className="p-6 sm:max-w-md">
         <DialogHeader className="mb-6">
           <DialogTitle className="text-foreground text-center text-base font-semibold">
-            {m.login_dialog_sign_in_to_continue()}
+            {customTitle ?? m.login_dialog_sign_in_to_continue()}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-center">
-            {resolvedOnlyGitHub
-              ? m.login_dialog_continue_with_github_to_verify()
-              : m.login_dialog_choose_a_provider()}
+            {customDescription ??
+              (resolvedOnlyGitHub
+                ? m.login_dialog_continue_with_github_to_verify()
+                : m.login_dialog_choose_a_provider())}
           </DialogDescription>
         </DialogHeader>
 

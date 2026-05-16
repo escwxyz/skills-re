@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { formatCompactNumber, formatInteger } from "@/utils/format";
+import { isRateLimitedSearchError } from "@/utils/is-rate-limited-search-error";
 import type { BrowseSkillItem } from "@/utils/types";
 
 interface SemanticSearchMeta {
@@ -247,6 +248,17 @@ export const SemanticSearchResults = ({
   const viewMode = useAtomValue(skillsViewModeAtom);
 
   if (error) {
+    if (isRateLimitedSearchError(error)) {
+      return (
+        <div className="border-border border-t px-6 py-16 text-center">
+          <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
+            Search temporarily limited
+          </div>
+          <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
+        </div>
+      );
+    }
+
     return (
       <div className="border-border border-t px-6 py-16 text-center">
         <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">

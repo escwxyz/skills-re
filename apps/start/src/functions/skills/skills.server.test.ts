@@ -10,6 +10,7 @@ import {
   fetchSkillsBrowseInitialPage,
   fetchSkillsBrowseMeta,
   fetchSkillsBrowsePagination,
+  fetchSkillsSearch,
   normalizeSkillsBrowseFilters,
   saveSkillToDashboard,
   resolveSkillBase,
@@ -27,6 +28,7 @@ type UnsaveSkillClient = Parameters<typeof unsaveSkillFromDashboard>[0]["client"
 
 type SkillsBrowseMetaClient = Parameters<typeof fetchSkillsBrowseMeta>[0]["client"];
 type SkillsBrowsePaginationClient = Parameters<typeof fetchSkillsBrowsePagination>[0]["client"];
+type SkillsSearchClient = Parameters<typeof fetchSkillsSearch>[0]["client"];
 
 describe("normalizeSkillsBrowseFilters", () => {
   test("trims inputs, deduplicates tags, and falls back to the default sort", () => {
@@ -248,6 +250,29 @@ describe("fetchSkillsBrowsePagination", () => {
         },
       },
     ]);
+  });
+});
+
+describe("fetchSkillsSearch", () => {
+  test("maps rate-limited search failures into a recoverable result", async () => {
+    const client = {
+      skills: {
+        search: () =>
+          Promise.reject(new Error("Search rate limit exceeded. Please try again in 42 seconds.")),
+      },
+    } satisfies SkillsSearchClient;
+
+    await expect(
+      fetchSkillsSearch({
+        client,
+        limit: 24,
+        query: "workflow",
+        rewriteQuery: true,
+      }),
+    ).resolves.toEqual({
+      message: "Search rate limit exceeded. Please try again in 42 seconds.",
+      status: "rate_limited",
+    });
   });
 });
 

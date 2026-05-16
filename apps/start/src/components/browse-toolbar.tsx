@@ -14,6 +14,7 @@ interface Props {
   activeFilterCount: number;
   filters: NormalizedSkillsBrowseFilters;
   filtersOpen: boolean;
+  searchDisabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
   isSearchMode: boolean;
   isSearching?: boolean;
@@ -29,6 +30,7 @@ export const BrowseToolbar = ({
   activeFilterCount,
   filters,
   filtersOpen,
+  searchDisabled,
   inputRef,
   isSearchMode,
   isSearching,
@@ -42,6 +44,7 @@ export const BrowseToolbar = ({
   <div className="sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] border-b border-border bg-paper/95 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]">
     <SkillsSearchField
       active={isSearchMode}
+      disabled={searchDisabled}
       inputRef={inputRef}
       isSearching={isSearching}
       onChange={onSearchChange}

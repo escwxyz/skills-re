@@ -6,7 +6,12 @@ import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-form";
 import { useAtom } from "jotai";
 
-import { isLoginDialogOpenAtom, loginDialogOnlyGithubAtom } from "@/atoms/app";
+import {
+  isLoginDialogOpenAtom,
+  loginDialogDescriptionAtom,
+  loginDialogOnlyGithubAtom,
+  loginDialogTitleAtom,
+} from "@/atoms/app";
 import { githubSubmitUrlSchema } from "@/lib/github-submit";
 import type { GithubSubmitInput } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
@@ -82,6 +87,8 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
   const [submitLocked, setSubmitLocked] = useState(false);
   const [, setLoginDialogOpen] = useAtom(isLoginDialogOpenAtom);
   const [, setLoginDialogOnlyGithub] = useAtom(loginDialogOnlyGithubAtom);
+  const [, setLoginDialogTitle] = useAtom(loginDialogTitleAtom);
+  const [, setLoginDialogDescription] = useAtom(loginDialogDescriptionAtom);
   const logBoxRef = useRef<HTMLDivElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -236,6 +243,8 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
 
             if (isRateLimitedError(error)) {
               setLoginDialogOnlyGithub(true);
+              setLoginDialogTitle("GitHub submission limit reached");
+              setLoginDialogDescription(errorMessage);
               setLoginDialogOpen(true);
             } else {
               console.error("Failed to submit GitHub repository", error);
