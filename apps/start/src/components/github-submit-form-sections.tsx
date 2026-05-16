@@ -68,7 +68,7 @@ export const GithubSubmitRepoUrlFieldRow = (props: {
           }
         }}
         placeholder={m.input_placeholder({})}
-        type="url"
+        type="text"
         value={props.value}
       />
       <Button

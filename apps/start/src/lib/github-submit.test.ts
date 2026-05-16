@@ -12,6 +12,24 @@ describe("github-submit", () => {
     });
   });
 
+  test("parses a repository shorthand and prefixes the GitHub URL", () => {
+    expect(githubSubmitUrlSchema.parse("openai/codex")).toEqual({
+      githubUrl: "https://github.com/openai/codex",
+      owner: "openai",
+      repo: "codex",
+    });
+  });
+
+  test("parses a repository shorthand with a skill root path", () => {
+    expect(githubSubmitUrlSchema.parse("openai/codex/tree/main/skills/code-review")).toEqual({
+      branch: "main",
+      githubUrl: "https://github.com/openai/codex/tree/main/skills/code-review",
+      owner: "openai",
+      repo: "codex",
+      skillRootPath: "skills/code-review",
+    });
+  });
+
   test("parses a tree URL into an optional skill root path", () => {
     expect(
       githubSubmitUrlSchema.parse("https://github.com/openai/codex/tree/main/skills/code-review"),
