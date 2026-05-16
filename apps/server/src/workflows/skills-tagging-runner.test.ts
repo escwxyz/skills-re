@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { runSkillsTaggingWorkflow } from "./skills-tagging-runner";
+import { createWorkflowStepStub } from "./test-support";
 
 const readSnapshotFileContent = () =>
   Promise.resolve({
@@ -10,6 +11,32 @@ const readSnapshotFileContent = () =>
   });
 
 describe("runSkillsTaggingWorkflow", () => {
+  test("runs the tagging pipeline inside a workflow step", async () => {
+    const stepNames: string[] = [];
+
+    await runSkillsTaggingWorkflow(
+      {
+        payload: {
+          skillIds: ["skill-1"],
+        },
+      },
+      {
+        runSkillsTaggingPipeline: () =>
+          Promise.resolve({
+            failedCount: 0,
+            updatedCount: 1,
+          }),
+      },
+      createWorkflowStepStub({
+        onDo: (name) => {
+          stepNames.push(name);
+        },
+      }) as never,
+    );
+
+    expect(stepNames).toEqual(["run-skills-tagging-pipeline"]);
+  });
+
   test("forwards the snapshot reader to the tagging pipeline", async () => {
     let forwardedSnapshotReader: unknown;
 

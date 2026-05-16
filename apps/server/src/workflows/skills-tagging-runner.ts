@@ -1,6 +1,7 @@
 import type { AiTaskRuntime } from "@skills-re/api/types";
 import type { RunSkillsTaggingPipelineOverrides } from "@skills-re/api/modules/tags/service";
 import { runSkillsTaggingPipeline } from "@skills-re/api/modules/tags/service";
+import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 
@@ -25,9 +26,14 @@ type CategorizationWorkflowScheduler = (input: { skillIds: string[] }) => Promis
   workId: string;
 }>;
 
+export interface WorkflowStep {
+  do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+}
+
 export const runSkillsTaggingWorkflow = async (
   event: Readonly<{ payload: SkillsTaggingWorkflowPayload }>,
   deps: RunSkillsTaggingWorkflowDeps = {},
+  step?: WorkflowStep,
 ): Promise<SkillsTaggingWorkflowResult> => {
   const { scheduleCategorization } = deps;
   if (event.payload.triggerCategorizationAfterTagging && !scheduleCategorization) {
@@ -37,17 +43,25 @@ export const runSkillsTaggingWorkflow = async (
   }
 
   const pipeline = deps.runSkillsTaggingPipeline ?? runSkillsTaggingPipeline;
-  const result = await pipeline(
-    {
-      skillIds: event.payload.skillIds,
-    },
-    deps.aiTasks,
-    deps.readSnapshotFileContent
-      ? {
-          readSnapshotFileContent: deps.readSnapshotFileContent,
-        }
-      : undefined,
-  );
+  const runPipeline = async () =>
+    await pipeline(
+      {
+        skillIds: event.payload.skillIds,
+      },
+      deps.aiTasks,
+      deps.readSnapshotFileContent
+        ? {
+            readSnapshotFileContent: deps.readSnapshotFileContent,
+          }
+        : undefined,
+    );
+  const result = step
+    ? await step.do(
+        "run-skills-tagging-pipeline",
+        workflowStepRetryPolicy.skillsTaggingPipeline,
+        runPipeline,
+      )
+    : await runPipeline();
 
   if (event.payload.triggerCategorizationAfterTagging) {
     const requiredScheduleCategorization = scheduleCategorization;

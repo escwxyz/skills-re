@@ -3,15 +3,20 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 
 import { asSkillId } from "@skills-re/db/utils";
 import { createAiSearchItemsRuntime } from "../ai-search";
+import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
 import { createGithubSnapshotHistoryHelpers } from "../github-history";
 import { createStaticAuditGithubRuntime } from "../static-audits-github";
 import { createSnapshotsHistoryRuntime } from "../snapshots-history";
 import { getSnapshotUploadWorkflowScheduler } from "./snapshot-upload";
+import { getSnapshotsArchiveUploadWorkflowScheduler } from "./snapshots-archive-upload";
 import { getSkillsTaggingWorkflowScheduler } from "./skills-tagging-scheduler";
 import { runSkillsUploadWorkflow } from "./skills-upload-runner";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SkillsUploadWorkflowPayload } from "./skills-upload";
-import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
+import {
+  createHistoricalSnapshotRunner,
+  createSnapshotsService,
+} from "@skills-re/api/modules/snapshots/service";
 import type { HistoricalSnapshotRunnerDeps } from "@skills-re/api/modules/snapshots/service";
 import {
   getSnapshotBySkillAndCommit,
@@ -31,7 +36,29 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
     const aiSearchItems = createAiSearchItemsRuntime(this.env as never) ?? undefined;
     const githubHistory = createGithubSnapshotHistoryHelpers(this.env);
     const staticAuditRuntime = createStaticAuditGithubRuntime(this.env);
+    const r2 = createSnapshotArchiveStorageRuntime(this.env);
     const snapshotUploadScheduler = getSnapshotUploadWorkflowScheduler(this.env);
+    const snapshotsService = createSnapshotsService({
+      deleteSnapshotFileObject: r2.deleteSnapshotFileObject,
+      getSnapshotById: async (snapshotId) => {
+        const { getSnapshotById } = await import("@skills-re/api/modules/snapshots/repo");
+        return await getSnapshotById(snapshotId);
+      },
+      getSnapshotStorageContext: async (snapshotId) => {
+        const { getSnapshotStorageContext } = await import("@skills-re/api/modules/snapshots/repo");
+        return await getSnapshotStorageContext(snapshotId);
+      },
+      listSnapshotFiles: async (snapshotId) => {
+        const { listSnapshotFiles } = await import("@skills-re/api/modules/snapshots/repo");
+        return await listSnapshotFiles(snapshotId);
+      },
+      putSnapshotFileObject: r2.putSnapshotFileObject,
+      snapshotArchiveUploadScheduler: getSnapshotsArchiveUploadWorkflowScheduler(this.env),
+      upsertSnapshotFiles: async (snapshotId, files) => {
+        const { upsertSnapshotFiles } = await import("@skills-re/api/modules/snapshots/repo");
+        await upsertSnapshotFiles(snapshotId, files);
+      },
+    });
     const snapshotHistory = createSnapshotsHistoryRuntime({
       createHistoricalSnapshot: createHistoricalSnapshotRunner({
         getSnapshotBySkillAndCommit: async (input: HistoricalGetSnapshotBySkillAndCommitInput) =>
@@ -61,6 +88,8 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
           scheduleSkillsTagging: getSkillsTaggingWorkflowScheduler(this.env),
           snapshotFilesBucket: this.env.SNAPSHOT_FILES,
           snapshotHistory,
+          runUploadSnapshotFilesPipeline: (input) =>
+            snapshotsService.runUploadSnapshotFilesPipeline(input),
           snapshotUploadScheduler,
         }),
       workflowName: "skills-re-v1-skills-upload",

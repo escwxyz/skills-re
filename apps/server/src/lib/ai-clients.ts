@@ -1,5 +1,5 @@
 import { createGeminiChat as createTanstackGeminiChat } from "@tanstack/ai-gemini";
-import type { GeminiTextModel } from "@tanstack/ai-gemini";
+import type { GeminiTextAdapter, GeminiTextModel } from "@tanstack/ai-gemini";
 
 export { createWorkersAiChat } from "@cloudflare/tanstack-ai/adapters/workers-ai";
 
@@ -53,7 +53,10 @@ const buildGeminiGatewayConfig = (config: GeminiGatewayConfig) => {
   };
 };
 
-export const createGeminiChat = (model: GeminiTextModel, config: GeminiGatewayConfig) => {
+export const createGeminiChat = (
+  model: GeminiTextModel,
+  config: GeminiGatewayConfig,
+): GeminiTextAdapter<GeminiTextModel> => {
   const gatewayConfig = buildGeminiGatewayConfig(config);
   return createTanstackGeminiChat(model, gatewayConfig.apiKey, {
     httpOptions: gatewayConfig.httpOptions,

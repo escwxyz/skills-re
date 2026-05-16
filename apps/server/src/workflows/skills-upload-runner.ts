@@ -64,6 +64,10 @@ export interface RunSkillsUploadWorkflowDeps {
   setSkillLatestSnapshot?: typeof setSkillLatestSnapshot;
   snapshotUploadScheduler?: SnapshotUploadScheduler | null;
   syncSkillTags?: typeof syncSkillTags;
+  runUploadSnapshotFilesPipeline?: (input: {
+    files: { content: string; path: string }[];
+    snapshotId: string;
+  }) => Promise<{ filesCount: number; snapshotId: string; workId?: string }>;
   dispatchStaticAuditWorkflow?: (targets: StaticAuditWorkflowTarget[]) => Promise<
     | {
         dispatched: false;
@@ -239,14 +243,20 @@ const processUploadSkill = async ({
   const upload = await step.do(
     `upload-skill-snapshot-files-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
-    async () =>
-      await (deps.uploadSnapshotFiles ?? uploadSnapshotFiles)(
-        {
-          files: skill.initialSnapshot.files,
-          snapshotId,
-        },
+    async () => {
+      const input = {
+        files: skill.initialSnapshot.files,
+        snapshotId,
+      };
+      if (deps.runUploadSnapshotFilesPipeline) {
+        return await deps.runUploadSnapshotFilesPipeline(input);
+      }
+
+      return await (deps.uploadSnapshotFiles ?? uploadSnapshotFiles)(
+        input,
         deps.snapshotUploadScheduler ?? null,
-      ),
+      );
+    },
   );
 
   await step.do(
@@ -341,7 +351,11 @@ const processUploadSkill = async ({
     },
   );
 
-  return { auditTarget, skillId, uploadWorkId: upload.workId };
+  return {
+    auditTarget,
+    skillId,
+    uploadWorkId: upload.workId ?? `snapshot-upload-${snapshotId}`,
+  };
 };
 
 const dispatchUploadStaticAudit = async ({

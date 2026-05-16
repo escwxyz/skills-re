@@ -35,11 +35,15 @@ export class SkillsTaggingWorkflow extends WorkflowEntrypoint<Env, SkillsTagging
       entrypoint: "SkillsTaggingWorkflow",
       instanceId: event.instanceId,
       run: () =>
-        runSkillsTaggingWorkflow(event, {
-          aiTasks,
-          readSnapshotFileContent: snapshotsService.readSnapshotFileContent,
-          scheduleCategorization,
-        }),
+        runSkillsTaggingWorkflow(
+          event,
+          {
+            aiTasks,
+            readSnapshotFileContent: snapshotsService.readSnapshotFileContent,
+            scheduleCategorization,
+          },
+          _step,
+        ),
       workflowName: "skills-re-v1-skills-tagging",
     });
   }

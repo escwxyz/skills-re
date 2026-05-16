@@ -19,6 +19,7 @@ describe("runSkillsUploadWorkflow", () => {
       deprecateSnapshotsBeyondLimit: [] as unknown[],
       ensureRepo: [] as unknown[],
       dispatchStaticAuditWorkflow: [] as unknown[],
+      runUploadSnapshotFilesPipeline: [] as unknown[],
       scheduleSkillsTagging: [] as unknown[],
       setSkillLatestSnapshot: [] as unknown[],
       syncSkillTags: [] as unknown[],
@@ -142,6 +143,14 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           });
         },
+        runUploadSnapshotFilesPipeline: (input: unknown) => {
+          calls.runUploadSnapshotFilesPipeline.push(input);
+          return Promise.resolve({
+            filesCount: 1,
+            snapshotId: "snapshot-1",
+            workId: "snapshot-upload-1",
+          });
+        },
         scheduleSkillsTagging: {
           enqueue: (input: unknown) => {
             calls.scheduleSkillsTagging.push(input);
@@ -242,7 +251,8 @@ describe("runSkillsUploadWorkflow", () => {
         version: "0.0.1",
       },
     ]);
-    expect(calls.uploadSnapshotFiles).toEqual([
+    expect(calls.uploadSnapshotFiles).toEqual([]);
+    expect(calls.runUploadSnapshotFilesPipeline).toEqual([
       {
         files: [
           {
