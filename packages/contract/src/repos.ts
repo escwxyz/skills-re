@@ -125,10 +125,33 @@ const repoStatsEnqueueContract = baseContract
     }),
   );
 
+const repoSkillsDiscoveryEnqueueContract = baseContract
+  .route({
+    description: "Enqueues a repository skill discovery workflow for content sync.",
+    method: "POST",
+    path: "/repos/enqueue-skills-discovery",
+    tags: ["Repos"],
+    successDescription: "Repository skill discovery enqueue result",
+    summary: "Enqueue repository skill discovery",
+  })
+  .input(
+    z.object({
+      expectedUpdatedAt: z.number().int().nonnegative().optional(),
+      repoName: z.string().min(1),
+      repoOwner: githubOwnerSchema,
+    }),
+  )
+  .output(
+    z.object({
+      workId: z.string(),
+    }),
+  );
+
 export const reposContract = {
   checkDuplicated: repoDuplicateContract,
   checkExisting: repoExistingContract,
   enqueueRepoStatsSync: repoStatsEnqueueContract,
+  enqueueRepoSkillsDiscovery: repoSkillsDiscoveryEnqueueContract,
   listByOwner: reposListByOwnerContract,
   listPage: reposListContract,
   syncStats: repoStatsSyncContract,

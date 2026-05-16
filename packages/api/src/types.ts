@@ -40,6 +40,14 @@ export interface RepoSnapshotSyncScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface RepoSkillsDiscoveryScheduler {
+  enqueue(input: {
+    expectedUpdatedAt?: number;
+    repoName: string;
+    repoOwner: string;
+  }): Promise<{ workId: string }>;
+}
+
 export interface SnapshotUploadScheduler {
   enqueue(input: {
     files: {
@@ -291,6 +299,7 @@ export interface Context {
     snapshotUpload?: SnapshotUploadScheduler;
     repoStatsSync?: RepoStatsSyncScheduler;
     repoSnapshotSync?: RepoSnapshotSyncScheduler;
+    repoSkillsDiscovery?: RepoSkillsDiscoveryScheduler;
     skillsUpload?: SkillsUploadScheduler;
     skillsTagging?: SkillsTaggingScheduler;
   };

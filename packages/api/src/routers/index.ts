@@ -373,6 +373,16 @@ export const appRouter = {
         return enqueueRepoStatsSync(scheduler, input);
       },
     ),
+    enqueueRepoSkillsDiscovery: adminProcedure.repos.enqueueRepoSkillsDiscovery.handler(
+      ({ input, context }) => {
+        const scheduler = context.workflowSchedulers?.repoSkillsDiscovery;
+        if (!scheduler) {
+          throw new ORPCError("SERVICE_UNAVAILABLE");
+        }
+
+        return scheduler.enqueue(input);
+      },
+    ),
   },
   snapshots: {
     getBySkillAndVersion: publicProcedure.snapshots.getBySkillAndVersion.handler(({ input }) =>

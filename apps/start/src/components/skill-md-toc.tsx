@@ -27,7 +27,7 @@ export const SkillMdToc = ({ items, scrollContainerRef }: Props) => {
       defaultValue={items[0]?.slug}
       offset={ACTIVE_OFFSET}
       scrollContainer={scrollContainer}
-      className="hidden self-start font-mono text-[11px] leading-8 tracking-wider lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:block"
+      className="hidden self-start font-mono text-[11px] leading-8 tracking-wider lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:block lg:max-h-[calc(100vh-var(--header-height)-3.5rem)] lg:overflow-y-auto"
     >
       <aside>
         <h6 className="text-muted-foreground mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em]">

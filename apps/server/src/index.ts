@@ -16,11 +16,15 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
+import { runScheduledJobs } from "./crons";
 import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
 
 export { AiSearchBackfillWorkflow } from "./workflows/ai-search-backfill-workflow";
+export { RepoSkillImportWorkflow } from "./workflows/repo-skill-import-workflow";
+export { RepoSkillSnapshotSyncWorkflow } from "./workflows/repo-skill-snapshot-sync-workflow";
+export { RepoSkillsDiscoveryWorkflow } from "./workflows/repo-skills-discovery-workflow";
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
@@ -231,6 +235,9 @@ const server = {
   async queue(batch: MessageBatch<unknown>, workerEnv: Env) {
     const logger = createWorkflowQueueLogger();
     await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv, logger);
+  },
+  scheduled(controller: ScheduledController, workerEnv: Env, executionContext: ExecutionContext) {
+    runScheduledJobs(controller, workerEnv, executionContext);
   },
 };
 

@@ -9,6 +9,7 @@ import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { createSnapshotsHistoryRuntime } from "./snapshots-history";
 import { getRepoStatsSyncWorkflowScheduler } from "./workflows/repo-stats";
+import { getRepoSkillsDiscoveryWorkflowScheduler } from "./workflows/repo-skills-discovery-scheduler";
 import { getSnapshotUploadWorkflowScheduler } from "./workflows/snapshot-upload";
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./workflows/snapshots-archive-upload";
 import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-scheduler";
@@ -122,6 +123,7 @@ async function createServerRuntime(
     snapshotStorage,
     workflowSchedulers: {
       repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
+      repoSkillsDiscovery: getRepoSkillsDiscoveryWorkflowScheduler(env) ?? undefined,
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,
       snapshotUpload: snapshotUploadScheduler ?? undefined,
       skillsTagging: getSkillsTaggingWorkflowScheduler(env) ?? undefined,

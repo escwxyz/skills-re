@@ -116,5 +116,6 @@ describe("repos contract", () => {
     expect(reposContract.updateStats).toBeDefined();
     expect(reposContract.syncStats).toBeDefined();
     expect(reposContract.enqueueRepoStatsSync).toBeDefined();
+    expect(reposContract.enqueueRepoSkillsDiscovery).toBeDefined();
   });
 });

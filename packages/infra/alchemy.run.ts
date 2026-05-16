@@ -138,6 +138,17 @@ const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_Q
   name: "skills-re-v1-repo-snapshot-sync-workflow",
 });
 
+const repoSkillImportWorkflowQueue = await Queue("REPO_SKILL_IMPORT_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-repo-skill-import-workflow",
+});
+
+const repoSkillSnapshotSyncWorkflowQueue = await Queue(
+  "REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW_QUEUE_V1",
+  {
+    name: "skills-re-v1-repo-skill-snapshot-sync-workflow",
+  },
+);
+
 const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-upload-workflow",
 });
@@ -190,6 +201,20 @@ const workflowQueueEventSources = [
   },
   {
     queue: repoStatsSyncWorkflowQueue,
+    settings: {
+      batchSize: 3,
+      maxWaitTimeMs: 2000,
+    },
+  },
+  {
+    queue: repoSkillImportWorkflowQueue,
+    settings: {
+      batchSize: 2,
+      maxWaitTimeMs: 2000,
+    },
+  },
+  {
+    queue: repoSkillSnapshotSyncWorkflowQueue,
     settings: {
       batchSize: 3,
       maxWaitTimeMs: 2000,
@@ -262,6 +287,18 @@ const workflowBindings = {
     className: "RepoSnapshotSyncWorkflow",
     workflowName: "skills-re-v1-repo-snapshot-sync",
   }),
+  REPO_SKILLS_DISCOVERY_WORKFLOW: Workflow("REPO_SKILLS_DISCOVERY_WORKFLOW", {
+    className: "RepoSkillsDiscoveryWorkflow",
+    workflowName: "skills-re-v1-repo-skills-discovery",
+  }),
+  REPO_SKILL_IMPORT_WORKFLOW: Workflow("REPO_SKILL_IMPORT_WORKFLOW", {
+    className: "RepoSkillImportWorkflow",
+    workflowName: "skills-re-v1-repo-skill-import",
+  }),
+  REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW: Workflow("REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW", {
+    className: "RepoSkillSnapshotSyncWorkflow",
+    workflowName: "skills-re-v1-repo-skill-snapshot-sync",
+  }),
   REPO_STATS_SYNC_WORKFLOW: Workflow("REPO_STATS_SYNC_WORKFLOW", {
     className: "RepoStatsSyncWorkflow",
     workflowName: "skills-re-v1-repo-sync",
@@ -293,6 +330,8 @@ const workflowBindings = {
 } as const;
 
 const workflowQueueBindings = {
+  REPO_SKILL_IMPORT_WORKFLOW_QUEUE: repoSkillImportWorkflowQueue,
+  REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSkillSnapshotSyncWorkflowQueue,
   REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSnapshotSyncWorkflowQueue,
   REPO_STATS_SYNC_WORKFLOW_QUEUE: repoStatsSyncWorkflowQueue,
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE: snapshotsArchiveUploadWorkflowQueue,
@@ -310,6 +349,12 @@ export const server = await Worker("server", {
   entrypoint: "src/index.ts",
   compatibility: "node",
   compatibilityDate: "2026-03-10",
+  crons: [
+    // Repo metadata sync only: stars, forks, and GitHub updatedAt.
+    "0 */6 * * *",
+    // Repo content discovery runs separately after metadata sync.
+    "15 */6 * * *",
+  ],
   bindings: {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,

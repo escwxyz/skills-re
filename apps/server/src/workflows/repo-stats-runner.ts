@@ -1,6 +1,5 @@
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import { reposService } from "@skills-re/api/modules/repos/service";
-import type { RepoSnapshotSyncScheduler } from "@skills-re/api/types";
 
 import type { RepoStatsSyncWorkflowPayload } from "./repo-stats";
 
@@ -12,68 +11,25 @@ export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
 }
 
+interface WorkflowScheduler<TPayload> {
+  enqueue(input: TPayload): Promise<{ workId: string }>;
+}
+
 export interface RepoStatsSyncWorkflowDeps {
-  snapshotSyncScheduler?: RepoSnapshotSyncScheduler | null;
   syncStats: typeof reposService.syncStats;
+  skillsDiscoveryScheduler?: WorkflowScheduler<{
+    expectedUpdatedAt?: number;
+    repoName: string;
+    repoOwner: string;
+  }> | null;
 }
 
 const DEFAULT_LIMIT = 20;
 const MAX_PAGES_PER_RUN = 25;
 
 const defaultDeps: RepoStatsSyncWorkflowDeps = {
-  snapshotSyncScheduler: null,
+  skillsDiscoveryScheduler: null,
   syncStats: reposService.syncStats,
-};
-
-const enqueueRepoSnapshotSyncBatch = async (
-  snapshotWorkflowScheduler: RepoSnapshotSyncScheduler,
-  changedRepos: {
-    repoOwner: string;
-    repoName: string;
-    updatedAt: number;
-  }[],
-) => {
-  const settled = await Promise.allSettled(
-    changedRepos.map((repo) =>
-      snapshotWorkflowScheduler.enqueue({
-        expectedUpdatedAt: repo.updatedAt,
-        repoName: repo.repoName,
-        repoOwner: repo.repoOwner,
-      }),
-    ),
-  );
-
-  const failed = settled
-    .map((item, index) => ({
-      item,
-      repo: changedRepos[index],
-    }))
-    .filter(
-      (
-        entry,
-      ): entry is {
-        item: PromiseRejectedResult;
-        repo: {
-          repoOwner: string;
-          repoName: string;
-          updatedAt: number;
-        };
-      } => entry.item.status === "rejected",
-    );
-
-  if (failed.length > 0) {
-    throw new Error(
-      [
-        "Failed to enqueue one or more repo snapshot sync jobs.",
-        ...failed.map(({ item, repo }) => {
-          const reason = String(item.reason);
-          return `- ${repo.repoOwner}/${repo.repoName}: ${reason}`;
-        }),
-      ].join("\n"),
-    );
-  }
-
-  return settled.filter((item) => item.status === "fulfilled").length;
 };
 
 const syncRepoStatsPage = (
@@ -86,6 +42,32 @@ const syncRepoStatsPage = (
     limit,
   });
 
+const scheduleDiscoveryJobs = async (
+  scheduler:
+    | WorkflowScheduler<{
+        expectedUpdatedAt?: number;
+        repoName: string;
+        repoOwner: string;
+      }>
+    | null
+    | undefined,
+  repos: { repoOwner: string; repoName: string; updatedAt: number }[],
+) => {
+  if (!scheduler || repos.length === 0) {
+    return 0;
+  }
+  await Promise.all(
+    repos.map((repo) =>
+      scheduler.enqueue({
+        expectedUpdatedAt: repo.updatedAt,
+        repoName: repo.repoName,
+        repoOwner: repo.repoOwner,
+      }),
+    ),
+  );
+  return repos.length;
+};
+
 export const runRepoStatsSyncWorkflow = async (
   event: Readonly<WorkflowEvent<RepoStatsSyncWorkflowPayload>>,
   step: WorkflowStep,
@@ -95,19 +77,15 @@ export const runRepoStatsSyncWorkflow = async (
     ...defaultDeps,
     ...deps,
   };
-  const snapshotWorkflowScheduler = activeDeps.snapshotSyncScheduler;
-  if (!snapshotWorkflowScheduler) {
-    throw new Error("Repo snapshot sync scheduler is unavailable.");
-  }
   const limit = Math.max(1, Math.min(event.payload.limit ?? DEFAULT_LIMIT, 20));
   let { cursor } = event.payload;
   let processedPages = 0;
+  let completedEarly = false;
   const changed: {
     repoOwner: string;
     repoName: string;
     updatedAt: number;
   }[] = [];
-  let scheduledSnapshotSyncCount = 0;
 
   while (processedPages < MAX_PAGES_PER_RUN) {
     const currentCursor = cursor;
@@ -118,43 +96,41 @@ export const runRepoStatsSyncWorkflow = async (
     );
 
     processedPages += 1;
+
     if (!result) {
-      return {
-        changedCount: changed.length,
-        continueCursor: "",
-        processedPages,
-        status: "completed",
-      } as const;
+      completedEarly = true;
+      break;
     }
 
     changed.push(...result.changed);
-    if (result.changed.length > 0) {
-      const scheduled = await step.do(
-        `enqueue-repo-snapshot-sync-${processedPages}`,
-        workflowStepRetryPolicy.repoSnapshotEnqueue,
-        () => enqueueRepoSnapshotSyncBatch(snapshotWorkflowScheduler, result.changed),
-      );
-      scheduledSnapshotSyncCount += scheduled;
-    }
 
     if (result.isDone || !result.continueCursor) {
-      return {
-        changedCount: changed.length,
-        continueCursor: "",
-        processedPages,
-        scheduledSnapshotSyncCount,
-        status: "completed",
-      } as const;
+      completedEarly = true;
+      break;
     }
 
     cursor = result.continueCursor;
+  }
+
+  await step.do(
+    "enqueue-content-sync-jobs",
+    workflowStepRetryPolicy.repoSkillsDiscoveryFanout,
+    () => scheduleDiscoveryJobs(activeDeps.skillsDiscoveryScheduler, changed),
+  );
+
+  if (completedEarly) {
+    return {
+      changedCount: changed.length,
+      continueCursor: "",
+      processedPages,
+      status: "completed",
+    } as const;
   }
 
   return {
     changedCount: changed.length,
     continueCursor: cursor ?? "",
     processedPages,
-    scheduledSnapshotSyncCount,
     status: "partial",
   } as const;
 };
