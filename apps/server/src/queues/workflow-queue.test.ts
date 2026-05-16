@@ -99,6 +99,101 @@ describe("processWorkflowQueueBatch", () => {
     expect(acked).toBe(true);
   });
 
+  test("starts repo skill fan-out workflows from queue messages", async () => {
+    const created: { binding: string; id: string; params: unknown }[] = [];
+    const acked: string[] = [];
+
+    await processWorkflowQueueBatch(
+      {
+        messages: [
+          {
+            ack() {
+              acked.push("import");
+            },
+            body: {
+              kind: "repo-skill-import",
+              payload: {
+                repoName: "skills",
+                repoOwner: "acme",
+                skillRootPath: "skills/new",
+              },
+              workflowId: "repo-skill-import-1",
+            },
+            retry() {
+              throw new Error("should not retry import");
+            },
+          },
+          {
+            ack() {
+              acked.push("snapshot");
+            },
+            body: {
+              kind: "repo-skill-snapshot-sync",
+              payload: {
+                expectedHeadSha: "head-sha",
+                repoName: "skills",
+                repoOwner: "acme",
+                skillId: "skill-1",
+                skillRootPath: "skills/existing",
+              },
+              workflowId: "repo-skill-snapshot-sync-1",
+            },
+            retry() {
+              throw new Error("should not retry snapshot");
+            },
+          },
+        ],
+      } as never,
+      {
+        REPO_SKILL_IMPORT_WORKFLOW: {
+          create({ id, params }: { id: string; params: unknown }) {
+            created.push({ binding: "import", id, params });
+            return Promise.resolve({ id });
+          },
+        },
+        REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW: {
+          create({ id, params }: { id: string; params: unknown }) {
+            created.push({ binding: "snapshot", id, params });
+            return Promise.resolve({ id });
+          },
+        },
+      } as never,
+      {
+        error() {},
+        info() {},
+        warn() {},
+        debug() {},
+        child() {
+          return this;
+        },
+      } as never,
+    );
+
+    expect(acked).toEqual(["import", "snapshot"]);
+    expect(created).toEqual([
+      {
+        binding: "import",
+        id: "repo-skill-import-1",
+        params: {
+          repoName: "skills",
+          repoOwner: "acme",
+          skillRootPath: "skills/new",
+        },
+      },
+      {
+        binding: "snapshot",
+        id: "repo-skill-snapshot-sync-1",
+        params: {
+          expectedHeadSha: "head-sha",
+          repoName: "skills",
+          repoOwner: "acme",
+          skillId: "skill-1",
+          skillRootPath: "skills/existing",
+        },
+      },
+    ]);
+  });
+
   test("rejects legacy inline skills-upload queue messages", async () => {
     let acked = false;
     let createCalled = false;

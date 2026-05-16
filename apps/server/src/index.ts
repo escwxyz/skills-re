@@ -21,6 +21,9 @@ import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limite
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
 
 export { AiSearchBackfillWorkflow } from "./workflows/ai-search-backfill-workflow";
+export { RepoSkillImportWorkflow } from "./workflows/repo-skill-import-workflow";
+export { RepoSkillSnapshotSyncWorkflow } from "./workflows/repo-skill-snapshot-sync-workflow";
+export { RepoSkillsDiscoveryWorkflow } from "./workflows/repo-skills-discovery-workflow";
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";

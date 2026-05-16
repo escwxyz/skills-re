@@ -3,15 +3,12 @@
 import { describe, expect, test } from "bun:test";
 
 import type { RepoStatsSyncSchedulerInput } from "@skills-re/api/modules/repos/service";
-import type { RepoSnapshotSyncScheduler } from "@skills-re/api/types";
-
 import { runRepoStatsSyncWorkflow } from "./repo-stats-runner";
 import { createWorkflowStepStub } from "./test-support";
 
 describe("runRepoStatsSyncWorkflow", () => {
-  test("schedules repo snapshot sync for changed repos", async () => {
+  test("syncs repository metadata without scheduling skill snapshot sync", async () => {
     const syncStatsCalls: RepoStatsSyncSchedulerInput[] = [];
-    const snapshotSyncCalls: Parameters<RepoSnapshotSyncScheduler["enqueue"]>[0][] = [];
 
     const result = await runRepoStatsSyncWorkflow(
       {
@@ -36,79 +33,47 @@ describe("runRepoStatsSyncWorkflow", () => {
             isDone: true,
           });
         },
-        snapshotSyncScheduler: {
-          enqueue: (input) => {
-            snapshotSyncCalls.push({ ...input });
-            return Promise.resolve({ workId: "snapshot-sync-1" });
-          },
-        },
       },
     );
 
     expect(syncStatsCalls).toEqual([{ cursor: "cursor-1", limit: 5 }]);
-    expect(snapshotSyncCalls).toEqual([
-      {
-        expectedUpdatedAt: 123,
-        repoName: "skills",
-        repoOwner: "acme",
-      },
-    ]);
     expect(result).toEqual({
       changedCount: 1,
       continueCursor: "",
       processedPages: 1,
-      scheduledSnapshotSyncCount: 1,
       status: "completed",
     });
   });
 
-  test("fails when snapshot enqueue rejects", async () => {
-    const syncStatsCalls: RepoStatsSyncSchedulerInput[] = [];
-    const snapshotSyncCalls: Parameters<RepoSnapshotSyncScheduler["enqueue"]>[0][] = [];
-
-    await expect(
-      runRepoStatsSyncWorkflow(
-        {
-          payload: {
-            cursor: "cursor-1",
-            limit: 5,
-          },
-        } as never,
-        createWorkflowStepStub() as never,
-        {
-          syncStats: (input) => {
-            syncStatsCalls.push(input ?? {});
-            return Promise.resolve({
-              changed: [
-                {
-                  repoName: "skills",
-                  repoOwner: "acme",
-                  updatedAt: 123,
-                },
-              ],
-              continueCursor: "cursor-2",
-              isDone: true,
-            });
-          },
-          snapshotSyncScheduler: {
-            enqueue: (input) => {
-              snapshotSyncCalls.push({ ...input });
-              return Promise.reject(new Error("boom"));
-            },
-          },
+  test("returns a continuation cursor without scheduling content sync work", async () => {
+    const result = await runRepoStatsSyncWorkflow(
+      {
+        payload: {
+          limit: 1,
         },
-      ),
-    ).rejects.toThrow(
-      "Failed to enqueue one or more repo snapshot sync jobs.\n- acme/skills: Error: boom",
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        syncStats: () =>
+          Promise.resolve({
+            changed: [
+              {
+                repoName: "skills",
+                repoOwner: "acme",
+                updatedAt: 123,
+              },
+            ],
+            continueCursor: "cursor-next",
+            isDone: false,
+          }),
+      },
     );
 
-    expect(syncStatsCalls).toEqual([{ cursor: "cursor-1", limit: 5 }]);
-    expect(snapshotSyncCalls).toEqual([
-      {
-        expectedUpdatedAt: 123,
-        repoName: "skills",
-        repoOwner: "acme",
-      },
-    ]);
+    expect(result).toEqual({
+      changedCount: 25,
+      continueCursor: "cursor-next",
+      processedPages: 25,
+      status: "partial",
+    });
   });
 });

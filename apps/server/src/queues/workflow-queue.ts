@@ -1,4 +1,8 @@
 import type { RepoStatsSyncWorkflowPayload } from "../workflows/repo-stats";
+import type {
+  RepoSkillImportWorkflowPayload,
+  RepoSkillSnapshotSyncWorkflowPayload,
+} from "../workflows/repo-skills-discovery";
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
 import type { WorkerLogger } from "../worker-logger";
@@ -46,6 +50,16 @@ export type WorkflowQueueMessage =
       workflowId: string;
     }
   | {
+      kind: "repo-skill-import";
+      payload: RepoSkillImportWorkflowPayload;
+      workflowId: string;
+    }
+  | {
+      kind: "repo-skill-snapshot-sync";
+      payload: RepoSkillSnapshotSyncWorkflowPayload;
+      workflowId: string;
+    }
+  | {
       kind: "repo-snapshot-sync";
       payload: RepoSnapshotSyncWorkflowPayload;
       workflowId: string;
@@ -83,6 +97,8 @@ export type WorkflowQueueMessage =
 
 export type WorkflowQueueEnv = Env & {
   EVALUATION_WORKFLOW?: WorkflowCreateBinding<EvaluationWorkflowPayload>;
+  REPO_SKILL_IMPORT_WORKFLOW?: WorkflowCreateBinding<RepoSkillImportWorkflowPayload>;
+  REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoSkillSnapshotSyncWorkflowPayload>;
   REPO_SNAPSHOT_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoSnapshotSyncWorkflowPayload>;
   REPO_STATS_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoStatsSyncWorkflowPayload>;
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotArchiveUploadWorkflowPayload>;
@@ -144,6 +160,24 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
   if (value.kind === "snapshot-upload" || value.kind === "skills-upload") {
     return typeof (value.payload as Record<string, unknown>).stagingKey === "string";
   }
+  if (value.kind === "repo-skill-import") {
+    const payload = value.payload as Record<string, unknown>;
+    return (
+      typeof payload.repoName === "string" &&
+      typeof payload.repoOwner === "string" &&
+      typeof payload.skillRootPath === "string"
+    );
+  }
+  if (value.kind === "repo-skill-snapshot-sync") {
+    const payload = value.payload as Record<string, unknown>;
+    return (
+      typeof payload.expectedHeadSha === "string" &&
+      typeof payload.repoName === "string" &&
+      typeof payload.repoOwner === "string" &&
+      typeof payload.skillId === "string" &&
+      typeof payload.skillRootPath === "string"
+    );
+  }
   return (
     value.kind === "evaluation" ||
     value.kind === "repo-snapshot-sync" ||
@@ -168,6 +202,12 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
     }
     case "repo-snapshot-sync": {
       return "skills-re-v1-repo-snapshot-sync";
+    }
+    case "repo-skill-import": {
+      return "skills-re-v1-repo-skill-import";
+    }
+    case "repo-skill-snapshot-sync": {
+      return "skills-re-v1-repo-skill-snapshot-sync";
     }
     case "repo-stats-sync": {
       return "skills-re-v1-repo-stats-sync";
@@ -218,6 +258,26 @@ const startWorkflowFromQueueMessage = async (
       await getWorkflowBinding<RepoSnapshotSyncWorkflowPayload>(
         env,
         "REPO_SNAPSHOT_SYNC_WORKFLOW",
+      ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
+    case "repo-skill-import": {
+      await getWorkflowBinding<RepoSkillImportWorkflowPayload>(
+        env,
+        "REPO_SKILL_IMPORT_WORKFLOW",
+      ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
+    case "repo-skill-snapshot-sync": {
+      await getWorkflowBinding<RepoSkillSnapshotSyncWorkflowPayload>(
+        env,
+        "REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW",
       ).create({
         id: message.workflowId,
         params: message.payload,

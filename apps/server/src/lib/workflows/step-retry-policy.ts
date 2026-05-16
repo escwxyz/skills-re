@@ -35,6 +35,26 @@ export const workflowStepRetryPolicy = {
     limit: 3,
     timeout: "5 minutes",
   }),
+  repoSkillsDiscovery: buildStepConfig({
+    delay: "15 seconds",
+    limit: 3,
+    timeout: "3 minutes",
+  }),
+  repoSkillsDiscoveryFanout: buildStepConfig({
+    delay: "10 seconds",
+    limit: 3,
+    timeout: "90 seconds",
+  }),
+  repoSkillImport: buildStepConfig({
+    delay: "15 seconds",
+    limit: 3,
+    timeout: "3 minutes",
+  }),
+  repoSkillSnapshotSync: buildStepConfig({
+    delay: "20 seconds",
+    limit: 3,
+    timeout: "5 minutes",
+  }),
   repoSyncPage: buildStepConfig({
     delay: "15 seconds",
     limit: 3,
