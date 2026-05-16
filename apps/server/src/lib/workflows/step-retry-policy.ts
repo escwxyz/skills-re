@@ -65,6 +65,11 @@ export const workflowStepRetryPolicy = {
     limit: 3,
     timeout: "10 minutes",
   }),
+  skillsUploadFiles: buildStepConfig({
+    delay: "10 seconds",
+    limit: 1,
+    timeout: "10 minutes",
+  }),
   snapshotArchiveUpload: buildStepConfig({
     delay: "10 seconds",
     limit: 3,

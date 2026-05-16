@@ -98,6 +98,7 @@ const buildSubmitSkill = async (
       tree: snapshotHelpers.buildSkillTreeEntries(tree, root.skillRootPath),
     },
     license: overview.repo.licenseName ?? undefined,
+    preferredVersion: frontmatter.metadata?.["version"],
     slug: frontmatter.name,
     sourceLocator: `github:${input.owner}/${input.repo}/${root.skillMdPath}`,
     sourceType: "github" as const,

@@ -248,7 +248,7 @@ describe("runSkillsUploadWorkflow", () => {
         sourceCommitSha: "commit-1",
         sourceCommitUrl: "https://github.com/acme/skills/commit/commit-1",
         syncTime: expect.any(Number),
-        version: "0.0.1",
+        version: "1.0.0",
       },
     ]);
     expect(calls.uploadSnapshotFiles).toEqual([]);
@@ -272,7 +272,7 @@ describe("runSkillsUploadWorkflow", () => {
         skillId: "skill-1",
         snapshotId: "snapshot-1",
         syncTime: expect.any(Number),
-        version: "0.0.1",
+        version: "1.0.0",
       },
     ]);
     expect(calls.syncSkillTags).toEqual([
@@ -296,7 +296,7 @@ describe("runSkillsUploadWorkflow", () => {
           repoName: "skills",
           skillId: "skill-1",
           skillSlug: "widget",
-          version: "0.0.1",
+          version: "1.0.0",
         },
       },
     ]);

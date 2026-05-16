@@ -210,7 +210,7 @@ const processUploadSkill = async ({
       }),
   );
 
-  const snapshotVersion = skill.preferredVersion ?? "0.0.1";
+  const snapshotVersion = skill.preferredVersion ?? "1.0.0";
   const snapshotId = await step.do(
     `create-upload-snapshot-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
@@ -244,7 +244,7 @@ const processUploadSkill = async ({
 
   const upload = await step.do(
     `upload-skill-snapshot-files-${skillIndex}`,
-    workflowStepRetryPolicy.skillsUploadPipeline,
+    workflowStepRetryPolicy.skillsUploadFiles,
     async () => {
       const input = {
         files: skill.initialSnapshot.files,
@@ -325,7 +325,7 @@ const processUploadSkill = async ({
           repoName,
           skillId,
           skillSlug: slug,
-          version: skill.preferredVersion ?? "0.0.1",
+          version: skill.preferredVersion ?? "1.0.0",
         });
         return id;
       } catch (error) {
