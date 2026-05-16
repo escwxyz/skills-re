@@ -298,7 +298,9 @@ describe("fetchSkillFileContent", () => {
     });
 
     expect(result.rawContent).toContain("name: Example");
-    expect(result.tocItems).toEqual([{ slug: "getting-started", title: "Getting Started" }]);
+    expect(result.tocItems).toEqual([
+      { depth: 2, slug: "getting-started", title: "Getting Started" },
+    ]);
     expect(result.html).not.toContain("name: Example");
     expect(result.html).toContain('<h2 id="getting-started" tabindex="-1">Getting Started</h2>');
   });

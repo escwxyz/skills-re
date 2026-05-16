@@ -26,9 +26,9 @@ description: Example
 `);
 
     expect(parsed.tocItems).toEqual([
-      { slug: "getting-started", title: "Getting Started" },
-      { slug: "getting-started-2", title: "Getting Started" },
-      { slug: "whats-new", title: "What's New?" },
+      { depth: 2, slug: "getting-started", title: "Getting Started" },
+      { depth: 3, slug: "getting-started-2", title: "Getting Started" },
+      { depth: 2, slug: "whats-new", title: "What's New?" },
     ]);
   });
 
@@ -94,6 +94,8 @@ description: Example
 ~~~
 `);
 
-    expect(parsed.tocItems).toEqual([{ slug: "visible-heading", title: "Visible Heading" }]);
+    expect(parsed.tocItems).toEqual([
+      { depth: 2, slug: "visible-heading", title: "Visible Heading" },
+    ]);
   });
 });

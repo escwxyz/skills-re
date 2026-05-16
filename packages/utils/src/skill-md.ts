@@ -339,7 +339,10 @@ export const parseSkillMarkdownDocument = (source: string) => {
     }
 
     const headingMatch = line.match(/^(#{2,6})\s+(.+?)(?:\s+#+\s*)?$/);
-    const title = headingMatch?.[2]?.trim();
+    if (!headingMatch || !headingMatch[1]) {
+      continue;
+    }
+    const title = headingMatch[2]?.trim();
 
     if (!title) {
       continue;
