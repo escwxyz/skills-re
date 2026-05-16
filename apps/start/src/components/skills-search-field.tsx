@@ -56,6 +56,11 @@ export const SkillsSearchField = ({
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         onFocus={onFocus}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            onClear();
+          }
+        }}
         placeholder={m.skills_browse_controls_search_placeholder()}
         type="search"
         value={value}
@@ -67,7 +72,6 @@ export const SkillsSearchField = ({
         <Button
           aria-label="Clear search"
           className="h-full w-(--header-height) rounded-none border-l border-border"
-          disabled={disabled}
           onClick={onClear}
           size="icon-sm"
           type="button"
