@@ -42,6 +42,7 @@
     "cmdk": "^1.1.1",
     "diff": "^9.0.0",
     "dotenv": "catalog:",
+    "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "jotai": "^2.19.1",
     "markdown-it-anchor": "^9.2.0",

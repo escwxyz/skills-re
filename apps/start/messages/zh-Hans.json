@@ -637,6 +637,8 @@
   "skill_activity_metrics_updated": "更新时间",
   "skill_detail_no_tags": "暂无标签",
   "skill_detail_performance_metrics": "性能指标",
+  "skill_detail_related_skills": "相关 Skills",
+  "skill_detail_related_skills_subtitle": "§ 调用图上的邻居",
   "skill_detail_review_tab": "评论",
   "skill_detail_snapshot_actions": "快照操作",
   "skill_detail_static_audit": "静态审计",

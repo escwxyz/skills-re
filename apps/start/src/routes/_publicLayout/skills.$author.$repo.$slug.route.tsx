@@ -25,6 +25,7 @@ import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
 import { ReviewRatingTrigger } from "@/components/review-rating-trigger";
+import { SkillRelated } from "@/components/skill-related";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { WriteReviewDialog } from "@/components/write-review-cta";
@@ -205,6 +206,7 @@ function RouteComponent() {
       <div>
         <Outlet />
       </div>
+      <SkillRelated primaryCategory={skill.primaryCategory} skillId={skill.id} tags={skill.tags} />
       <WriteReviewDialog />
     </>
   );

@@ -8,7 +8,7 @@ export type BrowseSort =
   | "downloads-all-time"
   | "stars";
 
-export const DEFAULT_BROWSE_SORT: BrowseSort = "downloads-all-time";
+export const DEFAULT_BROWSE_SORT: BrowseSort = "newest";
 export const SKILLS_BROWSE_PAGE_SIZE = 24;
 
 const SORT_SEQUENCE: BrowseSort[] = [

@@ -638,6 +638,8 @@
   "skill_activity_metrics_updated": "Updated",
   "skill_detail_no_tags": "No tags",
   "skill_detail_performance_metrics": "Performance Metrics",
+  "skill_detail_related_skills": "Related Skills",
+  "skill_detail_related_skills_subtitle": "§ Neighbors on the Call Graph",
   "skill_detail_review_tab": "Reviews",
   "skill_detail_snapshot_actions": "Snapshot Actions",
   "skill_detail_static_audit": "Static Audit",

@@ -4,6 +4,7 @@ import { getLocale } from "@/paraglide/runtime";
 import { getCategoryTitle } from "@/utils/category-data";
 import { formatCompactNumber } from "@/utils/format";
 import type { BrowseSkillItem } from "@/utils/types";
+import { StarIcon } from "@phosphor-icons/react";
 
 import { Link } from "@tanstack/react-router";
 
@@ -82,8 +83,8 @@ const SkillCardFooter = ({
 
     <div className="text-muted-foreground flex shrink-0 items-center gap-3 font-mono text-[10px] tracking-widest uppercase">
       {starsLabel ? (
-        <span>
-          ★ <b className="text-foreground font-medium">{starsLabel}</b>
+        <span className="flex items-center gap-1">
+          <StarIcon /> <b className="text-foreground font-medium">{starsLabel}</b>
         </span>
       ) : null}
       {typeof overallScore === "number" ? (
@@ -119,14 +120,14 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
       }}
       className="border-border hover:bg-muted flex h-full flex-col border-b border-r p-5 transition-colors"
     >
-      <div className="text-muted-foreground mb-3 flex items-center justify-between font-mono text-[10px] tracking-[.14em] uppercase">
+      <div className="text-muted-foreground mb-3 flex items-center justify-between font-mono text-[10px] uppercase">
         <span>{categoryLabel}</span>
         {badgeLabel ? <span>{badgeLabel}</span> : null}
       </div>
 
-      <h4 className="font-display mb-2 text-[22px] leading-[1.1] font-normal">{skill.title}</h4>
+      <h4 className="font-display mb-2 text-2xl font-normal">{skill.title}</h4>
 
-      <p className="text-muted-foreground mb-4 line-clamp-3 font-serif text-[13px] leading-normal">
+      <p className="text-muted-foreground mb-4 line-clamp-3 font-serif text-xs leading-normal">
         {skill.description}
       </p>
 

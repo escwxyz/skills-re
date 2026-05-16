@@ -638,6 +638,8 @@
   "skill_activity_metrics_updated": "Aktualisiert",
   "skill_detail_no_tags": "Keine Tags",
   "skill_detail_performance_metrics": "Leistungsmetriken",
+  "skill_detail_related_skills": "Verwandte Skills",
+  "skill_detail_related_skills_subtitle": "§ Nachbarn im Aufrufgraph",
   "skill_detail_review_tab": "Bewertungen",
   "skill_detail_snapshot_actions": "Snapshot-Aktionen",
   "skill_detail_static_audit": "Statische Prüfung",

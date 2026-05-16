@@ -11,6 +11,8 @@ import { skillsViewModeAtom } from "@/atoms/app";
 import { BrowseSkillList } from "@/components/browse-skill-list";
 import { LoadMore } from "@/components/load-more";
 import { SkillCardBrowse } from "@/components/skill-card-browse";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { getSkillsBrowseInitialPage } from "@/functions/skills/get-skills-browse-initial-page";
 import { getSkillsBrowsePagination } from "@/functions/skills/get-skills-browse-pagination";
 import type { NormalizedSkillsBrowseFilters, SkillsBrowsePageSlice } from "@/utils/browse";
@@ -76,9 +78,35 @@ export const BrowseSkillsGrid = ({
   }, [items.length, onResultsCountChange]);
 
   if (isLoading) {
+    const gridCols = getGridCols(sidebarOpen, viewMode);
+
+    if (viewMode === "list") {
+      return (
+        <div className="border-border border-t border-l">
+          <div className="space-y-4 p-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-12 w-12 shrink-0 rounded-sm" />
+                <div className="flex-1">
+                  <Skeleton className="h-3 w-1/3 mb-2" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="border-border border-t border-l px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-text">
-        TODO: skeleton
+      <div className={cn("border-border grid border-t border-l", gridCols)}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="border-r border-b border-border p-5">
+            <Skeleton className="h-36 w-full mb-3" />
+            <Skeleton className="h-3 w-3/4 mb-2" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -86,7 +114,16 @@ export const BrowseSkillsGrid = ({
   if (hasError) {
     return (
       <div className="border-border border-t border-l px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase text-destructive">
-        Something went wrong while loading skills.
+        <div className="mb-2">{m.dashboard_skills_failed()}</div>
+        <div className="text-muted-text">{m.dashboard_skills_failed_description()}</div>
+        <div className="mt-4">
+          <Button onClick={() => query.refetch()}>{m.error_component_try_again_later()}</Button>
+        </div>
+        {query.error ? (
+          <pre className="mt-3 text-left text-xs text-destructive/80 max-w-3xl mx-auto whitespace-pre-wrap">
+            {String(query.error?.message)}
+          </pre>
+        ) : null}
       </div>
     );
   }
