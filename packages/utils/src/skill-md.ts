@@ -10,6 +10,7 @@ export interface SkillFrontmatterData {
 }
 
 export interface SkillTocItem {
+  depth: number;
   slug: string;
   title: string;
 }
@@ -345,6 +346,7 @@ export const parseSkillMarkdownDocument = (source: string) => {
     }
 
     tocItems.push({
+      depth: headingMatch[1].length,
       slug: createUniqueHeadingSlug(title, headingCounts),
       title,
     });

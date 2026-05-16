@@ -35,12 +35,14 @@ export const SkillMdToc = ({ items, scrollContainerRef }: Props) => {
         </h6>
         <ul className="space-y-0.5">
           {items.map((item) => (
-            <li key={item.slug}>
+            <li key={item.slug} style={{ paddingLeft: `${(item.depth - 2) * 12}px` }}>
               <ScrollSpyLink
                 className={[
                   "block transition-colors",
-                  "text-ink-2 hover:text-ink",
-                  "data-[state=active]:-ml-3 data-[state=active]:border-l-2 data-[state=active]:border-ink data-[state=active]:pl-2.5 data-[state=active]:text-ink",
+                  item.depth === 2
+                    ? "font-medium text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground/60 hover:text-muted-foreground",
+                  "data-[state=active]:-ml-3 data-[state=active]:border-l-2 data-[state=active]:border-foreground data-[state=active]:pl-2.5 data-[state=active]:text-foreground",
                 ].join(" ")}
                 href={`#${item.slug}`}
                 value={item.slug}
