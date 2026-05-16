@@ -588,16 +588,29 @@ export async function buildAiSearchResult(input: {
   resolveSkillByPath: (candidate: SkillPathCandidate) => Promise<SearchSkillRow | null>;
   resolveSkillBySlug: (slug: string) => Promise<AiSearchResolvedSkillRow | null>;
 }): Promise<AiSearchResult> {
+  console.log("[buildAiSearchResult] raw input:", JSON.stringify(input.raw, null, 2));
+
   const { pathCandidates, slugCandidates } = collectSkillResolutionCandidates(input.raw);
   const aiRows = extractAiRows(input.raw);
 
+  console.log("[buildAiSearchResult] pathCandidates:", JSON.stringify(pathCandidates));
+  console.log("[buildAiSearchResult] slugCandidates:", JSON.stringify(slugCandidates));
+  console.log("[buildAiSearchResult] aiRows:", JSON.stringify(aiRows));
+
   // Primary: resolve by skillId from item metadata (built-in storage items carry this).
   const skillIdCandidates = [...new Set(aiRows.map((r) => r.skillId).filter(isDefined))];
+  console.log("[buildAiSearchResult] skillIdCandidates:", JSON.stringify(skillIdCandidates));
   const resolvedByIdResults = input.resolveSkillById
     ? await Promise.all(skillIdCandidates.map((id) => input.resolveSkillById?.(id)))
     : [];
   const resolvedById = resolvedByIdResults.filter(isDefined);
   const shouldRunFallback = resolvedById.length < Math.min(24, getAiSearchResultCount(input.raw));
+  console.log(
+    "[buildAiSearchResult] resolvedById:",
+    resolvedById.length,
+    "shouldRunFallback:",
+    shouldRunFallback,
+  );
 
   // Fallback: resolve by path / slug (legacy R2-sourced items, transition period).
   const seenSkillIds = new Set(resolvedById.map((skill) => skill.id));
@@ -627,6 +640,14 @@ export async function buildAiSearchResult(input: {
     .filter((skill): skill is AiSearchResolvedSkillRow => !seenSkillIds.has(skill.id));
 
   const resolvedSkills = [...resolvedById, ...resolvedByPath, ...resolvedBySlug].slice(0, 24);
+  console.log(
+    "[buildAiSearchResult] resolvedByPath:",
+    resolvedByPath.length,
+    "resolvedBySlug:",
+    resolvedBySlug.length,
+    "total resolvedSkills:",
+    resolvedSkills.length,
+  );
 
   return {
     ai: {

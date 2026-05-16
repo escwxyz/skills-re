@@ -8,6 +8,7 @@ export default defineConfig({
     "apps/start/src/routeTree.gen.ts",
     ".agents/**",
     ".claude/**",
+    ".codex/*",
     // "*.test.ts",
   ],
 });

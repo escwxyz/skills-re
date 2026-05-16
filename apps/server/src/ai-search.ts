@@ -77,10 +77,14 @@ export function createAiSearchRuntime(env: AiSearchRuntimeEnv & Env): AiSearchRu
       const rewriteQuery = input.rewriteQuery ?? true;
       const model = env.AI_SEARCH_MODEL?.trim() || undefined;
 
-      return (await binding.search({
+      const result = (await binding.search({
         ai_search_options: buildSearchOptions(rewriteQuery, model),
         query: input.query,
       })) as AiSearchRuntimeResult;
+
+      console.log("[ai-search] raw binding result:", JSON.stringify(result, null, 2));
+
+      return result;
     },
   };
 }
