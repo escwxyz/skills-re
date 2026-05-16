@@ -7,6 +7,7 @@ import { BrowseSortDropdown } from "@/components/browse-sort-dropdown";
 import { SkillsSearchField } from "@/components/skills-search-field";
 import { SkillsViewModeToggle } from "@/components/skills-view-mode-toggle";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { NormalizedSkillsBrowseFilters } from "@/utils/browse";
 import { m } from "@/paraglide/messages";
 
@@ -17,7 +18,6 @@ interface Props {
   searchDisabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
   isSearchMode: boolean;
-  isSearching?: boolean;
   onClearSearch: () => void;
   onSearchChange: (value: string) => void;
   onSearchFocus: () => void;
@@ -33,7 +33,6 @@ export const BrowseToolbar = ({
   searchDisabled,
   inputRef,
   isSearchMode,
-  isSearching,
   onClearSearch,
   onSearchChange,
   onSearchFocus,
@@ -41,12 +40,16 @@ export const BrowseToolbar = ({
   onToggleFilters,
   searchValue,
 }: Props) => (
-  <div className="sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] border-b border-border bg-paper/95 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]">
+  <div
+    className={cn(
+      "bg-background sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] bg-paper/95 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
+      isSearchMode ? "" : "border-b border-border",
+    )}
+  >
     <SkillsSearchField
       active={isSearchMode}
       disabled={searchDisabled}
       inputRef={inputRef}
-      isSearching={isSearching}
       onChange={onSearchChange}
       onClear={onClearSearch}
       onFocus={onSearchFocus}

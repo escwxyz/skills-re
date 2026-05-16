@@ -1,9 +1,12 @@
 "use client";
 
-import type { FormEvent, RefObject } from "react";
+import { useEffect } from "react";
+import type { RefObject } from "react";
 import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 
+import { useAppForm } from "@/hooks/form-hook";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 
@@ -11,7 +14,6 @@ interface SkillsSearchFieldProps {
   active: boolean;
   disabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
-  isSearching?: boolean;
   onChange: (value: string) => void;
   onClear: () => void;
   onFocus: () => void;
@@ -23,7 +25,6 @@ export const SkillsSearchField = ({
   active,
   disabled,
   inputRef,
-  isSearching,
   onChange,
   onClear,
   onFocus,
@@ -32,54 +33,66 @@ export const SkillsSearchField = ({
 }: SkillsSearchFieldProps) => {
   const hasValue = value.trim().length > 0;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (disabled) {
-      return;
+  const form = useAppForm({
+    defaultValues: { query: value },
+  });
+
+  useEffect(() => {
+    if (form.getFieldValue("query") !== value) {
+      form.setFieldValue("query", value);
     }
-    onSubmit();
-  };
+  }, [value, form]);
 
   return (
-    <form
-      className={cn(
-        "relative grid h-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center transition-colors",
-        active ? "bg-background" : "bg-transparent",
-      )}
-      onSubmit={handleSubmit}
-    >
-      <MagnifyingGlassIcon className="ml-5 size-4 text-muted-text" />
-      <input
-        ref={inputRef}
-        aria-label={m.skills_browse_controls_search_placeholder()}
-        className="h-full min-w-0 border-0 bg-transparent px-3 font-mono text-sm tracking-widest uppercase text-ink outline-none placeholder:text-ink-2/70 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        onFocus={onFocus}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            onClear();
-          }
+    <form.AppForm>
+      <form
+        className={cn(
+          "relative grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center transition-colors",
+          active ? "bg-background" : "bg-transparent",
+        )}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!disabled) onSubmit();
         }}
-        placeholder={m.skills_browse_controls_search_placeholder()}
-        type="search"
-        value={value}
-      />
-      <span className="mr-3 border border-border bg-muted px-2 py-1 font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
-        {isSearching ? "..." : "AI"}
-      </span>
-      {active || hasValue ? (
-        <Button
-          aria-label="Clear search"
-          className="h-full w-(--header-height) rounded-none border-l border-border"
-          onClick={onClear}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <XIcon />
-        </Button>
-      ) : null}
-    </form>
+      >
+        <MagnifyingGlassIcon className="ml-5 size-4 text-muted-text" />
+        <form.AppField name="query">
+          {(field) => (
+            <Input
+              ref={inputRef}
+              aria-label={m.skills_browse_controls_search_placeholder()}
+              className="h-full border-0 bg-transparent px-3 font-mono text-sm tracking-widest uppercase text-ink placeholder:text-ink-2/70 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={disabled}
+              onBlur={field.handleBlur}
+              onChange={(event) => {
+                field.handleChange(event.target.value);
+                onChange(event.target.value);
+              }}
+              onFocus={onFocus}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  onClear();
+                }
+              }}
+              placeholder={m.skills_browse_controls_search_placeholder()}
+              type="search"
+              value={field.state.value}
+            />
+          )}
+        </form.AppField>
+        {active || hasValue ? (
+          <Button
+            aria-label="Clear search"
+            className="h-full w-(--header-height) rounded-none border-l border-border"
+            onClick={onClear}
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <XIcon />
+          </Button>
+        ) : null}
+      </form>
+    </form.AppForm>
   );
 };

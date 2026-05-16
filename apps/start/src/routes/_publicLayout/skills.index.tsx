@@ -259,7 +259,6 @@ function RouteComponent() {
               filtersOpen={filtersOpen}
               inputRef={searchInputRef}
               isSearchMode={isSearchMode}
-              isSearching={semanticQuery.isFetching}
               onClearSearch={clearSearch}
               onSearchChange={setSearchDraft}
               onSearchFocus={enterSearchMode}

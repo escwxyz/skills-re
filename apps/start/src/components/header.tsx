@@ -18,7 +18,7 @@ export const Header = () => {
   const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
 
   return (
-    <header className="h-(--header-height) bg-background/80 sticky top-0 z-100 grid place-items-center border-b px-4 md:px-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm">
+    <header className="h-(--header-height) bg-background sticky top-0 z-100 grid place-items-center border-b px-4 md:px-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm">
       <nav className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
         <DesktopMenu />
         <MobileMenu />

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { skillsViewModeAtom } from "@/atoms/app";
 import { buildSkillDetailPath } from "@/lib/skill-path";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { formatCompactNumber, formatInteger } from "@/utils/format";
@@ -54,6 +55,64 @@ const getRelatedTags = (items: BrowseSkillItem[]) => {
     .toSorted((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 10)
     .map(([tag]) => tag);
+};
+
+const SemanticResultSkeletonRow = () => (
+  <div className="grid gap-5 border-border border-b px-6 py-6 md:grid-cols-[4.5rem_minmax(0,1fr)_8rem]">
+    <Skeleton className="h-10 w-8" />
+    <div className="space-y-3">
+      <Skeleton className="h-2.5 w-28" />
+      <Skeleton className="h-7 w-3/4" />
+      <Skeleton className="h-3.5 w-full max-w-xl" />
+      <Skeleton className="h-3.5 w-2/3 max-w-lg" />
+      <div className="flex gap-1.5 pt-1">
+        <Skeleton className="h-5 w-12" />
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-5 w-10" />
+      </div>
+    </div>
+    <div className="hidden space-y-1 md:block">
+      <Skeleton className="ml-auto h-7 w-10" />
+      <Skeleton className="ml-auto h-2.5 w-16" />
+    </div>
+  </div>
+);
+
+const SemanticResultSkeletonCard = () => (
+  <div className="flex min-h-72 flex-col border-b border-r border-border p-5">
+    <Skeleton className="mb-4 h-2.5 w-24" />
+    <Skeleton className="h-7 w-3/4" />
+    <Skeleton className="mt-3 h-3.5 w-full" />
+    <Skeleton className="mt-1.5 h-3.5 w-5/6" />
+    <Skeleton className="mt-1.5 h-3.5 w-2/3" />
+    <div className="mt-auto flex items-end justify-between pt-5">
+      <div className="flex gap-1">
+        <Skeleton className="h-5 w-10" />
+        <Skeleton className="h-5 w-14" />
+      </div>
+      <Skeleton className="h-2.5 w-8" />
+    </div>
+  </div>
+);
+
+const SemanticSearchSkeleton = ({ viewMode }: { viewMode: "list" | "grid" }) => {
+  if (viewMode === "list") {
+    return (
+      <div>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SemanticResultSkeletonRow key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("grid border-border border-l", "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <SemanticResultSkeletonCard key={i} />
+      ))}
+    </div>
+  );
 };
 
 const SemanticSearchEmpty = ({ query }: { query: string }) => (
@@ -270,7 +329,9 @@ export const SemanticSearchResults = ({
   }
 
   let resultsContent;
-  if (items.length === 0) {
+  if (isLoading && items.length === 0 && query.trim().length > 0) {
+    resultsContent = <SemanticSearchSkeleton viewMode={viewMode} />;
+  } else if (items.length === 0) {
     resultsContent = <SemanticSearchEmpty query={query} />;
   } else if (viewMode === "list") {
     resultsContent = (
