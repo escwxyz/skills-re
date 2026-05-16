@@ -3,7 +3,6 @@ import { z } from "zod/v4";
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useSetAtom } from "jotai";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -87,9 +86,9 @@ function RouteComponent() {
   const [isSearchBlocked, setIsSearchBlocked] = useState(false);
   const [searchDraft, setSearchDraft] = useState(search.q ?? "");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const [debouncedSearchDraft] = useDebouncedValue(searchDraft, { wait: 320 });
+  const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSearchMode = search.mode === "search" || Boolean(search.q);
-  const semanticQueryText = debouncedSearchDraft.trim();
+  const semanticQueryText = (search.q ?? "").trim();
   const searchSkills = useServerFn(getSkillsSearch);
   const isSearchInputLocked = isSearchBlocked && currentUser === null;
   const browseFilters = normalizeSkillsBrowseFilters({
@@ -120,6 +119,15 @@ function RouteComponent() {
     retry: false,
   });
 
+  useEffect(
+    () => () => {
+      if (submitTimerRef.current) {
+        clearTimeout(submitTimerRef.current);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     setSearchDraft(search.q ?? "");
   }, [search.q]);
@@ -131,27 +139,6 @@ function RouteComponent() {
 
     searchInputRef.current?.focus({ preventScroll: true });
   }, [isSearchMode]);
-
-  useEffect(() => {
-    if (!isSearchMode) {
-      return;
-    }
-
-    const nextQuery = debouncedSearchDraft.trim();
-    const currentQuery = search.q ?? "";
-    if (nextQuery === currentQuery) {
-      return;
-    }
-
-    navigate({
-      replace: true,
-      search: (prev) => ({
-        ...prev,
-        mode: "search",
-        q: nextQuery || undefined,
-      }),
-    });
-  }, [debouncedSearchDraft, isSearchMode, navigate, search.q]);
 
   useEffect(() => {
     if (
@@ -195,15 +182,20 @@ function RouteComponent() {
   };
 
   const submitSearch = () => {
+    if (submitTimerRef.current) {
+      clearTimeout(submitTimerRef.current);
+    }
     const nextQuery = searchDraft.trim();
-    void navigate({
-      replace: true,
-      search: (prev) => ({
-        ...prev,
-        mode: "search",
-        q: nextQuery || undefined,
-      }),
-    });
+    submitTimerRef.current = setTimeout(() => {
+      void navigate({
+        replace: true,
+        search: (prev) => ({
+          ...prev,
+          mode: "search",
+          q: nextQuery || undefined,
+        }),
+      });
+    }, 300);
   };
 
   const clearSearch = () => {
