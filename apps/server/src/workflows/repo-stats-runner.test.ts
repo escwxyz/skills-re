@@ -7,8 +7,10 @@ import { runRepoStatsSyncWorkflow } from "./repo-stats-runner";
 import { createWorkflowStepStub } from "./test-support";
 
 describe("runRepoStatsSyncWorkflow", () => {
-  test("syncs repository metadata without scheduling skill snapshot sync", async () => {
+  test("syncs repository metadata and schedules content sync for changed repos", async () => {
     const syncStatsCalls: RepoStatsSyncSchedulerInput[] = [];
+    const discoveryCalls: { expectedUpdatedAt?: number; repoName: string; repoOwner: string }[] =
+      [];
 
     const result = await runRepoStatsSyncWorkflow(
       {
@@ -33,10 +35,19 @@ describe("runRepoStatsSyncWorkflow", () => {
             isDone: true,
           });
         },
+        skillsDiscoveryScheduler: {
+          enqueue: (input) => {
+            discoveryCalls.push(input);
+            return Promise.resolve({ workId: "work-1" });
+          },
+        },
       },
     );
 
     expect(syncStatsCalls).toEqual([{ cursor: "cursor-1", limit: 5 }]);
+    expect(discoveryCalls).toEqual([
+      { expectedUpdatedAt: 123, repoName: "skills", repoOwner: "acme" },
+    ]);
     expect(result).toEqual({
       changedCount: 1,
       continueCursor: "",
@@ -45,7 +56,10 @@ describe("runRepoStatsSyncWorkflow", () => {
     });
   });
 
-  test("returns a continuation cursor without scheduling content sync work", async () => {
+  test("returns a continuation cursor and schedules content sync for all accumulated changed repos", async () => {
+    const discoveryCalls: { expectedUpdatedAt?: number; repoName: string; repoOwner: string }[] =
+      [];
+
     const result = await runRepoStatsSyncWorkflow(
       {
         payload: {
@@ -66,9 +80,21 @@ describe("runRepoStatsSyncWorkflow", () => {
             continueCursor: "cursor-next",
             isDone: false,
           }),
+        skillsDiscoveryScheduler: {
+          enqueue: (input) => {
+            discoveryCalls.push(input);
+            return Promise.resolve({ workId: "work-1" });
+          },
+        },
       },
     );
 
+    expect(discoveryCalls).toHaveLength(25);
+    expect(discoveryCalls[0]).toEqual({
+      expectedUpdatedAt: 123,
+      repoName: "skills",
+      repoOwner: "acme",
+    });
     expect(result).toEqual({
       changedCount: 25,
       continueCursor: "cursor-next",
