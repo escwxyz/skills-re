@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
 import { getCategoryTitle } from "@/utils/category-data";
+import { formatCompactNumber } from "@/utils/format";
 import type { BrowseSkillItem } from "@/utils/types";
 import { StarIcon } from "@phosphor-icons/react";
 
@@ -62,7 +63,10 @@ export const SkillCardBrowse = ({ skill }: Props) => {
   const categoryLabel = skill.primaryCategory
     ? getCategoryTitle(skill.primaryCategory, locale)
     : getCategoryTitle("other", locale);
-  const starsLabel = typeof skill.stargazerCount === "number" ? String(skill.stargazerCount) : null;
+  const starsLabel =
+    typeof skill.stargazerCount === "number"
+      ? formatCompactNumber(skill.stargazerCount, locale)
+      : null;
   const auditScore = skill.staticAudit?.overallScore;
   const updatedAt = skill.updatedAt ?? skill.createdAt ?? null;
   const initial = (authorLabel ?? "?").charAt(0).toUpperCase();
