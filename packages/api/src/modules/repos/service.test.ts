@@ -209,6 +209,67 @@ describe("repos service", () => {
     ]);
   });
 
+  test("syncs repo stats with an injected GitHub stats fetch runtime", async () => {
+    const fetched: { name: string; owner: string }[] = [];
+    const updated: { nameWithOwner: string; forks: number; stars: number; updatedAt: number }[] =
+      [];
+    const service = createReposService({
+      githubConfigured: () => true,
+      listReposPageBySyncTime: () => ({
+        continueCursor: "",
+        isDone: true,
+        repos: [
+          {
+            nameWithOwner: "acme/widget",
+            repoName: "widget",
+            repoOwner: "acme",
+            skillCount: 1,
+          },
+        ],
+      }),
+      updateRepoStatsByNameWithOwner: (input) => {
+        updated.push(input);
+        return { changed: true };
+      },
+    });
+
+    await expect(
+      service.syncStats(undefined, {
+        fetchRepoStats: (_query, variables) => {
+          fetched.push(variables);
+          return {
+            repository: {
+              forkCount: 5,
+              nameWithOwner: "acme/widget",
+              stargazerCount: 13,
+              updatedAt: "2026-05-16T00:00:00.000Z",
+            },
+          };
+        },
+      }),
+    ).resolves.toEqual({
+      changed: [
+        {
+          repoName: "widget",
+          repoOwner: "acme",
+          updatedAt: Date.parse("2026-05-16T00:00:00.000Z"),
+        },
+      ],
+      continueCursor: "",
+      isDone: true,
+    });
+
+    expect(fetched).toEqual([{ name: "widget", owner: "acme" }]);
+    expect(updated).toEqual([
+      {
+        forks: 5,
+        nameWithOwner: "acme/widget",
+        stars: 13,
+        updatedAt: Date.parse("2026-05-16T00:00:00.000Z"),
+      },
+    ]);
+  });
+
   test("throws when syncing stats without GitHub credentials", async () => {
     const service = createReposService({
       githubConfigured: () => false,

@@ -4,6 +4,7 @@ import type { Context as HonoContext } from "hono";
 
 import { createAiSearchItemsRuntime, createAiSearchRuntime } from "./ai-search";
 import { createGithubFetchRuntime } from "./github-fetch";
+import { createGithubRepoStatsRuntime } from "./github-stats";
 import { createGithubSubmitRuntime } from "./github-submit";
 import { createGithubSnapshotHistoryHelpers } from "./github-history";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
@@ -35,6 +36,7 @@ export interface CreateServerRuntimeDeps {
   aiSearchItems?: ApiContext["aiSearchItems"];
   githubHistory?: ApiContext["githubHistory"];
   githubFetch?: ApiContext["githubFetch"];
+  githubStats?: ApiContext["githubStats"];
   githubSubmit?: ApiContext["githubSubmit"];
   metrics?: ApiContext["metrics"];
   snapshotHistory?: ApiContext["snapshotHistory"];
@@ -61,6 +63,7 @@ export function createServerContextFromBase(
     aiSearchItems: runtimeDeps.aiSearchItems,
     githubHistory: runtimeDeps.githubHistory,
     githubFetch: runtimeDeps.githubFetch,
+    githubStats: runtimeDeps.githubStats,
     githubSubmit: runtimeDeps.githubSubmit,
     metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
@@ -82,6 +85,9 @@ async function createServerRuntime(
     logger: options.logger,
   });
   const githubFetch = createGithubFetchRuntime(env, {
+    logger: options.logger,
+  });
+  const githubStats = createGithubRepoStatsRuntime(env, {
     logger: options.logger,
   });
   const githubSubmit = createGithubSubmitRuntime(env, { logger: options.logger });
@@ -109,6 +115,7 @@ async function createServerRuntime(
     aiSearchItems,
     githubHistory,
     githubFetch,
+    githubStats,
     githubSubmit,
     metrics: {
       DOWNLOAD_EVENTS: env.DOWNLOAD_EVENTS,

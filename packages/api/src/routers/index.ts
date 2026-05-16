@@ -362,7 +362,9 @@ export const appRouter = {
     }),
     listPage: publicProcedure.repos.listPage.handler(({ input }) => listReposPage(input)),
     updateStats: adminProcedure.repos.updateStats.handler(({ input }) => updateRepoStats(input)),
-    syncStats: adminProcedure.repos.syncStats.handler(({ input }) => syncRepoStats(input)),
+    syncStats: adminProcedure.repos.syncStats.handler(({ input, context }) =>
+      syncRepoStats(input, context.githubStats),
+    ),
     enqueueRepoStatsSync: adminProcedure.repos.enqueueRepoStatsSync.handler(
       ({ input, context }) => {
         const scheduler = context.workflowSchedulers?.repoStatsSync;

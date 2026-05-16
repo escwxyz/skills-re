@@ -173,4 +173,24 @@ describe("createServerContextFromBase", () => {
     expect(context.githubSubmit).toBeDefined();
     expect(context.snapshotHistory).toBeDefined();
   });
+
+  test("preserves injected github stats runtime", () => {
+    const context = createServerContextFromBase(
+      {
+        auth: null,
+        session: null,
+      },
+      {
+        githubStats: {
+          fetchRepoStats() {
+            return Promise.resolve({
+              repository: null,
+            });
+          },
+        },
+      },
+    );
+
+    expect(context.githubStats).toBeDefined();
+  });
 });

@@ -26,6 +26,10 @@ export interface RepoStatsSyncScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface RepoStatsRuntime {
+  fetchRepoStats(query: string, variables: { name: string; owner: string }): Promise<unknown>;
+}
+
 export interface MetricsRuntime {
   DOWNLOAD_EVENTS?: AnalyticsEngineDataset;
   METRICS_CACHE?: KVNamespace;
@@ -289,6 +293,7 @@ export interface Context {
   aiSearch?: AiSearchRuntime;
   githubHistory?: GithubSnapshotHistoryHelpers;
   githubFetch?: GithubFetchRuntime;
+  githubStats?: RepoStatsRuntime;
   githubSubmit?: GithubSubmitRuntime;
   metrics?: MetricsRuntime;
   snapshotHistory?: SnapshotHistoryRuntime;

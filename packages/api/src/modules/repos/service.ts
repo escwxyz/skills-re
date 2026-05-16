@@ -422,10 +422,18 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
       return await deps.updateRepoStatsByNameWithOwner(input);
     },
 
-    async syncStats(input?: { cursor?: string; limit?: number }) {
+    async syncStats(
+      input?: { cursor?: string; limit?: number },
+      runtimeDeps?: Partial<Pick<ReposServiceDeps, "fetchRepoStats">>,
+    ) {
       if (!deps.githubConfigured()) {
         throw new Error("GitHub token is not configured.");
       }
+
+      const activeDeps = {
+        ...deps,
+        ...runtimeDeps,
+      };
 
       const limit = input?.limit ?? 20;
       const { repos, isDone, continueCursor } = await service.listPage({
@@ -445,7 +453,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
 
       await Promise.all(
         repos.map(async (repo) => {
-          const result = await deps.fetchRepoStats(getRepoStatsQuery, {
+          const result = await activeDeps.fetchRepoStats(getRepoStatsQuery, {
             name: repo.repoName,
             owner: repo.repoOwner,
           });
@@ -707,8 +715,10 @@ export const listByOwner = (input: {
   ownerHandle: string;
 }): Promise<RepoListByOwnerPage> => reposService.listByOwner(input);
 
-export const syncStats = (input?: { cursor?: string; limit?: number }) =>
-  reposService.syncStats(input);
+export const syncStats = (
+  input?: { cursor?: string; limit?: number },
+  runtimeDeps?: Partial<Pick<ReposServiceDeps, "fetchRepoStats">>,
+) => reposService.syncStats(input, runtimeDeps);
 
 export const syncRepoSnapshots = (
   input: {
