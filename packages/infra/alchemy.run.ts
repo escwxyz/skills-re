@@ -349,6 +349,12 @@ export const server = await Worker("server", {
   entrypoint: "src/index.ts",
   compatibility: "node",
   compatibilityDate: "2026-03-10",
+  crons: [
+    // Repo metadata sync only: stars, forks, and GitHub updatedAt.
+    "0 */6 * * *",
+    // Repo content discovery runs separately after metadata sync.
+    "15 */6 * * *",
+  ],
   bindings: {
     ADMIN: alchemy.env.ADMIN!,
     DB: db,

@@ -16,6 +16,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
 import type { WorkflowQueueEnv } from "./queues/workflow-queue";
+import { runScheduledJobs } from "./crons";
 import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
@@ -234,6 +235,9 @@ const server = {
   async queue(batch: MessageBatch<unknown>, workerEnv: Env) {
     const logger = createWorkflowQueueLogger();
     await processWorkflowQueueBatch(batch, workerEnv as WorkflowQueueEnv, logger);
+  },
+  scheduled(controller: ScheduledController, workerEnv: Env, executionContext: ExecutionContext) {
+    runScheduledJobs(controller, workerEnv, executionContext);
   },
 };
 
