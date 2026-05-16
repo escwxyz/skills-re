@@ -111,10 +111,17 @@ export const generateSkillCategoriesBatch = async (
 
   const userPrompt = `Categories:\n${categoriesText}\n\nSkills:\n${skillsText}\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","scores":{"code-frameworks":0,"tools-platforms":0,"analysis-insights":0,"design-creative":0,"process-methodology":0,"communication-strategy":0,"domain-expertise":0,"operations-automation":0,"other":0},"primaryCategory":"code-frameworks","confidence":0.85,"reasoning":"<short reason>"}]}`;
 
+  console.info("[ai-categorization] resolving adapters", { itemCount: input.items.length });
   const adapters = resolvedDeps.getAdapters("skill-categorization");
+  console.info("[ai-categorization] starting adapter loop", { adapterCount: adapters.length });
+
   const expectedKeys = new Set(input.items.map((item) => item.key));
   let lastError: unknown = null;
-  for (const adapter of adapters) {
+  for (const [adapterIndex, adapter] of adapters.entries()) {
+    console.info("[ai-categorization] trying adapter", {
+      adapterIndex,
+      itemCount: input.items.length,
+    });
     try {
       const text = await retryAiTaskCall(
         async () =>
@@ -141,9 +148,14 @@ export const generateSkillCategoriesBatch = async (
             ? "Categorization output must contain exactly one result per input item."
             : `Categorization output is missing key: ${missingKey}`,
         );
+        console.warn("[ai-categorization] adapter output invalid, trying next", {
+          adapterIndex,
+          error: (lastError as Error).message,
+        });
         continue;
       }
 
+      console.info("[ai-categorization] adapter succeeded", { adapterIndex });
       return {
         items: output.items.map(
           (item): SkillCategorizationOutputItem => ({
@@ -157,8 +169,15 @@ export const generateSkillCategoriesBatch = async (
       };
     } catch (error) {
       lastError = error;
+      console.warn("[ai-categorization] adapter failed, trying next", {
+        adapterIndex,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error("Categorization model call failed.");
+  const finalError =
+    lastError instanceof Error ? lastError : new Error("Categorization model call failed.");
+  console.error("[ai-categorization] all adapters exhausted", { error: finalError.message });
+  throw finalError;
 };

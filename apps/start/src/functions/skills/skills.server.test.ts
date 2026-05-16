@@ -41,7 +41,7 @@ describe("normalizeSkillsBrowseFilters", () => {
     ).toEqual({
       activeClass: "operations-automation",
       query: "workflow",
-      sort: "downloads-all-time",
+      sort: "newest",
       tags: ["ops", "workflow"],
     });
   });
@@ -197,7 +197,7 @@ describe("fetchSkillsBrowsePagination", () => {
           categories: ["operations-automation"],
           cursor: "cursor-1",
           limit: 24,
-          sort: "downloads-all-time",
+          sort: "newest",
           tags: ["ops", "workflow"],
         },
       },

@@ -300,7 +300,20 @@ const processUploadSkill = async ({
     workflowStepRetryPolicy.skillsUploadPipeline,
     async () => {
       const skillMdFile = findSkillMdFile(skill);
-      if (!deps.aiSearchItems || !skillMdFile) {
+      if (!deps.aiSearchItems) {
+        console.warn("[skills-upload] ai-search skipped: binding not configured", {
+          skillId,
+          skillIndex,
+        });
+        return null;
+      }
+      if (!skillMdFile) {
+        console.warn("[skills-upload] ai-search skipped: entry file not found", {
+          skillId,
+          skillIndex,
+          entryPath: skill.entryPath,
+          filePaths: skill.initialSnapshot.files.map((f) => f.path),
+        });
         return null;
       }
 
@@ -313,7 +326,12 @@ const processUploadSkill = async ({
           version: skill.preferredVersion ?? "0.0.1",
         });
         return id;
-      } catch {
+      } catch (error) {
+        console.warn("[skills-upload] ai-search upload failed", {
+          skillId,
+          skillIndex,
+          error: formatErrorMessage(error),
+        });
         return null;
       }
     },
