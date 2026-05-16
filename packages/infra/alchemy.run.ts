@@ -354,6 +354,8 @@ export const server = await Worker("server", {
     "0 */6 * * *",
     // Repo content discovery runs separately after metadata sync.
     "15 */6 * * *",
+    // Daily metrics refresh: new skills and snapshots per day.
+    "30 0 * * *",
   ],
   bindings: {
     ADMIN: alchemy.env.ADMIN!,

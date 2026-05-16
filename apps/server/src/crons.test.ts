@@ -2,7 +2,12 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { REPO_SKILLS_DISCOVERY_CRON, REPO_STATS_SYNC_CRON, runScheduledJobs } from "./crons";
+import {
+  DAILY_METRICS_REFRESH_CRON,
+  REPO_SKILLS_DISCOVERY_CRON,
+  REPO_STATS_SYNC_CRON,
+  runScheduledJobs,
+} from "./crons";
 
 const createExecutionContextStub = () => {
   const scheduled: Promise<unknown>[] = [];
@@ -105,6 +110,28 @@ describe("runScheduledJobs", () => {
         repoOwner: "openai",
       },
     ]);
+  });
+
+  test("refreshes daily metrics on the metrics cron", async () => {
+    const refreshed: unknown[] = [];
+    const { context, scheduled } = createExecutionContextStub();
+
+    runScheduledJobs(
+      { cron: DAILY_METRICS_REFRESH_CRON } as ScheduledController,
+      {} as Env,
+      context,
+      {
+        refreshDailySkillsSnapshots: async (input) => {
+          refreshed.push(input);
+          return { days: 7, fromDay: "2026-05-09", toDay: "2026-05-15", updatedAtMs: 0 };
+        },
+      },
+    );
+
+    expect(scheduled).toHaveLength(1);
+    await Promise.all(scheduled);
+
+    expect(refreshed).toHaveLength(1);
   });
 
   test("ignores unmatched cron expressions", () => {

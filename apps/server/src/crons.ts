@@ -1,4 +1,5 @@
 import { reposService } from "@skills-re/api/modules/repos/service";
+import { refreshDailySkillsSnapshots } from "@skills-re/api/modules";
 
 import { logHandledError } from "./logging";
 import { getRepoStatsSyncWorkflowScheduler } from "./workflows/repo-stats";
@@ -8,6 +9,7 @@ import type { WorkerLogger } from "./worker-logger";
 
 export const REPO_STATS_SYNC_CRON = "0 */6 * * *";
 export const REPO_SKILLS_DISCOVERY_CRON = "15 */6 * * *";
+export const DAILY_METRICS_REFRESH_CRON = "30 0 * * *";
 
 const DEFAULT_REPO_STATS_SYNC_LIMIT = 20;
 const DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT = 50;
@@ -23,7 +25,10 @@ type ListReposPage = typeof reposService.listPage;
 type RepoStatsSchedulerFactory = typeof getRepoStatsSyncWorkflowScheduler;
 type RepoSkillsDiscoverySchedulerFactory = typeof getRepoSkillsDiscoveryWorkflowScheduler;
 
+type RefreshDailyMetricsFn = typeof refreshDailySkillsSnapshots;
+
 export interface RepoSyncCronDeps {
+  refreshDailySkillsSnapshots?: RefreshDailyMetricsFn;
   getRepoSkillsDiscoveryWorkflowScheduler?: RepoSkillsDiscoverySchedulerFactory;
   getRepoStatsSyncWorkflowScheduler?: RepoStatsSchedulerFactory;
   listReposPage?: ListReposPage;
@@ -126,6 +131,7 @@ export const enqueueScheduledRepoSkillsDiscovery = async (
 
 export const getScheduledJobs = (env: Env, deps: RepoSyncCronDeps = {}): ScheduledJob[] => {
   const logger = deps.logger ?? createWorkerLogger({ component: "cron" });
+  const refreshMetrics = deps.refreshDailySkillsSnapshots ?? refreshDailySkillsSnapshots;
 
   return [
     {
@@ -150,6 +156,19 @@ export const getScheduledJobs = (env: Env, deps: RepoSyncCronDeps = {}): Schedul
           pages: result.pages,
           scheduledCount: result.scheduledCount,
           status: result.status,
+        });
+      },
+    },
+    {
+      cron: DAILY_METRICS_REFRESH_CRON,
+      name: "daily-metrics-refresh",
+      run: async () => {
+        const result = await refreshMetrics();
+        logger.info("cron.job.completed", {
+          days: result.days,
+          fromDay: result.fromDay,
+          job: "daily-metrics-refresh",
+          toDay: result.toDay,
         });
       },
     },
