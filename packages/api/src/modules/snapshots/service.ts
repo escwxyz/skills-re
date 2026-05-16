@@ -354,8 +354,14 @@ const normalizeFiles = (directoryPath: string, files: { content: string; path: s
   return normalized;
 };
 
-const normalizeSkillDirectoryRoot = (directoryPath: string) =>
-  normalizeSnapshotPath(directoryPath).replace(/\/+$/, "");
+const normalizeSkillDirectoryRoot = (directoryPath: string) => {
+  const trimmed = directoryPath
+    .replaceAll("\\", "/")
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
+  return trimmed ? normalizeSnapshotPath(trimmed) : "";
+};
 
 const toRootedSnapshotPath = (rootPath: string, value: string) => {
   const normalizedPath = normalizeSnapshotPath(value);

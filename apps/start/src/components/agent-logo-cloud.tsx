@@ -7,6 +7,26 @@ type Props = SVGProps<SVGSVGElement> & {
   size?: string | number;
 };
 
+const PiAgent = ({ size = "1em", style, ...rest }: Props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 800 800"
+    fill="currentColor"
+    fillRule="evenodd"
+    height={size}
+    style={{ flex: "none", lineHeight: 1, ...style }}
+    width={size}
+    {...rest}
+  >
+    <title>Pi Agent</title>
+    <path
+      fill-rule="evenodd"
+      d="M165.29 165.29 H517.36 V400 H400 V517.36 H282.65 V634.72 H165.29 Z M282.65 282.65 V400 H400 V282.65 Z"
+    />
+    <path d="M517.36 400 H634.72 V634.72 H517.36 Z" />
+  </svg>
+);
+
 const GeminiCLI = ({ size = "1em", style, ...rest }: Props) => (
   <svg
     fill="currentColor"
@@ -263,7 +283,7 @@ const Cursor = ({ size = "1em", style, ...rest }: Props) => (
   </svg>
 );
 
-const KiloCode = ({ size = "1em", style, ...rest }: Props) => (
+const _KiloCode = ({ size = "1em", style, ...rest }: Props) => (
   <svg
     fill="currentColor"
     fillRule="evenodd"
@@ -377,7 +397,12 @@ const AGENTS = [
     label: "Roo Code",
     href: "https://roocode.com",
   },
-  { Icon: KiloCode, label: "Kilo Code", href: "https://kilo.ai" },
+  {
+    Icon: PiAgent,
+    label: "Pi Agent",
+    href: "https://pi.dev",
+  },
+  // { Icon: KiloCode, label: "Kilo Code", href: "https://kilo.ai" },
 
   { Icon: OpenClaw, label: "OpenClaw", href: "https://openclaw.ai" },
   { Icon: HermesAgent, label: "Hermes Agent", href: "https://hermes-agent.nousresearch.com" },
