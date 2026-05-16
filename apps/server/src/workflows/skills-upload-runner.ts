@@ -100,29 +100,34 @@ const normalizeUploadFilePath = (value: string) =>
 const formatErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+const skillPathsMatch = (filePath: string, entryPath: string, rootPath: string) => {
+  if (filePath === entryPath) {
+    return true;
+  }
+  // file path is an absolute path longer than entryPath (e.g. "/prefix/SKILL.md" vs "SKILL.md")
+  if (filePath.endsWith(`/${entryPath}`)) {
+    return true;
+  }
+  // file path is a relative path shorter than entryPath — fetchSkillFilesForRoot strips the root
+  // prefix, so filePath="SKILL.md" while entryPath="skills/my-skill/SKILL.md"
+  if (entryPath.endsWith(`/${filePath}`)) {
+    return true;
+  }
+  if (rootPath.length > 0 && entryPath === `${rootPath}/${filePath}`) {
+    return true;
+  }
+  return false;
+};
+
 const findSkillMdContent = (
   skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number],
 ): string | null => {
   const normalizedEntryPath = normalizeUploadFilePath(skill.entryPath);
-
-  const directMatch = skill.initialSnapshot.files.find(
-    (file) => normalizeUploadFilePath(file.path) === normalizedEntryPath,
-  );
-  if (directMatch) {
-    return directMatch.content;
-  }
-
   const normalizedRootPath = normalizeSkillRootPath(skill.directoryPath);
-  const candidate = skill.initialSnapshot.files.find((file) => {
-    const normalizedPath = normalizeUploadFilePath(file.path);
-    if (normalizedPath === normalizedEntryPath) {
-      return true;
-    }
-    return normalizedRootPath.length > 0
-      ? normalizedPath.endsWith(`/${normalizedEntryPath}`) ||
-          normalizedPath === `${normalizedRootPath}/${normalizedEntryPath}`
-      : normalizedPath === normalizedEntryPath;
-  });
+
+  const candidate = skill.initialSnapshot.files.find((file) =>
+    skillPathsMatch(normalizeUploadFilePath(file.path), normalizedEntryPath, normalizedRootPath),
+  );
 
   return candidate?.content ?? null;
 };
@@ -147,10 +152,7 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
     ? skill.initialSnapshot.files.find((file) => {
         const normalizedFilePath = normalizeAiSearchFilePath(file.path);
         const normalizedEntryPath = normalizeAiSearchFilePath(skill.entryPath);
-        return (
-          normalizedFilePath === normalizedEntryPath ||
-          normalizedFilePath.endsWith(`/${normalizedEntryPath}`)
-        );
+        return skillPathsMatch(normalizedFilePath, normalizedEntryPath, "");
       })
     : skill.initialSnapshot.files.find((file) => file.path.split("/").at(-1) === SKILL_FILENAME);
 
