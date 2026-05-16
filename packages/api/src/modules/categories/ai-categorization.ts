@@ -2,7 +2,6 @@ import { chat } from "@tanstack/ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
-import { parseJsonFromModelText } from "../ai/model-output";
 import { retryAiTaskCall } from "../ai/retry";
 import { CATEGORY_SLUGS } from "./taxonomy";
 import type { CategoryDefinition } from "./taxonomy";
@@ -12,6 +11,69 @@ export const skillCategorySlugSchema = z.enum(CATEGORY_SLUGS);
 export type SkillCategorySlug = z.infer<typeof skillCategorySlugSchema>;
 
 const MAX_DESCRIPTION_CHARS = 2500;
+
+const JSON_CODE_FENCE_PATTERN = /^```(?:json)?\s*([\s\S]*?)\s*```$/i;
+
+// Some providers return the items array directly, or wrap it in a different key.
+const unwrapCategorizationPayload = (value: unknown): unknown => {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return { items: value };
+  }
+  const obj = value as Record<string, unknown>;
+  if ("items" in obj) {
+    return obj;
+  }
+  // Try to find any array-valued property and promote it to {items}
+  for (const v of Object.values(obj)) {
+    if (Array.isArray(v)) {
+      return { items: v };
+    }
+  }
+  // Try one level of nesting
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === "object" && !Array.isArray(v) && "items" in (v as object)) {
+      return v;
+    }
+  }
+  return value;
+};
+
+const parseCategorizationOutput = (text: string) => {
+  const trimmed = text.trim();
+  const fenceMatch = trimmed.match(JSON_CODE_FENCE_PATTERN);
+  const withoutFence = fenceMatch?.[1]?.trim() ?? trimmed;
+  const firstBrace = withoutFence.indexOf("{");
+  const lastBrace = withoutFence.lastIndexOf("}");
+  const braceSlice =
+    firstBrace !== -1 && lastBrace > firstBrace
+      ? withoutFence.slice(firstBrace, lastBrace + 1)
+      : withoutFence;
+
+  let parsedJson: unknown = null;
+  let parsed = false;
+  for (const candidate of [trimmed, withoutFence, braceSlice]) {
+    try {
+      parsedJson = JSON.parse(candidate);
+      parsed = true;
+      break;
+    } catch {
+      // try next candidate
+    }
+  }
+  if (!parsed) {
+    throw new Error("Categorization model returned invalid JSON after fence/braces normalization.");
+  }
+
+  const unwrapped = unwrapCategorizationPayload(parsedJson);
+  const result = categorizationOutputSchema.safeParse(unwrapped);
+  if (!result.success) {
+    throw new Error(`Categorization model returned invalid schema: ${result.error.message}`);
+  }
+  return result.data;
+};
 
 export const categoryScoresSchema = z.record(skillCategorySlugSchema, z.number().min(0).max(10));
 
@@ -134,7 +196,7 @@ export const generateSkillCategoriesBatch = async (
           }),
       );
 
-      const output = categorizationOutputSchema.parse(parseJsonFromModelText(text));
+      const output = parseCategorizationOutput(text);
 
       const returnedKeys = new Set(output.items.map((item) => item.key));
       const missingKey = [...expectedKeys].find((key) => !returnedKeys.has(key));
