@@ -1022,6 +1022,89 @@ describe("snapshots service", () => {
     expect(putCalls[0]?.body).toEqual(archiveBuffer);
   });
 
+  test("creates archive staging for root snapshot directories", async () => {
+    const archiveBuffer = new TextEncoder().encode("archive-bytes");
+    const createSnapshotArchiveBufferCalls: {
+      body: Uint8Array;
+      header: { name: string; size: number; type: "file" };
+    }[][] = [];
+
+    const service = createSnapshotsService({
+      createSnapshotArchiveBuffer: (entries) => {
+        createSnapshotArchiveBufferCalls.push(entries);
+        return Promise.resolve(archiveBuffer);
+      },
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: null,
+          description: "Root skill snapshot",
+          directoryPath: "",
+          entryPath: "SKILL.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "root-skill",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      getSnapshotStorageContext: () =>
+        Promise.resolve({
+          directoryPath: "",
+          repoName: "widget-repo",
+          repoOwner: "acme",
+          snapshotId: "snapshot-1" as never,
+          version: "1.0.0",
+        }),
+      listSnapshotFiles: () =>
+        Promise.resolve([
+          {
+            contentType: "text/markdown; charset=utf-8",
+            fileHash: "hash-1",
+            path: "SKILL.md",
+            r2Key: "snapshots/acme/widget/SKILL.md",
+            size: 12,
+            sourceSha: "sha-1",
+          },
+        ]),
+      putSnapshotArchiveStagingObject: () => Promise.resolve(),
+      readSnapshotFileObject: (key) =>
+        Promise.resolve({
+          arrayBuffer: () => Promise.resolve(new TextEncoder().encode(`bytes:${key}`).buffer),
+          body: new ReadableStream(),
+          size: 12,
+        }),
+    });
+
+    await expect(
+      service.createSnapshotArchiveStaging({
+        snapshotId: "snapshot-1",
+      }),
+    ).resolves.toMatchObject({
+      archiveBytes: archiveBuffer.byteLength,
+      archiveKey: "acme/widget-repo/1.0.0/skills.tar.gz",
+      filesCount: 1,
+      snapshotId: "snapshot-1",
+    });
+
+    expect(createSnapshotArchiveBufferCalls).toEqual([
+      [
+        {
+          body: new TextEncoder().encode("bytes:snapshots/acme/widget/SKILL.md"),
+          header: {
+            name: "SKILL.md",
+            size: new TextEncoder().encode("bytes:snapshots/acme/widget/SKILL.md").byteLength,
+            type: "file",
+          },
+        },
+      ],
+    ]);
+  });
+
   test("uploads archive staging objects into the archive bucket", async () => {
     const archiveBuffer = new TextEncoder().encode("archive-bytes");
     const stagingCalls: string[] = [];

@@ -59,26 +59,34 @@ const normalizeArchivePath = (input: string) => {
   return stack.join("/");
 };
 
-const normalizeDirectoryPath = (input: string) =>
-  normalizeArchivePath(input).replaceAll(/\/+$/g, "");
+const normalizeDirectoryPath = (input: string) => {
+  const replaced = input.replaceAll("\\", "/").trim();
+  if (replaced.length === 0 || replaced.replace(/^\/+/, "").length === 0) {
+    return "";
+  }
+
+  return normalizeArchivePath(input).replaceAll(/\/+$/g, "");
+};
 
 export const buildSnapshotArchiveTarEntries = (input: {
   directoryPath: string;
   files: SnapshotArchiveFileInput[];
 }) => {
   const normalizedDirectoryPath = normalizeDirectoryPath(input.directoryPath);
-  const directoryPrefix = `${normalizedDirectoryPath}/`;
+  const directoryPrefix = normalizedDirectoryPath ? `${normalizedDirectoryPath}/` : "";
   return input.files.map((file) => {
     const normalizedPath = normalizeArchivePath(file.path);
     if (normalizedPath === normalizedDirectoryPath) {
       throw new Error(`File path cannot equal the snapshot directory: ${file.path}`);
     }
 
-    if (!normalizedPath.startsWith(directoryPrefix)) {
+    if (directoryPrefix && !normalizedPath.startsWith(directoryPrefix)) {
       throw new Error(`File path must live under the snapshot directory: ${file.path}`);
     }
 
-    const entryPath = normalizedPath.slice(directoryPrefix.length);
+    const entryPath = directoryPrefix
+      ? normalizedPath.slice(directoryPrefix.length)
+      : normalizedPath;
 
     return {
       body: file.content,

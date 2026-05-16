@@ -40,6 +40,41 @@ describe("snapshots archive helpers", () => {
     ]);
   });
 
+  test("builds tar entries for root snapshot directories", () => {
+    expect(
+      buildSnapshotArchiveTarEntries({
+        directoryPath: "",
+        files: [
+          {
+            content: new TextEncoder().encode("hello"),
+            path: "SKILL.md",
+          },
+          {
+            content: new TextEncoder().encode("guide"),
+            path: "docs/guide.md",
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        body: new TextEncoder().encode("hello"),
+        header: {
+          name: "SKILL.md",
+          size: 5,
+          type: "file",
+        },
+      },
+      {
+        body: new TextEncoder().encode("guide"),
+        header: {
+          name: "docs/guide.md",
+          size: 5,
+          type: "file",
+        },
+      },
+    ]);
+  });
+
   test("rejects file paths outside the snapshot directory", () => {
     expect(() =>
       buildSnapshotArchiveTarEntries({
