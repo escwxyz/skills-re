@@ -45,7 +45,7 @@ export const SkillMdToc = ({ items, scrollContainerRef }: Props) => {
                 href={`#${item.slug}`}
                 value={item.slug}
               >
-                {`§ ${item.title}`}
+                {`#${item.title}`}
               </ScrollSpyLink>
             </li>
           ))}

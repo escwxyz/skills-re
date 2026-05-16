@@ -46,6 +46,37 @@ Respond terse like smart caveman.
     expect(parsed.body).toBe("Respond terse like smart caveman.");
   });
 
+  test("parses folded block scalar description (>)", () => {
+    const parsed = parseSkillMarkdownDocument(`---
+name: caveman-commit
+description: >
+  Ultra-compressed commit message generator. Cuts noise from commit messages while preserving
+  intent and reasoning. Conventional Commits format.
+---
+
+Body content.
+`);
+
+    expect(parsed.frontmatter).toMatchObject({
+      description:
+        "Ultra-compressed commit message generator. Cuts noise from commit messages while preserving intent and reasoning. Conventional Commits format.",
+      name: "caveman-commit",
+    });
+    expect(parsed.body).toBe("Body content.");
+  });
+
+  test("parses literal block scalar description (|)", () => {
+    const parsed = parseSkillMarkdownDocument(`---
+name: example
+description: |
+  Line one.
+  Line two.
+---
+`);
+
+    expect(parsed.frontmatter?.description).toBe("Line one.\nLine two.");
+  });
+
   test("ignores headings inside fenced code blocks", () => {
     const parsed = parseSkillMarkdownDocument(`---
 name: Example

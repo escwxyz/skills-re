@@ -172,9 +172,63 @@ export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | nu
   const values: Record<string, string | string[] | undefined> = {};
   const metadata: Record<string, string> = {};
   let currentKey: string | null = null;
+  let blockScalarKey: string | null = null;
+  let blockScalarStyle: "folded" | "literal" | null = null;
+  const blockScalarLines: string[] = [];
+
+  const flushBlockScalar = () => {
+    if (!blockScalarKey || !blockScalarStyle) {
+      return;
+    }
+
+    while (blockScalarLines.length > 0 && blockScalarLines.at(0) === "") {
+      blockScalarLines.shift();
+    }
+    while (blockScalarLines.length > 0 && blockScalarLines.at(-1) === "") {
+      blockScalarLines.pop();
+    }
+
+    let result: string;
+    if (blockScalarStyle === "folded") {
+      const parts: string[] = [];
+      let paragraph: string[] = [];
+      for (const line of blockScalarLines) {
+        if (line === "") {
+          if (paragraph.length > 0) {
+            parts.push(paragraph.join(" "));
+            paragraph = [];
+          }
+        } else {
+          paragraph.push(line);
+        }
+      }
+      if (paragraph.length > 0) {
+        parts.push(paragraph.join(" "));
+      }
+      result = parts.join("\n");
+    } else {
+      result = blockScalarLines.join("\n").trim();
+    }
+
+    if (result) {
+      values[blockScalarKey] = result;
+    }
+    blockScalarKey = null;
+    blockScalarStyle = null;
+    blockScalarLines.length = 0;
+  };
 
   for (const line of source.split(/\r?\n/)) {
     const trimmed = line.trim();
+
+    if (blockScalarKey !== null) {
+      if (/^[\t ]/.test(line) || trimmed === "") {
+        blockScalarLines.push(trimmed);
+        continue;
+      }
+      flushBlockScalar();
+    }
+
     if (!trimmed || trimmed.startsWith("#")) {
       continue;
     }
@@ -187,6 +241,12 @@ export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | nu
       }
       currentKey = normalizeFrontmatterKey(rawKey);
       const value = rawValue?.trim() ?? "";
+      if (/^[>|][->+]?$/.test(value)) {
+        blockScalarKey = currentKey;
+        blockScalarStyle = value.startsWith(">") ? "folded" : "literal";
+        blockScalarLines.length = 0;
+        continue;
+      }
       if (value) {
         values[currentKey] = stripWrappingQuotes(value);
       } else if (currentKey !== "metadata") {
@@ -218,6 +278,8 @@ export const parseSkillFrontmatter = (source: string): SkillFrontmatterData | nu
       }
     }
   }
+
+  flushBlockScalar();
 
   const name = readFrontmatterValue(values, "name");
   const description = readFrontmatterValue(values, "description");
