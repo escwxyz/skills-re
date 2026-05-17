@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowUpRightIcon, CircleIcon, TriangleIcon } from "@phosphor-icons/react";
 import { z } from "zod/v4";
-import { SkillSnapshotDiffDialog } from "@/components/skill-snapshot-diff-dialog";
+// import { SkillSnapshotDiffDialog } from "@/components/skill-snapshot-diff-dialog";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
@@ -23,10 +23,17 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/changelog")({
   loaderDeps: ({ search }) => ({ snapshotId: search.snapshotId }),
-  loader: ({ deps, params }) =>
-    getSkillChangelog({
+  loader: async ({ deps, params }) => {
+    const changelog = await getSkillChangelog({
       data: { selectedSnapshotId: deps.snapshotId, skillSlug: params.slug },
-    }),
+    });
+
+    if (!changelog) {
+      throw notFound();
+    }
+
+    return changelog;
+  },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
     createSeo({
@@ -48,11 +55,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
 
 function RouteComponent() {
   const data = Route.useLoaderData();
-  if (!data) {
-    throw notFound();
-  }
 
-  const { currentSnapshotId } = data;
+  // const { currentSnapshotId } = data;
 
   const locale = getLocale();
 
@@ -63,13 +67,13 @@ function RouteComponent() {
           <h2 className="font-display text-[clamp(36px,5vw,52px)] font-normal leading-none tracking-tight">
             {m.skill_detail_changelog()}
           </h2>
-          <SkillSnapshotDiffDialog
+          {/* <SkillSnapshotDiffDialog
             currentSnapshotId={currentSnapshotId}
             skillId={data.skillId}
             triggerClassName="w-auto min-w-0 px-4"
             triggerLabel={m.skill_changelog_diff_button()}
             versions={data.versions}
-          />
+          /> */}
         </div>
       </div>
 

@@ -137,7 +137,7 @@ function RouteComponent() {
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
       <aside
         className={cn(
-          "sticky top-[calc(var(--header-height)+3.5rem)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)+3.5rem+1px)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden lg:z-0",
+          "sticky top-[calc(var(--header-height)*2)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)*2+1px)] lg:h-[calc(100svh-var(--header-height)*2)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden lg:z-0",
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >
@@ -179,7 +179,7 @@ function RouteComponent() {
         </div>
 
         {isTreeExpanded ? (
-          <div className="bg-background lg:h-[calc(100svh-var(--header-height)-3.5rem-3.5rem)] lg:overflow-y-auto lg:bg-paper-2">
+          <div className="bg-background lg:h-[calc(100svh-var(--header-height)*2-3.5rem)] lg:overflow-y-auto lg:bg-paper-2">
             {data.rows.length > 0 ? (
               <div className="py-4">
                 {visibleRows.map((row) => {
@@ -256,7 +256,7 @@ function RouteComponent() {
 
       <div
         ref={contentScrollRef}
-        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:flex-1 lg:overflow-y-auto lg:border-r"
+        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)*2)] lg:flex-1 lg:overflow-y-auto lg:border-r"
       >
         {activePath && data.snapshotId ? (
           <SkillFileContent activePath={activePath} data={fileContent} isLoading={isLoading} />
@@ -265,7 +265,7 @@ function RouteComponent() {
         )}
       </div>
 
-      <aside className="hidden min-w-0 lg:block lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto">
+      <aside className="hidden min-w-0 lg:block lg:sticky lg:top-[calc(var(--header-height)*2)] lg:h-[calc(100svh-var(--header-height)*2)] lg:overflow-y-auto">
         <div className="p-6">
           {fileContent?.tocItems.length ? (
             <SkillMdToc items={fileContent.tocItems} scrollContainerRef={contentScrollRef} />

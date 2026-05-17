@@ -227,7 +227,9 @@ export const SkillSnapshotDiffDialog = ({
         render={
           <Button
             className={cn("w-full justify-between tracking-[.12em]", triggerClassName)}
-            disabled={!canCompare}
+            // todo: until we finish polish
+            disabled
+            // disabled={!canCompare}
             variant="outline"
           >
             {triggerLabel ?? skill_snapshot_diff_compare_button()}
