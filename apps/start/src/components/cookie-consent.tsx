@@ -92,7 +92,7 @@ export const CookieConsent = () => {
         className="h-6 px-2 font-mono text-[10px] tracking-[0.12em] uppercase"
         onClick={() => setOpen((current) => !current)}
         size="xs"
-        variant="outline"
+        variant="ghost"
       >
         <CookieIcon />
       </Button>

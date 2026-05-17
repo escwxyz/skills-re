@@ -142,4 +142,66 @@ describe("buildAiSearchResult", () => {
       title: "Widget",
     });
   });
+
+  test("resolves skills from chunks response format (Cloudflare AI Search native format)", async () => {
+    const idCandidates: string[] = [];
+
+    const result = await buildAiSearchResult({
+      raw: {
+        search_query: "email automation skill",
+        chunks: [
+          {
+            id: "ac374870df0f57620412b476b7513bd6c5af857fffaf2eadfc76081e474d84bf",
+            source: "skill-1.md",
+            score: 0.984,
+            text: "Widget skill content",
+            metadata: {
+              skillId: "skill-1",
+              skillSlug: "widget",
+              authorHandle: "acme",
+            },
+          },
+        ],
+      },
+      resolveSkillById: (id) => {
+        idCandidates.push(id);
+        return id === "skill-1" ? resolvedSkill : null;
+      },
+      resolveSkillByPath: () => null,
+      resolveSkillBySlug: () => null,
+    });
+
+    expect(idCandidates).toEqual(["skill-1"]);
+    expect(result.ai.resultCount).toBe(1);
+    expect(result.ai.resolvedSkillsCount).toBe(1);
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0]).toMatchObject({ id: "skill-1", slug: "widget" });
+  });
+
+  test("resolves skills from chunks using source filename when metadata lacks skillId", async () => {
+    const idCandidates: string[] = [];
+
+    const result = await buildAiSearchResult({
+      raw: {
+        chunks: [
+          {
+            id: "somehash",
+            source: "skill-1.md",
+            score: 0.9,
+            text: "Widget skill content",
+          },
+        ],
+      },
+      resolveSkillById: (id) => {
+        idCandidates.push(id);
+        return id === "skill-1" ? resolvedSkill : null;
+      },
+      resolveSkillByPath: () => null,
+      resolveSkillBySlug: () => null,
+    });
+
+    expect(idCandidates).toEqual(["skill-1"]);
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0]).toMatchObject({ id: "skill-1" });
+  });
 });
