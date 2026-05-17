@@ -1,12 +1,8 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useAtomValue } from "jotai";
-import { AnimatePresence, motion } from "motion/react";
 
-import { skillsViewModeAtom } from "@/atoms/app";
 import { buildSkillDetailPath } from "@/lib/skill-path";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
@@ -78,42 +74,13 @@ const SemanticResultSkeletonRow = () => (
   </div>
 );
 
-const SemanticResultSkeletonCard = () => (
-  <div className="flex min-h-72 flex-col border-b border-r border-border p-5">
-    <Skeleton className="mb-4 h-2.5 w-24" />
-    <Skeleton className="h-7 w-3/4" />
-    <Skeleton className="mt-3 h-3.5 w-full" />
-    <Skeleton className="mt-1.5 h-3.5 w-5/6" />
-    <Skeleton className="mt-1.5 h-3.5 w-2/3" />
-    <div className="mt-auto flex items-end justify-between pt-5">
-      <div className="flex gap-1">
-        <Skeleton className="h-5 w-10" />
-        <Skeleton className="h-5 w-14" />
-      </div>
-      <Skeleton className="h-2.5 w-8" />
-    </div>
+const SemanticSearchSkeleton = () => (
+  <div>
+    {Array.from({ length: 6 }).map((_, i) => (
+      <SemanticResultSkeletonRow key={i} />
+    ))}
   </div>
 );
-
-const SemanticSearchSkeleton = ({ viewMode }: { viewMode: "list" | "grid" }) => {
-  if (viewMode === "list") {
-    return (
-      <div>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SemanticResultSkeletonRow key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("grid border-border border-l", "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <SemanticResultSkeletonCard key={i} />
-      ))}
-    </div>
-  );
-};
 
 const SemanticSearchEmpty = ({ query }: { query: string }) => (
   <div className="border-border border-t px-6 py-16 text-center">
@@ -149,7 +116,36 @@ const SemanticSearchHeader = ({
   );
 };
 
-const MatchSnippet = ({ skill }: { skill: BrowseSkillItem }) =>
+const escapeRegex = (s: string) => s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const HighlightedText = ({ query, text }: { query?: string; text: string }) => {
+  const words = (query ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
+  if (!words.length) {
+    return <>{text}</>;
+  }
+
+  const pattern = new RegExp(`(${words.map(escapeRegex).join("|")})`, "gi");
+  const parts = text.split(pattern);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <mark className="bg-accent/15 text-accent not-italic" key={i}>
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+};
+
+const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem }) =>
   skill.aiMatch?.snippet ? (
     <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-ink-2">
       {skill.aiMatch.sourcePath ? (
@@ -157,11 +153,19 @@ const MatchSnippet = ({ skill }: { skill: BrowseSkillItem }) =>
           {skill.aiMatch.sourcePath}
         </div>
       ) : null}
-      {skill.aiMatch.snippet}
+      <HighlightedText query={query} text={skill.aiMatch.snippet} />
     </div>
   ) : null;
 
-const SemanticResultRow = ({ index, skill }: { index: number; skill: BrowseSkillItem }) => {
+const SemanticResultRow = ({
+  index,
+  query,
+  skill,
+}: {
+  index: number;
+  query?: string;
+  skill: BrowseSkillItem;
+}) => {
   const locale = getLocale();
   const score = formatScore(skill.aiMatch?.score);
   const downloads = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
@@ -183,7 +187,7 @@ const SemanticResultRow = ({ index, skill }: { index: number; skill: BrowseSkill
         <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-ink-2">
           {skill.description}
         </p>
-        <MatchSnippet skill={skill} />
+        <MatchSnippet query={query} skill={skill} />
         {skill.tags?.length ? (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {skill.tags.slice(0, 5).map((tag) => (
@@ -207,44 +211,6 @@ const SemanticResultRow = ({ index, skill }: { index: number; skill: BrowseSkill
           <b className="block font-display text-base font-normal tracking-normal text-ink">
             {downloads}
           </b>
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-const SemanticResultCard = ({ skill }: { skill: BrowseSkillItem }) => {
-  const locale = getLocale();
-  const score = formatScore(skill.aiMatch?.score);
-  const downloads = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
-
-  return (
-    <Link
-      className="flex min-h-72 flex-col border-b border-r border-border p-5 text-ink no-underline transition-colors hover:bg-paper-2"
-      to={getSkillHref(skill)}
-    >
-      <div className="mb-4 flex items-start justify-between gap-3 font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
-        <span className="truncate">{skill.authorHandle ?? "unknown"}</span>
-        {score ? <span className="text-accent">{score}</span> : null}
-      </div>
-      <h3 className="font-display text-[24px] font-normal leading-[1.05]">{skill.title}</h3>
-      <p className="mt-3 line-clamp-3 font-serif text-[13px] leading-normal text-ink-2">
-        {skill.description}
-      </p>
-      <MatchSnippet skill={skill} />
-      <div className="mt-auto flex items-end justify-between gap-4 pt-5">
-        <div className="flex flex-wrap gap-1">
-          {(skill.tags ?? []).slice(0, 3).map((tag) => (
-            <span
-              className="border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[.08em] uppercase text-muted-text"
-              key={tag}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-text">
-          {downloads}
         </div>
       </div>
     </Link>
@@ -304,8 +270,6 @@ export const SemanticSearchResults = ({
   meta,
   query,
 }: SemanticSearchResultsProps) => {
-  const viewMode = useAtomValue(skillsViewModeAtom);
-
   if (error) {
     if (isRateLimitedSearchError(error)) {
       return (
@@ -330,40 +294,16 @@ export const SemanticSearchResults = ({
 
   let resultsContent;
   if (isLoading && items.length === 0 && query.trim().length > 0) {
-    resultsContent = <SemanticSearchSkeleton viewMode={viewMode} />;
+    resultsContent = <SemanticSearchSkeleton />;
   } else if (items.length === 0) {
     resultsContent = <SemanticSearchEmpty query={query} />;
-  } else if (viewMode === "list") {
+  } else {
     resultsContent = (
       <div>
         {items.map((skill, index) => (
-          <SemanticResultRow index={index} key={skill.id} skill={skill} />
+          <SemanticResultRow index={index} key={skill.id} query={query} skill={skill} />
         ))}
       </div>
-    );
-  } else {
-    resultsContent = (
-      <motion.div
-        className={cn("grid border-border border-l", "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}
-        layout
-        transition={{ layout: { duration: 0.25, ease: "easeOut" } }}
-      >
-        <AnimatePresence initial={false} mode="popLayout">
-          {items.map((skill) => (
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="min-w-0"
-              exit={{ opacity: 0, scale: 0.98 }}
-              initial={{ opacity: 0, y: 8 }}
-              key={skill.id}
-              layout
-              transition={{ duration: 0.18, ease: "easeOut" }}
-            >
-              <SemanticResultCard skill={skill} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
     );
   }
 
