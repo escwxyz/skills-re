@@ -472,9 +472,12 @@ describe("resolveSkillBase", () => {
     } as unknown as ResolveSkillBaseClient;
 
     await expect(resolveSkillBase({ client, slug: "builder" })).resolves.toEqual({
+      authorHandle: "acme",
       description: "Builds things",
       id: "skill-1",
       latestVersion: "1.2.3",
+      repoName: "builder-repo",
+      skillSlug: "builder",
       title: "Builder",
     });
 

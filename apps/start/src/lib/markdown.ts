@@ -179,6 +179,43 @@ const ensureLanguageLoaded = async (language?: string | null) => {
   return highlighter.getLoadedLanguages().includes(normalized) ? normalized : "text";
 };
 
+interface MarkdownEnv {
+  fileTreeBase?: string;
+  filePath?: string;
+}
+
+const isRelativeUrl = (href: string): boolean => {
+  if (!href) {
+    return false;
+  }
+  return (
+    !href.startsWith("http://") &&
+    !href.startsWith("https://") &&
+    !href.startsWith("//") &&
+    !href.startsWith("/") &&
+    !href.startsWith("#") &&
+    !href.startsWith("mailto:") &&
+    !href.startsWith("tel:")
+  );
+};
+
+const resolveRelativePath = (basePath: string, relativePath: string): string => {
+  const hashIndex = relativePath.indexOf("#");
+  const pathWithoutFragment = hashIndex === -1 ? relativePath : relativePath.slice(0, hashIndex);
+  const baseDir = basePath.includes("/") ? basePath.slice(0, basePath.lastIndexOf("/")) : "";
+  const combined = baseDir ? `${baseDir}/${pathWithoutFragment}` : pathWithoutFragment;
+  const segments = combined.split("/").filter((s) => s !== "" && s !== ".");
+  const resolved: string[] = [];
+  for (const segment of segments) {
+    if (segment === "..") {
+      resolved.pop();
+    } else {
+      resolved.push(segment);
+    }
+  }
+  return resolved.join("/");
+};
+
 const createRenderer = () => {
   const md = createMarkdownItAsync({ breaks: true, html: false, linkify: true, typographer: true });
 
@@ -204,8 +241,19 @@ const createRenderer = () => {
     ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
 
   md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-    tokens[idx]?.attrSet("target", "_blank");
-    tokens[idx]?.attrSet("rel", "noopener noreferrer");
+    const href = tokens[idx]?.attrGet("href") ?? "";
+    if (isRelativeUrl(href)) {
+      const { fileTreeBase, filePath } = (env as MarkdownEnv | undefined) ?? {};
+      if (fileTreeBase) {
+        const resolvedPath = resolveRelativePath(filePath ?? "", href);
+        tokens[idx]?.attrSet("href", `${fileTreeBase}?path=${encodeURIComponent(resolvedPath)}`);
+      } else {
+        tokens[idx]?.attrSet("href", "#");
+      }
+    } else {
+      tokens[idx]?.attrSet("target", "_blank");
+      tokens[idx]?.attrSet("rel", "noopener noreferrer");
+    }
     return defaultLinkOpen(tokens, idx, options, env, self);
   };
 
@@ -251,11 +299,11 @@ export const sanitizeRenderedHtml = (html: string) =>
     .replace(SRCDOC_ATTRIBUTES, "")
     .replace(UNSAFE_URL_ATTRIBUTES, ' $1="#"');
 
-export const renderMarkdownAsync = async (content: string) => {
+export const renderMarkdownAsync = async (content: string, env?: MarkdownEnv) => {
   if (!renderer) {
     renderer = createRenderer();
   }
-  return sanitizeRenderedHtml(await renderer.renderAsync(content));
+  return sanitizeRenderedHtml(await renderer.renderAsync(content, env));
 };
 
 const getLanguageFromPath = (path?: string | null) => {
@@ -282,17 +330,19 @@ const renderCodeAsync = async (content: string, language?: string | null) => {
 
 export const renderContentAsync = async ({
   content,
-  path,
+  fileTreeBase,
   isMarkdown,
+  path,
 }: {
   content: string;
-  path?: string | null;
+  fileTreeBase?: string;
   isMarkdown?: boolean | null;
+  path?: string | null;
 }) => {
   const shouldRenderMarkdown = isMarkdown ?? path?.toLowerCase().endsWith(".md") ?? false;
 
   if (shouldRenderMarkdown) {
-    return await renderMarkdownAsync(content);
+    return await renderMarkdownAsync(content, { fileTreeBase, filePath: path ?? undefined });
   }
 
   return await renderCodeAsync(content, getLanguageFromPath(path));

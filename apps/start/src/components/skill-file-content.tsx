@@ -41,7 +41,8 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
 
   return (
     <>
-      <div className="border-border sticky top-[calc(var(--header-height)+7rem)] z-20 flex items-start justify-between gap-4 border-b bg-background/95 px-5 py-4 backdrop-blur-sm lg:top-0">
+      {/** todo fixed height */}
+      <div className="border-border sticky top-[calc(var(--header-height)+7rem)] z-20 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-5 backdrop-blur-sm lg:top-0">
         <div className="min-w-0 font-mono text-xs text-muted-foreground flex items-center gap-2">
           <div className="truncate">{activePath}</div>
           <div className="hidden lg:block">{metaLabel}</div>

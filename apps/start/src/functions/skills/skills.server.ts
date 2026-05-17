@@ -78,9 +78,12 @@ export const resolveSkillBase = async (input: { client: ResolvePathSkillClient; 
     return null;
   }
   return {
+    authorHandle: path.authorHandle,
     description: skill.description,
     id: skill.id,
     latestVersion: skill.latestVersion ?? null,
+    repoName: path.repoName,
+    skillSlug: path.skillSlug,
     title: skill.title,
   };
 };
@@ -233,6 +236,7 @@ export const fetchSkillDocument = async (input: {
   return {
     contentHtml: await renderContentAsync({
       content: parsed.body,
+      fileTreeBase: `/skills/${skill.authorHandle}/${skill.repoName}/${skill.skillSlug}/file-tree`,
       isMarkdown: true,
       path: snapshot.entryPath,
     }),
@@ -254,6 +258,7 @@ interface SkillFileContentClient {
 
 export const fetchSkillFileContent = async (input: {
   client: SkillFileContentClient;
+  fileTreeBase?: string;
   path: string;
   snapshotId: string;
 }) => {
@@ -269,6 +274,7 @@ export const fetchSkillFileContent = async (input: {
   return {
     html: await renderContentAsync({
       content: renderSource,
+      fileTreeBase: input.fileTreeBase,
       path: input.path,
     }),
     isTruncated: content.isTruncated,
