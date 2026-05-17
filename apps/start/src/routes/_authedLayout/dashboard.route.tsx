@@ -1,4 +1,10 @@
-import { ArrowBendUpLeftIcon, CaretRightIcon, HouseIcon, InfoIcon } from "@phosphor-icons/react";
+import {
+  ArrowBendUpLeftIcon,
+  CaretRightIcon,
+  HouseIcon,
+  InfoIcon,
+  UsersIcon,
+} from "@phosphor-icons/react";
 import { ChatCircleTextIcon } from "@phosphor-icons/react/dist/icons/ChatCircleText";
 import { ChatsIcon } from "@phosphor-icons/react/dist/icons/Chats";
 import { GearIcon } from "@phosphor-icons/react/dist/icons/Gear";
@@ -47,7 +53,7 @@ export const Route = createFileRoute("/_authedLayout/dashboard")({
 });
 
 function RouteComponent() {
-  const { currentUser } = Route.useLoaderData();
+  const { currentUser, isAdmin } = Route.useLoaderData();
   const matchRoute = useMatchRoute();
 
   const isSkillsActive = Boolean(matchRoute({ to: "/dashboard/skills", fuzzy: true }));
@@ -65,6 +71,7 @@ function RouteComponent() {
     { title: "Review history", to: "/dashboard/reviews" as const, fuzzy: false },
     { title: "Feedback inbox", to: "/dashboard/feedbacks" as const, fuzzy: false },
     { title: "Access controls", to: "/dashboard/settings" as const, fuzzy: false },
+    { title: "Users", to: "/dashboard/users" as const, fuzzy: false },
   ];
 
   const activeTitle =
@@ -268,6 +275,43 @@ function RouteComponent() {
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
+
+          {isAdmin && (
+            <>
+              <SidebarSeparator />
+              <SidebarGroup>
+                <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-text">
+                  Admin
+                </SidebarGroupLabel>
+                <SidebarMenu className="gap-1">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      render={
+                        <Link
+                          to="/dashboard/users"
+                          className="flex flex-col w-full rounded-none px-0"
+                        >
+                          <span className="flex w-full items-center justify-between gap-3">
+                            <span className="flex items-center gap-2">
+                              <UsersIcon className="size-3" />
+                              <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
+                                Users
+                              </span>
+                            </span>
+                          </span>
+                          <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
+                            Manage all registered accounts
+                          </p>
+                        </Link>
+                      }
+                      className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
+                      isActive={Boolean(matchRoute({ to: "/dashboard/users", fuzzy: false }))}
+                    />
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
+          )}
 
           <SidebarSeparator />
         </SidebarContent>

@@ -48,6 +48,7 @@ import { Route as PublicLayoutCategoriesSlugRouteImport } from './routes/_public
 import { Route as PublicLayoutAuthorsHandleRouteImport } from './routes/_publicLayout/authors.$handle'
 import { Route as PublicLayoutAuthorHandleRouteImport } from './routes/_publicLayout/author.$handle'
 import { Route as AuthedLayoutDeviceCapabilitiesRouteImport } from './routes/_authedLayout/device.capabilities'
+import { Route as AuthedLayoutDashboardUsersRouteImport } from './routes/_authedLayout/dashboard.users'
 import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authedLayout/dashboard.skills'
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
 import { Route as AuthedLayoutDashboardReviewsRouteImport } from './routes/_authedLayout/dashboard.reviews'
@@ -66,11 +67,14 @@ import { Route as ApiOgAuthorsHandlePngRouteImport } from './routes/api/og/autho
 import { Route as PublicLayoutSkillAuthorRepoSlugRouteImport } from './routes/_publicLayout/skill.$author.$repo.$slug'
 import { Route as PublicLayoutSkillsAuthorRepoSlugRouteRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.route'
 import { Route as PublicLayoutSkillsAuthorRepoSlugIndexRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.index'
+import { Route as PublicLayoutSkillsAuthorRepoSlugSandboxRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.sandbox'
 import { Route as PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.reviews'
 import { Route as PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.file-tree'
+import { Route as PublicLayoutSkillsAuthorRepoSlugEvalsRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.evals'
 import { Route as PublicLayoutSkillsAuthorRepoSlugChangelogRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.changelog'
 import { Route as PublicLayoutSkillsAuthorRepoSlugAuditRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.audit'
 import { Route as ApiOgSkillsAuthorRepoSkillSlugPngRouteImport } from './routes/api/og/skills.$author.$repo.$skillSlug.png'
+import { Route as PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRouteImport } from './routes/_publicLayout/skills.$author.$repo.$slug.evals.$runId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -278,6 +282,12 @@ const AuthedLayoutDeviceCapabilitiesRoute =
     path: '/device/capabilities',
     getParentRoute: () => AuthedLayoutRoute,
   } as any)
+const AuthedLayoutDashboardUsersRoute =
+  AuthedLayoutDashboardUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthedLayoutDashboardRouteRoute,
+  } as any)
 const AuthedLayoutDashboardSkillsRoute =
   AuthedLayoutDashboardSkillsRouteImport.update({
     id: '/skills',
@@ -376,6 +386,12 @@ const PublicLayoutSkillsAuthorRepoSlugIndexRoute =
     path: '/',
     getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
+const PublicLayoutSkillsAuthorRepoSlugSandboxRoute =
+  PublicLayoutSkillsAuthorRepoSlugSandboxRouteImport.update({
+    id: '/sandbox',
+    path: '/sandbox',
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
+  } as any)
 const PublicLayoutSkillsAuthorRepoSlugReviewsRoute =
   PublicLayoutSkillsAuthorRepoSlugReviewsRouteImport.update({
     id: '/reviews',
@@ -386,6 +402,12 @@ const PublicLayoutSkillsAuthorRepoSlugFileTreeRoute =
   PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport.update({
     id: '/file-tree',
     path: '/file-tree',
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
+  } as any)
+const PublicLayoutSkillsAuthorRepoSlugEvalsRoute =
+  PublicLayoutSkillsAuthorRepoSlugEvalsRouteImport.update({
+    id: '/evals',
+    path: '/evals',
     getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugRouteRoute,
   } as any)
 const PublicLayoutSkillsAuthorRepoSlugChangelogRoute =
@@ -405,6 +427,12 @@ const ApiOgSkillsAuthorRepoSkillSlugPngRoute =
     id: '/api/og/skills/$author/$repo/$skillSlug/png',
     path: '/api/og/skills/$author/$repo/$skillSlug/png',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute =
+  PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRouteImport.update({
+    id: '/$runId',
+    path: '/$runId',
+    getParentRoute: () => PublicLayoutSkillsAuthorRepoSlugEvalsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -432,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
   '/dashboard/skills': typeof AuthedLayoutDashboardSkillsRouteWithChildren
+  '/dashboard/users': typeof AuthedLayoutDashboardUsersRoute
   '/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
   '/author/$handle': typeof PublicLayoutAuthorHandleRoute
   '/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
@@ -464,9 +493,12 @@ export interface FileRoutesByFullPath {
   '/api/og/tags/$slug/png': typeof ApiOgTagsSlugPngRoute
   '/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
   '/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/skills/$author/$repo/$slug/evals': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren
   '/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
   '/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/skills/$author/$repo/$slug/sandbox': typeof PublicLayoutSkillsAuthorRepoSlugSandboxRoute
   '/skills/$author/$repo/$slug/': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
+  '/skills/$author/$repo/$slug/evals/$runId': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute
   '/api/og/skills/$author/$repo/$skillSlug/png': typeof ApiOgSkillsAuthorRepoSkillSlugPngRoute
 }
 export interface FileRoutesByTo {
@@ -493,6 +525,7 @@ export interface FileRoutesByTo {
   '/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
   '/dashboard/skills': typeof AuthedLayoutDashboardSkillsRouteWithChildren
+  '/dashboard/users': typeof AuthedLayoutDashboardUsersRoute
   '/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
   '/author/$handle': typeof PublicLayoutAuthorHandleRoute
   '/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
@@ -524,9 +557,12 @@ export interface FileRoutesByTo {
   '/api/og/tags/$slug/png': typeof ApiOgTagsSlugPngRoute
   '/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
   '/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/skills/$author/$repo/$slug/evals': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren
   '/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
   '/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/skills/$author/$repo/$slug/sandbox': typeof PublicLayoutSkillsAuthorRepoSlugSandboxRoute
   '/skills/$author/$repo/$slug': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
+  '/skills/$author/$repo/$slug/evals/$runId': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute
   '/api/og/skills/$author/$repo/$skillSlug/png': typeof ApiOgSkillsAuthorRepoSkillSlugPngRoute
 }
 export interface FileRoutesById {
@@ -557,6 +593,7 @@ export interface FileRoutesById {
   '/_authedLayout/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/_authedLayout/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
   '/_authedLayout/dashboard/skills': typeof AuthedLayoutDashboardSkillsRouteWithChildren
+  '/_authedLayout/dashboard/users': typeof AuthedLayoutDashboardUsersRoute
   '/_authedLayout/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
   '/_publicLayout/author/$handle': typeof PublicLayoutAuthorHandleRoute
   '/_publicLayout/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
@@ -589,9 +626,12 @@ export interface FileRoutesById {
   '/api/og/tags/$slug/png': typeof ApiOgTagsSlugPngRoute
   '/_publicLayout/skills/$author/$repo/$slug/audit': typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
   '/_publicLayout/skills/$author/$repo/$slug/changelog': typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  '/_publicLayout/skills/$author/$repo/$slug/evals': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren
   '/_publicLayout/skills/$author/$repo/$slug/file-tree': typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
   '/_publicLayout/skills/$author/$repo/$slug/reviews': typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  '/_publicLayout/skills/$author/$repo/$slug/sandbox': typeof PublicLayoutSkillsAuthorRepoSlugSandboxRoute
   '/_publicLayout/skills/$author/$repo/$slug/': typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
+  '/_publicLayout/skills/$author/$repo/$slug/evals/$runId': typeof PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute
   '/api/og/skills/$author/$repo/$skillSlug/png': typeof ApiOgSkillsAuthorRepoSkillSlugPngRoute
 }
 export interface FileRouteTypes {
@@ -621,6 +661,7 @@ export interface FileRouteTypes {
     | '/dashboard/reviews'
     | '/dashboard/settings'
     | '/dashboard/skills'
+    | '/dashboard/users'
     | '/device/capabilities'
     | '/author/$handle'
     | '/authors/$handle'
@@ -653,9 +694,12 @@ export interface FileRouteTypes {
     | '/api/og/tags/$slug/png'
     | '/skills/$author/$repo/$slug/audit'
     | '/skills/$author/$repo/$slug/changelog'
+    | '/skills/$author/$repo/$slug/evals'
     | '/skills/$author/$repo/$slug/file-tree'
     | '/skills/$author/$repo/$slug/reviews'
+    | '/skills/$author/$repo/$slug/sandbox'
     | '/skills/$author/$repo/$slug/'
+    | '/skills/$author/$repo/$slug/evals/$runId'
     | '/api/og/skills/$author/$repo/$skillSlug/png'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -682,6 +726,7 @@ export interface FileRouteTypes {
     | '/dashboard/reviews'
     | '/dashboard/settings'
     | '/dashboard/skills'
+    | '/dashboard/users'
     | '/device/capabilities'
     | '/author/$handle'
     | '/authors/$handle'
@@ -713,9 +758,12 @@ export interface FileRouteTypes {
     | '/api/og/tags/$slug/png'
     | '/skills/$author/$repo/$slug/audit'
     | '/skills/$author/$repo/$slug/changelog'
+    | '/skills/$author/$repo/$slug/evals'
     | '/skills/$author/$repo/$slug/file-tree'
     | '/skills/$author/$repo/$slug/reviews'
+    | '/skills/$author/$repo/$slug/sandbox'
     | '/skills/$author/$repo/$slug'
+    | '/skills/$author/$repo/$slug/evals/$runId'
     | '/api/og/skills/$author/$repo/$skillSlug/png'
   id:
     | '__root__'
@@ -745,6 +793,7 @@ export interface FileRouteTypes {
     | '/_authedLayout/dashboard/reviews'
     | '/_authedLayout/dashboard/settings'
     | '/_authedLayout/dashboard/skills'
+    | '/_authedLayout/dashboard/users'
     | '/_authedLayout/device/capabilities'
     | '/_publicLayout/author/$handle'
     | '/_publicLayout/authors/$handle'
@@ -777,9 +826,12 @@ export interface FileRouteTypes {
     | '/api/og/tags/$slug/png'
     | '/_publicLayout/skills/$author/$repo/$slug/audit'
     | '/_publicLayout/skills/$author/$repo/$slug/changelog'
+    | '/_publicLayout/skills/$author/$repo/$slug/evals'
     | '/_publicLayout/skills/$author/$repo/$slug/file-tree'
     | '/_publicLayout/skills/$author/$repo/$slug/reviews'
+    | '/_publicLayout/skills/$author/$repo/$slug/sandbox'
     | '/_publicLayout/skills/$author/$repo/$slug/'
+    | '/_publicLayout/skills/$author/$repo/$slug/evals/$runId'
     | '/api/og/skills/$author/$repo/$skillSlug/png'
   fileRoutesById: FileRoutesById
 }
@@ -1086,6 +1138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLayoutDeviceCapabilitiesRouteImport
       parentRoute: typeof AuthedLayoutRoute
     }
+    '/_authedLayout/dashboard/users': {
+      id: '/_authedLayout/dashboard/users'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof AuthedLayoutDashboardUsersRouteImport
+      parentRoute: typeof AuthedLayoutDashboardRouteRoute
+    }
     '/_authedLayout/dashboard/skills': {
       id: '/_authedLayout/dashboard/skills'
       path: '/skills'
@@ -1212,6 +1271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugIndexRouteImport
       parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
+    '/_publicLayout/skills/$author/$repo/$slug/sandbox': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/sandbox'
+      path: '/sandbox'
+      fullPath: '/skills/$author/$repo/$slug/sandbox'
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugSandboxRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
+    }
     '/_publicLayout/skills/$author/$repo/$slug/reviews': {
       id: '/_publicLayout/skills/$author/$repo/$slug/reviews'
       path: '/reviews'
@@ -1224,6 +1290,13 @@ declare module '@tanstack/react-router' {
       path: '/file-tree'
       fullPath: '/skills/$author/$repo/$slug/file-tree'
       preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
+    }
+    '/_publicLayout/skills/$author/$repo/$slug/evals': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/evals'
+      path: '/evals'
+      fullPath: '/skills/$author/$repo/$slug/evals'
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugEvalsRouteImport
       parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugRouteRoute
     }
     '/_publicLayout/skills/$author/$repo/$slug/changelog': {
@@ -1246,6 +1319,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/og/skills/$author/$repo/$skillSlug/png'
       preLoaderRoute: typeof ApiOgSkillsAuthorRepoSkillSlugPngRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_publicLayout/skills/$author/$repo/$slug/evals/$runId': {
+      id: '/_publicLayout/skills/$author/$repo/$slug/evals/$runId'
+      path: '/$runId'
+      fullPath: '/skills/$author/$repo/$slug/evals/$runId'
+      preLoaderRoute: typeof PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRouteImport
+      parentRoute: typeof PublicLayoutSkillsAuthorRepoSlugEvalsRoute
     }
   }
 }
@@ -1270,6 +1350,7 @@ interface AuthedLayoutDashboardRouteRouteChildren {
   AuthedLayoutDashboardReviewsRoute: typeof AuthedLayoutDashboardReviewsRoute
   AuthedLayoutDashboardSettingsRoute: typeof AuthedLayoutDashboardSettingsRoute
   AuthedLayoutDashboardSkillsRoute: typeof AuthedLayoutDashboardSkillsRouteWithChildren
+  AuthedLayoutDashboardUsersRoute: typeof AuthedLayoutDashboardUsersRoute
   AuthedLayoutDashboardIndexRoute: typeof AuthedLayoutDashboardIndexRoute
 }
 
@@ -1280,6 +1361,7 @@ const AuthedLayoutDashboardRouteRouteChildren: AuthedLayoutDashboardRouteRouteCh
     AuthedLayoutDashboardSettingsRoute: AuthedLayoutDashboardSettingsRoute,
     AuthedLayoutDashboardSkillsRoute:
       AuthedLayoutDashboardSkillsRouteWithChildren,
+    AuthedLayoutDashboardUsersRoute: AuthedLayoutDashboardUsersRoute,
     AuthedLayoutDashboardIndexRoute: AuthedLayoutDashboardIndexRoute,
   }
 
@@ -1302,11 +1384,28 @@ const AuthedLayoutRouteWithChildren = AuthedLayoutRoute._addFileChildren(
   AuthedLayoutRouteChildren,
 )
 
+interface PublicLayoutSkillsAuthorRepoSlugEvalsRouteChildren {
+  PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute: typeof PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute
+}
+
+const PublicLayoutSkillsAuthorRepoSlugEvalsRouteChildren: PublicLayoutSkillsAuthorRepoSlugEvalsRouteChildren =
+  {
+    PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute:
+      PublicLayoutSkillsAuthorRepoSlugEvalsRunIdRoute,
+  }
+
+const PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren =
+  PublicLayoutSkillsAuthorRepoSlugEvalsRoute._addFileChildren(
+    PublicLayoutSkillsAuthorRepoSlugEvalsRouteChildren,
+  )
+
 interface PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren {
   PublicLayoutSkillsAuthorRepoSlugAuditRoute: typeof PublicLayoutSkillsAuthorRepoSlugAuditRoute
   PublicLayoutSkillsAuthorRepoSlugChangelogRoute: typeof PublicLayoutSkillsAuthorRepoSlugChangelogRoute
+  PublicLayoutSkillsAuthorRepoSlugEvalsRoute: typeof PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren
   PublicLayoutSkillsAuthorRepoSlugFileTreeRoute: typeof PublicLayoutSkillsAuthorRepoSlugFileTreeRoute
   PublicLayoutSkillsAuthorRepoSlugReviewsRoute: typeof PublicLayoutSkillsAuthorRepoSlugReviewsRoute
+  PublicLayoutSkillsAuthorRepoSlugSandboxRoute: typeof PublicLayoutSkillsAuthorRepoSlugSandboxRoute
   PublicLayoutSkillsAuthorRepoSlugIndexRoute: typeof PublicLayoutSkillsAuthorRepoSlugIndexRoute
 }
 
@@ -1316,10 +1415,14 @@ const PublicLayoutSkillsAuthorRepoSlugRouteRouteChildren: PublicLayoutSkillsAuth
       PublicLayoutSkillsAuthorRepoSlugAuditRoute,
     PublicLayoutSkillsAuthorRepoSlugChangelogRoute:
       PublicLayoutSkillsAuthorRepoSlugChangelogRoute,
+    PublicLayoutSkillsAuthorRepoSlugEvalsRoute:
+      PublicLayoutSkillsAuthorRepoSlugEvalsRouteWithChildren,
     PublicLayoutSkillsAuthorRepoSlugFileTreeRoute:
       PublicLayoutSkillsAuthorRepoSlugFileTreeRoute,
     PublicLayoutSkillsAuthorRepoSlugReviewsRoute:
       PublicLayoutSkillsAuthorRepoSlugReviewsRoute,
+    PublicLayoutSkillsAuthorRepoSlugSandboxRoute:
+      PublicLayoutSkillsAuthorRepoSlugSandboxRoute,
     PublicLayoutSkillsAuthorRepoSlugIndexRoute:
       PublicLayoutSkillsAuthorRepoSlugIndexRoute,
   }
@@ -1419,12 +1522,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
