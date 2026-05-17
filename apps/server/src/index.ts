@@ -167,8 +167,11 @@ app.post(
 const createSkillEvalStreamDeps = (): SkillEvalStreamDeps => ({
   authorizeRun: async ({ runId, userId }) => {
     try {
-      const detail = await skillEvalSandboxService.getRunDetail({ runId }, { userId });
-      return detail ? "authorized" : "not_found";
+      const detail = await skillEvalSandboxService.getRunDetail({ runId });
+      if (!detail) {
+        return "not_found";
+      }
+      return detail.createdBy === userId ? "authorized" : "forbidden";
     } catch {
       return "forbidden";
     }
