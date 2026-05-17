@@ -215,11 +215,11 @@ export const runRepoSkillSnapshotSyncWorkflow = async (
     return { reason: "unchanged-hash", status: "skipped" as const };
   }
 
+  const relativeEntryPath = skill.entryPath.startsWith(`${skillRootPath}/`)
+    ? skill.entryPath.slice(skillRootPath.length + 1)
+    : (skill.entryPath.split("/").at(-1) ?? SKILL_FILENAME);
   const skillMdFile = filesResponse.files.find(
-    (f) =>
-      f.path === skill.entryPath ||
-      f.path.endsWith(`/${skill.entryPath}`) ||
-      f.path.split("/").at(-1) === SKILL_FILENAME,
+    (f) => f.path === relativeEntryPath || f.path.split("/").at(-1) === SKILL_FILENAME,
   );
   const fingerprint = skillMdFile
     ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdFile.content)
