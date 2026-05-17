@@ -1,6 +1,7 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 
 import {
   createSkillEvalCaseFingerprint,
@@ -10,6 +11,25 @@ import {
 } from "./parser";
 
 describe("skill eval suite parser", () => {
+  test("parses the local demo skill fixture", () => {
+    const content = readFileSync(
+      "apps/server/src/skill-eval-sandbox/fixtures/demo-skill/evals/evals.json",
+      "utf8",
+    );
+
+    expect(parseSkillEvalSuite(content)).toMatchObject({
+      caseCount: 1,
+      cases: [
+        {
+          fixturePaths: ["evals/files/note.txt"],
+          id: "summarize-note",
+          title: "summarize attached note",
+        },
+      ],
+      skillName: "demo-skill",
+    });
+  });
+
   test("parses a valid evals.json file into normalized cases", () => {
     expect(
       parseSkillEvalSuite(
@@ -38,6 +58,30 @@ describe("skill eval suite parser", () => {
         },
       ],
       skillName: "Code Review",
+    });
+  });
+
+  test("accepts SDK-compatible name and assertion-only cases", () => {
+    expect(
+      parseSkillEvalSuite(
+        JSON.stringify({
+          skill_name: "Code Review",
+          evals: [
+            {
+              assertions: ["mentions the risky line"],
+              id: "assertion-only",
+              name: "assertion only",
+              prompt: "Review this patch.",
+            },
+          ],
+        }),
+      ).cases[0],
+    ).toEqual({
+      assertions: ["mentions the risky line"],
+      fixturePaths: [],
+      id: "assertion-only",
+      prompt: "Review this patch.",
+      title: "assertion only",
     });
   });
 
@@ -77,7 +121,7 @@ describe("skill eval suite parser", () => {
     expect(suiteFingerprint).not.toBe(nextSnapshotFingerprint);
 
     const caseFingerprint = await createSkillEvalCaseFingerprint({
-      caseItem: suite.cases[0],
+      caseItem: suite.cases[0]!,
       snapshotId: "snapshot-1",
       snapshotVersion: "1.0.0",
     });
@@ -187,5 +231,21 @@ describe("skill eval suite parser", () => {
         }),
       ),
     ).toThrow();
+  });
+
+  test("rejects cases without expected output or assertions", () => {
+    expect(() =>
+      parseSkillEvalSuite(
+        JSON.stringify({
+          skill_name: "Code Review",
+          evals: [
+            {
+              id: "missing-rubric",
+              prompt: "Review this patch.",
+            },
+          ],
+        }),
+      ),
+    ).toThrow("expected_output");
   });
 });

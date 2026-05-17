@@ -366,7 +366,7 @@ const persistParsedSuite = async (input: {
     cases: input.parsedSuite.cases.map((caseItem, index) => ({
       assertions: caseItem.assertions,
       caseId: caseItem.id,
-      expectedOutput: caseItem.expectedOutput,
+      expectedOutput: caseItem.expectedOutput ?? null,
       fingerprint: caseFingerprints[index] ?? "",
       fixturePaths: caseItem.fixturePaths,
       prompt: caseItem.prompt,
@@ -578,19 +578,21 @@ export const createSkillEvalSandboxService = (
     },
 
     async getSuite(input: { skillId: string; snapshotId?: string }): Promise<SuiteOutput> {
-      const [getSnapshotById, listSnapshotsPageBySkill, readSnapshotFileContent] =
-        await Promise.all([
-          getDep("getSnapshotById"),
-          getDep("listSnapshotsPageBySkill"),
-          getDep("readSnapshotFileContent"),
-        ]);
-      const snapshotFromList = await listSnapshotsPageBySkill({
-        limit: 1,
-        skillId: input.skillId,
-      });
-      const snapshot = input.snapshotId
-        ? await getSnapshotById(asSnapshotId(input.snapshotId))
-        : (snapshotFromList.page[0] ?? null);
+      const [getSnapshotById, readSnapshotFileContent] = await Promise.all([
+        getDep("getSnapshotById"),
+        getDep("readSnapshotFileContent"),
+      ]);
+      let snapshot: SnapshotForEvalSuite | null;
+      if (input.snapshotId) {
+        snapshot = await getSnapshotById(asSnapshotId(input.snapshotId));
+      } else {
+        const listSnapshotsPageBySkill = await getDep("listSnapshotsPageBySkill");
+        const snapshotFromList = await listSnapshotsPageBySkill({
+          limit: 1,
+          skillId: input.skillId,
+        });
+        snapshot = snapshotFromList.page[0] ?? null;
+      }
 
       if (!snapshot || snapshot.skillId !== input.skillId) {
         return {

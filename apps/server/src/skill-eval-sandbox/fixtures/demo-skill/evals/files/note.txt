@@ -1,0 +1,2 @@
+This note exists so the Skills.re sandbox eval path has a local fixture with a SKILL.md file,
+an evals/evals.json suite, and an attached file that can be restored into a sandbox workspace.

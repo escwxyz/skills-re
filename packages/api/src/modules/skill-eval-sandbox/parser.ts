@@ -1,13 +1,22 @@
 import { z } from "zod";
 
-const rawEvalCaseSchema = z.object({
-  assertions: z.array(z.string()).optional(),
-  expected_output: z.string().min(1),
-  files: z.array(z.string()).optional(),
-  id: z.union([z.string(), z.number()]),
-  prompt: z.string().min(1),
-  title: z.string().optional(),
-});
+const rawEvalCaseSchema = z
+  .object({
+    assertions: z.array(z.string()).optional(),
+    expected_output: z.string().min(1).optional(),
+    files: z.array(z.string()).optional(),
+    id: z.union([z.string(), z.number()]),
+    name: z.string().optional(),
+    prompt: z.string().min(1),
+    title: z.string().optional(),
+  })
+  .refine(
+    (caseItem) => Boolean(caseItem.expected_output) || (caseItem.assertions?.length ?? 0) > 0,
+    {
+      message: "eval case requires expected_output or assertions",
+      path: ["expected_output"],
+    },
+  );
 
 const rawEvalSuiteSchema = z.object({
   evals: z.array(rawEvalCaseSchema),
@@ -40,7 +49,7 @@ const sha256Hex = async (value: unknown) => {
 
 export interface ParsedSkillEvalCase {
   assertions: string[];
-  expectedOutput: string;
+  expectedOutput?: string;
   fixturePaths: string[];
   id: string;
   prompt: string;
@@ -77,11 +86,11 @@ export const parseSkillEvalSuite = (content: string): ParsedSkillEvalSuite => {
     caseCount: parsed.evals.length,
     cases: parsed.evals.map((caseItem) => ({
       assertions: caseItem.assertions ?? [],
-      expectedOutput: caseItem.expected_output,
       fixturePaths: caseItem.files ?? [],
       id: String(caseItem.id),
       prompt: caseItem.prompt,
-      title: caseItem.title,
+      title: caseItem.title ?? caseItem.name,
+      ...(caseItem.expected_output ? { expectedOutput: caseItem.expected_output } : {}),
     })),
     skillName: parsed.skill_name,
   };

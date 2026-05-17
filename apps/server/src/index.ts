@@ -9,6 +9,7 @@ import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
+import { createSkillEvalSandboxSmokeResponse } from "./skill-eval-sandbox/smoke";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
@@ -132,7 +133,7 @@ app.use("/*", (c, next) =>
   cors({
     origin: (requestOrigin) => getAllowedCorsOrigin(requestOrigin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-api-key"],
+    allowHeaders: ["Content-Type", "Authorization", "x-api-key", "x-skills-automation-token"],
     credentials: true,
   })(c, next),
 );
@@ -158,6 +159,10 @@ app.get("/skills/download", async (c) => {
 app.post(
   "/skills/audits/ingest",
   async (c) => await createStaticAuditIngestResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
+);
+app.post(
+  "/skill-eval-sandbox/smoke",
+  async (c) => await createSkillEvalSandboxSmokeResponse(c.req.raw, c.env),
 );
 const createSkillEvalStreamDeps = (): SkillEvalStreamDeps => ({
   authorizeRun: async ({ runId, userId }) => {
