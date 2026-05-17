@@ -1,7 +1,5 @@
 // oxlint-disable prefer-destructuring
 import { isSkillEvalSandboxEnabled } from "./runtime";
-import { createSkillEvalRunEvent, serializeSkillEvalRunEvent } from "./events";
-import { sanitizeSkillEvalRunEvent } from "./redaction";
 import { readSkillEvalRunEvents } from "./event-writer";
 import type { SkillEvalR2Bucket } from "./event-writer";
 
@@ -115,23 +113,6 @@ export const createSkillEvalRunStreamResponse = async (input: {
   const client = pair[0];
   const server = pair[1];
   server.accept();
-  server.send(
-    serializeSkillEvalRunEvent(
-      sanitizeSkillEvalRunEvent(
-        createSkillEvalRunEvent({
-          event: {
-            kind: "status",
-            message: "Stream connected.",
-            payload: {
-              to: "running",
-            },
-            runId: input.runId,
-          },
-          nextSequence: 0,
-        }),
-      ),
-    ),
-  );
 
   return new Response(null, {
     status: 101,
