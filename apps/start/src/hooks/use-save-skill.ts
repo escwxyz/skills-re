@@ -8,11 +8,13 @@ import { useRouteContext } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
+import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 const DEBOUNCE_MS = 600;
 
 export const useSaveSkill = ({ slug }: { slug: string }) => {
   const { currentUser } = useRouteContext({ from: "__root__" });
+  const ga = useGoogleAnalytics();
   const queryClient = useQueryClient();
   const getSavedStatus = useServerFn(getSkillCheckSaved);
   const saveSkillFn = useServerFn(saveSkill);
@@ -74,6 +76,7 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
     }
 
     const newState = !isSaved;
+    ga.event(newState ? "save_skill" : "unsave_skill", { slug });
     setOptimisticSaved(newState);
     toggleDebouncer.maybeExecute(newState);
   };

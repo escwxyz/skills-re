@@ -5,6 +5,7 @@ import type { ReactNode, RefObject } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-form";
 import { useAtom } from "jotai";
+import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 import {
   isLoginDialogOpenAtom,
@@ -78,6 +79,7 @@ const getSubmitErrorMessage = (error: unknown) =>
     : "Failed to submit GitHub repository. Please try again.";
 
 export const useGithubSubmitForm = (): GithubSubmitFormModel => {
+  const ga = useGoogleAnalytics();
   const [logs, setLogs] = useState<string[]>([]);
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>("idle");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
@@ -168,6 +170,11 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
                 : `> ${m.logs_no_publishable_skills({})}`,
             ]);
 
+            ga.event("github_repo_fetch", {
+              owner: data.owner,
+              repo: data.repo,
+              skills_count: data.skills.length,
+            });
             setRepoPreview(data);
             form.setFieldValue("selectedSkillRootPaths", validSkillPaths);
             setFetchStatus("fetched");
@@ -261,6 +268,11 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
           },
           onSuccess: (data) => {
             if (data.status === "submitted") {
+              ga.event("github_repo_submit", {
+                owner: repoPreview.owner,
+                repo: repoPreview.repo,
+                skills_count: data.skillsCount,
+              });
               setLogs((prev) => [
                 ...prev,
                 data.workflowId

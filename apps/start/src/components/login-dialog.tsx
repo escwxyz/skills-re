@@ -2,6 +2,7 @@
 import { useAtom } from "jotai";
 import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
+import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 import {
   isLoginDialogOpenAtom,
@@ -61,6 +62,8 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
 
   const isMobile = useIsMobile();
 
+  const ga = useGoogleAnalytics();
+
   const resolvedOnlyGitHub = onlyGitHub ?? isGithubOnlyMode;
   const resolvedCallbackUrl =
     callbackUrl ??
@@ -81,6 +84,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
       callbackURL: resolvedCallbackUrl,
       fetchOptions: {
         onSuccess: () => {
+          ga.event("login", { method: provider });
           window.location.href = localizeHref("/dashboard");
         },
       },

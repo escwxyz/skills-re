@@ -4,6 +4,7 @@ import {
   ScriptOnce,
   Scripts,
   createRootRouteWithContext,
+  useRouteContext,
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
@@ -11,6 +12,7 @@ import type { orpc } from "@/lib/orpc";
 import type { QueryClient } from "@tanstack/react-query";
 import { getLocale } from "@/paraglide/runtime";
 import { getUser } from "@/functions/get-user";
+import { useEffect } from "react";
 import { Provider } from "jotai";
 import { getTheme } from "@/functions/get-theme";
 import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
@@ -18,7 +20,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ClarityConsent } from "@/components/clarity-consent";
 import { GoogleAnalyticsConsent } from "@/components/google-analytics-consent";
 import { env } from "@skills-re/env/start";
-import { GoogleAnalytics } from "tanstack-router-ga4";
+import { GoogleAnalytics, useGoogleAnalytics } from "tanstack-router-ga4";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -70,6 +72,21 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
+  const { currentUser, isAdmin } = useRouteContext({ from: "__root__" });
+  const ga = useGoogleAnalytics();
+
+  useEffect(() => {
+    if (!currentUser || isAdmin) {
+      return;
+    }
+    ga.set({
+      user_id: currentUser.id,
+      user_properties: {
+        email: currentUser.email,
+      },
+    });
+  }, [currentUser, ga, isAdmin]);
+
   return (
     <Provider>
       <Outlet />

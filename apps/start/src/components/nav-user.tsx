@@ -12,15 +12,19 @@ import { authClient } from "@/lib/auth-client";
 import { SignOutIcon, HouseIcon, CodeIcon, ChatsIcon, GearIcon } from "@phosphor-icons/react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { m } from "@/paraglide/messages";
+import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 type User = typeof authClient.$Infer.Session.user;
 
 export const NavUser = ({ currentUser }: { currentUser: User }) => {
   const router = useRouter();
 
+  const ga = useGoogleAnalytics();
+
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
+      ga.event("logout", { user: currentUser.id });
     } finally {
       if (location.pathname.startsWith("/dashboard")) {
         window.location.assign("/");
