@@ -486,10 +486,7 @@ export const createSkillEvalSandboxService = (
       return await notImplemented("stream token creation");
     },
 
-    async getRunDetail(
-      input: RunDetailInput,
-      auth: { userId: string },
-    ): Promise<RunDetailOutput | null> {
+    async getRunDetail(input: RunDetailInput): Promise<RunDetailOutput | null> {
       const [getRunDetailByIdFn, listCaseResultsByRunFn] = await Promise.all([
         getDep("getRunDetailById"),
         getDep("listCaseResultsByRun"),
@@ -497,9 +494,6 @@ export const createSkillEvalSandboxService = (
       const run = await getRunDetailByIdFn(asSkillEvalRunId(input.runId));
       if (!run) {
         return null;
-      }
-      if (run.createdBy && run.createdBy !== auth.userId) {
-        throw new Error("Run is not authorized.");
       }
 
       const limits = skillEvalLimitsSchema.parse(

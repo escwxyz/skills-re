@@ -352,10 +352,8 @@ export const appRouter = {
           userId: context.session.user.id,
         }),
     ),
-    getRunDetail: protectedProcedure.skillEvalSandbox.getRunDetail.handler(({ input, context }) =>
-      skillEvalSandboxService.getRunDetail(input, {
-        userId: context.session.user.id,
-      }),
+    getRunDetail: publicProcedure.skillEvalSandbox.getRunDetail.handler(({ input }) =>
+      skillEvalSandboxService.getRunDetail(input),
     ),
     getSuite: publicProcedure.skillEvalSandbox.getSuite.handler(({ input }) =>
       skillEvalSandboxService.getSuite(input),

@@ -850,9 +850,7 @@ describe("skill eval sandbox service", () => {
         ]),
     });
 
-    await expect(
-      service.getRunDetail({ runId: "run-1" }, { userId: "user-1" }),
-    ).resolves.toMatchObject({
+    await expect(service.getRunDetail({ runId: "run-1" })).resolves.toMatchObject({
       agent: {
         displayName: "Codex",
         id: "agent-codex",
@@ -913,43 +911,5 @@ describe("skill eval sandbox service", () => {
         totalCases: 1,
       },
     });
-  });
-
-  test("denies run detail for another user's run", async () => {
-    const service = createSkillEvalSandboxService({
-      getRunDetailById: () =>
-        Promise.resolve({
-          agentDisplayName: "Codex",
-          agentId: asSandboxAgentId("agent-codex"),
-          agentProvider: "openai",
-          artifactPrefix: "eval-runs/run-1",
-          blockedCases: 0,
-          completedAt: null,
-          createdAt: new Date(1_700_000_000_000),
-          createdBy: "user-2",
-          errorCode: null,
-          errorMessage: null,
-          failedCases: 0,
-          id: asSkillEvalRunId("run-1"),
-          limitsJson: "{}",
-          networkJson: "{}",
-          passedCases: 0,
-          policyVersion: "skill-eval-sandbox-v1",
-          skillId: "skill-1",
-          snapshotId: asSnapshotId("snapshot-1"),
-          snapshotVersion: "1.0.0",
-          status: "running",
-          suiteId: asSkillEvalSuiteId("suite-1"),
-          syncTime: 1_700_000_000_600,
-          tokenCount: null,
-          totalCases: 1,
-          totalDurationMs: null,
-        }),
-      listCaseResultsByRun: () => Promise.resolve([]),
-    });
-
-    await expect(service.getRunDetail({ runId: "run-1" }, { userId: "user-1" })).rejects.toThrow(
-      "Run is not authorized.",
-    );
   });
 });
