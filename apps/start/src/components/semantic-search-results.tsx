@@ -118,23 +118,59 @@ const SemanticSearchHeader = ({
 
 const escapeRegex = (s: string) => s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const leadingFrontmatterPat = /^---\s*\n[\s\S]*?\n---\s*/;
+const mdCodeFencePat = /```[\s\S]*?```/g;
+const mdInlineCodePat = /`([^`]+)`/g;
+const mdImagePat = /!\[([^\]]*)\]\([^)]+\)/g;
+const mdLinkPat = /\[([^\]]+)\]\([^)]+\)/g;
+const mdHeadingPat = /^\s{0,3}#{1,6}\s+/gm;
+const mdListPat = /^\s{0,3}[-*+]\s+/gm;
+const mdOrderedListPat = /^\s{0,3}\d+\.\s+/gm;
+const mdQuotePat = /^\s{0,3}>\s?/gm;
+const mdEmphasisPat = /[*_~]/g;
+const mdWhitespacePat = /\s+/g;
+
+const toPlainTextSnippet = (value: string) =>
+  value
+    .replace(leadingFrontmatterPat, "")
+    .replaceAll(mdCodeFencePat, " ")
+    .replaceAll(mdInlineCodePat, "$1")
+    .replaceAll(mdImagePat, "$1")
+    .replaceAll(mdLinkPat, "$1")
+    .replaceAll(mdHeadingPat, "")
+    .replaceAll(mdListPat, "")
+    .replaceAll(mdOrderedListPat, "")
+    .replaceAll(mdQuotePat, "")
+    .replaceAll("|", " ")
+    .replaceAll(mdEmphasisPat, "")
+    .replaceAll(mdWhitespacePat, " ")
+    .trim();
+
+const getQueryTerms = (query: string) =>
+  [
+    ...new Set(
+      query
+        .toLowerCase()
+        .split(/\s+/)
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 2),
+    ),
+  ].slice(0, 8);
+
 const HighlightedText = ({ query, text }: { query?: string; text: string }) => {
-  const words = (query ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
-  if (!words.length) {
+  const terms = getQueryTerms(query ?? "");
+  if (!terms.length) {
     return <>{text}</>;
   }
 
-  const pattern = new RegExp(`(${words.map(escapeRegex).join("|")})`, "gi");
+  const pattern = new RegExp(`(${terms.map(escapeRegex).join("|")})`, "gi");
   const parts = text.split(pattern);
 
   return (
     <>
       {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <mark className="bg-accent/15 text-accent not-italic" key={i}>
+        terms.some((t) => t === part.toLowerCase()) ? (
+          <mark className="bg-primary/20 font-semibold text-primary-foreground not-italic" key={i}>
             {part}
           </mark>
         ) : (
@@ -145,17 +181,27 @@ const HighlightedText = ({ query, text }: { query?: string; text: string }) => {
   );
 };
 
-const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem }) =>
-  skill.aiMatch?.snippet ? (
+const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem }) => {
+  const raw = skill.aiMatch?.snippet;
+  if (!raw) {
+    return null;
+  }
+  const snippet = toPlainTextSnippet(raw);
+  if (!snippet) {
+    return null;
+  }
+
+  return (
     <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-ink-2">
-      {skill.aiMatch.sourcePath ? (
+      {skill.aiMatch?.sourcePath ? (
         <div className="mb-1 text-[10px] tracking-[.12em] uppercase text-muted-text">
           {skill.aiMatch.sourcePath}
         </div>
       ) : null}
-      <HighlightedText query={query} text={skill.aiMatch.snippet} />
+      <HighlightedText query={query} text={snippet} />
     </div>
-  ) : null;
+  );
+};
 
 const SemanticResultRow = ({
   index,
@@ -243,7 +289,7 @@ const SemanticSearchRail = ({
       {tags.length ? (
         <section className="mt-8">
           <h4 className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-            Related tags
+            {m.semantic_search_related_tags()}
           </h4>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag) => (
@@ -275,7 +321,7 @@ export const SemanticSearchResults = ({
       return (
         <div className="border-border border-t px-6 py-16 text-center">
           <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-            Search temporarily limited
+            {m.semantic_search_rate_limited()}
           </div>
           <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
         </div>
@@ -285,7 +331,7 @@ export const SemanticSearchResults = ({
     return (
       <div className="border-border border-t px-6 py-16 text-center">
         <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-          Search unavailable
+          {m.semantic_search_unavailable()}
         </div>
         <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
       </div>

@@ -246,33 +246,81 @@ export async function countSkills() {
 export async function findSkillById(id: string) {
   const rows = await db
     .select({
+      authorHandle: reposTable.ownerHandle,
+      createdAt: skillsTable.createdAt,
       description: skillsTable.description,
+      downloadsAllTime: skillsTable.downloadsAllTime,
+      downloadsTrending: skillsTable.downloadsTrending,
+      forkCount: reposTable.forks,
       id: skillsTable.id,
+      isVerified: skillsTable.isVerified,
+      latestVersion: skillsTable.latestVersion,
+      license: reposTable.license,
+      ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      primaryCategory: skillsTable.primaryCategory,
+      repoName: reposTable.name,
+      repoUrl: reposTable.url,
       slug: skillsTable.slug,
+      stargazerCount: reposTable.stars,
       syncTime: skillsTable.syncTime,
+      tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
       title: skillsTable.title,
+      updatedAt: skillsTable.updatedAt,
+      viewsAllTime: skillsTable.viewsAllTime,
     })
     .from(skillsTable)
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(skillsTagsTable, eq(skillsTagsTable.skillId, skillsTable.id))
+    .leftJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
     .where(and(eq(skillsTable.id, id as SkillId), eq(skillsTable.visibility, "public")))
+    .groupBy(skillsTable.id)
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+  return { ...row, tags: row.tags ? row.tags.split(",").filter(Boolean) : [] };
 }
 
 export async function findSkillBySlug(slug: string) {
   const rows = await db
     .select({
+      authorHandle: reposTable.ownerHandle,
+      createdAt: skillsTable.createdAt,
       description: skillsTable.description,
+      downloadsAllTime: skillsTable.downloadsAllTime,
+      downloadsTrending: skillsTable.downloadsTrending,
+      forkCount: reposTable.forks,
       id: skillsTable.id,
+      isVerified: skillsTable.isVerified,
+      latestVersion: skillsTable.latestVersion,
+      license: reposTable.license,
+      ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      primaryCategory: skillsTable.primaryCategory,
+      repoName: reposTable.name,
+      repoUrl: reposTable.url,
       slug: skillsTable.slug,
+      stargazerCount: reposTable.stars,
       syncTime: skillsTable.syncTime,
+      tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
       title: skillsTable.title,
+      updatedAt: skillsTable.updatedAt,
+      viewsAllTime: skillsTable.viewsAllTime,
     })
     .from(skillsTable)
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(skillsTagsTable, eq(skillsTagsTable.skillId, skillsTable.id))
+    .leftJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
     .where(and(eq(skillsTable.slug, slug), eq(skillsTable.visibility, "public")))
+    .groupBy(skillsTable.id)
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+  return { ...row, tags: row.tags ? row.tags.split(",").filter(Boolean) : [] };
 }
 
 export async function findSkillByPath(input: {

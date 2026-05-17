@@ -156,7 +156,7 @@ export interface SkillsServiceDeps {
   countSkills: () => Promise<number>;
   countAuthors: () => Promise<AuthorCountRow>;
   findAuthorByHandle: (handle: string) => Promise<AuthorRow | null>;
-  findSkillById: (id: string) => Promise<SkillListRow | null>;
+  findSkillById: (id: string) => Promise<SkillPathRow | null>;
   findSkillClaimContextBySlug: (slug: string) => Promise<SkillClaimContextRow | null>;
   findSkillByPath: (input: {
     authorHandle: string;
@@ -173,7 +173,7 @@ export interface SkillsServiceDeps {
     userId?: string | null;
     visibility?: "public" | "private";
   }) => Promise<string>;
-  findSkillBySlug: (slug: string) => Promise<SkillListRow | null>;
+  findSkillBySlug: (slug: string) => Promise<SkillPathRow | null>;
   listAuthors: (input?: {
     cursor?: string;
     limit?: number;
