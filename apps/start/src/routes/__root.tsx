@@ -15,6 +15,10 @@ import { Provider } from "jotai";
 import { getTheme } from "@/functions/get-theme";
 import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
+import { ClarityConsent } from "@/components/clarity-consent";
+import { GoogleAnalyticsConsent } from "@/components/google-analytics-consent";
+import { env } from "@skills-re/env/start";
+import { GoogleAnalytics } from "tanstack-router-ga4";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -93,7 +97,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider initial={themeState} disableTransition={false}>
           {children}
+          <ClarityConsent projectId={env.VITE_CLARITY_PROJECT_ID} />
+          <GoogleAnalyticsConsent />
+          <GoogleAnalytics measurementId={env.VITE_GA_MEASURE_ID} />
         </ThemeProvider>
+
         <Scripts />
       </body>
     </html>

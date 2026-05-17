@@ -94,6 +94,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
       },
     },
     advanced: {
+      cookiePrefix: "skills-re",
       defaultCookieAttributes: {
         httpOnly: true,
         sameSite: "none",

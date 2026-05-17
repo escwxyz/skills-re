@@ -11,6 +11,7 @@ import { DesktopMenu } from "@/components/desktop-menu";
 import { NavUser } from "@/components/nav-user";
 import { HumanHand, RobotHand } from "@/components/logo";
 import { motion } from "motion/react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
@@ -50,6 +51,7 @@ export const Header = () => {
           </motion.span>
         </Link>
         <div className="flex items-center justify-end gap-2 md:gap-4.5">
+          <ThemeToggle className="hidden md:block" />
           <Link
             to="/skills"
             search={{ mode: "search" }}

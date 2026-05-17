@@ -2,11 +2,11 @@ import { GithubLogoIcon, XLogoIcon } from "@phosphor-icons/react";
 import type { IconProps } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { ForwardRefExoticComponent } from "react";
+import { CookieConsent } from "@/components/cookie-consent";
 
 interface InternalItem {
   label: string;
@@ -115,8 +115,8 @@ export const Footer = ({ className }: Props) => {
       <div className="flex flex-col items-center justify-between gap-4 border-border border-t pt-8 font-mono text-muted-foreground text-xs md:flex-row">
         <p>© {year} SKILLS.re. </p>
         <div className="flex items-center gap-4">
+          <CookieConsent />
           <LanguageSwitcher />
-          <ThemeToggle />
           <p className="flex items-center gap-2 uppercase">
             Status:{" "}
             <span className="animate-pulse rounded border px-1 border-chart-2/20 bg-chart-2/10 text-chart-2">

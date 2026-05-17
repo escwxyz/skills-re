@@ -404,6 +404,8 @@ export const start = await TanStackStart("start", {
     VITE_SERVER_URL: server.url!,
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     VITE_TEST_USER: devTestUserEnabled ? "true" : "false",
+    VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,
+    VITE_GA_MEASURE_ID: alchemy.env.GA_MEASURE_ID!,
   },
 });
 

@@ -8,6 +8,8 @@ export const env = createEnv({
     VITE_SITE_URL: z.url(),
     // Set to "false" to disable test-user mode even in dev.
     VITE_TEST_USER: z.enum(["true", "false"]).optional(),
+    VITE_CLARITY_PROJECT_ID: z.string(),
+    VITE_GA_MEASURE_ID: z.string(),
   },
   // oxlint-disable-next-line typescript/no-explicit-any
   runtimeEnv: (import.meta as any).env,
