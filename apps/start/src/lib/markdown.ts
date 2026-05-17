@@ -236,6 +236,9 @@ const createRenderer = () => {
     return await originalRenderAsync(src, env);
   };
 
+  md.renderer.rules.table_open = () => '<div style="overflow-x:auto;max-width:100%">\n<table>';
+  md.renderer.rules.table_close = () => "</table>\n</div>\n";
+
   const defaultLinkOpen =
     md.renderer.rules.link_open ||
     ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));

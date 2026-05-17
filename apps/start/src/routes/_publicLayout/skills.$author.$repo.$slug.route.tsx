@@ -143,7 +143,7 @@ function RouteComponent() {
             {skill.description}
           </p>
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2">
             <div className="space-y-4">
               <SkillDetailCategory
                 categorySlug={(skill.primaryCategory ?? "other") as CategorySlug}
