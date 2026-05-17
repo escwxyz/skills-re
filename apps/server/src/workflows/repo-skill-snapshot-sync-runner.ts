@@ -8,6 +8,7 @@ import { findRepoByNameWithOwner } from "@skills-re/api/modules/repos/repo";
 import { listRepoSkillSnapshotHeadsByRepoId } from "@skills-re/api/modules/skills/repo";
 import {
   hashSnapshotFiles,
+  normalizeUploadDirectoryPath,
   truncateUploadCommitMessage,
 } from "@skills-re/api/modules/skills/upload-pipeline";
 import { buildSkillDuplicateFingerprintFromSkillMd, SKILL_FILENAME } from "../github-skill-utils";
@@ -234,7 +235,7 @@ export const runRepoSkillSnapshotSyncWorkflow = async (
     async () =>
       await activeDeps.createSnapshot({
         description: skill.latestDescription,
-        directoryPath: skill.directoryPath,
+        directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
         entryPath: skill.entryPath,
         frontmatterHash: fingerprint?.frontmatterHash ?? null,
         hash: nextHash,
