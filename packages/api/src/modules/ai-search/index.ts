@@ -120,6 +120,26 @@ const coerceFiniteNumber = (value: unknown) => {
   return value;
 };
 
+// Extracts the skill slug from a SKILL.md frontmatter block embedded in chunk text.
+// Chunks from Cloudflare AI Search include the raw document text; when the chunk
+// covers the start of the document we can read `name:` from the YAML frontmatter.
+const extractSlugFromSkillMdText = (text: unknown): string | null => {
+  const str = coerceNonEmptyString(text);
+  if (!str || !str.startsWith("---")) {
+    return null;
+  }
+  const endFm = str.indexOf("\n---", 3);
+  if (endFm === -1) {
+    return null;
+  }
+  const nameMatch = str.slice(3, endFm).match(/^name:\s*([^\n]+)/m);
+  if (!nameMatch?.[1]) {
+    return null;
+  }
+  const name = nameMatch[1].trim().replaceAll(/^["']|["']$/g, "");
+  return name && slugPattern.test(name) ? name : null;
+};
+
 const coerceSnippet = (value: unknown) => {
   const text = coerceNonEmptyString(value);
   if (!text) {
@@ -336,6 +356,7 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
       attributes?: {
         folder?: unknown;
       };
+      content?: unknown;
       filename?: unknown;
       id?: unknown;
       itemKey?: unknown;
@@ -351,6 +372,7 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
       };
       slug?: unknown;
       source?: unknown;
+      text?: unknown;
     };
 
     fromPath(item.key);
@@ -367,6 +389,8 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     fromPath(item.filename);
     fromPath(item.source);
     fromPath(item.attributes?.folder);
+    addSlug(extractSlugFromSkillMdText(item.text));
+    addSlug(extractSlugFromSkillMdText(item.content));
   }
 
   return {
@@ -486,7 +510,11 @@ const extractAiRow = (row: unknown): AiSearchRow => {
       coerceNonEmptyString(item.metadata?.skill_id) ??
       getSkillIdFromSourceFilename(item.source) ??
       null,
-    skillSlug: getAiRowSkillSlug(item, directPathDetails),
+    skillSlug:
+      getAiRowSkillSlug(item, directPathDetails) ??
+      extractSlugFromSkillMdText(item.text) ??
+      extractSlugFromSkillMdText(item.content) ??
+      null,
     sourcePath: directPathDetails?.sourcePath ?? null,
     version: directPathDetails?.version ?? null,
   };

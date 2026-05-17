@@ -52,15 +52,15 @@ describe("buildAiSearchResult", () => {
           },
         ],
       },
-      resolveSkillById: (id) => {
+      resolveSkillById: async (id) => {
         idCandidates.push(id);
         return id === "skill-1" ? resolvedSkill : null;
       },
-      resolveSkillByPath: (candidate) => {
+      resolveSkillByPath: async (candidate) => {
         pathCandidates.push(candidate);
         return null;
       },
-      resolveSkillBySlug: (slug) => {
+      resolveSkillBySlug: async (slug) => {
         slugCandidates.push(slug);
         return null;
       },
@@ -112,11 +112,11 @@ describe("buildAiSearchResult", () => {
           },
         ],
       },
-      resolveSkillByPath: (candidate) => {
+      resolveSkillByPath: async (candidate) => {
         pathCandidates.push(candidate);
         return candidate.skillSlug === "widget" ? resolvedSkill : null;
       },
-      resolveSkillBySlug: () => null,
+      resolveSkillBySlug: async () => null,
     });
 
     expect(pathCandidates).toEqual([
@@ -163,12 +163,12 @@ describe("buildAiSearchResult", () => {
           },
         ],
       },
-      resolveSkillById: (id) => {
+      resolveSkillById: async (id) => {
         idCandidates.push(id);
         return id === "skill-1" ? resolvedSkill : null;
       },
-      resolveSkillByPath: () => null,
-      resolveSkillBySlug: () => null,
+      resolveSkillByPath: async () => null,
+      resolveSkillBySlug: async () => null,
     });
 
     expect(idCandidates).toEqual(["skill-1"]);
@@ -192,16 +192,44 @@ describe("buildAiSearchResult", () => {
           },
         ],
       },
-      resolveSkillById: (id) => {
+      resolveSkillById: async (id) => {
         idCandidates.push(id);
         return id === "skill-1" ? resolvedSkill : null;
       },
-      resolveSkillByPath: () => null,
-      resolveSkillBySlug: () => null,
+      resolveSkillByPath: async () => null,
+      resolveSkillBySlug: async () => null,
     });
 
     expect(idCandidates).toEqual(["skill-1"]);
     expect(result.page).toHaveLength(1);
     expect(result.page[0]).toMatchObject({ id: "skill-1" });
+  });
+
+  test("resolves skills from chunks that only have id/score/text (no metadata or source)", async () => {
+    const slugCandidates: string[] = [];
+
+    const result = await buildAiSearchResult({
+      raw: {
+        search_query: "Mastra framework documentation and tutorial skill",
+        chunks: [
+          {
+            id: "ac2dcacf337effb24752219974d5ef5080ba26adfeabf796f3742337cc8c91ca",
+            type: "text",
+            score: 0.71177137,
+            text: '---\nname: widget\ndescription: "Widget skill"\n---\n\n# Widget\n\nSome content.',
+          },
+        ],
+      },
+      resolveSkillById: async () => null,
+      resolveSkillByPath: async () => null,
+      resolveSkillBySlug: async (slug) => {
+        slugCandidates.push(slug);
+        return slug === "widget" ? resolvedSkill : null;
+      },
+    });
+
+    expect(slugCandidates).toContain("widget");
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0]).toMatchObject({ id: "skill-1", slug: "widget" });
   });
 });
