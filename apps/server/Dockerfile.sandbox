@@ -1,4 +1,6 @@
-ARG SANDBOX_BASE_IMAGE=docker.io/cloudflare/sandbox:latest
+# https://developers.cloudflare.com/sandbox/configuration/dockerfile/#base-images
+# match with the npm sdk package
+ARG SANDBOX_BASE_IMAGE=docker.io/cloudflare/sandbox:0.10.1
 FROM ${SANDBOX_BASE_IMAGE}
 
 ARG OPENCODE_VERSION=latest
@@ -7,6 +9,12 @@ USER root
 
 RUN npm install -g "opencode-ai@${OPENCODE_VERSION}" \
   && opencode --version
+
+RUN npm install -g @openai/codex \
+  && codex --version
+
+RUN npm install -g @anthropic-ai/claude-code \
+  && claude --version
 
 ENV SKILLS_RE_EVAL_AGENT=opencode
 ENV PYTHON_POOL_MIN_SIZE=0
