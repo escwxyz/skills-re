@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import type { Variants } from "motion/react";
 import type { SVGProps } from "react";
+import { m } from "@/paraglide/messages";
 
 type Props = SVGProps<SVGSVGElement> & {
   color?: string;
@@ -283,22 +284,6 @@ const Cursor = ({ size = "1em", style, ...rest }: Props) => (
   </svg>
 );
 
-const _KiloCode = ({ size = "1em", style, ...rest }: Props) => (
-  <svg
-    fill="currentColor"
-    fillRule="evenodd"
-    height={size}
-    style={{ flex: "none", lineHeight: 1, ...style }}
-    viewBox="0 0 24 24"
-    width={size}
-    xmlns="http://www.w3.org/2000/svg"
-    {...rest}
-  >
-    <title>Kilo Code</title>
-    <path d="M0 0v24h24V0H0zm22.222 22.222H1.778V1.778h20.444v20.444zm-7.555-4.964h2.222v1.778h-2.794L12.89 17.83v-2.794h1.778v2.222zm4 0h-1.778v-2.222h-2.222v-1.778h2.793l1.207 1.207v2.793zm-7.556-2.591H9.333v-1.778h1.778v1.778zm-5.778-1.778h1.778v4h4v1.778H6.54L5.333 17.46V12.89zm13.334-3.556v1.778h-5.778V9.333h1.987V7.111h-1.987V5.333h2.558l1.206 1.207v2.793h2.014zm-11.556-2h2.222l1.778 1.778v2H9.333v-2H7.111v2H5.333V5.333h1.778v2zm4 0H9.333v-2h1.778v2z" />
-  </svg>
-);
-
 const ClaudeCode = ({ size = "1em", style, ...rest }: Props) => (
   <svg
     fill="currentColor"
@@ -402,7 +387,6 @@ const AGENTS = [
     label: "Pi Agent",
     href: "https://pi.dev",
   },
-  // { Icon: KiloCode, label: "Kilo Code", href: "https://kilo.ai" },
 
   { Icon: OpenClaw, label: "OpenClaw", href: "https://openclaw.ai" },
   { Icon: HermesAgent, label: "Hermes Agent", href: "https://hermes-agent.nousresearch.com" },
@@ -420,11 +404,11 @@ const item: Variants = {
 
 export const AgentLogoCloud = () => (
   <div className="pt-4 border-t">
-    <div className="mb-2.5 font-mono text-[9.5px] tracking-[.18em] uppercase text-muted-foreground/50">
-      Works with
+    <div className="mb-2.5 font-mono text-xs tracking-[.18em] uppercase text-muted-foreground/50">
+      {m.agent_logo_cloud_works_with()}
     </div>
     <motion.div
-      className="flex flex-wrap gap-x-6 md:gap-x-8 gap-y-4.5"
+      className="flex flex-wrap gap-x-4 md:gap-x-8 gap-y-4.5"
       initial="hidden"
       variants={container}
       viewport={{ margin: "-40px", once: true }}
@@ -445,5 +429,8 @@ export const AgentLogoCloud = () => (
         </motion.a>
       ))}
     </motion.div>
+    <div className="mt-2.5 font-mono text-muted-foreground/50 text-xs tracking-[.18em] uppercase text-right">
+      {m.agent_logo_cloud_and_more()}
+    </div>
   </div>
 );

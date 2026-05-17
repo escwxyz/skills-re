@@ -9,6 +9,8 @@ import { LoginDialog } from "@/components/login-dialog";
 import { isLoginDialogOpenAtom } from "@/atoms/app";
 import { DesktopMenu } from "@/components/desktop-menu";
 import { NavUser } from "@/components/nav-user";
+import { HumanHand, RobotHand } from "@/components/logo";
+import { motion } from "motion/react";
 
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
@@ -22,10 +24,30 @@ export const Header = () => {
         <MobileMenu />
         <Link
           to="/"
-          className="font-display text-foreground text-center text-[22px] tracking-normal normal-case italic"
+          className="font-display text-foreground flex items-center justify-center gap-1 text-[22px] tracking-normal normal-case italic"
         >
-          <b className="font-serif not-italic">skills</b>
-          <i>.re</i>
+          <motion.span
+            initial={{ x: -8, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <HumanHand size="1.6em" />
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+          >
+            <b className="font-serif not-italic">skills</b>
+            <i>.re</i>
+          </motion.span>
+          <motion.span
+            initial={{ x: 8, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <RobotHand size="1.6em" />
+          </motion.span>
         </Link>
         <div className="flex items-center justify-end gap-2 md:gap-4.5">
           <Link

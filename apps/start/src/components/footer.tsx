@@ -1,7 +1,7 @@
 import { GithubLogoIcon, XLogoIcon } from "@phosphor-icons/react";
 import type { IconProps } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
-
+import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
         external: true,
       },
       {
-        label: "X",
+        label: "X(Twitter)",
         Icon: XLogoIcon,
         href: "https://x.com/skills_re",
         external: true,
@@ -75,9 +75,16 @@ export const Footer = ({ className }: Props) => {
     >
       <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] mb-8">
         <div>
-          <div className="font-display mb-4 text-4xl leading-none italic">
-            skills.<em>re</em>
-          </div>
+          <Link
+            className="group mb-4 flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80"
+            to="/"
+          >
+            <Logo size={48} />
+            <div className="font-display text-4xl leading-none italic">
+              skills.<em>re</em>
+            </div>
+          </Link>
+
           <p className="text-muted-foreground font-serif text-sm">{m.footer_description({})}</p>
         </div>
         {FOOTER_MENUS.map((menu) => (
