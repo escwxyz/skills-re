@@ -171,16 +171,27 @@ export async function createSkill(input: {
       userId: input.userId ? asUserId(input.userId) : null,
       visibility: input.visibility ?? "public",
     } as never)
+    .onConflictDoNothing()
     .returning({
       id: skillsTable.id,
     });
 
   const [created] = rows;
-  if (!created) {
-    throw new Error("Failed to create skill record");
+  if (created) {
+    return created.id;
   }
 
-  return created.id;
+  // Conflict: another concurrent workflow already inserted this slug — reuse its ID.
+  const [existing] = await db
+    .select({ id: skillsTable.id })
+    .from(skillsTable)
+    .where(eq(skillsTable.slug, input.slug));
+
+  if (!existing) {
+    throw new Error("Failed to create or find skill record");
+  }
+
+  return existing.id;
 }
 
 export async function listSkillCategorizationTargetsByIds(skillIds: SkillId[]) {
