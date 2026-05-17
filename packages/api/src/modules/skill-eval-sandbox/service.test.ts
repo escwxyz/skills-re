@@ -4,10 +4,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
   asSandboxAgentId,
-  asSkillEvalCaseId,
   asSkillEvalCaseResultId,
   asSkillEvalRunId,
   asSkillEvalSuiteId,
+  asSkillId,
   asSnapshotId,
 } from "@skills-re/db/utils";
 
@@ -266,7 +266,7 @@ describe("skill eval sandbox service", () => {
       findRunByIdempotencyKey: () => Promise.resolve(null),
       getRunnableSkillById: () =>
         Promise.resolve({
-          id: "skill-1",
+          id: asSkillId("skill-1"),
           latestSnapshotId: asSnapshotId("snapshot-1"),
           visibility: "public",
         }),
@@ -427,6 +427,125 @@ describe("skill eval sandbox service", () => {
     expect(enqueued).toEqual([]);
   });
 
+  test("scopes idempotency lookup to the requesting user's id", async () => {
+    const lookupArgs: unknown[] = [];
+    const service = createSkillEvalSandboxService({
+      findRunByIdempotencyKey: (idempotencyKey, createdBy) => {
+        lookupArgs.push({ idempotencyKey, createdBy });
+        return Promise.resolve({
+          id: asSkillEvalRunId("run-existing"),
+          status: "queued",
+        });
+      },
+      runScheduler: {
+        enqueue: () => Promise.resolve({ workId: "workflow-1" }),
+      },
+    });
+
+    await service.createRun(
+      { agentId: "agent-codex", idempotencyKey: "key-abc", skillId: "skill-1" },
+      { userId: "user-42" },
+    );
+
+    expect(lookupArgs).toEqual([{ idempotencyKey: "key-abc", createdBy: "user-42" }]);
+  });
+
+  test("creates a new run when the same idempotency key belongs to a different user", async () => {
+    const insertedRuns: unknown[] = [];
+    const enqueued: unknown[] = [];
+    // Simulate: user-2 calls with the same key that user-1 already used.
+    // The repo returns null because the lookup is (key, user-2) and no match exists.
+    const service = createSkillEvalSandboxService({
+      findRunByIdempotencyKey: (_key, createdBy) =>
+        createdBy === "user-2"
+          ? Promise.resolve(null)
+          : Promise.resolve({ id: asSkillEvalRunId("run-user1"), status: "queued" }),
+      getRunnableSkillById: () =>
+        Promise.resolve({
+          id: asSkillId("skill-1"),
+          latestSnapshotId: asSnapshotId("snapshot-1"),
+          visibility: "public",
+        }),
+      getSnapshotById: () =>
+        Promise.resolve({
+          directoryPath: "",
+          id: asSnapshotId("snapshot-1"),
+          skillId: "skill-1",
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      insertRun: (input) => {
+        insertedRuns.push(input);
+        return Promise.resolve({ id: asSkillEvalRunId(input.id), status: "pending" });
+      },
+      listActiveAgents: () =>
+        Promise.resolve([
+          {
+            capabilitiesJson: JSON.stringify({
+              supportsBaseline: true,
+              supportsFilesystem: true,
+              supportsStreaming: true,
+            }),
+            defaultLimitsJson: JSON.stringify({
+              maxOutputBytes: 65_536,
+              maxSteps: 64,
+              timeoutMs: 120_000,
+            }),
+            description: null,
+            displayName: "Codex",
+            id: asSandboxAgentId("agent-codex"),
+            provider: "openai",
+            runtimeFamily: "codex",
+            sortOrder: 0,
+            status: "active",
+          },
+        ]),
+      listSnapshotFiles: () => Promise.resolve([]),
+      readSnapshotFileContent: () =>
+        Promise.resolve({
+          bytesRead: 100,
+          content: JSON.stringify({
+            evals: [{ id: "c1", prompt: "Do X.", expected_output: "Done." }],
+            skill_name: "s",
+          }),
+          isTruncated: false,
+          offset: 0,
+          totalBytes: 100,
+        }),
+      runScheduler: {
+        enqueue: (input) => {
+          enqueued.push(input);
+          return Promise.resolve({ workId: "workflow-2" });
+        },
+      },
+      upsertSuiteWithCases: (input) =>
+        Promise.resolve({
+          caseCount: input.caseCount,
+          cases: input.cases.map((c) => ({ ...c, id: "case-db-1", syncTime: 1 })),
+          evalPath: input.evalPath,
+          fingerprint: input.fingerprint,
+          id: asSkillEvalSuiteId("suite-1"),
+          skillId: input.skillId,
+          snapshotId: input.snapshotId,
+          status: input.status,
+          syncTime: 1,
+          validationErrors: input.validationErrors,
+        }),
+    });
+
+    const result = await service.createRun(
+      { agentId: "agent-codex", idempotencyKey: "shared-key", skillId: "skill-1" },
+      { userId: "user-2" },
+    );
+
+    // user-2 gets a fresh run, not user-1's run
+    expect(result.runId).not.toBe("run-user1");
+    expect(result.status).toBe("pending");
+    expect(insertedRuns).toHaveLength(1);
+    expect(insertedRuns[0]).toMatchObject({ createdBy: "user-2", idempotencyKey: "shared-key" });
+    expect(enqueued).toHaveLength(1);
+  });
+
   test("rejects unauthenticated create run requests", async () => {
     const service = createSkillEvalSandboxService();
 
@@ -446,7 +565,7 @@ describe("skill eval sandbox service", () => {
       findRunByIdempotencyKey: () => Promise.resolve(null),
       getRunnableSkillById: () =>
         Promise.resolve({
-          id: "skill-1",
+          id: asSkillId("skill-1"),
           latestSnapshotId: asSnapshotId("snapshot-1"),
           visibility: "public",
         }),
@@ -472,7 +591,7 @@ describe("skill eval sandbox service", () => {
       findRunByIdempotencyKey: () => Promise.resolve(null),
       getRunnableSkillById: () =>
         Promise.resolve({
-          id: "skill-1",
+          id: asSkillId("skill-1"),
           latestSnapshotId: asSnapshotId("snapshot-1"),
           visibility: "private",
         }),
@@ -498,7 +617,7 @@ describe("skill eval sandbox service", () => {
       findRunByIdempotencyKey: () => Promise.resolve(null),
       getRunnableSkillById: () =>
         Promise.resolve({
-          id: "skill-1",
+          id: asSkillId("skill-1"),
           latestSnapshotId: asSnapshotId("snapshot-1"),
           visibility: "public",
         }),
@@ -691,7 +810,9 @@ describe("skill eval sandbox service", () => {
           status: "pass",
           suiteId: asSkillEvalSuiteId("suite-1"),
           syncTime: 1_700_000_000_600,
+          tokenCount: null,
           totalCases: 1,
+          totalDurationMs: null,
         }),
       listCaseResultsByRun: () =>
         Promise.resolve([
@@ -820,7 +941,9 @@ describe("skill eval sandbox service", () => {
           status: "running",
           suiteId: asSkillEvalSuiteId("suite-1"),
           syncTime: 1_700_000_000_600,
+          tokenCount: null,
           totalCases: 1,
+          totalDurationMs: null,
         }),
       listCaseResultsByRun: () => Promise.resolve([]),
     });

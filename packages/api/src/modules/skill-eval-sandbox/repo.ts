@@ -241,6 +241,7 @@ export async function getRunnableSkillById(
 
 export async function findRunByIdempotencyKey(
   idempotencyKey: string,
+  createdBy: string,
   database: Database = db,
 ): Promise<SkillEvalRunRef | null> {
   const rows = await database
@@ -249,7 +250,12 @@ export async function findRunByIdempotencyKey(
       status: skillEvalRunsTable.status,
     })
     .from(skillEvalRunsTable)
-    .where(eq(skillEvalRunsTable.idempotencyKey, idempotencyKey))
+    .where(
+      and(
+        eq(skillEvalRunsTable.idempotencyKey, idempotencyKey),
+        eq(skillEvalRunsTable.createdBy, asUserId(createdBy)),
+      ),
+    )
     .limit(1);
 
   return rows[0] ?? null;

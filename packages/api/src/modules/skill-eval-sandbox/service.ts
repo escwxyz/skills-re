@@ -404,7 +404,7 @@ export const createSkillEvalSandboxService = (
 
       if (input.idempotencyKey) {
         const findRunByIdempotencyKeyFn = await getDep("findRunByIdempotencyKey");
-        const existingRun = await findRunByIdempotencyKeyFn(input.idempotencyKey);
+        const existingRun = await findRunByIdempotencyKeyFn(input.idempotencyKey, auth.userId);
         if (existingRun) {
           return {
             runId: existingRun.id,
