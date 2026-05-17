@@ -291,6 +291,16 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
               return;
             }
 
+            if (data.reason === "duplicate-content") {
+              setLogs((prev) => [...prev, `> ${m.logs_duplicate_skill({})}`]);
+              setSubmitError(
+                "This skill is already in the registry. Each unique skill can only be published once, regardless of who submits it.",
+              );
+              setSubmitStatus("error");
+              setSubmitLocked(false);
+              return;
+            }
+
             setLogs((prev) => [
               ...prev,
               `> ${m.logs_submission_skipped({

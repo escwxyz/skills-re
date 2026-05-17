@@ -87,6 +87,21 @@ export async function createSnapshot(
   },
   database = db,
 ) {
+  const [existing] = await database
+    .select({ id: snapshotsTable.id })
+    .from(snapshotsTable)
+    .where(
+      and(
+        eq(snapshotsTable.skillId, asSkillId(input.skillId)),
+        eq(snapshotsTable.hash, input.hash),
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    return existing.id;
+  }
+
   const snapshotId = asSnapshotId(createId());
   const rows = await database
     .insert(snapshotsTable)
@@ -115,6 +130,23 @@ export async function createSnapshot(
     });
 
   return rows[0]?.id ?? snapshotId;
+}
+
+export async function findSnapshotByContentHashes(input: {
+  frontmatterHash: string;
+  skillContentHash: string;
+}): Promise<{ skillId: string } | null> {
+  const [row] = await db
+    .select({ skillId: snapshotsTable.skillId })
+    .from(snapshotsTable)
+    .where(
+      and(
+        eq(snapshotsTable.frontmatterHash, input.frontmatterHash),
+        eq(snapshotsTable.skillContentHash, input.skillContentHash),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
 }
 
 export async function setSkillLatestSnapshot(

@@ -7,6 +7,7 @@ import type {
 import {
   createSnapshot,
   deprecateSnapshotsBeyondLimit,
+  findSnapshotByContentHashes,
   setSkillLatestSnapshot,
 } from "@skills-re/api/modules/snapshots/repo";
 import { ensureRepo } from "@skills-re/api/modules/repos/service";
@@ -56,6 +57,7 @@ export interface RunSkillsUploadWorkflowDeps {
   checkSkillExistingBySlug?: typeof checkSkillExistingBySlug;
   createSkill?: typeof createSkill;
   createSnapshot?: typeof createSnapshot;
+  findSnapshotByContentHashes?: typeof findSnapshotByContentHashes;
   deprecateSnapshotsBeyondLimit?: typeof deprecateSnapshotsBeyondLimit;
   ensureRepo?: typeof ensureRepo;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
@@ -184,6 +186,26 @@ const processUploadSkill = async ({
     ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdContent)
     : null;
 
+  const effectiveFrontmatterHash =
+    skill.frontmatterHash ?? computedFingerprint?.frontmatterHash ?? null;
+  const effectiveSkillContentHash =
+    skill.skillContentHash ?? computedFingerprint?.skillContentHash ?? null;
+
+  if (effectiveFrontmatterHash && effectiveSkillContentHash) {
+    const duplicate = await step.do(
+      `check-duplicate-content-${skillIndex}`,
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await (deps.findSnapshotByContentHashes ?? findSnapshotByContentHashes)({
+          frontmatterHash: effectiveFrontmatterHash,
+          skillContentHash: effectiveSkillContentHash,
+        }),
+    );
+    if (duplicate) {
+      return { reason: "duplicate-content" as const, status: "skipped" as const };
+    }
+  }
+
   const slug = await step.do(
     `resolve-upload-skill-slug-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
@@ -219,10 +241,10 @@ const processUploadSkill = async ({
         description: skill.description,
         directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
         entryPath: normalizeUploadEntryPath(skill.entryPath),
-        frontmatterHash: skill.frontmatterHash ?? computedFingerprint?.frontmatterHash ?? null,
+        frontmatterHash: effectiveFrontmatterHash,
         hash: skill.snapshotHash,
         name: skill.title,
-        skillContentHash: skill.skillContentHash ?? computedFingerprint?.skillContentHash ?? null,
+        skillContentHash: effectiveSkillContentHash,
         skillId,
         sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
         sourceCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
@@ -508,7 +530,7 @@ export const runSkillsUploadWorkflow = async (
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
-      const { auditTarget, skillId, uploadWorkId } = await processUploadSkill({
+      const result = await processUploadSkill({
         authorHandle,
         deps,
         repoId,
@@ -520,11 +542,15 @@ export const runSkillsUploadWorkflow = async (
         usedSlugs,
       });
 
-      auditTargets.push(auditTarget);
-      createdSkillIds.push(skillId);
+      if (result.status === "skipped") {
+        continue;
+      }
+
+      auditTargets.push(result.auditTarget);
+      createdSkillIds.push(result.skillId);
 
       if (!firstWorkId) {
-        firstWorkId = uploadWorkId;
+        firstWorkId = result.uploadWorkId;
       }
     }
 
