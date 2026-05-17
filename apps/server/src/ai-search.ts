@@ -54,9 +54,39 @@ export interface AiSearchRuntimeInput {
   rewriteQuery?: boolean;
 }
 
+export const SKILLS_REWRITE_PROMPT = `Your task: rewrite the user's search query to find the most relevant AI skills, prompts, and tools in a skills registry.
+
+Context: Users are searching a registry of AI Agent skills — reusable prompts, coding assistants, automation workflows, and AI-powered tools built for developers and teams.
+
+Rules:
+- Rewrite the query to describe what kind of AI skill or tool the user is looking for.
+- Expand short keyword queries into a phrase that describes a skill's purpose or capability (e.g. "email" → "email automation skill", "code review" → "code review assistant tool").
+- Do NOT rewrite as a definitional question — users want skills, not definitions. Never output "What is X?" or "How does X work?".
+- Remove conversational filler ("can you", "please", "I want to", "I was wondering").
+- Preserve the user's intent — do not change the topic or scope.
+- Output only the rewritten query. No preamble, no label.
+
+Examples:
+
+Query: email
+Rewrite: email automation skill
+
+Query: code review
+Rewrite: code review assistant tool
+
+Query: can you help me write better commit messages
+Rewrite: git commit message generator
+
+Query: python debugging
+Rewrite: python debugging assistant
+
+Query: What is the best way to summarize documents?
+Rewrite: document summarization tool`;
+
 const buildSearchOptions = (rewriteQuery: boolean, model?: string) => ({
   query_rewrite: {
     enabled: rewriteQuery,
+    rewrite_prompt: SKILLS_REWRITE_PROMPT,
     ...(model ? { model } : {}),
   },
   retrieval: {

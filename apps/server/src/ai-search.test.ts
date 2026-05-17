@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { createAiSearchRuntime } from "./ai-search";
+import { createAiSearchRuntime, SKILLS_REWRITE_PROMPT } from "./ai-search";
 
 describe("createAiSearchRuntime", () => {
   test("calls AI_SEARCH.search with correct options", async () => {
@@ -28,7 +28,7 @@ describe("createAiSearchRuntime", () => {
     expect(calls).toEqual([
       {
         ai_search_options: {
-          query_rewrite: { enabled: true },
+          query_rewrite: { enabled: true, rewrite_prompt: SKILLS_REWRITE_PROMPT },
           retrieval: {
             context_expansion: 0,
             max_num_results: 10,
