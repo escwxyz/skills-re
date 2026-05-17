@@ -7,7 +7,6 @@ const MENUS = [
   // { label: m.header_collections(), path: "/collections" },
   { label: m.header_tags(), path: "/tags" },
   { label: m.header_authors(), path: "/authors" },
-  { label: m.header_docs(), path: "/docs" },
 ];
 
 export const DesktopMenu = () => (

@@ -396,6 +396,24 @@ const doSparseCheckout = async (input: {
   );
 };
 
+const findSkillMdPathsInTree = async (
+  repoDir: string,
+  treeRef: string,
+  verbose: boolean,
+): Promise<string[]> => {
+  const result = await runCommand("git", ["ls-tree", "-r", treeRef, "--name-only"], {
+    cwd: repoDir,
+    verbose,
+  });
+  if (result.code !== 0) {
+    return [];
+  }
+  return result.stdout
+    .split("\n")
+    .map((line) => normalizePath(line.trim()))
+    .filter((line) => line.length > 0 && path.basename(line).toLowerCase() === "skill.md");
+};
+
 const cloneAuditTargetRepo = async (input: {
   target: AuditTargetRecord;
   workspaceDir: string;
@@ -443,8 +461,16 @@ const cloneAuditTargetRepo = async (input: {
     return { resolvedSkillRootPath: firstPathHint };
   }
 
+  const treeRef = input.target.sourceCommitSha ?? "HEAD";
+  const skillMdPaths = await findSkillMdPathsInTree(input.repoDir, treeRef, input.verbose);
+  if (skillMdPaths.length === 0) {
+    throw new Error(
+      `skill root path could not be resolved for ${input.target.owner}/${input.target.repo}: no SKILL.md found at expected locations`,
+    );
+  }
+
   await runGit(
-    ["sparse-checkout", "set", "--no-cone", "**/SKILL.md", "**/skill.md"],
+    ["sparse-checkout", "set", "--no-cone", ...skillMdPaths],
     { cwd: input.repoDir, verbose: input.verbose },
     "git sparse-checkout set markdown failed",
   );

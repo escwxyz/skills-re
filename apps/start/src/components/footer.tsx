@@ -27,8 +27,12 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
   {
     title: m.footer_platform_title(),
     children: [
-      { label: m.footer_publish_changelog(), href: "/changelog" },
-      { label: m.footer_publish_docs(), href: "/docs" },
+      { label: m.footer_platform_changelogs(), href: "/changelogs" },
+      { label: m.footer_platform_docs(), href: "/docs" },
+      {
+        label: m.footer_platform_feedbacks(),
+        href: "/dashboard/feedbacks",
+      },
     ],
   },
   {

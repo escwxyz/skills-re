@@ -51,4 +51,7 @@ tmp
 temp
 .omx/
 
+# Audit run artifacts
+review-runs/
+
 .wrangler
