@@ -42,7 +42,7 @@ export const BrowseToolbar = ({
 }: Props) => (
   <div
     className={cn(
-      "bg-background sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] bg-paper/95 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
+      "bg-background/90 sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
       isSearchMode ? "" : "border-b border-border",
     )}
   >

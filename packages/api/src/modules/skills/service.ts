@@ -9,6 +9,7 @@ import type {
 
 import { buildAiSearchResult } from "../ai-search";
 import type { AiSearchResult } from "../ai-search";
+import { findSnapshotByContentHashes } from "../snapshots/repo";
 import { toSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
 
@@ -665,15 +666,40 @@ export async function submitGithubRepoPublic(
     };
   }
 
+  const filteredSkills = await Promise.all(
+    selectedPayloadSkills.map(async (skill) => {
+      if (skill.frontmatterHash && skill.skillContentHash) {
+        const duplicate = await findSnapshotByContentHashes({
+          frontmatterHash: skill.frontmatterHash,
+          skillContentHash: skill.skillContentHash,
+        });
+        if (duplicate) {
+          return null;
+        }
+      }
+      return skill;
+    }),
+  );
+
+  const newSkills = filteredSkills.filter((s) => s !== null);
+
+  if (newSkills.length === 0) {
+    return {
+      reason: "duplicate-content",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
   const uploaded = await uploadSkills(
     {
       ...result.payload,
-      skills: selectedPayloadSkills,
+      skills: newSkills,
     },
     scheduler,
   );
   return {
-    skillsCount: selectedPayloadSkills.length,
+    skillsCount: newSkills.length,
     status: "submitted",
     workflowId: uploaded.workId,
   };

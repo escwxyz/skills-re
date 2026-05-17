@@ -516,6 +516,7 @@
   "logs_review_and_choose": "Review the list below and choose which skills to publish.",
   "logs_skills_being_processed": "Skills are being processed in the background.",
   "logs_skipped_invalid_skills": "Skipped {count} invalid skill(s).",
+  "logs_duplicate_skill": "This skill already exists in the registry — nothing was submitted.",
   "logs_submission_failed": "Submission failed.",
   "logs_submission_skipped": "Submission skipped (reason: {reason}).",
   "logs_submitted_skills": "Submitted {count} skill(s).",

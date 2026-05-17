@@ -127,6 +127,7 @@ describe("runSkillsUploadWorkflow", () => {
           calls.createSnapshot.push(input);
           return Promise.resolve("snapshot-1");
         },
+        findSnapshotByContentHashes: () => Promise.resolve(null),
         deprecateSnapshotsBeyondLimit: (input: unknown) => {
           calls.deprecateSnapshotsBeyondLimit.push(input);
           return Promise.resolve();
@@ -188,6 +189,7 @@ describe("runSkillsUploadWorkflow", () => {
 
     expect(stepNames).toEqual([
       "ensure-upload-repo",
+      "check-duplicate-content-0",
       "resolve-upload-skill-slug-0",
       "create-upload-skill-0",
       "create-upload-snapshot-0",
@@ -422,6 +424,7 @@ describe("runSkillsUploadWorkflow", () => {
         checkSkillExistingBySlug: () => Promise.resolve(false),
         createSkill: () => Promise.resolve("skill-1"),
         createSnapshot: () => Promise.resolve("snapshot-1"),
+        findSnapshotByContentHashes: () => Promise.resolve(null),
         deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
         ensureRepo: () => Promise.resolve("repo-1"),
         scheduleSkillsTagging: {
@@ -535,6 +538,7 @@ describe("runSkillsUploadWorkflow", () => {
         checkSkillExistingBySlug: () => Promise.resolve(false),
         createSkill: () => Promise.resolve("skill-1"),
         createSnapshot: () => Promise.resolve("snapshot-1"),
+        findSnapshotByContentHashes: () => Promise.resolve(null),
         deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
         ensureRepo: () => Promise.resolve("repo-1"),
         scheduleSkillsTagging: {

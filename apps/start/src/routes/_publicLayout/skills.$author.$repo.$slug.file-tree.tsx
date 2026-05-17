@@ -107,6 +107,7 @@ function RouteComponent() {
     queryFn: () =>
       getContent({
         data: {
+          fileTreeBase: `/skills/${author}/${repo}/${slug}/file-tree`,
           path: activePath ?? "",
           snapshotId: data.snapshotId ?? "",
         },
@@ -140,9 +141,10 @@ function RouteComponent() {
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >
+        {/** todo fixed height */}
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
+            "flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
             !isTreeExpanded && "lg:justify-center",
           )}
         >
