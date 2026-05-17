@@ -94,6 +94,7 @@ export async function createSnapshot(
       and(
         eq(snapshotsTable.skillId, asSkillId(input.skillId)),
         eq(snapshotsTable.hash, input.hash),
+        eq(snapshotsTable.isDeprecated, false),
       ),
     )
     .limit(1);
