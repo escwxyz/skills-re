@@ -18,6 +18,7 @@ import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-sche
 import type { WorkerLogger } from "./worker-logger";
 import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
 import { getSnapshotBySkillAndCommit } from "@skills-re/api/modules/skills/repo";
+import { isSkillEvalSandboxEnabled } from "./skill-eval-sandbox/runtime";
 
 type ServerHonoContext = HonoContext<{
   Bindings: Env;
@@ -38,6 +39,7 @@ export interface CreateServerRuntimeDeps {
   githubFetch?: ApiContext["githubFetch"];
   githubStats?: ApiContext["githubStats"];
   githubSubmit?: ApiContext["githubSubmit"];
+  features?: ApiContext["features"];
   metrics?: ApiContext["metrics"];
   snapshotHistory?: ApiContext["snapshotHistory"];
   snapshotStorage?: ApiContext["snapshotStorage"];
@@ -65,6 +67,7 @@ export function createServerContextFromBase(
     githubFetch: runtimeDeps.githubFetch,
     githubStats: runtimeDeps.githubStats,
     githubSubmit: runtimeDeps.githubSubmit,
+    features: runtimeDeps.features,
     metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
     snapshotStorage: runtimeDeps.snapshotStorage,
@@ -117,6 +120,9 @@ async function createServerRuntime(
     githubFetch,
     githubStats,
     githubSubmit,
+    features: {
+      skillEvalSandboxEnabled: isSkillEvalSandboxEnabled(env),
+    },
     metrics: {
       DOWNLOAD_EVENTS: env.DOWNLOAD_EVENTS,
       METRICS_CACHE: env.METRICS_CACHE,

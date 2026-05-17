@@ -1,0 +1,18 @@
+ARG SANDBOX_BASE_IMAGE=docker.io/cloudflare/sandbox:latest
+FROM ${SANDBOX_BASE_IMAGE}
+
+ARG OPENCODE_VERSION=latest
+
+USER root
+
+RUN npm install -g "opencode-ai@${OPENCODE_VERSION}" \
+  && opencode --version
+
+ENV SKILLS_RE_EVAL_AGENT=opencode
+ENV PYTHON_POOL_MIN_SIZE=0
+ENV JAVASCRIPT_POOL_MIN_SIZE=3
+ENV TYPESCRIPT_POOL_MIN_SIZE=3
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/container-server/sandbox"]

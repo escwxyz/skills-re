@@ -4,7 +4,7 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
+import { createDownloadMetricsRecorder, skillEvalSandboxService } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
@@ -20,6 +20,12 @@ import { runScheduledJobs } from "./crons";
 import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
+import { createSkillEvalArtifactPrefix } from "./skill-eval-sandbox/event-writer";
+import {
+  createSkillEvalRunEventsReplayResponse,
+  createSkillEvalRunStreamResponse,
+} from "./skill-eval-sandbox/stream";
+import type { SkillEvalStreamDeps } from "./skill-eval-sandbox/stream";
 
 export { AiSearchBackfillWorkflow } from "./workflows/ai-search-backfill-workflow";
 export { RepoSkillImportWorkflow } from "./workflows/repo-skill-import-workflow";
@@ -35,6 +41,7 @@ export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
+export { Sandbox } from "@cloudflare/sandbox";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -152,6 +159,45 @@ app.post(
   "/skills/audits/ingest",
   async (c) => await createStaticAuditIngestResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
 );
+const createSkillEvalStreamDeps = (): SkillEvalStreamDeps => ({
+  authorizeRun: async ({ runId, userId }) => {
+    try {
+      const detail = await skillEvalSandboxService.getRunDetail({ runId }, { userId });
+      return detail ? "authorized" : "not_found";
+    } catch {
+      return "forbidden";
+    }
+  },
+  getSession: async (request) =>
+    await createRuntimeAuth().api.getSession({ headers: request.headers }),
+});
+
+app.get(
+  "/skill-eval-sandbox/runs/:runId/stream",
+  async (c) =>
+    await createSkillEvalRunStreamResponse({
+      deps: createSkillEvalStreamDeps(),
+      env: c.env,
+      request: c.req.raw,
+      runId: c.req.param("runId"),
+    }),
+);
+app.get("/skill-eval-sandbox/runs/:runId/events", async (c) => {
+  const runId = c.req.param("runId");
+  const url = new URL(c.req.url);
+  const parsedAfterSequence = Number(url.searchParams.get("afterSequence") ?? "-1");
+  const parsedLimit = Number(url.searchParams.get("limit") ?? "100");
+  return await createSkillEvalRunEventsReplayResponse({
+    afterSequence: Number.isFinite(parsedAfterSequence) ? parsedAfterSequence : -1,
+    artifactPrefix: createSkillEvalArtifactPrefix(runId),
+    bucket: c.env.SKILL_EVAL_ARTIFACTS,
+    deps: createSkillEvalStreamDeps(),
+    env: c.env,
+    limit: Number.isFinite(parsedLimit) ? parsedLimit : 100,
+    request: c.req.raw,
+    runId,
+  });
+});
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [

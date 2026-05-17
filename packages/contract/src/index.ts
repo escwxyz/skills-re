@@ -9,6 +9,7 @@ import { metricsContract } from "./metrics";
 import { newsletterContract } from "./newsletter";
 import { reviewsContract } from "./reviews";
 import { reposContract } from "./repos";
+import { skillEvalSandboxContract } from "./skill-eval-sandbox";
 import { staticAuditsContract } from "./static-audits";
 import { snapshotsContract } from "./snapshots";
 import { skillsContract } from "./skills";
@@ -37,6 +38,7 @@ export const contract = {
   newsletter: newsletterContract,
   reviews: reviewsContract,
   repos: reposContract,
+  skillEvalSandbox: skillEvalSandboxContract,
   staticAudits: staticAuditsContract,
   snapshots: snapshotsContract,
   skills: skillsContract,

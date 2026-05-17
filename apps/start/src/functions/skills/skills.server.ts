@@ -121,6 +121,54 @@ export const fetchSkillAuditReport = async (input: {
   snapshotId: string;
 }) => await input.client.staticAudits.getReportBySnapshot({ snapshotId: input.snapshotId });
 
+interface SkillEvalSandboxInitialClient extends ResolvePathSkillClient {
+  skillEvalSandbox: Pick<
+    AppRouterClient["skillEvalSandbox"],
+    "getSuite" | "listAgents" | "listRunsBySkill"
+  >;
+}
+
+export const fetchSkillEvalSandboxInitial = async (input: {
+  client: SkillEvalSandboxInitialClient;
+  selectedSnapshotId?: string;
+  skillSlug: string;
+}) => {
+  const skill = await resolveSkillBase({ client: input.client, slug: input.skillSlug });
+  if (!skill) {
+    return null;
+  }
+
+  const [agents, suite, runs] = await Promise.all([
+    input.client.skillEvalSandbox.listAgents(),
+    input.client.skillEvalSandbox.getSuite({
+      skillId: skill.id,
+      snapshotId: input.selectedSnapshotId,
+    }),
+    input.client.skillEvalSandbox.listRunsBySkill({
+      limit: 5,
+      skillId: skill.id,
+      snapshotId: input.selectedSnapshotId,
+    }),
+  ]);
+
+  return {
+    agents,
+    latestRun: runs.page[0] ?? null,
+    runs,
+    skill,
+    suite,
+  };
+};
+
+interface SkillEvalRunDetailClient {
+  skillEvalSandbox: Pick<AppRouterClient["skillEvalSandbox"], "getRunDetail">;
+}
+
+export const fetchSkillEvalRunDetail = async (input: {
+  client: SkillEvalRunDetailClient;
+  runId: string;
+}) => await input.client.skillEvalSandbox.getRunDetail({ runId: input.runId });
+
 interface SkillCheckSavedClient {
   skills: Pick<AppRouterClient["skills"], "checkSaved">;
 }

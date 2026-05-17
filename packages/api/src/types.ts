@@ -287,6 +287,9 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  features?: {
+    skillEvalSandboxEnabled?: boolean;
+  };
   aiTasks?: AiTaskRuntime;
   aiSearchItems?: AiSearchItemsRuntime;
   session: AuthSession;

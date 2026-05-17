@@ -69,6 +69,14 @@ const archiveFilesBucket = await R2Bucket("skills-re-archives", {
   },
 });
 
+const skillEvalArtifactsBucket = await R2Bucket("skills-re-skill-eval-artifacts", {
+  name: "skills-re-skill-eval-artifacts",
+  adopt: true,
+  dev: {
+    remote: true,
+  },
+});
+
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills-re-download-events",
 });
@@ -87,6 +95,10 @@ const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limit
 
 const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limiter", {
   className: "SearchRateLimiter",
+});
+
+const skillEvalSandboxDurableObject = DurableObjectNamespace("skill-eval-sandbox", {
+  className: "Sandbox",
 });
 
 await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
@@ -183,6 +195,10 @@ const snapshotsArchiveUploadWorkflowQueue = await Queue(
     name: "skills-re-v1-snapshot-archive-upload-workflow",
   },
 );
+
+const skillEvalRunWorkflowQueue = await Queue("SKILL_EVAL_RUN_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-skill-eval-run-workflow",
+});
 
 const workflowQueueEventSources = [
   // {
@@ -338,6 +354,7 @@ const workflowQueueBindings = {
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE: skillsCategorizationWorkflowQueue,
   SKILLS_TAGGING_WORKFLOW_QUEUE: skillsTaggingWorkflowQueue,
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
+  SKILL_EVAL_RUN_WORKFLOW_QUEUE: skillEvalRunWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2: snapshotUploadWorkflowQueue2,
@@ -370,6 +387,7 @@ export const server = await Worker("server", {
     GOOGLE_CLIENT_ID: alchemy.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
+    SKILL_EVAL_ARTIFACTS: skillEvalArtifactsBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
     AI_SEARCH: aiSearch,
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
@@ -382,10 +400,17 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
     AUTOMATION_API_TOKEN: alchemy.secret.env.AUTOMATION_API_TOKEN!,
+    SKILL_EVAL_SANDBOX_ENABLED: alchemy.env.SKILL_EVAL_SANDBOX_ENABLED ?? "false",
+    SKILL_EVAL_OPENCODE_API_KEY: alchemy.secret.env.SKILL_EVAL_OPENCODE_API_KEY ?? "",
+    SKILL_EVAL_OPENCODE_MODEL:
+      alchemy.env.SKILL_EVAL_OPENCODE_MODEL ?? "anthropic/claude-sonnet-4-5",
+    SKILL_EVAL_SANDBOX_IMAGE:
+      alchemy.env.SKILL_EVAL_SANDBOX_IMAGE ?? "docker.io/cloudflare/sandbox:latest",
     TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
+    SKILL_EVAL_SANDBOX: skillEvalSandboxDurableObject,
     ...workflowBindings,
     ...workflowQueueBindings,
   },

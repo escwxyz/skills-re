@@ -73,10 +73,14 @@ import {
   readSnapshotFileContent,
   uploadSkills,
   searchSkills,
+  skillEvalSandboxService,
 } from "../modules";
 import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
+
+const isSkillEvalSandboxEnabled = (context: { features?: { skillEvalSandboxEnabled?: boolean } }) =>
+  context.features?.skillEvalSandboxEnabled === true;
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -328,6 +332,39 @@ export const appRouter = {
   staticAudits: {
     getReportBySnapshot: publicProcedure.staticAudits.getReportBySnapshot.handler(({ input }) =>
       getStaticAuditReportBySnapshot(input.snapshotId),
+    ),
+  },
+  skillEvalSandbox: {
+    createRun: protectedProcedure.skillEvalSandbox.createRun.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.createRun(input, {
+        userId: context.session.user.id,
+      });
+    }),
+    createStreamToken: protectedProcedure.skillEvalSandbox.createStreamToken.handler(
+      ({ input, context }) =>
+        skillEvalSandboxService.createStreamToken(input, {
+          userId: context.session.user.id,
+        }),
+    ),
+    getRunDetail: protectedProcedure.skillEvalSandbox.getRunDetail.handler(({ input, context }) =>
+      skillEvalSandboxService.getRunDetail(input, {
+        userId: context.session.user.id,
+      }),
+    ),
+    getSuite: publicProcedure.skillEvalSandbox.getSuite.handler(({ input }) =>
+      skillEvalSandboxService.getSuite(input),
+    ),
+    listAgents: publicProcedure.skillEvalSandbox.listAgents.handler(({ context }) =>
+      isSkillEvalSandboxEnabled(context) ? skillEvalSandboxService.listAgents() : [],
+    ),
+    listRunsBySkill: publicProcedure.skillEvalSandbox.listRunsBySkill.handler(({ input }) =>
+      skillEvalSandboxService.listRunsBySkill(input),
     ),
   },
   repos: {

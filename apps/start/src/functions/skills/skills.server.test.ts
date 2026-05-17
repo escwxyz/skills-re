@@ -4,6 +4,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   fetchSkillChangelog,
+  fetchSkillEvalSandboxInitial,
+  fetchSkillEvalRunDetail,
   fetchSkillFileContent,
   fetchSkillCheckSaved,
   fetchSkillVersionHistory,
@@ -20,6 +22,10 @@ import {
 
 type ResolveSkillBaseClient = Parameters<typeof resolveSkillBase>[0]["client"];
 type FetchSkillChangelogClient = Parameters<typeof fetchSkillChangelog>[0]["client"];
+type FetchSkillEvalSandboxInitialClient = Parameters<
+  typeof fetchSkillEvalSandboxInitial
+>[0]["client"];
+type FetchSkillEvalRunDetailClient = Parameters<typeof fetchSkillEvalRunDetail>[0]["client"];
 type FetchSkillVersionHistoryClient = Parameters<typeof fetchSkillVersionHistory>[0]["client"];
 type FetchSkillFileContentClient = Parameters<typeof fetchSkillFileContent>[0]["client"];
 type FetchSkillCheckSavedClient = Parameters<typeof fetchSkillCheckSaved>[0]["client"];
@@ -650,5 +656,211 @@ describe("fetchSkillChangelog", () => {
         },
       ],
     });
+  });
+});
+
+describe("fetchSkillEvalSandboxInitial", () => {
+  test("loads suite availability, active agents, and recent eval history for a skill", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      skills: {
+        resolvePathBySlug: (input: { slug: string }) => {
+          calls.push({ resolvePathBySlug: input });
+          return Promise.resolve({
+            authorHandle: "acme",
+            repoName: "skills",
+            skillSlug: "reviewer",
+          });
+        },
+        getByPath: (input: { authorHandle: string; repoName?: string; skillSlug: string }) => {
+          calls.push({ getByPath: input });
+          return Promise.resolve({
+            description: "Reviews patches.",
+            id: "skill-1",
+            latestVersion: "1.0.0",
+            title: "Reviewer",
+          });
+        },
+      },
+      skillEvalSandbox: {
+        getSuite: (input: { skillId: string; snapshotId?: string }) => {
+          calls.push({ getSuite: input });
+          return Promise.resolve({
+            caseCount: 1,
+            cases: [
+              {
+                fixturePaths: [],
+                id: "case-1",
+                promptPreview: "Review a patch",
+              },
+            ],
+            fingerprint: "suite-fingerprint",
+            id: "suite-1",
+            skillId: input.skillId,
+            snapshotId: input.snapshotId,
+            status: "valid",
+            validationErrors: [],
+          });
+        },
+        listAgents: () => {
+          calls.push({ listAgents: {} });
+          return Promise.resolve([
+            {
+              capabilities: {
+                supportsBaseline: true,
+                supportsFilesystem: true,
+                supportsStreaming: true,
+              },
+              defaultLimits: {
+                maxOutputBytes: 1000,
+                maxSteps: 20,
+                timeoutMs: 60_000,
+              },
+              displayName: "OpenCode",
+              id: "agent-1",
+              provider: "opencode",
+              runtimeFamily: "container",
+              sortOrder: 0,
+              status: "active",
+            },
+          ]);
+        },
+        listRunsBySkill: (input: { limit?: number; skillId: string; snapshotId?: string }) => {
+          calls.push({ listRunsBySkill: input });
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [
+              {
+                agent: {
+                  displayName: "OpenCode",
+                  id: "agent-1",
+                  provider: "opencode",
+                },
+                completedAt: 2,
+                createdAt: 1,
+                id: "run-1",
+                skillId: input.skillId,
+                snapshotId: input.snapshotId,
+                status: "pass",
+                summary: {
+                  blockedCases: 0,
+                  failedCases: 0,
+                  passedCases: 1,
+                  totalCases: 1,
+                },
+                syncTime: 2,
+              },
+            ],
+          });
+        },
+      },
+    } as unknown as FetchSkillEvalSandboxInitialClient;
+
+    await expect(
+      fetchSkillEvalSandboxInitial({
+        client,
+        selectedSnapshotId: "snapshot-1",
+        skillSlug: "reviewer",
+      }),
+    ).resolves.toMatchObject({
+      agents: [{ id: "agent-1" }],
+      latestRun: { id: "run-1", status: "pass" },
+      skill: { id: "skill-1", title: "Reviewer" },
+      suite: { id: "suite-1", status: "valid" },
+    });
+    expect(calls).toContainEqual({
+      getSuite: { skillId: "skill-1", snapshotId: "snapshot-1" },
+    });
+    expect(calls).toContainEqual({
+      listRunsBySkill: { limit: 5, skillId: "skill-1", snapshotId: "snapshot-1" },
+    });
+  });
+});
+
+describe("fetchSkillEvalRunDetail", () => {
+  test("forwards run detail requests through the injected client", async () => {
+    const calls: unknown[] = [];
+    const client = {
+      skillEvalSandbox: {
+        getRunDetail: (input: { runId: string }) => {
+          calls.push(input);
+          return Promise.resolve({
+            agent: {
+              displayName: "OpenCode",
+              id: "agent-1",
+              provider: "opencode",
+            },
+            artifactPrefix: "eval-runs/run-1",
+            caseResults: [],
+            completedAt: 2,
+            createdAt: 1,
+            createdBy: "user-1",
+            id: input.runId,
+            limits: {
+              maxOutputBytes: 1000,
+              maxSteps: 20,
+              timeoutMs: 60_000,
+            },
+            network: {
+              allowlist: [],
+              blockMetadataEndpoints: true,
+              blockPrivateRanges: true,
+              maxBytes: 0,
+              maxRequests: 0,
+              mode: "deny",
+            },
+            policyVersion: "skill-eval-sandbox-v1",
+            skillId: "skill-1",
+            status: "pass",
+            summary: {
+              blockedCases: 0,
+              failedCases: 0,
+              passedCases: 1,
+              totalCases: 1,
+            },
+            syncTime: 2,
+          });
+        },
+      },
+    } as unknown as FetchSkillEvalRunDetailClient;
+
+    await expect(fetchSkillEvalRunDetail({ client, runId: "run-1" })).resolves.toEqual({
+      agent: {
+        displayName: "OpenCode",
+        id: "agent-1",
+        provider: "opencode",
+      },
+      artifactPrefix: "eval-runs/run-1",
+      caseResults: [],
+      completedAt: 2,
+      createdAt: 1,
+      createdBy: "user-1",
+      id: "run-1",
+      limits: {
+        maxOutputBytes: 1000,
+        maxSteps: 20,
+        timeoutMs: 60_000,
+      },
+      network: {
+        allowlist: [],
+        blockMetadataEndpoints: true,
+        blockPrivateRanges: true,
+        maxBytes: 0,
+        maxRequests: 0,
+        mode: "deny",
+      },
+      policyVersion: "skill-eval-sandbox-v1",
+      skillId: "skill-1",
+      status: "pass",
+      summary: {
+        blockedCases: 0,
+        failedCases: 0,
+        passedCases: 1,
+        totalCases: 1,
+      },
+      syncTime: 2,
+    });
+    expect(calls).toEqual([{ runId: "run-1" }]);
   });
 });

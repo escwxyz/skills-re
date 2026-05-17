@@ -40,6 +40,7 @@ export {
 } from "./metrics";
 export type { SkillDownloadMetrics, SkillViewMetrics } from "./metrics";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
+export { skillEvalSandboxService } from "./skill-eval-sandbox";
 export {
   countMineFeedback,
   createFeedbackRecord,
