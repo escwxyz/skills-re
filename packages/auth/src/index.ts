@@ -178,6 +178,23 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
             },
             name: "search_site",
           },
+          {
+            description: "Resolve public skill install metadata for CLI or MCP clients.",
+            input: {
+              additionalProperties: false,
+              properties: {
+                skill: {
+                  type: "string",
+                },
+                version: {
+                  type: "string",
+                },
+              },
+              required: ["skill"],
+              type: "object",
+            },
+            name: "resolve_skill_install",
+          },
         ],
         approvalMethods: ["device_authorization", "ciba"],
         deviceAuthorizationPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
@@ -205,6 +222,23 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
               searchUrl.pathname + searchUrl.search,
               env.PUBLIC_SITE_URL,
             );
+          }
+
+          if (capability === "resolve_skill_install") {
+            if (!args || typeof args !== "object" || typeof args.skill !== "string") {
+              throw new Error("resolve_skill_install requires a string skill.");
+            }
+
+            const installUrl = new URL("/cli/skills/resolve-install", env.PUBLIC_SERVER_URL);
+            installUrl.searchParams.set("skill", args.skill);
+            if (typeof args.version === "string") {
+              installUrl.searchParams.set("version", args.version);
+            }
+            const response = await fetch(installUrl);
+            if (!response.ok) {
+              throw new Error(`Install metadata request failed: ${response.status}`);
+            }
+            return await response.json();
           }
 
           throw new Error(`Unsupported agent capability: ${capability}`);

@@ -4,6 +4,7 @@ import { ORPCError } from "@orpc/server";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../procedures";
 import {
   checkDuplicatedRepo,
+  resolveCliInstall,
   checkExistingRepo,
   enqueueRepoStatsSync,
   checkExistingSkill,
@@ -123,6 +124,47 @@ export const appRouter = {
     listForAi: publicProcedure.categories.listForAi.handler(({ input }) =>
       listCategoriesForAi(input as { limit?: number } | undefined),
     ),
+  },
+  cli: {
+    auth: {
+      revoke: protectedProcedure.cli.auth.revoke.handler(() => ({ revoked: true })),
+      session: protectedProcedure.cli.auth.session.handler(({ context }) => ({
+        expiresAt: String(context.session.session.expiresAt),
+        user: {
+          email: context.session.user.email,
+          id: context.session.user.id,
+          name: context.session.user.name,
+        },
+      })),
+      start: publicProcedure.cli.auth.start.handler(({ context }) => {
+        const origin = context.requestHeaders?.get("origin") ?? "";
+        const fallbackHost = context.requestHeaders?.get("host");
+        const baseUrl = origin || (fallbackHost ? `https://${fallbackHost}` : "");
+        return {
+          verificationUri: baseUrl ? `${baseUrl}/auth` : undefined,
+          verificationUriComplete: baseUrl ? `${baseUrl}/auth?cli=true` : undefined,
+        };
+      }),
+    },
+    skills: {
+      resolveInstall: publicProcedure.cli.skills.resolveInstall.handler(
+        async ({ input, context }) => {
+          try {
+            return await resolveCliInstall({
+              requestHeaders: context.requestHeaders,
+              skill: input.skill,
+              version: input.version,
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Install resolution failed.";
+            if (message.includes("not found") || message.includes("No installable snapshot")) {
+              throw new ORPCError("NOT_FOUND", { message });
+            }
+            throw error;
+          }
+        },
+      ),
+    },
   },
   collections: {
     count: publicProcedure.collections.count.handler(() => countCollections()),

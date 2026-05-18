@@ -1,3 +1,4 @@
+export { resolveCliInstall, createCliService, cliService } from "./cli/service";
 export {
   checkExistingSkill,
   claimAsAuthor,
