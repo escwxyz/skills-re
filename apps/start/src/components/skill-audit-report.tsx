@@ -28,26 +28,41 @@ const CATEGORIES: AuditCategory[] = [
   "specification",
 ];
 
-const SEVERITY_COLORS: Record<AuditSeverity, { badge: string; card: string }> = {
+const SEVERITY_COLORS: Record<
+  AuditSeverity,
+  { badge: string; card: string; category: string; icon: string; count: string }
+> = {
   critical: {
-    // high contrast red
-    badge: "border-red-600 text-red-600",
-    card: "border-red-300 bg-red-50",
+    badge: "border-red-600 text-red-600 dark:border-red-400 dark:text-red-400",
+    card: "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40",
+    category: "bg-red-50 border-red-300 dark:bg-red-950/40 dark:border-red-800",
+    icon: "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400",
+    count:
+      "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/40 dark:border-red-800 dark:text-red-400",
   },
   high: {
-    // strong orange for high
-    badge: "border-orange-600 text-orange-600",
-    card: "border-orange-300 bg-orange-50",
+    badge: "border-orange-600 text-orange-600 dark:border-orange-400 dark:text-orange-400",
+    card: "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/40",
+    category: "bg-orange-50 border-orange-300 dark:bg-orange-950/40 dark:border-orange-800",
+    icon: "border-orange-300 text-orange-600 dark:border-orange-700 dark:text-orange-400",
+    count:
+      "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/40 dark:border-orange-800 dark:text-orange-400",
   },
   medium: {
-    // amber for medium severity
-    badge: "border-amber-600 text-amber-600",
-    card: "border-amber-300 bg-amber-50",
+    badge: "border-amber-600 text-amber-600 dark:border-amber-400 dark:text-amber-400",
+    card: "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40",
+    category: "bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800",
+    icon: "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400",
+    count:
+      "bg-amber-100 border-amber-200 text-amber-600 dark:bg-amber-900/40 dark:border-amber-800 dark:text-amber-400",
   },
   low: {
-    // calm blue for low severity
-    badge: "border-blue-600 text-blue-600",
-    card: "border-blue-200 bg-blue-50",
+    badge: "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400",
+    card: "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
+    category: "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800",
+    icon: "border-blue-200 text-blue-600 dark:border-blue-700 dark:text-blue-400",
+    count:
+      "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-400",
   },
 };
 
@@ -86,6 +101,21 @@ const getSeverityCounts = (findings: AuditFinding[]) => {
     counts[finding.severity] += 1;
   }
   return counts;
+};
+
+const SEVERITY_ORDER: AuditSeverity[] = ["critical", "high", "medium", "low"];
+
+const getWorstSeverityByCategory = (
+  findings: AuditFinding[],
+): Partial<Record<AuditCategory, AuditSeverity>> => {
+  const result: Partial<Record<AuditCategory, AuditSeverity>> = {};
+  for (const finding of findings) {
+    const current = result[finding.category];
+    if (!current || SEVERITY_ORDER.indexOf(finding.severity) < SEVERITY_ORDER.indexOf(current)) {
+      result[finding.category] = finding.severity;
+    }
+  }
+  return result;
 };
 
 const formatLocation = (loc: { endLine?: number; path: string; startLine: number }) =>
@@ -151,6 +181,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
   const locale = getLocale();
   const categoryCounts = getCategoryCounts(report.findings);
   const severityCounts = getSeverityCounts(report.findings);
+  const worstSeverityByCategory = getWorstSeverityByCategory(report.findings);
   const severityOrder: AuditSeverity[] = ["critical", "high", "medium", "low"];
   const filteredFindings = severityFilter
     ? report.findings.filter((f) => f.severity === severityFilter)
@@ -211,25 +242,25 @@ function AuditPanel({ report }: { report: AuditReport }) {
           {CATEGORIES.map((category) => {
             const count = categoryCounts[category];
             const isActive = count > 0;
+            const worstSeverity = worstSeverityByCategory[category];
+            const colors = worstSeverity ? SEVERITY_COLORS[worstSeverity] : null;
             return (
               <div
                 key={category}
-                className={`border p-3 ${
-                  isActive ? "bg-amber-50 border-amber-300" : "bg-muted border-border"
-                }`}
+                className={`border p-3 ${isActive && colors ? colors.category : "bg-muted border-border"}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div
                     className={`flex size-7 shrink-0 items-center justify-center border ${
-                      isActive
-                        ? "border-amber-300 text-amber-600"
-                        : "border-[rgba(45,90,61,0.4)] text-chart-5"
+                      isActive && colors ? colors.icon : "border-[rgba(45,90,61,0.4)] text-chart-5"
                     }`}
                   >
                     {isActive ? <WarningIcon /> : <CheckIcon />}
                   </div>
-                  {isActive && (
-                    <span className="border px-1.5 py-0.5 font-mono text-[9px] leading-none bg-amber-100 border-amber-200 text-amber-600">
+                  {isActive && colors && (
+                    <span
+                      className={`border px-1.5 py-0.5 font-mono text-[9px] leading-none ${colors.count}`}
+                    >
                       {count}
                     </span>
                   )}
@@ -293,8 +324,8 @@ function AuditPanel({ report }: { report: AuditReport }) {
           ))}
         </section>
       ) : (
-        <section className="border px-5 py-4 bg-emerald-50 border-emerald-200">
-          <p className="text-emerald-700 font-serif text-[15px] m-0">
+        <section className="border px-5 py-4 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800">
+          <p className="text-emerald-700 font-serif text-[15px] m-0 dark:text-emerald-400">
             {m.skill_audit_pass_message()}
           </p>
         </section>

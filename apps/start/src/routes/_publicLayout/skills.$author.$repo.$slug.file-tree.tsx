@@ -141,7 +141,6 @@ function RouteComponent() {
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >
-        {/** todo fixed height */}
         <div
           className={cn(
             "flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
@@ -173,7 +172,10 @@ function RouteComponent() {
           >
             <CaretRightIcon
               aria-hidden
-              className={cn("size-4 transition-transform", isTreeExpanded ? "rotate-180" : "")}
+              className={cn(
+                "size-4 transition-transform",
+                isTreeExpanded ? "-rotate-90 lg:rotate-180" : "rotate-90 lg:rotate-0",
+              )}
             />
           </button>
         </div>
