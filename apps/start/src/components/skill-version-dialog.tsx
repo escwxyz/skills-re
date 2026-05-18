@@ -1,7 +1,7 @@
 // oxlint-disable no-nested-ternary
 "use client";
 
-import { CaretDownIcon } from "@phosphor-icons/react";
+import { CaretUpDownIcon } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -16,6 +16,7 @@ import {
   skill_version_current_badge,
   skill_version_selected,
   skill_version_switch_button,
+  skill_version_switch_version_aria,
 } from "@/paraglide/messages";
 import { cn } from "@/lib/utils";
 import type { SkillVersionHistoryItem } from "@/utils/types";
@@ -65,15 +66,13 @@ export const SkillVersionDialog = ({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
+        aria-label={skill_version_switch_version_aria()}
         className={cn(
-          "border-border hover:bg-muted flex items-center justify-between gap-3 border px-4 py-3 text-left transition-colors",
+          "border-border hover:bg-muted flex size-7 items-center justify-center border transition-colors",
           triggerClassName,
         )}
       >
-        <span className="font-mono text-[10px] uppercase tracking-[.14em] text-foreground">
-          {skill_version_switch_button()}
-        </span>
-        <CaretDownIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+        <CaretUpDownIcon aria-hidden className="size-3.5 text-muted-foreground" />
       </DialogTrigger>
 
       <DialogContent showCloseButton={false} className="w-[min(96vw,38rem)] max-w-none p-0">

@@ -7,7 +7,9 @@ export interface SearchSkillRow {
   forkCount: number;
   id: string;
   isVerified: boolean;
+  latestAuditScore?: number | null;
   latestSnapshotId?: string | null;
+  latestSnapshotTotalBytes?: number | null;
   latestVersion: string | null;
   license: string | null;
   ownerAvatarUrl: string | null;
@@ -37,7 +39,9 @@ export const toSearchSkillItem = (row: SearchSkillRow) => ({
   forkCount: row.forkCount,
   id: row.id,
   isVerified: row.isVerified,
+  latestAuditScore: row.latestAuditScore ?? undefined,
   latestSnapshotId: row.latestSnapshotId ?? undefined,
+  latestSnapshotTotalBytes: row.latestSnapshotTotalBytes ?? undefined,
   latestVersion: row.latestVersion ?? undefined,
   license: row.license ?? undefined,
   primaryCategory: row.primaryCategory ?? undefined,

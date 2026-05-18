@@ -30,6 +30,7 @@ import { SkillRelated } from "@/components/skill-related";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { WriteReviewDialog } from "@/components/write-review-cta";
+import { SkillDetailStats } from "@/components/skill-detail-stats";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -180,16 +181,31 @@ function RouteComponent() {
             <ReviewRatingTrigger skillId={skill.id} />
           </div>
 
-          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div className="col-span-2">TODO</div>
+          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 md:gap-0 gap-6 items-center">
+            <div className="col-span-2">
+              <SkillDetailStats
+                auditScore={skill.latestAuditScore ?? null}
+                createdAt={skill.createdAt ?? null}
+                downloadsAllTime={skill.downloadsAllTime ?? null}
+                latestSnapshotTotalBytes={skill.latestSnapshotTotalBytes ?? null}
+                skillId={skill.id}
+                viewsAllTime={skill.viewsAllTime ?? null}
+              />
+            </div>
 
-            <div className="col-span-1 space-y-4">
-              {isMobile ? null : <InstallTabs author={author} repo={repo} slug={skill.slug} />}
-
-              <SkillDetailActions
+            <div className="col-span-1 border-t border-border pt-6 md:border-t-0 md:border-l md:pl-6 md:pt-0">
+              <SkillVersionPanel
+                author={author}
+                onSnapshotChange={(id) => {
+                  navigate({
+                    replace: true,
+                    search: (prev) => ({ ...prev, snapshotId: id }),
+                  });
+                }}
+                repo={repo}
+                skillId={data.skill.id}
                 snapshotId={selectedSnapshotId}
-                slug={skill.slug}
-                version={latestVersion}
+                slug={slug}
               />
             </div>
           </div>
@@ -206,19 +222,15 @@ function RouteComponent() {
             updatedAt={skill.updatedAt}
           />
 
-          <SkillVersionPanel
-            author={author}
-            onSnapshotChange={(id) => {
-              navigate({
-                replace: true,
-                search: (prev) => ({ ...prev, snapshotId: id }),
-              });
-            }}
-            repo={repo}
-            skillId={data.skill.id}
-            snapshotId={selectedSnapshotId}
-            slug={slug}
-          />
+          <div className="py-4 space-y-4">
+            {isMobile ? null : <InstallTabs author={author} repo={repo} slug={skill.slug} />}
+
+            <SkillDetailActions
+              snapshotId={selectedSnapshotId}
+              slug={skill.slug}
+              version={latestVersion}
+            />
+          </div>
         </div>
       </section>
 

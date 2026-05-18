@@ -743,6 +743,7 @@
   "skill_version_history": "Version History",
   "skill_version_selected": "Selected",
   "skill_version_switch_button": "Switch version",
+  "skill_version_switch_version_aria": "Switch version",
   "skill_version_view_full_changelog": "View full Change Log",
   "skill_tabs_actions_download_archive": "Download archive",
   "skill_tabs_actions_install": "Install",

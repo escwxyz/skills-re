@@ -742,6 +742,7 @@
   "skill_version_history": "Versionsverlauf",
   "skill_version_selected": "Ausgewählt",
   "skill_version_switch_button": "Version wechseln",
+  "skill_version_switch_version_aria": "Version wechseln",
   "skill_version_view_full_changelog": "Vollständiges Changelog ansehen",
   "skill_tabs_actions_download_archive": "Archiv herunterladen",
   "skill_tabs_actions_install": "Installieren",

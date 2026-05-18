@@ -386,6 +386,15 @@ export const fetchSkillDownloadMetrics = async (input: {
     skillId: input.skillId,
   });
 
+interface SkillReviewStatsClient {
+  reviews: Pick<AppRouterClient["reviews"], "statsBySkill">;
+}
+
+export const fetchSkillReviewStats = async (input: {
+  client: SkillReviewStatsClient;
+  skillId: string;
+}) => await input.client.reviews.statsBySkill({ skillId: input.skillId });
+
 interface SkillReviewsInitialClient extends ResolvePathSkillClient {
   reviews: Pick<AppRouterClient["reviews"], "statsBySkill" | "listBySkill">;
 }

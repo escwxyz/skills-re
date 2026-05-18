@@ -439,6 +439,18 @@ const SKILLS: SkillDef[] = [
     viewsAllTime: 38_900,
     createdDaysAgo: 90,
     ownedByTestUser: true,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.1",
+        createdDaysAgo: 100,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 115,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -455,6 +467,13 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 580,
     viewsAllTime: 33_400,
     createdDaysAgo: 95,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 120,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -471,6 +490,28 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 510,
     viewsAllTime: 29_100,
     createdDaysAgo: 60,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.4.0",
+        createdDaysAgo: 75,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.3.0",
+        createdDaysAgo: 100,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.2.0",
+        createdDaysAgo: 130,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 160,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -487,6 +528,18 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 440,
     viewsAllTime: 24_600,
     createdDaysAgo: 75,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "0.8.0",
+        createdDaysAgo: 95,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "0.7.0",
+        createdDaysAgo: 120,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -503,6 +556,18 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 390,
     viewsAllTime: 22_300,
     createdDaysAgo: 110,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.1.0",
+        createdDaysAgo: 135,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 165,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -633,6 +698,18 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 460,
     viewsAllTime: 27_300,
     createdDaysAgo: 100,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.1.0",
+        createdDaysAgo: 125,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 155,
+      },
+    ],
   },
   {
     id: nid() as SkillId,
@@ -862,6 +939,23 @@ const SKILLS: SkillDef[] = [
     downloadsTrending: 540,
     viewsAllTime: 32_400,
     createdDaysAgo: 150,
+    versionHistory: [
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.2.0",
+        createdDaysAgo: 175,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.1.0",
+        createdDaysAgo: 210,
+      },
+      {
+        snapshotId: nid() as SnapshotId,
+        version: "1.0.0",
+        createdDaysAgo: 260,
+      },
+    ],
   },
   {
     id: nid() as SkillId,

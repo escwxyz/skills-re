@@ -179,7 +179,7 @@ function RouteComponent() {
         </div>
 
         {isTreeExpanded ? (
-          <div className="bg-background lg:h-[calc(100svh-var(--header-height)*2-3.5rem)] lg:overflow-y-auto lg:bg-muted">
+          <div className="bg-background lg:h-[calc(100svh-var(--header-height)*2-3.5rem)] lg:overflow-y-auto">
             {data.rows.length > 0 ? (
               <div className="py-4">
                 {visibleRows.map((row) => {

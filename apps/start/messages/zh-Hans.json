@@ -741,6 +741,7 @@
   "skill_version_history": "版本历史",
   "skill_version_selected": "已选中",
   "skill_version_switch_button": "切换版本",
+  "skill_version_switch_version_aria": "切换版本",
   "skill_version_view_full_changelog": "查看完整变更记录",
   "skill_tabs_actions_download_archive": "下载归档",
   "skill_tabs_actions_install": "安装",

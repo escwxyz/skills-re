@@ -52,6 +52,8 @@ interface SkillPathRow {
   forkCount: number;
   id: string;
   isVerified: boolean;
+  latestAuditScore?: number | null;
+  latestSnapshotTotalBytes?: number | null;
   latestVersion: string | null;
   license: string | null;
   ownerAvatarUrl: string | null;

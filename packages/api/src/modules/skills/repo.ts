@@ -3,7 +3,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { reposTable } from "@skills-re/db/schema/repos";
 import { skillsTable } from "@skills-re/db/schema/skills";
 import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
-import { skillsTagsTable, tagsTable } from "@skills-re/db/schema";
+import { skillsTagsTable, tagsTable, staticAuditsTable } from "@skills-re/db/schema";
 import { asRepoId, asSkillId, asUserId, createId } from "@skills-re/db/utils";
 import type { RepoId, SkillId, SnapshotId } from "@skills-re/db/utils";
 
@@ -362,6 +362,18 @@ export async function findSkillByPath(input: {
       title: skillsTable.title,
       updatedAt: skillsTable.updatedAt,
       viewsAllTime: skillsTable.viewsAllTime,
+      latestAuditScore: sql<number | null>`(
+        SELECT ${staticAuditsTable.overallScore}
+        FROM ${staticAuditsTable}
+        WHERE ${staticAuditsTable.snapshotId} = ${skillsTable.latestSnapshotId}
+        ORDER BY ${staticAuditsTable.syncTime} DESC
+        LIMIT 1
+      )`,
+      latestSnapshotTotalBytes: sql<number>`COALESCE((
+        SELECT SUM(${snapshotFilesTable.size})
+        FROM ${snapshotFilesTable}
+        WHERE ${snapshotFilesTable.snapshotId} = ${skillsTable.latestSnapshotId}
+      ), 0)`,
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
