@@ -92,6 +92,20 @@
       "when": 1777820502875,
       "tag": "0012_windy_famine",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1779102400000,
+      "tag": "0013_skill_usage_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1779102500000,
+      "tag": "0014_oauth_provider_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -2,10 +2,11 @@
 import { authTables } from "@skills-re/db/schema";
 import { agentAuth } from "@better-auth/agent-auth";
 import { apiKey } from "@better-auth/api-key";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import type { GithubProfile } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, emailOTP } from "better-auth/plugins";
+import { admin, emailOTP, jwt } from "better-auth/plugins";
 
 import { nanoid } from "nanoid";
 
@@ -50,6 +51,8 @@ export type AuthSession = {
 export interface AuthInstance {
   api: {
     getAgentConfiguration: () => Promise<unknown>;
+    getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
+    getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getSession: (input: { headers: Headers }) => Promise<AuthSession>;
   };
   handler: (request: Request) => Response | Promise<Response>;
@@ -148,6 +151,29 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     plugins: [
       admin(),
       apiKey(),
+      jwt({
+        jwt: {
+          issuer: env.PUBLIC_SERVER_URL,
+        },
+      }),
+      oauthProvider({
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        consentPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
+        grantTypes: ["authorization_code", "refresh_token"],
+        // todo: add new routes in tanstack start
+        loginPage: `${env.PUBLIC_SITE_URL}/auth`,
+        scopes: [
+          "openid",
+          "profile",
+          "email",
+          "offline_access",
+          "skills:read",
+          "skills:library",
+          "skills:usage",
+        ],
+        validAudiences: [env.PUBLIC_SERVER_URL, `${env.PUBLIC_SERVER_URL}/mcp`],
+      }),
       agentAuth({
         capabilities: [
           {

@@ -103,6 +103,105 @@ export const apikeysTable = sqliteTable(
   ],
 );
 
+export const jwkssTable = sqliteTable("jwkss", {
+  id: text("id").primaryKey(),
+  publicKey: text("public_key").notNull(),
+  privateKey: text("private_key").notNull(),
+  createdAt: timestampMsColumn("created_at").notNull(),
+  expiresAt: timestampMsColumn("expires_at"),
+});
+
+export const oauthClientsTable = sqliteTable("oauth_clients", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id").notNull().unique(),
+  clientSecret: text("client_secret"),
+  disabled: integer("disabled", { mode: "boolean" }).default(false),
+  skipConsent: integer("skip_consent", { mode: "boolean" }),
+  enableEndSession: integer("enable_end_session", { mode: "boolean" }),
+  subjectType: text("subject_type"),
+  scopes: text("scopes", { mode: "json" }),
+  userId: text("user_id")
+    .$type<UserId>()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: timestampMsColumn("created_at"),
+  updatedAt: timestampMsColumn("updated_at"),
+  name: text("name"),
+  uri: text("uri"),
+  icon: text("icon"),
+  contacts: text("contacts", { mode: "json" }),
+  tos: text("tos"),
+  policy: text("policy"),
+  softwareId: text("software_id"),
+  softwareVersion: text("software_version"),
+  softwareStatement: text("software_statement"),
+  redirectUris: text("redirect_uris", { mode: "json" }).notNull(),
+  postLogoutRedirectUris: text("post_logout_redirect_uris", { mode: "json" }),
+  tokenEndpointAuthMethod: text("token_endpoint_auth_method"),
+  grantTypes: text("grant_types", { mode: "json" }),
+  responseTypes: text("response_types", { mode: "json" }),
+  public: integer("public", { mode: "boolean" }),
+  type: text("type"),
+  requirePKCE: integer("require_pkce", { mode: "boolean" }),
+  referenceId: text("reference_id"),
+  metadata: text("metadata", { mode: "json" }),
+});
+
+export const oauthRefreshTokensTable = sqliteTable("oauth_refresh_tokens", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull(),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => oauthClientsTable.clientId, { onDelete: "cascade" }),
+  sessionId: text("session_id")
+    .$type<SessionId>()
+    .references(() => sessionsTable.id, { onDelete: "set null" }),
+  userId: text("user_id")
+    .$type<UserId>()
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  referenceId: text("reference_id"),
+  expiresAt: timestampMsColumn("expires_at"),
+  createdAt: timestampMsColumn("created_at"),
+  revoked: timestampMsColumn("revoked"),
+  authTime: timestampMsColumn("auth_time"),
+  scopes: text("scopes", { mode: "json" }).notNull(),
+});
+
+export const oauthAccessTokensTable = sqliteTable("oauth_access_tokens", {
+  id: text("id").primaryKey(),
+  token: text("token").unique(),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => oauthClientsTable.clientId, { onDelete: "cascade" }),
+  sessionId: text("session_id")
+    .$type<SessionId>()
+    .references(() => sessionsTable.id, { onDelete: "set null" }),
+  userId: text("user_id")
+    .$type<UserId>()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  referenceId: text("reference_id"),
+  refreshId: text("refresh_id").references(() => oauthRefreshTokensTable.id, {
+    onDelete: "cascade",
+  }),
+  expiresAt: timestampMsColumn("expires_at"),
+  createdAt: timestampMsColumn("created_at"),
+  scopes: text("scopes", { mode: "json" }).notNull(),
+});
+
+export const oauthConsentsTable = sqliteTable("oauth_consents", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id")
+    .notNull()
+    .references(() => oauthClientsTable.clientId, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .$type<UserId>()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  referenceId: text("reference_id"),
+  scopes: text("scopes", { mode: "json" }).notNull(),
+  createdAt: timestampMsColumn("created_at"),
+  updatedAt: timestampMsColumn("updated_at"),
+});
+
 export const agentHostsTable = sqliteTable(
   "agent_hosts",
   {
@@ -231,6 +330,11 @@ export const authTables = {
   agents: agentsTable,
   approvalRequests: approvalRequestsTable,
   apikeys: apikeysTable,
+  jwkss: jwkssTable,
+  oauthAccessTokens: oauthAccessTokensTable,
+  oauthClients: oauthClientsTable,
+  oauthConsents: oauthConsentsTable,
+  oauthRefreshTokens: oauthRefreshTokensTable,
   sessions: sessionsTable,
   users: usersTable,
   verifications: verificationsTable,
