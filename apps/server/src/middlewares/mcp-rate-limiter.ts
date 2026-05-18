@@ -1,7 +1,29 @@
 import type { MiddlewareHandler } from "hono";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
+import { verifyAccessToken } from "better-auth/oauth2";
 import type { RateLimitResult } from "@/lib/cloudflare/do";
 import type { WorkerLogger } from "../worker-logger";
+
+const isBearerAuthenticated = async (env: Env, headers: Headers): Promise<boolean> => {
+  const authorization = headers.get("authorization");
+  if (!authorization?.toLowerCase().startsWith("bearer ")) {
+    return false;
+  }
+  const token = authorization.slice("bearer ".length).trim();
+  if (!token) {
+    return false;
+  }
+  try {
+    const base = env.PUBLIC_SERVER_URL;
+    await verifyAccessToken(token, {
+      jwksUrl: `${base}/auth/jwks`,
+      verifyOptions: { audience: `${base}/mcp`, issuer: base },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export const mcpRateLimiter: MiddlewareHandler<{
   Bindings: Env;
@@ -13,6 +35,10 @@ export const mcpRateLimiter: MiddlewareHandler<{
 
   const session = await createRuntimeAuth().api.getSession({ headers: c.req.raw.headers });
   if (session?.user) {
+    return next();
+  }
+
+  if (await isBearerAuthenticated(c.env, c.req.raw.headers)) {
     return next();
   }
 
