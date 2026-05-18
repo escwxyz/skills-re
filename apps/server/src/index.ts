@@ -8,6 +8,7 @@ import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { mcpRouter } from "./routes/mcp";
+import { mcpRateLimiter } from "./middlewares/mcp-rate-limiter";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
@@ -34,6 +35,7 @@ export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization"
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
+export { McpRateLimiter } from "./dos/mcp-rate-limiter";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
 
@@ -186,6 +188,7 @@ export const rpcHandler = new RPCHandler(appRouter, {
   ],
 });
 
+app.use("/mcp/*", mcpRateLimiter);
 app.route("/mcp", mcpRouter);
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);

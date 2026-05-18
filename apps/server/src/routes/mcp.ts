@@ -17,7 +17,7 @@ const createMcpServer = (env: Env) => {
     "search_skills",
     {
       description:
-        "Search public Skills.re skills by keyword, category, or tag. Returns paginated results with title, slug, description, and author.",
+        "Search public Skills.re skills by keyword, category, or tag. Each result includes authorHandle, repoName, and slug — pass these to get_skill to retrieve full metadata.",
       inputSchema: z.object({
         categories: z.array(z.string().min(1)).optional(),
         cursor: z.string().optional(),

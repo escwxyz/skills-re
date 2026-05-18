@@ -81,6 +81,10 @@ const metricsCache = await KVNamespace("METRICS_CACHE", {
   title: "skills-re-metrics-cache",
 });
 
+const mcpRateLimiterDurableObject = DurableObjectNamespace("mcp-rate-limiter", {
+  className: "McpRateLimiter",
+});
+
 const submitRateLimiterDurableObject = DurableObjectNamespace("submit-rate-limiter", {
   className: "SubmitRateLimiter",
 });
@@ -384,6 +388,7 @@ export const server = await Worker("server", {
     AUTOMATION_API_TOKEN: alchemy.secret.env.AUTOMATION_API_TOKEN!,
     TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
+    MCP_RATE_LIMITER: mcpRateLimiterDurableObject,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
     ...workflowBindings,
