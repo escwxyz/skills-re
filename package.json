@@ -12,7 +12,7 @@
       "typescript": "^5",
       "@types/node": "^25.1.0",
       "@cloudflare/workers-types": "^4.20260421.1",
-      "hono": "^4.8.2",
+      "hono": "^4.11.5",
       "@orpc/contract": "^1.14.1",
       "@orpc/server": "^1.14.1",
       "@orpc/openapi": "^1.14.1",
