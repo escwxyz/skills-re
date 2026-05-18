@@ -127,34 +127,15 @@ export const appRouter = {
   },
   cli: {
     auth: {
-      revoke: protectedProcedure.cli.auth.revoke.handler(() => ({ revoked: true })),
-      session: publicProcedure.cli.auth.session.handler(async ({ context }) => {
-        const token = context.requestHeaders?.get("authorization")?.slice(7).trim();
-        if (!token) {
-          throw new ORPCError("UNAUTHORIZED");
-        }
-        const verified = context.verifyCliToken ? await context.verifyCliToken(token) : null;
-        if (!verified) {
-          throw new ORPCError("UNAUTHORIZED");
-        }
-        return {
-          expiresAt: verified.expiresAt,
-          user: { id: verified.user.id },
-        };
+      revoke: protectedProcedure.cli.auth.revoke.handler(async ({ context }) => {
+        await context.revokeSession?.();
+        return { revoked: true };
       }),
-      start: publicProcedure.cli.auth.start.handler(async ({ context }) => {
-        if (context.session?.user && context.createCliToken) {
-          const tokenResult = await context.createCliToken(context.session.user.id);
-          if (tokenResult) {
-            return { expiresAt: tokenResult.expiresAt, token: tokenResult.token };
-          }
-        }
-        const origin = context.requestHeaders?.get("origin") ?? "";
-        const fallbackHost = context.requestHeaders?.get("host");
-        const baseUrl = origin || (fallbackHost ? `https://${fallbackHost}` : "");
+      session: protectedProcedure.cli.auth.session.handler(({ context }) => {
+        const { user, session } = context.session;
         return {
-          verificationUri: baseUrl ? `${baseUrl}/auth` : undefined,
-          verificationUriComplete: baseUrl ? `${baseUrl}/auth?cli=true` : undefined,
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          user: { email: user.email, id: user.id, name: user.name },
         };
       }),
     },

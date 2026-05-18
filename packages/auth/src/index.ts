@@ -6,7 +6,7 @@ import { oauthProvider } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import type { GithubProfile } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, emailOTP, jwt } from "better-auth/plugins";
+import { admin, bearer, deviceAuthorization, emailOTP, jwt } from "better-auth/plugins";
 
 import { nanoid } from "nanoid";
 
@@ -60,6 +60,7 @@ export interface AuthInstance {
     getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getSession: (input: { headers: Headers }) => Promise<AuthSession>;
+    signOut: (input: { asResponse: true; headers: Headers }) => Promise<Response>;
   };
   handler: (request: Request) => Response | Promise<Response>;
 }
@@ -157,6 +158,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     plugins: [
       admin(),
       apiKey(),
+      bearer(),
       jwt({
         jwt: {
           issuer: env.PUBLIC_SERVER_URL,
@@ -228,8 +230,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
             name: "resolve_skill_install",
           },
         ],
-        approvalMethods: ["device_authorization", "ciba"],
-        deviceAuthorizationPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
+        approvalMethods: ["ciba"],
         modes: ["delegated"],
         providerDescription: "Public website content and content discovery for AI agents.",
         providerName: "skills.re",
@@ -275,6 +276,11 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
 
           throw new Error(`Unsupported agent capability: ${capability}`);
         },
+      }),
+      deviceAuthorization({
+        schema: {},
+        validateClient: (clientId) => clientId === "cli",
+        verificationUri: `${env.PUBLIC_SITE_URL}/device`,
       }),
       emailOTP({
         allowedAttempts: 3,

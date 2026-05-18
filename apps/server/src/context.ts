@@ -34,8 +34,6 @@ export interface CreateServerRuntimeDeps {
   aiTasks?: ApiContext["aiTasks"];
   aiSearch?: ApiContext["aiSearch"];
   aiSearchItems?: ApiContext["aiSearchItems"];
-  createCliToken?: ApiContext["createCliToken"];
-  verifyCliToken?: ApiContext["verifyCliToken"];
   githubHistory?: ApiContext["githubHistory"];
   githubFetch?: ApiContext["githubFetch"];
   githubStats?: ApiContext["githubStats"];
@@ -63,8 +61,6 @@ export function createServerContextFromBase(
     aiTasks: runtimeDeps.aiTasks,
     aiSearch: runtimeDeps.aiSearch,
     aiSearchItems: runtimeDeps.aiSearchItems,
-    createCliToken: runtimeDeps.createCliToken,
-    verifyCliToken: runtimeDeps.verifyCliToken,
     githubHistory: runtimeDeps.githubHistory,
     githubFetch: runtimeDeps.githubFetch,
     githubStats: runtimeDeps.githubStats,
@@ -145,46 +141,8 @@ async function createServerRuntime(
 
 export async function createServerContext({ context }: CreateServerContextOptions) {
   const { createContext: createApiContext } = await import("@skills-re/api/context");
-  const baseContext = await createApiContext({
-    context,
-  });
+  const baseContext = await createApiContext({ context });
   const logger = context.get("workerLogger");
   const runtimeDeps = await createServerRuntime(context.env, { logger });
-  const { createRuntimeAuth } = await import("@skills-re/auth/runtime");
-  const auth = createRuntimeAuth();
-  const createCliToken: ApiContext["createCliToken"] = async (userId) => {
-    try {
-      const result = await auth.api.createApiKey({
-        body: { expiresIn: 60 * 60 * 24 * 30, name: "CLI", prefix: "cli_", userId },
-      });
-      if (!result?.key) {
-        return null;
-      }
-      return {
-        expiresAt: result.expiresAt ? new Date(result.expiresAt).toISOString() : undefined,
-        token: result.key,
-      };
-    } catch {
-      return null;
-    }
-  };
-  const verifyCliToken: ApiContext["verifyCliToken"] = async (token) => {
-    try {
-      const result = await auth.api.verifyApiKey({ body: { key: token } });
-      if (!result?.valid || !result.key) {
-        return null;
-      }
-      return {
-        expiresAt: result.key.expiresAt ? new Date(result.key.expiresAt).toISOString() : undefined,
-        user: { id: result.key.referenceId },
-      };
-    } catch {
-      return null;
-    }
-  };
-  return createServerContextFromBase(
-    baseContext,
-    { ...runtimeDeps, createCliToken, verifyCliToken },
-    logger,
-  );
+  return createServerContextFromBase(baseContext, runtimeDeps, logger);
 }

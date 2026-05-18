@@ -1,4 +1,6 @@
+// oxlint-disable unicorn/no-nested-ternary
 // oxlint-disable unicorn/prefer-ternary
+// todo i18n
 "use client";
 
 import { useRef, useState } from "react";
@@ -27,9 +29,10 @@ interface CurrentUser {
 interface Props {
   currentUser?: CurrentUser | null;
   userCode?: string;
+  variant?: "agent" | "cli";
 }
 
-export function DeviceApproval({ currentUser, userCode = "" }: Props) {
+export function DeviceApproval({ currentUser, userCode = "", variant = "agent" }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<"approve" | "deny" | null>(null);
   const actionRef = useRef<"approve" | "deny">("approve");
@@ -70,13 +73,15 @@ export function DeviceApproval({ currentUser, userCode = "" }: Props) {
             Device approval
           </CardDescription>
           <CardTitle className="mt-2 font-serif text-[clamp(1.8rem,2.5vw,2.6rem)] leading-[0.96] tracking-[-0.03em]">
-            Approve agent access
+            {variant === "cli" ? "Approve CLI login" : "Approve agent access"}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 py-4">
           <p className="text-[13px] leading-[1.6] text-foreground/80">
             {currentUser
-              ? "Authorize the requesting device so it can exchange the approval for scoped agent tokens."
+              ? variant === "cli"
+                ? "Enter the code shown in your terminal to authorize the CLI to access your skills.re account."
+                : "Authorize the requesting device so it can exchange the approval for scoped agent tokens."
               : "Sign in first, then return here to approve the device."}
           </p>
 

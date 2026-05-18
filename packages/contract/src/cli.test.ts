@@ -8,10 +8,6 @@ describe("cliContract", () => {
       method: "GET",
       path: "/cli/skills/resolve-install",
     });
-    expect(cliContract.auth.start["~orpc"].route).toMatchObject({
-      method: "POST",
-      path: "/cli/auth/start",
-    });
     expect(cliContract.auth.session["~orpc"].route).toMatchObject({
       method: "GET",
       path: "/cli/auth/session",

@@ -11,6 +11,7 @@ export interface RequestOptions {
   body?: unknown;
   method?: "DELETE" | "GET" | "POST";
   query?: Record<string, boolean | number | string | undefined>;
+  throwOnError?: boolean;
   token?: string;
 }
 
@@ -58,7 +59,7 @@ export class ApiClient {
         ? (JSON.parse(text) as unknown)
         : text;
 
-    if (!response.ok) {
+    if (!response.ok && options.throwOnError !== false) {
       const message =
         typeof data === "object" && data && "message" in data
           ? String((data as { message?: unknown }).message)
@@ -144,14 +145,30 @@ export class ApiClient {
     return await this.request<unknown>("/openapi.json");
   }
 
-  async startCliLogin() {
+  async requestDeviceCode() {
     return await this.request<{
-      expiresAt?: string;
-      token?: string;
-      userCode?: string;
-      verificationUri?: string;
-      verificationUriComplete?: string;
-    }>("/cli/auth/start", { method: "POST" });
+      device_code: string;
+      user_code: string;
+      verification_uri: string;
+      verification_uri_complete: string;
+      expires_in: number;
+      interval: number;
+    }>("/auth/device/code", { body: { client_id: "cli" }, method: "POST" });
+  }
+
+  async pollDeviceToken(deviceCode: string) {
+    return await this.request<
+      | { access_token: string; token_type: string; expires_in: number; scope: string }
+      | { error: string; error_description: string }
+    >("/auth/device/token", {
+      body: {
+        client_id: "cli",
+        device_code: deviceCode,
+        grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+      },
+      method: "POST",
+      throwOnError: false,
+    });
   }
 
   async readAuthStatus(token: string) {

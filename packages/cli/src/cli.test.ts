@@ -143,16 +143,75 @@ describe("commands", () => {
     restore();
   });
 
+  test("auth login polls through authorization_pending before storing credential", async () => {
+    const cwd = await createTempDir();
+    const configDir = join(cwd, "config");
+    let pollCount = 0;
+    const restore = mockFetch((url) => {
+      if (url.pathname === "/auth/device/code") {
+        return Response.json({
+          device_code: "dc",
+          expires_in: 30,
+          interval: 0,
+          user_code: "ABCD-EFGH",
+          verification_uri_complete: "https://skills.re/device?user_code=ABCD-EFGH",
+        });
+      }
+      if (url.pathname === "/auth/device/token") {
+        pollCount += 1;
+        if (pollCount < 3) {
+          return Response.json(
+            { error: "authorization_pending", error_description: "Waiting for user" },
+            { status: 400 },
+          );
+        }
+        return Response.json({
+          access_token: "token-1",
+          expires_in: 2592000,
+          scope: "",
+          token_type: "bearer",
+        });
+      }
+      return Response.json({
+        expiresAt: "2030-01-01T00:00:00.000Z",
+        user: { id: "user-1" },
+      });
+    });
+    const io = createCommandContext(cwd, { SKILLS_RE_CONFIG_DIR: configDir });
+
+    await run(["auth", "login"], io.context);
+
+    expect(pollCount).toBe(3);
+    await expect(readCredential(io.context.env)).resolves.toMatchObject({ token: "token-1" });
+    restore();
+  });
+
   test("auth login stores server-issued CLI credential", async () => {
     const cwd = await createTempDir();
     const configDir = join(cwd, "config");
-    const restore = mockFetch(() =>
-      Response.json({
+    const restore = mockFetch((url) => {
+      if (url.pathname === "/auth/device/code") {
+        return Response.json({
+          device_code: "dc",
+          expires_in: 30,
+          interval: 0,
+          user_code: "ABCD-EFGH",
+          verification_uri_complete: "https://skills.re/device?user_code=ABCD-EFGH",
+        });
+      }
+      if (url.pathname === "/auth/device/token") {
+        return Response.json({
+          access_token: "token-1",
+          expires_in: 2592000,
+          scope: "",
+          token_type: "bearer",
+        });
+      }
+      return Response.json({
         expiresAt: "2030-01-01T00:00:00.000Z",
-        token: "token-1",
-        verificationUri: "https://skills.re/auth",
-      }),
-    );
+        user: { id: "user-1" },
+      });
+    });
     const io = createCommandContext(cwd, { SKILLS_RE_CONFIG_DIR: configDir });
 
     await run(["auth", "login"], io.context);

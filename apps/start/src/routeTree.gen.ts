@@ -47,6 +47,7 @@ import { Route as PublicLayoutCategorySlugRouteImport } from './routes/_publicLa
 import { Route as PublicLayoutCategoriesSlugRouteImport } from './routes/_publicLayout/categories.$slug'
 import { Route as PublicLayoutAuthorsHandleRouteImport } from './routes/_publicLayout/authors.$handle'
 import { Route as PublicLayoutAuthorHandleRouteImport } from './routes/_publicLayout/author.$handle'
+import { Route as AuthedLayoutDeviceIndexRouteImport } from './routes/_authedLayout/device.index'
 import { Route as AuthedLayoutDeviceCapabilitiesRouteImport } from './routes/_authedLayout/device.capabilities'
 import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authedLayout/dashboard.skills'
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
@@ -272,6 +273,11 @@ const PublicLayoutAuthorHandleRoute =
     path: '/author/$handle',
     getParentRoute: () => PublicLayoutRoute,
   } as any)
+const AuthedLayoutDeviceIndexRoute = AuthedLayoutDeviceIndexRouteImport.update({
+  id: '/device/',
+  path: '/device/',
+  getParentRoute: () => AuthedLayoutRoute,
+} as any)
 const AuthedLayoutDeviceCapabilitiesRoute =
   AuthedLayoutDeviceCapabilitiesRouteImport.update({
     id: '/device/capabilities',
@@ -443,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/tags/$slug': typeof PublicLayoutTagsSlugRoute
   '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
   '/dashboard/': typeof AuthedLayoutDashboardIndexRoute
+  '/device/': typeof AuthedLayoutDeviceIndexRoute
   '/authors/': typeof PublicLayoutAuthorsIndexRoute
   '/categories/': typeof PublicLayoutCategoriesIndexRoute
   '/collections/': typeof PublicLayoutCollectionsIndexRoute
@@ -504,6 +511,7 @@ export interface FileRoutesByTo {
   '/tags/$slug': typeof PublicLayoutTagsSlugRoute
   '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
   '/dashboard': typeof AuthedLayoutDashboardIndexRoute
+  '/device': typeof AuthedLayoutDeviceIndexRoute
   '/authors': typeof PublicLayoutAuthorsIndexRoute
   '/categories': typeof PublicLayoutCategoriesIndexRoute
   '/collections': typeof PublicLayoutCollectionsIndexRoute
@@ -558,6 +566,7 @@ export interface FileRoutesById {
   '/_authedLayout/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
   '/_authedLayout/dashboard/skills': typeof AuthedLayoutDashboardSkillsRouteWithChildren
   '/_authedLayout/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
+  '/_authedLayout/device/': typeof AuthedLayoutDeviceIndexRoute
   '/_publicLayout/author/$handle': typeof PublicLayoutAuthorHandleRoute
   '/_publicLayout/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
   '/_publicLayout/categories/$slug': typeof PublicLayoutCategoriesSlugRoute
@@ -632,6 +641,7 @@ export interface FileRouteTypes {
     | '/tags/$slug'
     | '/sitemap/skills/$page'
     | '/dashboard/'
+    | '/device/'
     | '/authors/'
     | '/categories/'
     | '/collections/'
@@ -693,6 +703,7 @@ export interface FileRouteTypes {
     | '/tags/$slug'
     | '/sitemap/skills/$page'
     | '/dashboard'
+    | '/device'
     | '/authors'
     | '/categories'
     | '/collections'
@@ -746,6 +757,7 @@ export interface FileRouteTypes {
     | '/_authedLayout/dashboard/settings'
     | '/_authedLayout/dashboard/skills'
     | '/_authedLayout/device/capabilities'
+    | '/_authedLayout/device/'
     | '/_publicLayout/author/$handle'
     | '/_publicLayout/authors/$handle'
     | '/_publicLayout/categories/$slug'
@@ -1086,6 +1098,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLayoutDeviceCapabilitiesRouteImport
       parentRoute: typeof AuthedLayoutRoute
     }
+    '/_authedLayout/device/': {
+      id: '/_authedLayout/device/'
+      path: '/device/'
+      fullPath: '/device/'
+      preLoaderRoute: typeof AuthedLayoutDeviceIndexRouteImport
+      parentRoute: typeof AuthedLayoutRoute
+    }
     '/_authedLayout/dashboard/skills': {
       id: '/_authedLayout/dashboard/skills'
       path: '/skills'
@@ -1291,11 +1310,13 @@ const AuthedLayoutDashboardRouteRouteWithChildren =
 interface AuthedLayoutRouteChildren {
   AuthedLayoutDashboardRouteRoute: typeof AuthedLayoutDashboardRouteRouteWithChildren
   AuthedLayoutDeviceCapabilitiesRoute: typeof AuthedLayoutDeviceCapabilitiesRoute
+  AuthedLayoutDeviceIndexRoute: typeof AuthedLayoutDeviceIndexRoute
 }
 
 const AuthedLayoutRouteChildren: AuthedLayoutRouteChildren = {
   AuthedLayoutDashboardRouteRoute: AuthedLayoutDashboardRouteRouteWithChildren,
   AuthedLayoutDeviceCapabilitiesRoute: AuthedLayoutDeviceCapabilitiesRoute,
+  AuthedLayoutDeviceIndexRoute: AuthedLayoutDeviceIndexRoute,
 }
 
 const AuthedLayoutRouteWithChildren = AuthedLayoutRoute._addFileChildren(

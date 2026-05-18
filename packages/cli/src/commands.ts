@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import { ApiClient } from "./api-client";
 import { parseArgs, getFlag, hasFlag, parseLimit } from "./args";
 import { DEFAULT_API_URL, deleteCredential, readCredential, writeCredential } from "./config";
@@ -208,23 +209,59 @@ export const runUpdateCommand = async (
   );
 };
 
+const runAuthLogin = async (ctx: CommandContext, apiClient: ApiClient, json: boolean) => {
+  const device = await apiClient.requestDeviceCode();
+  if (json) {
+    print(ctx, writeJson(device));
+    return;
+  }
+  print(ctx, `Open: ${device.verification_uri_complete}\n`);
+  print(ctx, `Code: ${device.user_code}\n`);
+  const intervalMs = (device.interval ?? 5) * 1000;
+  const expiresAt = Date.now() + device.expires_in * 1000;
+  while (Date.now() < expiresAt) {
+    await sleep(intervalMs);
+    const result = await apiClient.pollDeviceToken(device.device_code);
+    if ("error" in result) {
+      if (result.error === "authorization_pending" || result.error === "slow_down") {
+        continue;
+      }
+      throw new CliError(`Login failed: ${result.error_description ?? result.error}`);
+    }
+    const status = await apiClient.readAuthStatus(result.access_token);
+    await writeCredential(
+      {
+        apiUrl: DEFAULT_API_URL,
+        expiresAt: status.expiresAt,
+        token: result.access_token,
+        user: status.user,
+      },
+      ctx.env,
+    );
+    print(ctx, `Logged in${status.user?.name ? ` as ${status.user.name}` : ""}.\n`);
+    return;
+  }
+  throw new CliError("Login timed out. Please try again.");
+};
+
 export const runAuthCommand = async (
   ctx: CommandContext,
   argv: string[],
   globalOptions: GlobalOptions,
 ) => {
-  const [subcommand, ...rest] = argv;
-  const args = parseArgs(rest);
+  const [subcommand] = argv;
   const apiClient = await createApiClient(ctx);
+
   if (subcommand === "logout") {
     const credential = await readCredential(ctx.env);
-    if (credential && credential.apiUrl === DEFAULT_API_URL) {
-      await apiClient.revokeAuth(credential.token).catch(() => ({ revoked: false }));
+    if (credential?.apiUrl === DEFAULT_API_URL) {
+      await apiClient.revokeAuth(credential.token).catch(() => null);
     }
     await deleteCredential(ctx.env);
     print(ctx, globalOptions.json ? writeJson({ loggedIn: false }) : "Logged out.\n");
     return;
   }
+
   if (subcommand === "status" || !subcommand) {
     const credential = await readCredential(ctx.env);
     if (!credential || credential.apiUrl !== DEFAULT_API_URL) {
@@ -235,34 +272,17 @@ export const runAuthCommand = async (
     print(ctx, globalOptions.json ? writeJson({ loggedIn: true, ...status }) : "Logged in.\n");
     return;
   }
+
   if (subcommand === "login") {
-    const token = getFlag(args, "token");
+    const token = getFlag(parseArgs(argv.slice(1)), "token");
     if (token) {
       throw new CliError(
         "Do not pass raw credentials on the command line. Use the server login flow.",
       );
     }
-    const started = await apiClient.startCliLogin();
-    if (started.token) {
-      await writeCredential(
-        {
-          apiUrl: DEFAULT_API_URL,
-          expiresAt: started.expiresAt,
-          token: started.token,
-        },
-        ctx.env,
-      );
-    }
-    print(
-      ctx,
-      globalOptions.json
-        ? writeJson(started)
-        : `Open: ${started.verificationUriComplete ?? started.verificationUri ?? "(server did not return a verification URL)"}\n`,
-    );
-    if (started.userCode) {
-      print(ctx, `Code: ${started.userCode}\n`);
-    }
+    await runAuthLogin(ctx, apiClient, globalOptions.json);
     return;
   }
+
   throw new CliError("Usage: skills-re auth <login|status|logout>");
 };

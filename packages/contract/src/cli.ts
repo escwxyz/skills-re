@@ -39,14 +39,6 @@ const cliResolveInstallOutputSchema = z.object({
   }),
 });
 
-const cliAuthStartOutputSchema = z.object({
-  expiresAt: z.string().optional(),
-  token: z.string().optional(),
-  userCode: z.string().optional(),
-  verificationUri: z.string().optional(),
-  verificationUriComplete: z.string().optional(),
-});
-
 const cliAuthSessionOutputSchema = z.object({
   expiresAt: z.string().optional(),
   user: z
@@ -80,16 +72,6 @@ export const cliContract = {
         tags: ["CLI"],
       })
       .output(cliAuthSessionOutputSchema),
-    start: baseContract
-      .route({
-        description: "Starts a browser-safe CLI login flow.",
-        method: "POST",
-        path: "/cli/auth/start",
-        successDescription: "CLI login flow details",
-        summary: "Start CLI login",
-        tags: ["CLI"],
-      })
-      .output(cliAuthStartOutputSchema),
   },
   skills: {
     resolveInstall: baseContract

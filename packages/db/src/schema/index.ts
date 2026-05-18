@@ -6,6 +6,7 @@ export {
   approvalRequestsTable,
   apikeysTable,
   authTables,
+  deviceCodesTable,
   jwkssTable,
   oauthAccessTokensTable,
   oauthClientsTable,
