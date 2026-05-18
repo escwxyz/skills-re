@@ -1,7 +1,6 @@
 export type OutputMode = "human" | "json";
 
 export interface GlobalOptions {
-  apiUrl?: string;
   json: boolean;
   yes: boolean;
 }

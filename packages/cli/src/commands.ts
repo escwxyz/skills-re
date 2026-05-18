@@ -1,6 +1,6 @@
 import { ApiClient } from "./api-client";
 import { parseArgs, getFlag, hasFlag, parseLimit } from "./args";
-import { createCliConfig, deleteCredential, readCredential, writeCredential } from "./config";
+import { DEFAULT_API_URL, deleteCredential, readCredential, writeCredential } from "./config";
 import { CliError } from "./errors";
 import { installSkill, updateSkills } from "./install";
 import { readLockfile } from "./lockfile";
@@ -16,12 +16,11 @@ const splitCsv = (value: string | undefined) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const createApiClient = async (ctx: CommandContext, globalOptions: GlobalOptions) => {
-  const config = createCliConfig(globalOptions, ctx.env);
+const createApiClient = async (ctx: CommandContext) => {
   const credential = await readCredential(ctx.env);
   return new ApiClient({
-    apiUrl: config.apiUrl,
-    token: credential?.apiUrl === config.apiUrl ? credential.token : undefined,
+    apiUrl: DEFAULT_API_URL,
+    token: credential?.apiUrl === DEFAULT_API_URL ? credential.token : undefined,
   });
 };
 
@@ -45,7 +44,7 @@ export const runSearchCommand = async (
 ) => {
   const args = parseArgs(argv);
   const query = args.positionals.join(" ").trim();
-  const apiClient = await createApiClient(ctx, globalOptions);
+  const apiClient = await createApiClient(ctx);
   const result = await apiClient.searchSkills({
     categories: splitCsv(getFlag(args, "category")),
     cursor: getFlag(args, "cursor"),
@@ -77,7 +76,7 @@ export const runShowCommand = async (
   if (!identifier) {
     throw new CliError("Usage: skills-re show <slug-or-path>");
   }
-  const apiClient = await createApiClient(ctx, globalOptions);
+  const apiClient = await createApiClient(ctx);
   const skill = await apiClient.showSkill(identifier);
   if (!skill) {
     throw new CliError(`Skill not found: ${identifier}`, 4);
@@ -171,7 +170,7 @@ export const runInstallCommand = async (
   }
   const target = resolveAgentTarget(getFlag(args, "agent"));
   const result = await installSkill({
-    apiClient: await createApiClient(ctx, globalOptions),
+    apiClient: await createApiClient(ctx),
     cwd: ctx.cwd,
     lockfilePath: getFlag(args, "lockfile"),
     skillsDir: resolveSkillsDir(ctx.cwd, target, getFlag(args, "dir")),
@@ -194,7 +193,7 @@ export const runUpdateCommand = async (
   const args = parseArgs(argv);
   const target = resolveAgentTarget(getFlag(args, "agent"));
   const result = await updateSkills({
-    apiClient: await createApiClient(ctx, globalOptions),
+    apiClient: await createApiClient(ctx),
     cwd: ctx.cwd,
     lockfilePath: getFlag(args, "lockfile"),
     onlySkill: args.positionals[0],
@@ -216,10 +215,10 @@ export const runAuthCommand = async (
 ) => {
   const [subcommand, ...rest] = argv;
   const args = parseArgs(rest);
-  const apiClient = await createApiClient(ctx, globalOptions);
+  const apiClient = await createApiClient(ctx);
   if (subcommand === "logout") {
     const credential = await readCredential(ctx.env);
-    if (credential) {
+    if (credential && credential.apiUrl === DEFAULT_API_URL) {
       await apiClient.revokeAuth(credential.token).catch(() => ({ revoked: false }));
     }
     await deleteCredential(ctx.env);
@@ -228,7 +227,7 @@ export const runAuthCommand = async (
   }
   if (subcommand === "status" || !subcommand) {
     const credential = await readCredential(ctx.env);
-    if (!credential) {
+    if (!credential || credential.apiUrl !== DEFAULT_API_URL) {
       print(ctx, globalOptions.json ? writeJson({ loggedIn: false }) : "Not logged in.\n");
       return;
     }
@@ -247,7 +246,7 @@ export const runAuthCommand = async (
     if (started.token) {
       await writeCredential(
         {
-          apiUrl: createCliConfig(globalOptions, ctx.env).apiUrl,
+          apiUrl: DEFAULT_API_URL,
           expiresAt: started.expiresAt,
           token: started.token,
         },

@@ -34,8 +34,7 @@ const extractGlobalOptions = (argv: string[]) => {
   let help = false;
   let version = false;
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
+  for (const arg of argv) {
     if (arg === "--help") {
       help = true;
       continue;
@@ -50,15 +49,6 @@ const extractGlobalOptions = (argv: string[]) => {
     }
     if (arg === "--yes") {
       options.yes = true;
-      continue;
-    }
-    if (arg === "--api-url") {
-      options.apiUrl = argv[index + 1];
-      index += 1;
-      continue;
-    }
-    if (arg?.startsWith("--api-url=")) {
-      options.apiUrl = arg.slice("--api-url=".length);
       continue;
     }
     if (arg) {
@@ -101,7 +91,7 @@ const run = async (argv: string[], ctx = createContext()) => {
       return;
     }
     case "mcp": {
-      await startMcpServer(ctx, globalOptions);
+      await startMcpServer(ctx);
       return;
     }
     case "read": {

@@ -3,12 +3,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod/v4";
 
 import { ApiClient } from "./api-client";
-import { createCliConfig } from "./config";
+import { DEFAULT_API_URL } from "./config";
 import { installSkill } from "./install";
 import { readInstalledSkillContent } from "./read";
 import { syncAgentMetadata } from "./sync";
 import { resolveAgentTarget, resolveMetadataPath, resolveSkillsDir } from "./targets";
-import type { CommandContext, GlobalOptions } from "./types";
+import type { CommandContext } from "./types";
 
 const textResult = (text: string) => ({
   content: [{ text, type: "text" as const }],
@@ -24,9 +24,8 @@ export const MCP_TOOL_NAMES = [
   "install_skill",
 ] as const;
 
-export const startMcpServer = async (ctx: CommandContext, globalOptions: GlobalOptions) => {
-  const config = createCliConfig(globalOptions, ctx.env);
-  const apiClient = new ApiClient({ apiUrl: config.apiUrl });
+export const startMcpServer = async (ctx: CommandContext) => {
+  const apiClient = new ApiClient({ apiUrl: DEFAULT_API_URL });
   const server = new McpServer({
     name: "skills-re",
     version: "0.0.0",

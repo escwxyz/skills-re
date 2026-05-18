@@ -2,14 +2,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
-import type { GlobalOptions } from "./types";
-
 export const DEFAULT_API_URL = "https://api.skills.re";
-export const API_URL_ENV = "SKILLS_RE_API_URL";
-
-export interface CliConfig {
-  apiUrl: string;
-}
 
 export interface StoredCredential {
   apiUrl: string;
@@ -21,18 +14,6 @@ export interface StoredCredential {
     name?: string;
   };
 }
-
-export const resolveApiUrl = (options: Pick<GlobalOptions, "apiUrl">, env = process.env) => {
-  const value = options.apiUrl ?? env[API_URL_ENV] ?? DEFAULT_API_URL;
-  return new URL(value).origin;
-};
-
-export const createCliConfig = (
-  options: Pick<GlobalOptions, "apiUrl">,
-  env = process.env,
-): CliConfig => ({
-  apiUrl: resolveApiUrl(options, env),
-});
 
 export const getConfigDir = (env = process.env) =>
   env.SKILLS_RE_CONFIG_DIR ?? join(homedir(), ".config", "skills-re");

@@ -13,7 +13,6 @@ Usage:
   skills-re mcp
 
 Global flags:
-  --api-url <url>   Override Skills.re API origin
   --json            Print JSON where supported
   --yes             Skip safe confirmations
   --help            Show this help
