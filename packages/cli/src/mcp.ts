@@ -17,43 +17,53 @@ const textResult = (text: string) => ({
 const jsonResult = (value: unknown) => textResult(JSON.stringify(value, null, 2));
 
 export const MCP_TOOL_NAMES = [
-  "search_skills",
-  "show_skill",
   "read_installed_skill",
   "sync_skills_metadata",
   "install_skill",
 ] as const;
 
-export const startMcpServer = async (ctx: CommandContext) => {
+export const printRemoteMcpConfig = (ctx: CommandContext) => {
+  ctx.stdout.write(
+    `${JSON.stringify(
+      {
+        local: {
+          command: "skills-re",
+          args: ["mcp"],
+          tools: MCP_TOOL_NAMES,
+          transport: "stdio",
+        },
+        remote: {
+          transport: "streamable-http",
+          url: `${DEFAULT_API_URL}/mcp`,
+          tools: [
+            "search_skills",
+            "get_skill",
+            "get_my_saved_skills",
+            "save_skill",
+            "unsave_skill",
+            "record_skill_usage",
+            "get_my_recently_used",
+            "get_skill_recommendations",
+          ],
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+};
+
+export const startMcpServer = async (ctx: CommandContext, argv: string[] = []) => {
+  if (argv.includes("--remote") || argv.includes("--remote-config")) {
+    printRemoteMcpConfig(ctx);
+    return;
+  }
+
   const apiClient = new ApiClient({ apiUrl: DEFAULT_API_URL });
   const server = new McpServer({
     name: "skills-re",
     version: "0.0.0",
   });
-
-  // server.registerTool(
-  //   "search_skills",
-  //   {
-  //     description: "Search public Skills.re skills.",
-  //     inputSchema: z.object({
-  //       limit: z.number().int().min(1).max(100).optional(),
-  //       query: z.string().min(1),
-  //     }),
-  //   },
-  //   async ({ limit, query }) =>
-  //     jsonResult(await apiClient.searchSkills({ limit: limit ?? 10, query })),
-  // );
-
-  // server.registerTool(
-  //   "show_skill",
-  //   {
-  //     description: "Read public metadata for a Skills.re skill.",
-  //     inputSchema: z.object({
-  //       identifier: z.string().min(1),
-  //     }),
-  //   },
-  //   async ({ identifier }) => jsonResult(await apiClient.showSkill(identifier)),
-  // );
 
   server.registerTool(
     "read_installed_skill",

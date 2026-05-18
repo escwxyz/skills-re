@@ -8,8 +8,9 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "catalog:",
     "@cloudflare/tanstack-ai": "^0.1.9",
-    "@hono/mcp": "^0.2.5",
+    "@hono/mcp": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",

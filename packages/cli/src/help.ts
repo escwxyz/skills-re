@@ -10,7 +10,7 @@ Usage:
   skills-re read <name> [--agent codex]
   skills-re sync [--agent universal] [--output AGENTS.md]
   skills-re auth <login|status|logout>
-  skills-re mcp
+  skills-re mcp [--remote-config]
 
 Global flags:
   --json            Print JSON where supported

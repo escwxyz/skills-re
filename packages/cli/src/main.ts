@@ -91,7 +91,7 @@ const run = async (argv: string[], ctx = createContext()) => {
       return;
     }
     case "mcp": {
-      await startMcpServer(ctx);
+      await startMcpServer(ctx, rest);
       return;
     }
     case "read": {

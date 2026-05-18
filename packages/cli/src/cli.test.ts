@@ -92,12 +92,27 @@ describe("ApiClient", () => {
 describe("MCP bridge", () => {
   test("defines the MVP tool surface", () => {
     expect(MCP_TOOL_NAMES).toEqual([
-      "search_skills",
-      "show_skill",
       "read_installed_skill",
       "sync_skills_metadata",
       "install_skill",
     ]);
+  });
+
+  test("prints remote MCP setup without starting stdio transport", async () => {
+    const cwd = await createTempDir();
+    const io = createCommandContext(cwd);
+
+    await run(["mcp", "--remote-config"], io.context);
+
+    const output = JSON.parse(io.read().stdout) as {
+      local: { tools: string[] };
+      remote: { tools: string[]; url: string };
+    };
+    expect(output.local.tools).not.toContain("search_skills");
+    expect(output.local.tools).not.toContain("show_skill");
+    expect(output.remote.url).toBe("https://api.skills.re/mcp");
+    expect(output.remote.tools).toContain("search_skills");
+    expect(output.remote.tools).toContain("get_skill");
   });
 });
 
