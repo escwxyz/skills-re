@@ -1,8 +1,12 @@
+// oxlint-disable unicorn/no-nested-ternary
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { getSkillAuditReport } from "@/functions/skills/get-skill-audit-report";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
+import { TimeValue } from "./time-value";
 
 type AuditReport = NonNullable<Awaited<ReturnType<typeof getSkillAuditReport>>>;
 type AuditFinding = AuditReport["findings"][number];
@@ -20,6 +24,8 @@ const CATEGORIES: AuditCategory[] = [
   "obfuscation",
   "hidden_helpers",
   "prompt_injection",
+  "social_engineering",
+  "specification",
 ];
 
 const SEVERITY_COLORS: Record<AuditSeverity, { badge: string; card: string }> = {
@@ -32,8 +38,8 @@ const SEVERITY_COLORS: Record<AuditSeverity, { badge: string; card: string }> = 
     card: "border-[#b06d15]/25 bg-[#b06d15]/5",
   },
   low: {
-    badge: "border-[var(--editorial-blue)] text-[var(--editorial-blue)]",
-    card: "border-[var(--editorial-blue)]/20 bg-[var(--editorial-blue)]/5",
+    badge: "border-blue-500 text-blue-500",
+    card: "border-blue-300 bg-blue-200",
   },
   medium: {
     badge: "border-[#a08020] text-[#a08020]",
@@ -52,6 +58,8 @@ const getAuditCategoryLabel = (category: AuditCategory): string => {
     obfuscation: m.skill_audit_category_obfuscation(),
     persistence: m.skill_audit_category_persistence(),
     prompt_injection: m.skill_audit_category_prompt_injection(),
+    social_engineering: m.skill_audit_category_social_engineering(),
+    specification: m.skill_audit_category_specification(),
     supply_chain: m.skill_audit_category_supply_chain(),
   };
   return labels[category];
@@ -79,6 +87,19 @@ const getSeverityCounts = (findings: AuditFinding[]) => {
 const formatLocation = (loc: { endLine?: number; path: string; startLine: number }) =>
   `${loc.path}:${loc.endLine ? `${loc.startLine}–${loc.endLine}` : loc.startLine}`;
 
+const formatScannerVersion = (version: string) => {
+  const match = version.match(/(\d+\.\d[\d.]*)/);
+  return match ? match[1] : version;
+};
+
+const formatModelName = (model: string) => {
+  const name = model.includes("/") ? model.slice(model.indexOf("/") + 1) : model;
+  return name
+    .split("-")
+    .map((part) => (/^\d/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+    .join(" ");
+};
+
 interface Props {
   snapshotId: string;
   version?: string;
@@ -99,7 +120,7 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
 
   return (
     <div className="border border-border font-mono text-[11px]">
-      <div className="border-b border-border px-5 py-3.5 bg-[var(--muted)] text-muted-foreground tracking-[0.18em] uppercase">
+      <div className="border-b border-border px-5 py-3.5 bg-muted text-muted-foreground tracking-[0.18em] uppercase">
         {m.skill_audit_report_title()}
         {version ? ` · v${version}` : ""}
       </div>
@@ -108,9 +129,7 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
         {isLoading ? <AuditReportSkeleton /> : null}
 
         {isError ? (
-          <p className="text-[var(--editorial-red)] font-serif text-[15px]">
-            {m.skill_audit_error()}
-          </p>
+          <p className="text-destructive font-serif text-[15px]">{m.skill_audit_error()}</p>
         ) : null}
 
         {!isLoading && !isError && !report ? (
@@ -124,9 +143,14 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
 }
 
 function AuditPanel({ report }: { report: AuditReport }) {
+  const [severityFilter, setSeverityFilter] = useState<AuditSeverity | null>(null);
+  const locale = getLocale();
   const categoryCounts = getCategoryCounts(report.findings);
   const severityCounts = getSeverityCounts(report.findings);
   const severityOrder: AuditSeverity[] = ["critical", "high", "medium", "low"];
+  const filteredFindings = severityFilter
+    ? report.findings.filter((f) => f.severity === severityFilter)
+    : report.findings;
 
   return (
     <div className="space-y-8">
@@ -146,16 +170,28 @@ function AuditPanel({ report }: { report: AuditReport }) {
       {report.scanner.providerName && (
         <p className="text-muted-foreground text-[10.5px] tracking-[0.06em]">
           {m.skill_audit_scanner_label()}:{" "}
-          <span className="text-[var(--foreground)] font-medium">
+          <a
+            href="https://github.com/cisco-ai-defense/skill-scanner"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground font-medium hover:underline"
+          >
             {report.scanner.providerName}
-          </span>
-          {report.scanner.scannerVersion && ` · v${report.scanner.scannerVersion}`}
-          {report.scanner.model && ` · ${report.scanner.model}`}
+          </a>
+          {report.scanner.scannerVersion &&
+            ` · v${formatScannerVersion(report.scanner.scannerVersion)}`}
+          {report.scanner.model && ` · ${formatModelName(report.scanner.model)}`}
+          {report.generatedAt && (
+            <>
+              {" · "}
+              <TimeValue locale={locale} time={report.generatedAt} />
+            </>
+          )}
         </p>
       )}
 
       {report.summary && (
-        <p className="text-[var(--muted-foreground)] font-serif text-[15px] leading-[1.6] max-w-170">
+        <p className="text-muted-foreground font-serif text-[15px] leading-[1.6] max-w-170">
           {report.summary}
         </p>
       )}
@@ -177,7 +213,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                 className={`border p-3 ${
                   isActive
                     ? "bg-[rgba(160,128,32,0.06)] border-[rgba(160,128,32,0.4)]"
-                    : "bg-[var(--muted)] border-border"
+                    : "bg-muted border-border"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -185,7 +221,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                     className={`flex size-7 shrink-0 items-center justify-center border ${
                       isActive
                         ? "border-[rgba(160,128,32,0.4)] text-[#a08020]"
-                        : "border-[rgba(45,90,61,0.4)] text-[var(--editorial-green)]"
+                        : "border-[rgba(45,90,61,0.4)] text-chart-5"
                     }`}
                   >
                     {isActive ? <WarningIcon /> : <CheckIcon />}
@@ -196,7 +232,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                     </span>
                   )}
                 </div>
-                <div className="mt-3 text-[12px] leading-[1.3] text-[var(--foreground)] font-serif">
+                <div className="mt-3 text-[12px] leading-[1.3] text-foreground font-serif">
                   {getAuditCategoryLabel(category)}
                 </div>
               </div>
@@ -211,30 +247,43 @@ function AuditPanel({ report }: { report: AuditReport }) {
             <div className="text-muted-foreground text-[10px] tracking-[0.2em] mb-2 uppercase">
               {m.skill_audit_security_issues()}
             </div>
-            <h3 className="text-[var(--foreground)] font-display text-[clamp(28px,4vw,40px)] font-normal leading-none tracking-[-0.01em]">
+            <h3 className="text-foreground font-display text-[clamp(28px,4vw,40px)] font-normal leading-none tracking-[-0.01em]">
               {report.findings.length === 0
                 ? m.skill_audit_no_findings()
                 : m.skill_audit_findings_count({ count: report.findings.length })}
             </h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            {severityOrder.map((severity) =>
-              severityCounts[severity] > 0 ? (
-                <span
+            {severityOrder.map((severity) => {
+              const count = severityCounts[severity];
+              const isActive = severityFilter === severity;
+              const hasFindings = count > 0;
+              return (
+                <button
                   key={severity}
-                  className={`border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${SEVERITY_COLORS[severity].badge}`}
+                  type="button"
+                  onClick={() => hasFindings && setSeverityFilter(isActive ? null : severity)}
+                  disabled={!hasFindings}
+                  className={`border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
+                    // oxlint-disable-next-line no-negated-condition
+                    !hasFindings
+                      ? "border-border text-muted-foreground opacity-35 cursor-default"
+                      : isActive
+                        ? SEVERITY_COLORS[severity].badge
+                        : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground cursor-pointer"
+                  }`}
                 >
-                  {severityCounts[severity]} {severity}
-                </span>
-              ) : null,
-            )}
+                  {count} {severity}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {report.findings.length > 0 ? (
         <section className="space-y-4">
-          {report.findings.map((finding, index) => (
+          {filteredFindings.map((finding, index) => (
             <FindingCard
               key={`${finding.rule_id}-${finding.location.path}-${index}`}
               finding={finding}
@@ -243,9 +292,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
         </section>
       ) : (
         <section className="border px-5 py-4 bg-[rgba(45,90,61,0.05)] border-[rgba(45,90,61,0.3)]">
-          <p className="text-[var(--editorial-green)] font-serif text-[15px] m-0">
-            {m.skill_audit_pass_message()}
-          </p>
+          <p className="text-chart-5 font-serif text-[15px] m-0">{m.skill_audit_pass_message()}</p>
         </section>
       )}
     </div>
@@ -283,7 +330,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
             {m.skill_audit_finding_line()} {finding.location.startLine}
           </span>
         </div>
-        <p className="mt-3 text-balance text-[var(--foreground)] font-display text-[clamp(18px,2.5vw,22px)] font-normal leading-[1.1] tracking-[-0.01em]">
+        <p className="mt-3 text-balance text-foreground font-display text-[clamp(18px,2.5vw,22px)] font-normal leading-[1.1] tracking-[-0.01em]">
           {finding.message}
         </p>
       </div>
@@ -293,7 +340,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             {m.skill_audit_finding_source()}
           </div>
-          <div className="mt-1.5 font-mono text-[12px] text-[var(--foreground)]">
+          <div className="mt-1.5 font-mono text-[12px] text-foreground">
             {formatLocation(finding.location)}
           </div>
         </div>
@@ -301,17 +348,26 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             {m.skill_audit_finding_rule()}
           </div>
-          <div className="mt-1.5 font-mono text-[12px] text-[var(--foreground)]">
-            {finding.rule_id}
-          </div>
+          <div className="mt-1.5 font-mono text-[12px] text-foreground">{finding.rule_id}</div>
         </div>
       </div>
+
+      {finding.location.snippet && (
+        <div className="border-b border-border/50 bg-muted/40 px-4 py-3 sm:px-5">
+          <pre className="overflow-x-auto font-mono text-[11px] leading-relaxed text-foreground">
+            <span className="mr-4 select-none text-muted-foreground">
+              {finding.location.startLine}
+            </span>
+            {finding.location.snippet.trim()}
+          </pre>
+        </div>
+      )}
 
       <div className="px-4 py-4 sm:px-5">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           {m.skill_audit_finding_evidence()}
         </div>
-        <p className="mt-2 text-[var(--foreground)] font-serif text-[15px] leading-[1.65]">
+        <p className="mt-2 text-foreground font-serif text-[15px] leading-[1.65]">
           {finding.evidence}
         </p>
         {finding.fix && (
@@ -319,7 +375,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
             <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               {m.skill_audit_finding_suggested_fix()}
             </div>
-            <p className="mt-2 text-[var(--muted-foreground)] font-serif text-[15px] leading-[1.65]">
+            <p className="mt-2 text-muted-foreground font-serif text-[15px] leading-[1.65]">
               {finding.fix}
             </p>
           </>
@@ -335,29 +391,26 @@ function AuditReportSkeleton() {
       <div className="grid grid-cols-2 border border-border sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="border-border border-r px-4 py-3 last:border-r-0">
-            <div className="mb-2 h-2 w-20 animate-pulse rounded-none bg-[var(--border)]" />
-            <div className="h-6 w-14 animate-pulse rounded-none bg-[var(--border)]" />
+            <div className="mb-2 h-2 w-20 animate-pulse rounded-none bg-border" />
+            <div className="h-6 w-14 animate-pulse rounded-none bg-border" />
           </div>
         ))}
       </div>
       <div className="space-y-2">
-        <div className="h-3.5 w-full max-w-lg animate-pulse rounded-none bg-[var(--border)]" />
-        <div className="h-3.5 w-3/4 animate-pulse rounded-none bg-[var(--border)]" />
-        <div className="h-3.5 w-1/2 animate-pulse rounded-none bg-[var(--border)]" />
+        <div className="h-3.5 w-full max-w-lg animate-pulse rounded-none bg-border" />
+        <div className="h-3.5 w-3/4 animate-pulse rounded-none bg-border" />
+        <div className="h-3.5 w-1/2 animate-pulse rounded-none bg-border" />
       </div>
       <div>
-        <div className="mb-1.5 h-2 w-28 animate-pulse rounded-none bg-[var(--border)]" />
-        <div className="mb-4 h-7 w-40 animate-pulse rounded-none bg-[var(--border)]" />
+        <div className="mb-1.5 h-2 w-28 animate-pulse rounded-none bg-border" />
+        <div className="mb-4 h-7 w-40 animate-pulse rounded-none bg-border" />
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-20 animate-pulse border p-3 bg-[var(--muted)] border-[var(--border)]"
-            />
+            <div key={i} className="h-20 animate-pulse border p-3 bg-muted border-border" />
           ))}
         </div>
       </div>
-      <div className="h-24 animate-pulse border border-border p-4 bg-[var(--muted)]" />
+      <div className="h-24 animate-pulse border border-border p-4 bg-muted" />
     </div>
   );
 }

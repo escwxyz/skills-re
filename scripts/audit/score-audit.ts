@@ -17,6 +17,8 @@ const categoryWeights: Record<StaticAuditFinding["category"], number> = {
   obfuscation: 1,
   persistence: 1.2,
   prompt_injection: 0.8,
+  social_engineering: 1.15,
+  specification: 0.6,
   supply_chain: 1.25,
 };
 
