@@ -30,20 +30,24 @@ const CATEGORIES: AuditCategory[] = [
 
 const SEVERITY_COLORS: Record<AuditSeverity, { badge: string; card: string }> = {
   critical: {
-    badge: "border-[#b23314] text-[#b23314]",
-    card: "border-[#b23314]/25 bg-[#b23314]/5",
+    // high contrast red
+    badge: "border-red-600 text-red-600",
+    card: "border-red-300 bg-red-50",
   },
   high: {
-    badge: "border-[#b06d15] text-[#b06d15]",
-    card: "border-[#b06d15]/25 bg-[#b06d15]/5",
-  },
-  low: {
-    badge: "border-blue-500 text-blue-500",
-    card: "border-blue-300 bg-blue-200",
+    // strong orange for high
+    badge: "border-orange-600 text-orange-600",
+    card: "border-orange-300 bg-orange-50",
   },
   medium: {
-    badge: "border-[#a08020] text-[#a08020]",
-    card: "border-[#a08020]/25 bg-[#a08020]/5",
+    // amber for medium severity
+    badge: "border-amber-600 text-amber-600",
+    card: "border-amber-300 bg-amber-50",
+  },
+  low: {
+    // calm blue for low severity
+    badge: "border-blue-600 text-blue-600",
+    card: "border-blue-200 bg-blue-50",
   },
 };
 
@@ -211,23 +215,21 @@ function AuditPanel({ report }: { report: AuditReport }) {
               <div
                 key={category}
                 className={`border p-3 ${
-                  isActive
-                    ? "bg-[rgba(160,128,32,0.06)] border-[rgba(160,128,32,0.4)]"
-                    : "bg-muted border-border"
+                  isActive ? "bg-amber-50 border-amber-300" : "bg-muted border-border"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div
                     className={`flex size-7 shrink-0 items-center justify-center border ${
                       isActive
-                        ? "border-[rgba(160,128,32,0.4)] text-[#a08020]"
+                        ? "border-amber-300 text-amber-600"
                         : "border-[rgba(45,90,61,0.4)] text-chart-5"
                     }`}
                   >
                     {isActive ? <WarningIcon /> : <CheckIcon />}
                   </div>
                   {isActive && (
-                    <span className="border px-1.5 py-0.5 font-mono text-[9px] leading-none bg-[rgba(160,128,32,0.1)] border-[rgba(160,128,32,0.35)] text-[#a08020]">
+                    <span className="border px-1.5 py-0.5 font-mono text-[9px] leading-none bg-amber-100 border-amber-200 text-amber-600">
                       {count}
                     </span>
                   )}
@@ -291,8 +293,10 @@ function AuditPanel({ report }: { report: AuditReport }) {
           ))}
         </section>
       ) : (
-        <section className="border px-5 py-4 bg-[rgba(45,90,61,0.05)] border-[rgba(45,90,61,0.3)]">
-          <p className="text-chart-5 font-serif text-[15px] m-0">{m.skill_audit_pass_message()}</p>
+        <section className="border px-5 py-4 bg-emerald-50 border-emerald-200">
+          <p className="text-emerald-700 font-serif text-[15px] m-0">
+            {m.skill_audit_pass_message()}
+          </p>
         </section>
       )}
     </div>
