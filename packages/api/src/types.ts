@@ -287,6 +287,11 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  createCliToken?: (userId: string) => Promise<{ expiresAt?: string; token: string } | null>;
+  verifyCliToken?: (token: string) => Promise<{
+    expiresAt?: string;
+    user: { id: string };
+  } | null>;
   aiTasks?: AiTaskRuntime;
   aiSearchItems?: AiSearchItemsRuntime;
   session: AuthSession;

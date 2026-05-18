@@ -84,6 +84,12 @@ cd packages/cli && npm pack --dry-run
 
 - Public search/show/install flows are implemented first; protected write workflows depend on server-side auth rollout.
 - `auth login` expects the server CLI auth start endpoint to return a browser/device flow and, when available, a short-lived CLI token.
-- The MCP bridge intentionally exposes a narrow local tool surface: search, show, read, sync, and install.
+- MCP is split across two servers:
+  - `skills-re mcp` is a local stdio server for filesystem-scoped tools: `install_skill`, `read_installed_skill`, and `sync_skills_metadata`.
+  - `https://api.skills.re/mcp` is the remote Streamable HTTP server for catalog, library, usage, and recommendation tools such as `search_skills` and `get_skill`.
+- Run `skills-re mcp --remote-config` to print the local and remote MCP setup shape for agent hosts.
+- Remote `save_skill` and `unsave_skill` use the canonical skill `slug` for the MVP; callers should use `authorHandle`, `repoName`, and `skillSlug` only for `get_skill` lookup.
+- Remote usage telemetry is authenticated and optional: agents may send `skillSlug`, `taskDescription`, `agentName`, and `projectContext`; server-side handling redacts common local user-home path prefixes and should not receive raw file contents.
+- `submit_skill_draft` is intentionally deferred until usage and recommendations stabilize, so the MVP remote MCP server cannot publish or submit generated skills for review.
 - Install/update uses immutable Skills.re snapshot archives and does not clone arbitrary Git repositories directly.
 - Agent target adapters cover common directory and metadata conventions, but individual tools may evolve their preferred metadata files over time.

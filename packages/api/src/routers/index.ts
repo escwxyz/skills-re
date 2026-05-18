@@ -128,15 +128,27 @@ export const appRouter = {
   cli: {
     auth: {
       revoke: protectedProcedure.cli.auth.revoke.handler(() => ({ revoked: true })),
-      session: protectedProcedure.cli.auth.session.handler(({ context }) => ({
-        expiresAt: String(context.session.session.expiresAt),
-        user: {
-          email: context.session.user.email,
-          id: context.session.user.id,
-          name: context.session.user.name,
-        },
-      })),
-      start: publicProcedure.cli.auth.start.handler(({ context }) => {
+      session: publicProcedure.cli.auth.session.handler(async ({ context }) => {
+        const token = context.requestHeaders?.get("authorization")?.slice(7).trim();
+        if (!token) {
+          throw new ORPCError("UNAUTHORIZED");
+        }
+        const verified = context.verifyCliToken ? await context.verifyCliToken(token) : null;
+        if (!verified) {
+          throw new ORPCError("UNAUTHORIZED");
+        }
+        return {
+          expiresAt: verified.expiresAt,
+          user: { id: verified.user.id },
+        };
+      }),
+      start: publicProcedure.cli.auth.start.handler(async ({ context }) => {
+        if (context.session?.user && context.createCliToken) {
+          const tokenResult = await context.createCliToken(context.session.user.id);
+          if (tokenResult) {
+            return { expiresAt: tokenResult.expiresAt, token: tokenResult.token };
+          }
+        }
         const origin = context.requestHeaders?.get("origin") ?? "";
         const fallbackHost = context.requestHeaders?.get("host");
         const baseUrl = origin || (fallbackHost ? `https://${fallbackHost}` : "");

@@ -50,6 +50,12 @@ export type AuthSession = {
 
 export interface AuthInstance {
   api: {
+    createApiKey: (input: {
+      body: { expiresIn?: number; name?: string; prefix?: string; userId?: string };
+    }) => Promise<{ expiresAt: Date | null; key: string } | null>;
+    verifyApiKey: (input: {
+      body: { key: string };
+    }) => Promise<{ valid: boolean; key: { expiresAt: Date | null; referenceId: string } | null }>;
     getAgentConfiguration: () => Promise<unknown>;
     getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
