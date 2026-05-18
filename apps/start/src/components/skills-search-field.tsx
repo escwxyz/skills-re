@@ -1,7 +1,7 @@
 // oxlint-disable no-nested-ternary
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 
@@ -16,8 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { Form } from "@/components/ui/form";
-
-const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
 interface SkillsSearchFieldProps {
   active: boolean;
@@ -41,6 +39,11 @@ export const SkillsSearchField = ({
   value,
 }: SkillsSearchFieldProps) => {
   const hasValue = value.trim().length > 0;
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(/Mac/i.test(navigator.platform));
+  }, []);
 
   const form = useAppForm({
     defaultValues: { query: value },
@@ -103,7 +106,7 @@ export const SkillsSearchField = ({
                 ref={inputRef}
                 aria-label={m.skills_browse_controls_search_placeholder()}
                 autoComplete="off"
-                className="font-mono text-sm tracking-widest uppercase placeholder:text-muted-foreground/70 [&::-webkit-search-cancel-button]:hidden"
+                className="font-mono text-sm tracking-wide uppercase placeholder:text-muted-foreground/70 sm:tracking-widest [&::-webkit-search-cancel-button]:hidden"
                 disabled={disabled}
                 onBlur={field.handleBlur}
                 onChange={(event) => {
@@ -125,7 +128,10 @@ export const SkillsSearchField = ({
               </InputGroupButton>
             </InputGroupAddon>
           ) : (
-            <InputGroupAddon align="inline-end" className="hidden pr-3 lg:flex">
+            <InputGroupAddon
+              align="inline-end"
+              className={cn("pr-3", active ? "flex" : "hidden lg:flex")}
+            >
               {active ? (
                 <Kbd className="select-none">⏎</Kbd>
               ) : (

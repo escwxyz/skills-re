@@ -210,7 +210,10 @@ function RouteComponent() {
 
   return (
     <>
-      <SearchFocusBackdrop active={isSearchMode && searchDraft.trim().length === 0} />
+      <SearchFocusBackdrop
+        active={isSearchMode && searchDraft.trim().length === 0}
+        onClick={clearSearch}
+      />
       <div className="min-w-0 flex-1">
         <PageHero
           eyebrow={m.skills_browse_eyebrow()}

@@ -29,7 +29,7 @@ export const SaveSkillButton = memo(
         onClick={handleClick}
         className="w-full max-w-md"
       >
-        <BookmarkSimpleIcon arial-hidden className="size-4" weight={isSaved ? "fill" : "regular"} />
+        <BookmarkSimpleIcon aria-hidden className="size-4" weight={isSaved ? "fill" : "regular"} />
         {renderLabel()}
       </Button>
     );
