@@ -83,7 +83,7 @@ export const SkillDetailStats = ({
         icon={<EyeIcon className="size-3" />}
         label={m.skill_detail_metric_views()}
         value={
-          viewsAllTime ? (
+          viewsAllTime !== null && viewsAllTime !== undefined ? (
             formatCompactNumber(viewsAllTime, locale)
           ) : (
             <Skeleton className="h-7 w-12" />
@@ -95,7 +95,7 @@ export const SkillDetailStats = ({
         icon={<DownloadSimpleIcon className="size-3" />}
         label={m.skill_activity_metrics_downloads()}
         value={
-          downloadsAllTime ? (
+          downloadsAllTime !== null && downloadsAllTime !== undefined ? (
             formatCompactNumber(downloadsAllTime, locale)
           ) : (
             <Skeleton className="h-7 w-12" />
