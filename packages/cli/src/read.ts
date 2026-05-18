@@ -1,10 +1,15 @@
 import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 import { CliError } from "./errors";
 import { readLockfile } from "./lockfile";
 import { readSkillMetadataFile } from "./skill-md";
 import type { InstalledSkill } from "./types";
+
+const withinDir = (root: string, filePath: string): boolean => {
+  const rel = relative(resolve(root), resolve(filePath));
+  return !rel.startsWith("..") && !isAbsolute(rel);
+};
 
 const candidateSkillPaths = (skillsDir: string, name: string, skillPath?: string) => {
   const paths = [
@@ -13,7 +18,11 @@ const candidateSkillPaths = (skillsDir: string, name: string, skillPath?: string
     join(skillsDir, name, "README.md"),
   ];
   if (skillPath) {
-    paths.unshift(join(skillsDir, name, skillPath), join(skillsDir, skillPath));
+    for (const candidate of [join(skillsDir, name, skillPath), join(skillsDir, skillPath)]) {
+      if (withinDir(skillsDir, candidate)) {
+        paths.unshift(candidate);
+      }
+    }
   }
   return paths;
 };
