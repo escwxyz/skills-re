@@ -1,5 +1,5 @@
 import { readdir } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { CliError } from "./errors";
 import { readLockfile } from "./lockfile";
@@ -40,7 +40,7 @@ export const findInstalledSkill = async (
     try {
       const { metadata } = await readSkillMetadataFile(filePath);
       return {
-        baseDir: filePath.replace(/\/[^/]+$/, ""),
+        baseDir: dirname(filePath),
         description: metadata?.description ?? entry?.source ?? "",
         lockName: name,
         name: metadata?.name ?? name,
