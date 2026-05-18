@@ -7,6 +7,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
+import { mcpRouter } from "./routes/mcp";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
@@ -76,12 +77,6 @@ const app = new Hono<{
     workerLogger?: WorkerLogger;
   };
 }>();
-
-// Ref: https://honohub.dev/docs/hono-mcp
-// const mcpServer = new McpServer({
-//   name: "skills-re-mcp",
-//   version: "1.0.0",
-// });
 
 app.use("/*", async (c, next) => {
   const startedAt = Date.now();
@@ -191,11 +186,7 @@ export const rpcHandler = new RPCHandler(appRouter, {
   ],
 });
 
-// app.all("/mcp", async (c) => {
-//   const transport = new StreamableHTTPTransport();
-//   await mcpServer.connect(transport);
-//   return transport.handleRequest(c);
-// });
+app.route("/mcp", mcpRouter);
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
 app.use("/skills/submit", submitPublicRateLimiter);

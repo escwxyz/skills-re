@@ -31,29 +31,29 @@ export const startMcpServer = async (ctx: CommandContext) => {
     version: "0.0.0",
   });
 
-  server.registerTool(
-    "search_skills",
-    {
-      description: "Search public Skills.re skills.",
-      inputSchema: z.object({
-        limit: z.number().int().min(1).max(100).optional(),
-        query: z.string().min(1),
-      }),
-    },
-    async ({ limit, query }) =>
-      jsonResult(await apiClient.searchSkills({ limit: limit ?? 10, query })),
-  );
+  // server.registerTool(
+  //   "search_skills",
+  //   {
+  //     description: "Search public Skills.re skills.",
+  //     inputSchema: z.object({
+  //       limit: z.number().int().min(1).max(100).optional(),
+  //       query: z.string().min(1),
+  //     }),
+  //   },
+  //   async ({ limit, query }) =>
+  //     jsonResult(await apiClient.searchSkills({ limit: limit ?? 10, query })),
+  // );
 
-  server.registerTool(
-    "show_skill",
-    {
-      description: "Read public metadata for a Skills.re skill.",
-      inputSchema: z.object({
-        identifier: z.string().min(1),
-      }),
-    },
-    async ({ identifier }) => jsonResult(await apiClient.showSkill(identifier)),
-  );
+  // server.registerTool(
+  //   "show_skill",
+  //   {
+  //     description: "Read public metadata for a Skills.re skill.",
+  //     inputSchema: z.object({
+  //       identifier: z.string().min(1),
+  //     }),
+  //   },
+  //   async ({ identifier }) => jsonResult(await apiClient.showSkill(identifier)),
+  // );
 
   server.registerTool(
     "read_installed_skill",
