@@ -6,6 +6,12 @@ export {
   approvalRequestsTable,
   apikeysTable,
   authTables,
+  deviceCodesTable,
+  jwkssTable,
+  oauthAccessTokensTable,
+  oauthClientsTable,
+  oauthConsentsTable,
+  oauthRefreshTokensTable,
   sessionsTable,
   usersTable,
   verificationsTable,
@@ -14,6 +20,7 @@ export { collectionsTable, collectionsSkillsTable } from "./collections";
 export { categoryCountsTable } from "./category-counts";
 export { reposTable } from "./repos";
 export { savedSkillsTable } from "./saved-skills";
+export { skillUsageEventsTable } from "./skill-usage-events";
 export { skillsTagsTable, skillsTable } from "./skills";
 export { snapshotFilesTable, snapshotsTable } from "./snapshots";
 export { feedbackTable } from "./feedback";
@@ -30,8 +37,13 @@ export {
   approvalRequestsRelations,
   collectionsRelations,
   collectionsSkillsRelations,
+  oauthAccessTokensRelations,
+  oauthClientsRelations,
+  oauthConsentsRelations,
+  oauthRefreshTokensRelations,
   reposRelations,
   savedSkillsRelations,
+  skillUsageEventsRelations,
   reviewsRelations,
   sessionsRelations,
   skillsRelations,

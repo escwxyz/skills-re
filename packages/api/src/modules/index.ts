@@ -1,3 +1,4 @@
+export { resolveCliInstall, createCliService, cliService } from "./cli/service";
 export {
   checkExistingSkill,
   claimAsAuthor,
@@ -25,6 +26,13 @@ export {
   savedSkillsService,
   unsaveSkill,
 } from "./saved-skills/service";
+export {
+  createSkillUsageService,
+  getSkillRecommendations,
+  listMyRecentSkillUsage,
+  recordSkillUsage,
+  skillUsageService,
+} from "./skill-usage/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
 export {
   createDownloadMetricsRecorder,

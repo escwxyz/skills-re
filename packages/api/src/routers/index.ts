@@ -4,6 +4,7 @@ import { ORPCError } from "@orpc/server";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../procedures";
 import {
   checkDuplicatedRepo,
+  resolveCliInstall,
   checkExistingRepo,
   enqueueRepoStatsSync,
   checkExistingSkill,
@@ -123,6 +124,40 @@ export const appRouter = {
     listForAi: publicProcedure.categories.listForAi.handler(({ input }) =>
       listCategoriesForAi(input as { limit?: number } | undefined),
     ),
+  },
+  cli: {
+    auth: {
+      revoke: protectedProcedure.cli.auth.revoke.handler(async ({ context }) => {
+        await context.revokeSession?.();
+        return { revoked: true };
+      }),
+      session: protectedProcedure.cli.auth.session.handler(({ context }) => {
+        const { user, session } = context.session;
+        return {
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          user: { email: user.email, id: user.id, name: user.name },
+        };
+      }),
+    },
+    skills: {
+      resolveInstall: publicProcedure.cli.skills.resolveInstall.handler(
+        async ({ input, context }) => {
+          try {
+            return await resolveCliInstall({
+              requestHeaders: context.requestHeaders,
+              skill: input.skill,
+              version: input.version,
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Install resolution failed.";
+            if (message.includes("not found") || message.includes("No installable snapshot")) {
+              throw new ORPCError("NOT_FOUND", { message });
+            }
+            throw error;
+          }
+        },
+      ),
+    },
   },
   collections: {
     count: publicProcedure.collections.count.handler(() => countCollections()),

@@ -10,6 +10,11 @@ import {
   approvalRequestsTable,
   apikeysTable,
   authTables,
+  jwkssTable,
+  oauthAccessTokensTable,
+  oauthClientsTable,
+  oauthConsentsTable,
+  oauthRefreshTokensTable,
   sessionsTable,
   usersTable,
   verificationsTable,
@@ -20,6 +25,10 @@ import {
   agentHostsRelations,
   agentsRelations,
   approvalRequestsRelations,
+  oauthAccessTokensRelations,
+  oauthClientsRelations,
+  oauthConsentsRelations,
+  oauthRefreshTokensRelations,
   sessionsRelations,
   usersRelations,
 } from "./relations";
@@ -35,9 +44,18 @@ describe("auth schema", () => {
     expect(authTables.agentCapabilityGrants).toBe(agentCapabilityGrantsTable);
     expect(authTables.approvalRequests).toBe(approvalRequestsTable);
     expect(authTables.verifications).toBe(verificationsTable);
+    expect(authTables.jwkss).toBe(jwkssTable);
+    expect(authTables.oauthClients).toBe(oauthClientsTable);
+    expect(authTables.oauthRefreshTokens).toBe(oauthRefreshTokensTable);
+    expect(authTables.oauthAccessTokens).toBe(oauthAccessTokensTable);
+    expect(authTables.oauthConsents).toBe(oauthConsentsTable);
     expect(usersRelations).toBeDefined();
     expect(sessionsRelations).toBeDefined();
     expect(accountsRelations).toBeDefined();
+    expect(oauthClientsRelations).toBeDefined();
+    expect(oauthRefreshTokensRelations).toBeDefined();
+    expect(oauthAccessTokensRelations).toBeDefined();
+    expect(oauthConsentsRelations).toBeDefined();
     expect(agentHostsRelations).toBeDefined();
     expect(agentsRelations).toBeDefined();
     expect(agentCapabilityGrantsRelations).toBeDefined();
@@ -62,6 +80,13 @@ describe("auth schema", () => {
     expect(apikeysTable.id.name).toBe("id");
     expect(apikeysTable.key.name).toBe("key");
     expect(apikeysTable.referenceId.name).toBe("reference_id");
+
+    expect(jwkssTable.publicKey.name).toBe("public_key");
+    expect(oauthClientsTable.clientId.name).toBe("client_id");
+    expect(oauthClientsTable.redirectUris.name).toBe("redirect_uris");
+    expect(oauthRefreshTokensTable.clientId.name).toBe("client_id");
+    expect(oauthAccessTokensTable.refreshId.name).toBe("refresh_id");
+    expect(oauthConsentsTable.scopes.name).toBe("scopes");
 
     expect(agentHostsTable.id.name).toBe("id");
     expect(agentHostsTable.userId.name).toBe("user_id");

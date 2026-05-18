@@ -2,10 +2,11 @@
 import { authTables } from "@skills-re/db/schema";
 import { agentAuth } from "@better-auth/agent-auth";
 import { apiKey } from "@better-auth/api-key";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import type { GithubProfile } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, emailOTP } from "better-auth/plugins";
+import { admin, bearer, deviceAuthorization, emailOTP, jwt } from "better-auth/plugins";
 
 import { nanoid } from "nanoid";
 
@@ -49,8 +50,17 @@ export type AuthSession = {
 
 export interface AuthInstance {
   api: {
+    createApiKey: (input: {
+      body: { expiresIn?: number; name?: string; prefix?: string; userId?: string };
+    }) => Promise<{ expiresAt: Date | null; key: string } | null>;
+    verifyApiKey: (input: {
+      body: { key: string };
+    }) => Promise<{ valid: boolean; key: { expiresAt: Date | null; referenceId: string } | null }>;
     getAgentConfiguration: () => Promise<unknown>;
+    getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
+    getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getSession: (input: { headers: Headers }) => Promise<AuthSession>;
+    signOut: (input: { asResponse: true; headers: Headers }) => Promise<Response>;
   };
   handler: (request: Request) => Response | Promise<Response>;
 }
@@ -148,6 +158,30 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     plugins: [
       admin(),
       apiKey(),
+      bearer(),
+      jwt({
+        jwt: {
+          issuer: env.PUBLIC_SERVER_URL,
+        },
+      }),
+      oauthProvider({
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        consentPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
+        grantTypes: ["authorization_code", "refresh_token"],
+        // todo: add new routes in tanstack start
+        loginPage: `${env.PUBLIC_SITE_URL}/auth`,
+        scopes: [
+          "openid",
+          "profile",
+          "email",
+          "offline_access",
+          "skills:read",
+          "skills:library",
+          "skills:usage",
+        ],
+        validAudiences: [env.PUBLIC_SERVER_URL, `${env.PUBLIC_SERVER_URL}/mcp`],
+      }),
       agentAuth({
         capabilities: [
           {
@@ -178,9 +212,25 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
             },
             name: "search_site",
           },
+          {
+            description: "Resolve public skill install metadata for CLI or MCP clients.",
+            input: {
+              additionalProperties: false,
+              properties: {
+                skill: {
+                  type: "string",
+                },
+                version: {
+                  type: "string",
+                },
+              },
+              required: ["skill"],
+              type: "object",
+            },
+            name: "resolve_skill_install",
+          },
         ],
-        approvalMethods: ["device_authorization", "ciba"],
-        deviceAuthorizationPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
+        approvalMethods: ["ciba"],
         modes: ["delegated"],
         providerDescription: "Public website content and content discovery for AI agents.",
         providerName: "skills.re",
@@ -207,8 +257,30 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
             );
           }
 
+          if (capability === "resolve_skill_install") {
+            if (!args || typeof args !== "object" || typeof args.skill !== "string") {
+              throw new Error("resolve_skill_install requires a string skill.");
+            }
+
+            const installUrl = new URL("/cli/skills/resolve-install", env.PUBLIC_SERVER_URL);
+            installUrl.searchParams.set("skill", args.skill);
+            if (typeof args.version === "string") {
+              installUrl.searchParams.set("version", args.version);
+            }
+            const response = await fetch(installUrl);
+            if (!response.ok) {
+              throw new Error(`Install metadata request failed: ${response.status}`);
+            }
+            return await response.json();
+          }
+
           throw new Error(`Unsupported agent capability: ${capability}`);
         },
+      }),
+      deviceAuthorization({
+        schema: {},
+        validateClient: (clientId) => clientId === "cli",
+        verificationUri: `${env.PUBLIC_SITE_URL}/device`,
       }),
       emailOTP({
         allowedAttempts: 3,

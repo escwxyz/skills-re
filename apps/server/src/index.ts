@@ -7,11 +7,15 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
+import { mcpRouter } from "./routes/mcp";
+import { mcpRateLimiter } from "./middlewares/mcp-rate-limiter";
+import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
+import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
@@ -33,6 +37,7 @@ export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization"
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
+export { McpRateLimiter } from "./dos/mcp-rate-limiter";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
 
@@ -76,12 +81,6 @@ const app = new Hono<{
     workerLogger?: WorkerLogger;
   };
 }>();
-
-// Ref: https://honohub.dev/docs/hono-mcp
-// const mcpServer = new McpServer({
-//   name: "skills-re-mcp",
-//   version: "1.0.0",
-// });
 
 app.use("/*", async (c, next) => {
   const startedAt = Date.now();
@@ -136,6 +135,15 @@ app.get("/.well-known/agent-configuration", async (c) => {
   const configuration = await runtimeAuth.api.getAgentConfiguration();
   return c.json(configuration);
 });
+// OAuth 2.0 discovery for MCP clients (RFC 8414 + RFC 9728).
+// The authorization server is Better Auth; this Worker is the resource server.
+app.get("/.well-known/oauth-authorization-server", async (c) => {
+  const response = await oauthProviderAuthServerMetadata(createRuntimeAuth())(c.req.raw);
+  return c.newResponse(response.body, response);
+});
+app.get("/.well-known/oauth-protected-resource", (c) =>
+  c.json(createOAuthProtectedResourceMetadata(c.env.PUBLIC_SERVER_URL)),
+);
 app.get("/skills/download", async (c) => {
   const url = new URL(c.req.url);
   return await createSkillArchiveDownloadResponse(
@@ -191,11 +199,9 @@ export const rpcHandler = new RPCHandler(appRouter, {
   ],
 });
 
-// app.all("/mcp", async (c) => {
-//   const transport = new StreamableHTTPTransport();
-//   await mcpServer.connect(transport);
-//   return transport.handleRequest(c);
-// });
+app.use("/mcp", mcpRateLimiter);
+app.use("/mcp/*", mcpRateLimiter);
+app.route("/mcp", mcpRouter);
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
 app.use("/skills/submit", submitPublicRateLimiter);

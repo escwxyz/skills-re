@@ -287,6 +287,7 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  revokeSession?: () => Promise<void>;
   aiTasks?: AiTaskRuntime;
   aiSearchItems?: AiSearchItemsRuntime;
   session: AuthSession;

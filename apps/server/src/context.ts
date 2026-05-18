@@ -141,9 +141,7 @@ async function createServerRuntime(
 
 export async function createServerContext({ context }: CreateServerContextOptions) {
   const { createContext: createApiContext } = await import("@skills-re/api/context");
-  const baseContext = await createApiContext({
-    context,
-  });
+  const baseContext = await createApiContext({ context });
   const logger = context.get("workerLogger");
   const runtimeDeps = await createServerRuntime(context.env, { logger });
   return createServerContextFromBase(baseContext, runtimeDeps, logger);
