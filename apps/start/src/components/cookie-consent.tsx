@@ -26,7 +26,7 @@ interface CookieRowProps {
 
 const CookieRow = ({ name, description }: CookieRowProps) => (
   <div className="flex items-start gap-3 py-1.5">
-    <code className="text-ink shrink-0 font-mono text-[10px] tracking-tight">{name}</code>
+    <code className="text-foreground shrink-0 font-mono text-[10px] tracking-tight">{name}</code>
     <span className="text-muted-foreground text-[11px] leading-tight">{description}</span>
   </div>
 );
@@ -43,7 +43,7 @@ const CookieSection = ({ title, badge, badgeActive, children }: CookieSectionPro
     <div className="border-border flex items-center justify-between border-b px-3 py-1.5">
       <span className="font-mono text-[10px] tracking-[0.14em] uppercase">{title}</span>
       <span
-        className={`font-mono text-[9px] tracking-[0.12em] uppercase ${badgeActive ? "text-ink" : "text-muted-foreground"}`}
+        className={`font-mono text-[9px] tracking-[0.12em] uppercase ${badgeActive ? "text-foreground" : "text-muted-foreground"}`}
       >
         {badge}
       </span>
@@ -54,13 +54,13 @@ const CookieSection = ({ title, badge, badgeActive, children }: CookieSectionPro
 
 export const CookieConsent = () => {
   const [open, setOpen] = useState(false);
-  const [choice, setChoice] = useState<CookieConsentChoice>("essential");
+  const [choice, setChoice] = useState<CookieConsentChoice>("all");
 
   useEffect(() => {
     const run = async () => {
       const preferences = await getCookiePreferences();
       if (preferences === null) {
-        setOpen(true);
+        setTimeout(() => setOpen(true), 3000);
         return;
       }
       const saved = await readCookieConsent();
@@ -89,12 +89,10 @@ export const CookieConsent = () => {
       <Button
         aria-label={m.cookie_consent_toggle_aria_label()}
         aria-expanded={open}
-        className="h-6 px-2 font-mono text-[10px] tracking-[0.12em] uppercase"
         onClick={() => setOpen((current) => !current)}
-        size="xs"
         variant="ghost"
       >
-        <CookieIcon />
+        <CookieIcon size={16} />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -174,10 +172,10 @@ export const CookieConsent = () => {
           </DialogFooter>
 
           <div className="border-border text-muted-foreground flex items-center justify-between border-t pt-3 font-mono text-[10px] tracking-[0.14em] uppercase">
-            <a href={localizeHref("/cookies")} className="hover:text-ink">
+            <a href={localizeHref("/cookies")} className="hover:text-foreground">
               {m.cookie_consent_policy()}
             </a>
-            <button type="button" onClick={resetConsent} className="hover:text-ink">
+            <button type="button" onClick={resetConsent} className="hover:text-foreground">
               {m.cookie_consent_reset()}
             </button>
           </div>

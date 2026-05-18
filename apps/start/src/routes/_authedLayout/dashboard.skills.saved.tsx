@@ -68,12 +68,12 @@ function RouteComponent() {
           />
         </>
       ) : (
-        <div className="border border-dashed border-rule bg-background px-5 py-12 text-center">
-          <BookmarkSimpleIcon className="mx-auto size-7 text-muted-text/60" />
+        <div className="border border-dashed border-border bg-background px-5 py-12 text-center">
+          <BookmarkSimpleIcon className="mx-auto size-7 text-muted-foreground/60" />
           <p className="mt-4 font-display text-[1.35rem] leading-none tracking-[-0.03em] text-foreground">
             {m.dashboard_skills_saved_coming_soon()}
           </p>
-          <p className="mx-auto mt-3 max-w-md text-[13px] leading-[1.6] text-muted-text">
+          <p className="mx-auto mt-3 max-w-md text-[13px] leading-[1.6] text-muted-foreground">
             {m.dashboard_skills_saved_description_body()}
           </p>
         </div>

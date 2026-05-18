@@ -42,8 +42,10 @@ export const BrowseToolbar = ({
 }: Props) => (
   <div
     className={cn(
-      "bg-background/90 sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
-      isSearchMode ? "" : "border-b border-border",
+      "bg-background/90 sticky top-(--header-height) z-20 h-(--header-height) backdrop-blur",
+      isSearchMode
+        ? "grid grid-cols-1"
+        : "grid grid-cols-[minmax(0,1fr)_auto] border-b border-border lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
     )}
   >
     <SkillsSearchField
@@ -56,16 +58,12 @@ export const BrowseToolbar = ({
       onSubmit={onSearchSubmit}
       value={searchValue}
     />
-    {isSearchMode ? (
-      <div className="hidden h-full items-center border-l border-border px-4 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text lg:flex">
-        Relevance
-      </div>
-    ) : (
+    {!isSearchMode && (
       <>
         <Button
           aria-pressed={filtersOpen}
           aria-label={m.skills_browse_controls_filters()}
-          className="relative h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-ink hover:bg-muted hover:text-ink"
+          className="relative h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-foreground hover:bg-muted hover:text-foreground"
           onClick={onToggleFilters}
           size="icon-sm"
           type="button"
@@ -73,7 +71,7 @@ export const BrowseToolbar = ({
         >
           <FadersHorizontalIcon />
           {activeFilterCount > 0 ? (
-            <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-ink text-[9px] leading-none text-paper">
+            <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-foreground text-[9px] leading-none text-background">
               {activeFilterCount}
             </span>
           ) : null}
@@ -81,8 +79,8 @@ export const BrowseToolbar = ({
         <div className="hidden lg:block">
           <BrowseSortDropdown filters={filters} />
         </div>
+        <SkillsViewModeToggle className="hidden w-(--header-height) lg:flex" />
       </>
     )}
-    <SkillsViewModeToggle className="hidden w-(--header-height) lg:flex" />
   </div>
 );

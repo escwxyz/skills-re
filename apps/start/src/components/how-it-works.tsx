@@ -45,13 +45,13 @@ export const HowItWorks = () => (
           key={step.title}
           className="border-border border-b px-5.5 py-7 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
         >
-          <div className="font-display text-muted-text-2 text-[72px] leading-none italic">
+          <div className="font-display text-muted-foreground-2 text-[72px] leading-none italic">
             {step.num}
           </div>
           <h5 className="font-display mt-2.5 mb-2 text-[28px] leading-[1.05] font-normal">
             {step.title}
           </h5>
-          <p className="text-ink-2 m-0 font-serif text-sm leading-normal">{step.body}</p>
+          <p className="text-muted-foreground m-0 font-serif text-sm leading-normal">{step.body}</p>
           <div className="border-border text-muted-foreground mt-4.5 border-t pt-3.5 font-mono text-[10.5px] tracking-[.14em] uppercase">
             {step.meta}
           </div>

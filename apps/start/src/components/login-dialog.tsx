@@ -4,12 +4,7 @@ import { useState } from "react";
 import { SignInIcon } from "@phosphor-icons/react";
 import { useGoogleAnalytics } from "tanstack-router-ga4";
 
-import {
-  isLoginDialogOpenAtom,
-  loginDialogDescriptionAtom,
-  loginDialogOnlyGithubAtom,
-  loginDialogTitleAtom,
-} from "@/atoms/app";
+import { loginDialogAtom } from "@/atoms/app";
 import { authClient } from "@/lib/auth-client";
 
 import { EmailOtpForm } from "@/components/email-otp-form";
@@ -54,10 +49,13 @@ interface LoginDialogProps {
 }
 
 export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
-  const [isOpen, setIsOpen] = useAtom(isLoginDialogOpenAtom);
-  const [isGithubOnlyMode, setGithubOnlyMode] = useAtom(loginDialogOnlyGithubAtom);
-  const [customDescription, setCustomDescription] = useAtom(loginDialogDescriptionAtom);
-  const [customTitle, setCustomTitle] = useAtom(loginDialogTitleAtom);
+  const [dialog, setDialog] = useAtom(loginDialogAtom);
+  const {
+    open: isOpen,
+    onlyGithub: isGithubOnlyMode,
+    description: customDescription,
+    title: customTitle,
+  } = dialog;
   const [view, setView] = useState<"options" | "email">("options");
 
   const isMobile = useIsMobile();
@@ -76,7 +74,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     })();
 
   const closeDialog = () => {
-    setIsOpen(false);
+    setDialog((prev) => ({ ...prev, open: false }));
   };
 
   const handleLogin = async (provider: "github" | "google") => {
@@ -100,12 +98,11 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
     <Dialog
       onOpenChange={(open) => {
         onOpenChange?.(open);
-        setIsOpen(open);
-        if (!open) {
+        if (open) {
+          setDialog((prev) => ({ ...prev, open: true }));
+        } else {
           resetEmailFlow();
-          setGithubOnlyMode(false);
-          setCustomTitle(null);
-          setCustomDescription(null);
+          setDialog({ open: false, onlyGithub: false, title: null, description: null });
         }
       }}
       open={isOpen}

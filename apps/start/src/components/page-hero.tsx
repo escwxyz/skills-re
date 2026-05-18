@@ -90,7 +90,7 @@ export const PageHero = ({
         </h1>
         <p
           className={cn(
-            "text-ink-2 mt-5 max-w-170 font-serif text-[20px] leading-[1.45]",
+            "text-muted-foreground mt-5 max-w-170 font-serif text-[20px] leading-[1.45]",
             descriptionItalic && "italic",
           )}
         >

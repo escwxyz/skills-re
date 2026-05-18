@@ -34,7 +34,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           className,
         )}
       >
-        <TranslateIcon className="size-4 shrink-0" />
+        <TranslateIcon size={16} className="shrink-0" />
         <span>{m.language_switcher_short_label()}</span>
       </DialogTrigger>
 
@@ -60,7 +60,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                     });
                   }}
                   className={cn(
-                    "hover:bg-paper-2 flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
+                    "hover:bg-muted flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
                     {
                       "text-foreground": isActive,
                       "text-muted-foreground": !isActive,

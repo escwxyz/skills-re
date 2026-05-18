@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSetAtom } from "jotai";
-import { isLoginDialogOpenAtom } from "@/atoms/app";
+import { loginDialogAtom } from "@/atoms/app";
 import { LoginDialog } from "@/components/login-dialog";
 
 export const Route = createFileRoute("/_authedLayout")({
@@ -12,14 +12,14 @@ export const Route = createFileRoute("/_authedLayout")({
 
 function LoginGate() {
   const { currentUser } = useRouteContext({ from: "__root__" });
-  const setOpen = useSetAtom(isLoginDialogOpenAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
 
   useEffect(() => {
     if (!currentUser) {
-      setOpen(true);
+      setLoginDialog((prev) => ({ ...prev, open: true }));
     }
-    return () => setOpen(false);
-  }, [currentUser, setOpen]);
+    return () => setLoginDialog((prev) => ({ ...prev, open: false }));
+  }, [currentUser, setLoginDialog]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center">

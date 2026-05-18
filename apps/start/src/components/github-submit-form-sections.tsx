@@ -7,7 +7,7 @@ import {
   FieldLabel as CardLabel,
   Field as CardField,
 } from "@/components/ui/field";
-import { Field, FieldError } from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -46,18 +46,15 @@ export const GithubSubmitRepoUrlFieldRow = (props: {
   value: string;
 }) => (
   <Field className="gap-0">
-    <label
-      className="mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text"
-      htmlFor="github-submit-repo-url"
-    >
+    <FieldLabel className="mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
       {m.input_label({})}
-    </label>
+    </FieldLabel>
     <div className="flex flex-wrap gap-2.5">
       <Input
         id="github-submit-repo-url"
         className={cn(
-          "min-w-0 flex-1 border border-border bg-paper px-3 py-2.5 font-mono text-[13px] text-ink outline-none",
-          "placeholder:text-muted-text/60 disabled:opacity-60",
+          "min-w-0 flex-1 border border-border bg-background px-3 py-2.5 font-mono text-[13px] text-foreground outline-none",
+          "placeholder:text-muted-foreground/60 disabled:opacity-60",
         )}
         disabled={props.disabled}
         onChange={(event) => props.onChange(event.target.value)}
@@ -75,7 +72,7 @@ export const GithubSubmitRepoUrlFieldRow = (props: {
         className={cn(
           "whitespace-nowrap border border-border px-5 py-2.5 font-mono text-xs uppercase transition-colors",
           props.fetchStatus === "fetching" || props.submitStatus === "submitting"
-            ? "cursor-not-allowed text-muted-text"
+            ? "cursor-not-allowed text-muted-foreground"
             : "text-primary-foreground bg-primary",
         )}
         disabled={props.disabled}
@@ -85,20 +82,20 @@ export const GithubSubmitRepoUrlFieldRow = (props: {
       </Button>
     </div>
     <FieldError />
-    <p className="font-serif mt-1.5 text-[12px] italic text-muted-text">{m.input_help({})}</p>
+    <p className="font-serif mt-1.5 text-[12px] italic text-muted-foreground">{m.input_help({})}</p>
   </Field>
 );
 
 export const GithubSubmitLogsPanel = (props: { fetchStatus: FetchStatus; logs: string[] }) =>
   props.logs.length > 0 ? (
-    <div className="mb-4.5 h-40 overflow-y-auto border border-border bg-paper-2 p-4 font-mono text-xs leading-relaxed">
+    <div className="mb-4.5 h-40 overflow-y-auto border border-border bg-muted p-4 font-mono text-xs leading-relaxed">
       {props.logs.map((line, index) => (
         <div
           key={`${index}-${line}`}
           className={cn(
             index === props.logs.length - 1 && props.fetchStatus !== "fetching"
               ? "text-editorial-green"
-              : "text-muted-text",
+              : "text-muted-foreground",
           )}
         >
           {line}
@@ -122,8 +119,8 @@ export const GithubSubmitStatusRail = (props: { statusItems: readonly StatusItem
     {props.statusItems.map(({ id, label, status, statusText }) => (
       <div key={id} className="flex items-center gap-2">
         <span className={cn("size-2 shrink-0 rounded-full", dotClass(status))} />
-        <span className="text-ink">{label}</span>
-        <span className="text-muted-text">{statusText}</span>
+        <span className="text-foreground">{label}</span>
+        <span className="text-muted-foreground">{statusText}</span>
       </div>
     ))}
   </div>
@@ -138,21 +135,21 @@ export const GithubSubmitPreviewPanel = (props: {
   selectedSkillRootPaths: string[];
 }) => (
   <div className="mb-7 space-y-4">
-    <div className="space-y-1 border border-border bg-paper-2 p-4">
-      <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
+    <div className="space-y-1 border border-border bg-muted p-4">
+      <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
         {m.preview_title()}
       </p>
-      <p className="font-mono text-[13px] text-ink">
+      <p className="font-mono text-[13px] text-foreground">
         {props.repoPreview.owner}/{props.repoPreview.repo}
       </p>
-      <p className="font-mono text-[11px] text-muted-text">
+      <p className="font-mono text-[11px] text-muted-foreground">
         {m.preview_branch()} {props.repoPreview.branch}
       </p>
-      <p className="font-mono text-[11px] text-muted-text">
+      <p className="font-mono text-[11px] text-muted-foreground">
         {m.preview_publishable_skills()} {props.repoPreview.skills.length}
       </p>
       {props.repoPreview.invalidSkills.length > 0 && (
-        <p className="font-mono text-[11px] text-muted-text">
+        <p className="font-mono text-[11px] text-muted-foreground">
           {m.preview_skipped_invalid_skills()} {props.repoPreview.invalidSkills.length}
         </p>
       )}
@@ -161,7 +158,7 @@ export const GithubSubmitPreviewPanel = (props: {
           <p className="font-mono text-[10px] tracking-[.14em] uppercase text-amber-600">
             {m.preview_diagnostics()}
           </p>
-          <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed text-ink-2">
+          <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed text-muted-foreground">
             {props.previewDiagnostics.map((line) => (
               <p key={line}>{line}</p>
             ))}
@@ -172,21 +169,21 @@ export const GithubSubmitPreviewPanel = (props: {
 
     <div>
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <div className="font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+        <div className="font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
           {m.preview_select_skills_to_publish()}
         </div>
         <div className="flex gap-2.5">
           <button
             type="button"
             onClick={props.onSelectAllSkillRootPaths}
-            className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
+            className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-foreground hover:bg-muted"
           >
             {m.preview_select_all()}
           </button>
           <button
             type="button"
             onClick={props.onClearSelectedSkillRootPaths}
-            className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-ink hover:bg-paper-2"
+            className="border border-border px-2.5 py-1 font-mono text-[10px] tracking-widest uppercase text-foreground hover:bg-muted"
           >
             {m.preview_clear()}
           </button>
@@ -203,17 +200,17 @@ export const GithubSubmitPreviewPanel = (props: {
             <CardLabel key={skill.skillMdPath} htmlFor={checkboxId}>
               <CardField orientation="horizontal">
                 <FieldContent>
-                  <FieldTitle className="font-mono text-[13px] font-normal text-ink">
+                  <FieldTitle className="font-mono text-[13px] font-normal text-foreground">
                     {skill.skillTitle || m.preview_untitled_skill({})}
                   </FieldTitle>
-                  <p className="truncate font-mono text-[10px] tracking-widest text-muted-text">
+                  <p className="truncate font-mono text-[10px] tracking-widest text-muted-foreground">
                     {skill.skillMdPath}
                   </p>
-                  <p className="font-mono text-[10px] tracking-widest text-muted-text">
+                  <p className="font-mono text-[10px] tracking-widest text-muted-foreground">
                     Root: {skillRootPathLabel}
                   </p>
                   {skill.skillDescription && (
-                    <p className="mt-1 text-[12px] leading-relaxed text-ink-2">
+                    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
                       {skill.skillDescription}
                     </p>
                   )}
@@ -241,20 +238,22 @@ export const GithubSubmitPreviewPanel = (props: {
 
     {props.repoPreview.invalidSkills.length > 0 && (
       <div>
-        <p className="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+        <p className="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
           {m.preview_invalid_skills_title()}
         </p>
         <div className="space-y-2">
           {props.repoPreview.invalidSkills.map((skill) => (
             <div
               key={skill.skillMdPath}
-              className="rounded-none border border-editorial-red/30 bg-paper-2 p-3"
+              className="rounded-none border border-editorial-red/30 bg-muted p-3"
             >
-              <p className="font-mono text-[11px] text-ink">{skill.skillMdPath}</p>
-              <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
+              <p className="font-mono text-[11px] text-foreground">{skill.skillMdPath}</p>
+              <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
                 {formatSkillRootPathLabel(skill.skillRootPath)}
               </p>
-              <p className="mt-2 text-[12px] leading-relaxed text-ink-2">{skill.message}</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                {skill.message}
+              </p>
             </div>
           ))}
         </div>
@@ -270,7 +269,9 @@ export const GithubSubmitActionBar = (props: {
   submitLabel: ReactNode;
 }) => (
   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4.5">
-    <span className="font-serif text-[12.5px] italic text-muted-text">{props.selectedSummary}</span>
+    <span className="font-serif text-[12.5px] italic text-muted-foreground">
+      {props.selectedSummary}
+    </span>
 
     <Button
       onClick={props.onSubmit}
@@ -278,8 +279,8 @@ export const GithubSubmitActionBar = (props: {
       className={cn(
         "border px-6 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase transition-colors",
         props.canSubmit
-          ? "border-ink bg-ink text-paper hover:opacity-85"
-          : "cursor-not-allowed border-border bg-paper-2 text-muted-text",
+          ? "border-foreground bg-foreground text-background hover:opacity-85"
+          : "cursor-not-allowed border-border bg-muted text-muted-foreground",
       )}
     >
       {props.submitLabel}

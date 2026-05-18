@@ -55,7 +55,7 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
         </label>
       </div>
       {data.isTruncated && (
-        <div className="border-border bg-paper-2 border-b px-5 py-3 text-sm text-ink-2">
+        <div className="border-border bg-muted border-b px-5 py-3 text-sm text-muted-foreground">
           {m.skill_file_tree_content_truncated_notice()}
         </div>
       )}
@@ -78,8 +78,8 @@ export function SkillFileContent({ activePath, data, isLoading }: Props) {
 function FileContentSkeleton({ path }: { path: string }) {
   return (
     <div className="border-border border-b px-5 py-4">
-      <div className="font-mono text-[12px] text-ink">{path}</div>
-      <div className="bg-paper-2 mt-1 h-2.5 w-32 animate-pulse rounded" />
+      <div className="font-mono text-[12px] text-foreground">{path}</div>
+      <div className="bg-muted mt-1 h-2.5 w-32 animate-pulse rounded" />
     </div>
   );
 }
@@ -87,8 +87,10 @@ function FileContentSkeleton({ path }: { path: string }) {
 export function FileEmptyState() {
   return (
     <div className="px-5 py-8">
-      <div className="border-border bg-paper-2 border px-5 py-6">
-        <p className="text-ink-2 m-0 max-w-110">{m.skill_file_tree_content_empty_description()}</p>
+      <div className="border-border bg-muted border px-5 py-6">
+        <p className="text-muted-foreground m-0 max-w-110">
+          {m.skill_file_tree_content_empty_description()}
+        </p>
       </div>
     </div>
   );

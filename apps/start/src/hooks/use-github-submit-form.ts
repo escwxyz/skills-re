@@ -4,15 +4,10 @@ import type { ReactNode, RefObject } from "react";
 
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-form";
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useGoogleAnalytics } from "tanstack-router-ga4";
 
-import {
-  isLoginDialogOpenAtom,
-  loginDialogDescriptionAtom,
-  loginDialogOnlyGithubAtom,
-  loginDialogTitleAtom,
-} from "@/atoms/app";
+import { loginDialogAtom } from "@/atoms/app";
 import { githubSubmitUrlSchema } from "@/lib/github-submit";
 import type { GithubSubmitInput } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
@@ -87,10 +82,7 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
   const [repoTarget, setRepoTarget] = useState<GithubSubmitInput | null>(null);
   const [repoPreview, setRepoPreview] = useState<RepoPreview | null>(null);
   const [submitLocked, setSubmitLocked] = useState(false);
-  const [, setLoginDialogOpen] = useAtom(isLoginDialogOpenAtom);
-  const [, setLoginDialogOnlyGithub] = useAtom(loginDialogOnlyGithubAtom);
-  const [, setLoginDialogTitle] = useAtom(loginDialogTitleAtom);
-  const [, setLoginDialogDescription] = useAtom(loginDialogDescriptionAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
   const logBoxRef = useRef<HTMLDivElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -249,10 +241,12 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
             const errorMessage = getSubmitErrorMessage(error);
 
             if (isRateLimitedError(error)) {
-              setLoginDialogOnlyGithub(true);
-              setLoginDialogTitle("GitHub submission limit reached");
-              setLoginDialogDescription(errorMessage);
-              setLoginDialogOpen(true);
+              setLoginDialog({
+                open: true,
+                onlyGithub: true,
+                title: "GitHub submission limit reached",
+                description: errorMessage,
+              });
             } else {
               console.error("Failed to submit GitHub repository", error);
             }

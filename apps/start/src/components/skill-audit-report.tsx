@@ -99,7 +99,7 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
 
   return (
     <div className="border border-border font-mono text-[11px]">
-      <div className="border-b border-border px-5 py-3.5 bg-[var(--paper-2)] text-muted-text tracking-[0.18em] uppercase">
+      <div className="border-b border-border px-5 py-3.5 bg-[var(--muted)] text-muted-foreground tracking-[0.18em] uppercase">
         {m.skill_audit_report_title()}
         {version ? ` · v${version}` : ""}
       </div>
@@ -114,7 +114,7 @@ export function SkillAuditReport({ snapshotId, version }: Props) {
         ) : null}
 
         {!isLoading && !isError && !report ? (
-          <p className="text-muted-text font-serif text-[15px]">{m.skill_audit_pending()}</p>
+          <p className="text-muted-foreground font-serif text-[15px]">{m.skill_audit_pending()}</p>
         ) : null}
 
         {!isLoading && !isError && report ? <AuditPanel report={report} /> : null}
@@ -144,22 +144,24 @@ function AuditPanel({ report }: { report: AuditReport }) {
       </div>
 
       {report.scanner.providerName && (
-        <p className="text-muted-text text-[10.5px] tracking-[0.06em]">
+        <p className="text-muted-foreground text-[10.5px] tracking-[0.06em]">
           {m.skill_audit_scanner_label()}:{" "}
-          <span className="text-[var(--ink)] font-medium">{report.scanner.providerName}</span>
+          <span className="text-[var(--foreground)] font-medium">
+            {report.scanner.providerName}
+          </span>
           {report.scanner.scannerVersion && ` · v${report.scanner.scannerVersion}`}
           {report.scanner.model && ` · ${report.scanner.model}`}
         </p>
       )}
 
       {report.summary && (
-        <p className="text-[var(--ink-2)] font-serif text-[15px] leading-[1.6] max-w-170">
+        <p className="text-[var(--muted-foreground)] font-serif text-[15px] leading-[1.6] max-w-170">
           {report.summary}
         </p>
       )}
 
       <section>
-        <div className="text-muted-text text-[10px] tracking-[0.2em] mb-1.5 uppercase">
+        <div className="text-muted-foreground text-[10px] tracking-[0.2em] mb-1.5 uppercase">
           {m.skill_audit_categories_tested()}
         </div>
         <h3 className="mb-4 font-display text-[clamp(22px,3vw,28px)] font-normal leading-none tracking-[-0.01em]">
@@ -175,7 +177,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                 className={`border p-3 ${
                   isActive
                     ? "bg-[rgba(160,128,32,0.06)] border-[rgba(160,128,32,0.4)]"
-                    : "bg-[var(--paper-2)] border-border"
+                    : "bg-[var(--muted)] border-border"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -194,7 +196,7 @@ function AuditPanel({ report }: { report: AuditReport }) {
                     </span>
                   )}
                 </div>
-                <div className="mt-3 text-[12px] leading-[1.3] text-[var(--ink)] font-serif">
+                <div className="mt-3 text-[12px] leading-[1.3] text-[var(--foreground)] font-serif">
                   {getAuditCategoryLabel(category)}
                 </div>
               </div>
@@ -206,10 +208,10 @@ function AuditPanel({ report }: { report: AuditReport }) {
       <section className="border border-border p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-muted-text text-[10px] tracking-[0.2em] mb-2 uppercase">
+            <div className="text-muted-foreground text-[10px] tracking-[0.2em] mb-2 uppercase">
               {m.skill_audit_security_issues()}
             </div>
-            <h3 className="text-[var(--ink)] font-display text-[clamp(28px,4vw,40px)] font-normal leading-none tracking-[-0.01em]">
+            <h3 className="text-[var(--foreground)] font-display text-[clamp(28px,4vw,40px)] font-normal leading-none tracking-[-0.01em]">
               {report.findings.length === 0
                 ? m.skill_audit_no_findings()
                 : m.skill_audit_findings_count({ count: report.findings.length })}
@@ -256,7 +258,7 @@ function SummaryCell({ label, value }: { label: string; value: string }) {
       <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 font-display text-[22px] leading-none text-ink">{value}</div>
+      <div className="mt-1 font-display text-[22px] leading-none text-foreground">{value}</div>
     </div>
   );
 }
@@ -273,49 +275,51 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
             >
               {finding.severity}
             </span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-text">
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {getAuditCategoryLabel(finding.category)}
             </span>
           </div>
-          <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-text">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
             {m.skill_audit_finding_line()} {finding.location.startLine}
           </span>
         </div>
-        <p className="mt-3 text-balance text-[var(--ink)] font-display text-[clamp(18px,2.5vw,22px)] font-normal leading-[1.1] tracking-[-0.01em]">
+        <p className="mt-3 text-balance text-[var(--foreground)] font-display text-[clamp(18px,2.5vw,22px)] font-normal leading-[1.1] tracking-[-0.01em]">
           {finding.message}
         </p>
       </div>
 
-      <div className="grid gap-3 border-b border-border/50 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 bg-[var(--paper)/0.35]">
+      <div className="grid gap-3 border-b border-border/50 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 bg-[var(--background)/0.35]">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-text">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             {m.skill_audit_finding_source()}
           </div>
-          <div className="mt-1.5 font-mono text-[12px] text-[var(--ink)]">
+          <div className="mt-1.5 font-mono text-[12px] text-[var(--foreground)]">
             {formatLocation(finding.location)}
           </div>
         </div>
         <div className="sm:text-right">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-text">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             {m.skill_audit_finding_rule()}
           </div>
-          <div className="mt-1.5 font-mono text-[12px] text-[var(--ink)]">{finding.rule_id}</div>
+          <div className="mt-1.5 font-mono text-[12px] text-[var(--foreground)]">
+            {finding.rule_id}
+          </div>
         </div>
       </div>
 
       <div className="px-4 py-4 sm:px-5">
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-text">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           {m.skill_audit_finding_evidence()}
         </div>
-        <p className="mt-2 text-[var(--ink)] font-serif text-[15px] leading-[1.65]">
+        <p className="mt-2 text-[var(--foreground)] font-serif text-[15px] leading-[1.65]">
           {finding.evidence}
         </p>
         {finding.fix && (
           <>
-            <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-text">
+            <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               {m.skill_audit_finding_suggested_fix()}
             </div>
-            <p className="mt-2 text-[var(--ink-2)] font-serif text-[15px] leading-[1.65]">
+            <p className="mt-2 text-[var(--muted-foreground)] font-serif text-[15px] leading-[1.65]">
               {finding.fix}
             </p>
           </>
@@ -331,29 +335,29 @@ function AuditReportSkeleton() {
       <div className="grid grid-cols-2 border border-border sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="border-border border-r px-4 py-3 last:border-r-0">
-            <div className="mb-2 h-2 w-20 animate-pulse rounded-none bg-[var(--rule)]" />
-            <div className="h-6 w-14 animate-pulse rounded-none bg-[var(--rule)]" />
+            <div className="mb-2 h-2 w-20 animate-pulse rounded-none bg-[var(--border)]" />
+            <div className="h-6 w-14 animate-pulse rounded-none bg-[var(--border)]" />
           </div>
         ))}
       </div>
       <div className="space-y-2">
-        <div className="h-3.5 w-full max-w-lg animate-pulse rounded-none bg-[var(--rule)]" />
-        <div className="h-3.5 w-3/4 animate-pulse rounded-none bg-[var(--rule)]" />
-        <div className="h-3.5 w-1/2 animate-pulse rounded-none bg-[var(--rule)]" />
+        <div className="h-3.5 w-full max-w-lg animate-pulse rounded-none bg-[var(--border)]" />
+        <div className="h-3.5 w-3/4 animate-pulse rounded-none bg-[var(--border)]" />
+        <div className="h-3.5 w-1/2 animate-pulse rounded-none bg-[var(--border)]" />
       </div>
       <div>
-        <div className="mb-1.5 h-2 w-28 animate-pulse rounded-none bg-[var(--rule)]" />
-        <div className="mb-4 h-7 w-40 animate-pulse rounded-none bg-[var(--rule)]" />
+        <div className="mb-1.5 h-2 w-28 animate-pulse rounded-none bg-[var(--border)]" />
+        <div className="mb-4 h-7 w-40 animate-pulse rounded-none bg-[var(--border)]" />
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <div
               key={i}
-              className="h-20 animate-pulse border p-3 bg-[var(--paper-2)] border-[var(--rule)]"
+              className="h-20 animate-pulse border p-3 bg-[var(--muted)] border-[var(--border)]"
             />
           ))}
         </div>
       </div>
-      <div className="h-24 animate-pulse border border-border p-4 bg-[var(--paper-2)]" />
+      <div className="h-24 animate-pulse border border-border p-4 bg-[var(--muted)]" />
     </div>
   );
 }

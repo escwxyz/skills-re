@@ -1,15 +1,23 @@
+// oxlint-disable no-nested-ternary
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 
 import { useAppForm } from "@/hooks/form-hook";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Kbd } from "@/components/ui/kbd";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import { Form } from "./ui/form";
+import { Form } from "@/components/ui/form";
+
+const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
 interface SkillsSearchFieldProps {
   active: boolean;
@@ -44,13 +52,39 @@ export const SkillsSearchField = ({
     }
   }, [value, form]);
 
+  // Keep latest values in refs so the listener never needs to be re-registered.
+  const activeRef = useRef(active);
+  const hasValueRef = useRef(hasValue);
+  const onClearRef = useRef(onClear);
+  activeRef.current = active;
+  hasValueRef.current = hasValue;
+  onClearRef.current = onClear;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // CMD+K / CTRL+K — enter search mode (focus triggers onFocus via input's own handler)
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        inputRef?.current?.focus();
+        return;
+      }
+      // Escape — exit search mode from anywhere, even when input is blurred
+      if (event.key === "Escape" && (activeRef.current || hasValueRef.current)) {
+        onClearRef.current();
+        inputRef?.current?.blur();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // stable — only re-registers if the input ref itself changes
+  }, [inputRef]);
+
   return (
     <form.AppForm>
       <Form
-        className={cn(
-          "relative grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center transition-colors",
-          active ? "bg-background" : "bg-transparent",
-        )}
+        autoComplete="off"
+        className={cn("h-full transition-colors", active ? "bg-muted" : "bg-transparent")}
         onSubmit={(event) => {
           event.preventDefault();
           if (!disabled) {
@@ -58,43 +92,51 @@ export const SkillsSearchField = ({
           }
         }}
       >
-        <MagnifyingGlassIcon className="ml-5 size-4 text-muted-text" />
-        <form.AppField name="query">
-          {(field) => (
-            <Input
-              ref={inputRef}
-              aria-label={m.skills_browse_controls_search_placeholder()}
-              className="h-full border-0 bg-transparent px-3 font-mono text-sm tracking-widest uppercase text-ink placeholder:text-ink-2/70 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={disabled}
-              onBlur={field.handleBlur}
-              onChange={(event) => {
-                field.handleChange(event.target.value);
-                onChange(event.target.value);
-              }}
-              onFocus={onFocus}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  onClear();
-                }
-              }}
-              placeholder={m.skills_browse_controls_search_placeholder()}
-              type="search"
-              value={field.state.value}
-            />
+        <InputGroup className="h-full border-none">
+          <InputGroupAddon align="inline-start" className="pl-5">
+            <MagnifyingGlassIcon className="size-4" />
+          </InputGroupAddon>
+
+          <form.AppField name="query">
+            {(field) => (
+              <InputGroupInput
+                ref={inputRef}
+                aria-label={m.skills_browse_controls_search_placeholder()}
+                autoComplete="off"
+                className="font-mono text-sm tracking-widest uppercase placeholder:text-muted-foreground/70 [&::-webkit-search-cancel-button]:hidden"
+                disabled={disabled}
+                onBlur={field.handleBlur}
+                onChange={(event) => {
+                  field.handleChange(event.target.value);
+                  onChange(event.target.value);
+                }}
+                onFocus={onFocus}
+                placeholder={m.skills_browse_controls_search_placeholder()}
+                type="search"
+                value={field.state.value}
+              />
+            )}
+          </form.AppField>
+
+          {hasValue ? (
+            <InputGroupAddon align="inline-end" className="pr-2">
+              <InputGroupButton aria-label="Clear search" onClick={onClear} size="icon-sm">
+                <XIcon />
+              </InputGroupButton>
+            </InputGroupAddon>
+          ) : (
+            <InputGroupAddon align="inline-end" className="hidden pr-3 lg:flex">
+              {active ? (
+                <Kbd className="select-none">⏎</Kbd>
+              ) : (
+                <>
+                  <Kbd className="select-none">{isMac ? "⌘" : "Ctrl"}</Kbd>
+                  <Kbd className="select-none">K</Kbd>
+                </>
+              )}
+            </InputGroupAddon>
           )}
-        </form.AppField>
-        {active || hasValue ? (
-          <Button
-            aria-label="Clear search"
-            className="h-full w-(--header-height) rounded-none border-l border-border"
-            onClick={onClear}
-            size="icon-sm"
-            type="button"
-            variant="ghost"
-          >
-            <XIcon />
-          </Button>
-        ) : null}
+        </InputGroup>
       </Form>
     </form.AppForm>
   );

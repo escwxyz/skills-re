@@ -77,9 +77,9 @@ const CliToolDropdown = ({
   onSelect: (tool: CliTool) => void;
 }) => (
   <DropdownMenu>
-    <DropdownMenuTrigger className="border-border hover:bg-paper-2 data-popup-open:bg-paper-2 flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
+    <DropdownMenuTrigger className="border-border hover:bg-muted data-popup-open:bg-muted flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
       <span className="min-w-0 truncate">{CLI_TOOL_LABELS[cliTool]}</span>
-      <CaretUpDownIcon className="text-muted-text size-3 shrink-0" />
+      <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" className="min-w-40">
       {CLI_TOOLS.map((tool) => (
@@ -107,9 +107,9 @@ const CliToolDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="border-border hover:bg-paper-2 data-popup-open:bg-paper-2 flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
+      <DialogTrigger className="border-border hover:bg-muted data-popup-open:bg-muted flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
         <span className="min-w-0 truncate">{CLI_TOOL_LABELS[cliTool]}</span>
-        <CaretUpDownIcon className="text-muted-text size-3 shrink-0" />
+        <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
       </DialogTrigger>
 
       <DialogContent showCloseButton={false} className="max-w-xs p-0">
@@ -132,7 +132,7 @@ const CliToolDialog = ({
                     setOpen(false);
                   }}
                   className={cn(
-                    "hover:bg-paper-2 flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
+                    "hover:bg-muted flex w-full items-center justify-between px-5 py-4 font-mono text-[11.5px] tracking-normal normal-case transition-colors",
                     {
                       "text-foreground": isActive,
                       "text-muted-foreground": !isActive,
@@ -201,8 +201,8 @@ export const InstallTabs = ({ author, repo, slug }: Props) => {
               "flex-1 px-0 py-1.5 font-mono text-[10.5px] tracking-widest lowercase transition-all duration-120",
               index < CLI_LABELS.length - 1 ? "border-r border-border" : "",
               cli === label
-                ? "bg-(--ink) text-(--paper)"
-                : "bg-transparent text-muted-foreground hover:bg-(--ink)/5",
+                ? "bg-foreground text-background"
+                : "bg-transparent text-muted-foreground hover:bg-foreground/5",
             )}
           >
             {label}
@@ -210,10 +210,10 @@ export const InstallTabs = ({ author, repo, slug }: Props) => {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 bg-(--paper-2) px-3 py-2.25">
+      <div className="flex items-center gap-2 bg-muted px-3 py-2.25">
         <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs tracking-tighter text-muted-foreground">
           <span className="text-editorial-green">{CLI_COMMANDS[cliTool][cli]}</span>{" "}
-          <span className="text-(--ink)">
+          <span className="text-foreground">
             {command.replace(`${CLI_COMMANDS[cliTool][cli]} `, "")}
           </span>
         </span>

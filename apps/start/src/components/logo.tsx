@@ -48,7 +48,6 @@ export const HumanHand = ({ className, size = "1em", ...props }: LogoProps) => (
     xmlns="http://www.w3.org/2000/svg"
     width={size}
     height={size}
-    aria-hidden="true"
     {...props}
   >
     <g fill="currentColor" stroke="none" transform={TRANSFORM}>
@@ -65,7 +64,6 @@ export const RobotHand = ({ className, size = "1em", ...props }: LogoProps) => (
     xmlns="http://www.w3.org/2000/svg"
     width={size}
     height={size}
-    aria-hidden="true"
     {...props}
   >
     <g fill="currentColor" stroke="none" transform={TRANSFORM}>

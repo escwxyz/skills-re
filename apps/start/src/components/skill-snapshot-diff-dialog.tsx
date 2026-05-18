@@ -77,7 +77,7 @@ const getSelectedVersion = (versions: SkillVersionHistoryItem[], snapshotId: str
 
 const DIFF_ROW_CLASS: Record<SkillSnapshotDiffLine["kind"], string> = {
   added: "border-[#1b7f37]/20 bg-[#1b7f37]/5 text-[#1b7f37]",
-  context: "border-border bg-background text-ink",
+  context: "border-border bg-background text-foreground",
   removed: "border-[#b42318]/20 bg-[#b42318]/5 text-[#b42318]",
 };
 
@@ -249,7 +249,7 @@ export const SkillSnapshotDiffDialog = ({
 
         <div className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0 space-y-4">
-            <div className="border-border bg-paper-2 border px-4 py-3">
+            <div className="border-border bg-muted border px-4 py-3">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="min-w-0">
                   <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
@@ -304,7 +304,7 @@ export const SkillSnapshotDiffDialog = ({
             </div>
           </div>
 
-          <div className="border-border bg-paper-2 border px-4 py-4">
+          <div className="border-border bg-muted border px-4 py-4">
             <div className="mb-2 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
               {skill_snapshot_diff_compare_version_label()}
             </div>

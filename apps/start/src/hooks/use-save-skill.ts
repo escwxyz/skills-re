@@ -1,4 +1,4 @@
-import { isLoginDialogOpenAtom } from "@/atoms/app";
+import { loginDialogAtom } from "@/atoms/app";
 import { getSkillCheckSaved } from "@/functions/skills/get-skill-check-saved";
 import { saveSkill } from "@/functions/skills/save-skill";
 import { unsaveSkill } from "@/functions/skills/unsave-skill";
@@ -6,7 +6,7 @@ import { useAsyncDebouncer } from "@tanstack/react-pacer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useGoogleAnalytics } from "tanstack-router-ga4";
 
@@ -20,7 +20,7 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
   const saveSkillFn = useServerFn(saveSkill);
   const unsaveSkillFn = useServerFn(unsaveSkill);
 
-  const [, setLoginDialogOpen] = useAtom(isLoginDialogOpenAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
   const savedQueryKey = ["skillCheckSaved", slug] as const;
 
   const { data: savedData } = useQuery({
@@ -71,7 +71,7 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
 
   const handleClick = () => {
     if (!currentUser) {
-      setLoginDialogOpen(true);
+      setLoginDialog((prev) => ({ ...prev, open: true }));
       return;
     }
 

@@ -1,13 +1,32 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
-export const isLoginDialogOpenAtom = atom(false);
-export const loginDialogOnlyGithubAtom = atom(false);
-export const loginDialogTitleAtom = atom<string | null>(null);
-export const loginDialogDescriptionAtom = atom<string | null>(null);
-export const isWriteReviewDialogOpenAtom = atom(false);
-export const writeReviewInitialStarsAtom = atom(0);
-export const writeReviewSkillIdAtom = atom<string | null>(null);
+export interface LoginDialogState {
+  open: boolean;
+  onlyGithub: boolean;
+  title: string | null;
+  description: string | null;
+}
+
+export const loginDialogAtom = atom<LoginDialogState>({
+  open: false,
+  onlyGithub: false,
+  title: null,
+  description: null,
+});
+
+export interface WriteReviewDialogState {
+  open: boolean;
+  initialStars: number;
+  skillId: string | null;
+}
+
+export const writeReviewDialogAtom = atom<WriteReviewDialogState>({
+  open: false,
+  initialStars: 0,
+  skillId: null,
+});
+
 export const isMobileMenuOpenAtom = atom(false);
 export const isHeroSearchInViewAtom = atom(false);
 

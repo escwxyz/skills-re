@@ -23,11 +23,11 @@ export function DashboardSkillCard({ skill }: { skill: SkillItem }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+              <span className="truncate font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                 {[skill.authorHandle, skill.repoName].filter(Boolean).join(" / ") || skill.slug}
               </span>
               {skill.updatedAt ? (
-                <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text/60">
+                <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground/60">
                   <TimeValue locale={locale} time={skill.updatedAt} />
                 </span>
               ) : null}
@@ -37,7 +37,7 @@ export function DashboardSkillCard({ skill }: { skill: SkillItem }) {
             </CardTitle>
           </div>
           {skill.latestVersion ? (
-            <span className="inline-flex shrink-0 items-center gap-1.5 border bg-paper px-2 py-1 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text">
+            <span className="inline-flex shrink-0 items-center gap-1.5 border bg-background px-2 py-1 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
               <CodeIcon className="size-3" />
               {skill.latestVersion}
             </span>
@@ -50,7 +50,7 @@ export function DashboardSkillCard({ skill }: { skill: SkillItem }) {
         </p>
         <div className="flex items-center justify-end">
           <Link
-            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground transition-colors hover:text-foreground"
             to={detailPath}
           >
             {m.dashboard_skills_view_skill()} <ArrowRightIcon className="size-3" />

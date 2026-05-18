@@ -94,7 +94,7 @@ function RouteComponent() {
                   <div className="flex flex-wrap items-center gap-3">
                     {/** TODO */}
                     <span
-                      className={`flex items-center gap-1.5 font-mono text-sm tracking-wide ${entry.isCurrent ? "text-editorial-red" : "text-ink"}`}
+                      className={`flex items-center gap-1.5 font-mono text-sm tracking-wide ${entry.isCurrent ? "text-editorial-red" : "text-foreground"}`}
                     >
                       {entry.isCurrent ? <TriangleIcon /> : <CircleIcon />}
                       <b className="font-semibold">v.{entry.version}</b>
@@ -117,7 +117,7 @@ function RouteComponent() {
                     {commitUrl ? (
                       <a
                         aria-label={m.skill_changelog_open_commit_link()}
-                        className="border-border hover:bg-paper-2 inline-flex size-8 items-center justify-center border transition-colors"
+                        className="border-border hover:bg-muted inline-flex size-8 items-center justify-center border transition-colors"
                         href={commitUrl}
                         rel="noreferrer"
                         target="_blank"
@@ -143,9 +143,9 @@ function RouteComponent() {
           })}
         </div>
       ) : (
-        <div className="border-border bg-paper-2 border px-5 py-6">
+        <div className="border-border bg-muted border px-5 py-6">
           <div className="eyebrow text-editorial-red mb-2">{m.skill_changelog_empty_eyebrow()}</div>
-          <p className="text-ink-2 m-0 max-w-110">{m.skill_changelog_empty_body()}</p>
+          <p className="text-muted-foreground m-0 max-w-110">{m.skill_changelog_empty_body()}</p>
         </div>
       )}
     </div>

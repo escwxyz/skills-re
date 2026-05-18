@@ -18,7 +18,7 @@ export const NotFound = () => (
         <h1 className="mt-6 font-serif text-[clamp(28px,4vw,42px)] font-bold italic text-foreground">
           {m.error_404_title()}
         </h1>
-        <p className="text-ink-2 mt-3 max-w-2xl font-serif text-[18px] leading-[1.6]">
+        <p className="text-muted-foreground mt-3 max-w-2xl font-serif text-[18px] leading-[1.6]">
           {m.error_404_description()}
         </p>
         <div className="mt-8">

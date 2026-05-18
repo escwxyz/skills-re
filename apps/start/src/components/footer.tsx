@@ -1,11 +1,10 @@
-import { GithubLogoIcon, XLogoIcon } from "@phosphor-icons/react";
-import type { IconProps } from "@phosphor-icons/react";
+import { GithubLogoIcon, XLogoIcon, DiscordLogoIcon } from "@phosphor-icons/react";
+
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import type { ForwardRefExoticComponent } from "react";
 import { CookieConsent } from "@/components/cookie-consent";
 
 interface InternalItem {
@@ -18,7 +17,7 @@ interface ExternalItem {
   label: string;
   href: string;
   external: true;
-  Icon?: ForwardRefExoticComponent<IconProps>;
+  Icon?: React.ComponentType;
 }
 
 type MenuItem = InternalItem | ExternalItem;
@@ -38,7 +37,7 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
   {
     title: m.footer_legal_title(),
     children: [
-      { label: m.footer_legal_imprint(), href: "/imprint" },
+      // { label: m.footer_legal_imprint(), href: "/imprint" },
       { label: m.footer_legal_terms(), href: "/terms" },
       { label: m.footer_legal_privacy(), href: "/privacy" },
       { label: m.footer_legal_cookies(), href: "/cookies" },
@@ -57,6 +56,12 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
         label: "X(Twitter)",
         Icon: XLogoIcon,
         href: "https://x.com/skills_re",
+        external: true,
+      },
+      {
+        label: "Discord",
+        Icon: DiscordLogoIcon,
+        href: "https://discordapp.com/users/352134766738407424",
         external: true,
       },
     ],
@@ -90,7 +95,7 @@ export const Footer = ({ className }: Props) => {
         {FOOTER_MENUS.map((menu) => (
           <div key={String(menu.title)}>
             <h6 className="mb-3 font-mono text-base uppercase">{menu.title}</h6>
-            <ul className="text-muted-foreground m-0 list-none p-0 font-mono text-sm">
+            <ul className="text-muted-foreground m-0 list-none p-0 font-mono text-sm space-y-1.5">
               {menu.children.map((item) => (
                 <li key={item.href} className="flex items-center gap-1.5">
                   {item.external ? (
@@ -117,12 +122,12 @@ export const Footer = ({ className }: Props) => {
         <div className="flex items-center gap-4">
           <CookieConsent />
           <LanguageSwitcher />
-          <p className="flex items-center gap-2 uppercase">
+          {/* <p className="flex items-center gap-2 uppercase">
             Status:{" "}
             <span className="animate-pulse rounded border px-1 border-chart-2/20 bg-chart-2/10 text-chart-2">
               OK
             </span>
-          </p>
+          </p> */}
         </div>
       </div>
     </footer>

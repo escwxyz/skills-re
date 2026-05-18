@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { z } from "zod/v4";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,11 +13,7 @@ import { BrowseSkillsGrid } from "@/components/browse-skills-grid";
 import { BrowseStatsRow } from "@/components/browse-stats-row";
 import { SearchFocusBackdrop } from "@/components/search-focus-backdrop";
 import { SemanticSearchResults } from "@/components/semantic-search-results";
-import {
-  isLoginDialogOpenAtom,
-  loginDialogDescriptionAtom,
-  loginDialogTitleAtom,
-} from "@/atoms/app";
+import { loginDialogAtom } from "@/atoms/app";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getSkillsBrowseMeta } from "@/functions/skills/get-skills-browse-meta";
 import { getSkillsSearch } from "@/functions/skills/get-skills-search";
@@ -78,9 +74,7 @@ function RouteComponent() {
   const navigate = useNavigate({ from: "/skills/" });
   const { currentUser } = useRouteContext({ from: "__root__" });
   const isMobile = useIsMobile();
-  const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
-  const setLoginDialogTitle = useSetAtom(loginDialogTitleAtom);
-  const setLoginDialogDescription = useSetAtom(loginDialogDescriptionAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
   const [browseResultCount, setBrowseResultCount] = useState(0);
   const [isSearchBlocked, setIsSearchBlocked] = useState(false);
@@ -91,12 +85,17 @@ function RouteComponent() {
   const semanticQueryText = (search.q ?? "").trim();
   const searchSkills = useServerFn(getSkillsSearch);
   const isSearchInputLocked = isSearchBlocked && currentUser === null;
-  const browseFilters = normalizeSkillsBrowseFilters({
-    category: search.category,
-    q: search.q,
-    sort: search.sort,
-    tag: [...new Set([...(search.tag ?? []), ...(search.tags ?? [])])],
-  });
+  const browseFilters = useMemo(
+    () =>
+      normalizeSkillsBrowseFilters({
+        category: search.category,
+        q: search.q,
+        sort: search.sort,
+        tag: [...new Set([...(search.tag ?? []), ...(search.tags ?? [])])],
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [search.category, search.q, search.sort, search.tag?.join("|"), search.tags?.join("|")],
+  );
 
   const semanticQuery = useQuery<SemanticSearchData, Error>({
     enabled: isSearchMode && semanticQueryText.length > 0 && !isSearchInputLocked,
@@ -147,18 +146,14 @@ function RouteComponent() {
       isRateLimitedSearchError(semanticQuery.error)
     ) {
       setIsSearchBlocked(true);
-      setLoginDialogTitle("Search limit reached");
-      setLoginDialogDescription(semanticQuery.error.message);
-      setLoginDialogOpen(true);
+      setLoginDialog({
+        open: true,
+        onlyGithub: false,
+        title: "Search limit reached",
+        description: semanticQuery.error.message,
+      });
     }
-  }, [
-    currentUser,
-    semanticQuery.error,
-    setLoginDialogDescription,
-    setLoginDialogOpen,
-    setLoginDialogTitle,
-    setIsSearchBlocked,
-  ]);
+  }, [currentUser, semanticQuery.error, setLoginDialog, setIsSearchBlocked]);
   const semanticItems = semanticQuery.data?.page ?? [];
   const semanticMeta = semanticQuery.data?.ai
     ? {
@@ -167,7 +162,7 @@ function RouteComponent() {
       }
     : undefined;
 
-  const enterSearchMode = () => {
+  const enterSearchMode = useCallback(() => {
     if (isSearchMode) {
       return;
     }
@@ -180,9 +175,9 @@ function RouteComponent() {
         mode: "search",
       }),
     });
-  };
+  }, [isSearchMode, navigate]);
 
-  const submitSearch = () => {
+  const submitSearch = useCallback(() => {
     if (submitTimerRef.current) {
       clearTimeout(submitTimerRef.current);
     }
@@ -198,9 +193,9 @@ function RouteComponent() {
         }),
       });
     }, 300);
-  };
+  }, [searchDraft, navigate]);
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchDraft("");
     void navigate({
       replace: true,
@@ -211,7 +206,7 @@ function RouteComponent() {
         q: undefined,
       }),
     });
-  };
+  }, [navigate]);
 
   return (
     <>
@@ -243,7 +238,7 @@ function RouteComponent() {
           {m.skills_browse_title()}
         </PageHero>
 
-        <div className="relative z-20 flex items-start bg-paper">
+        <div className="relative z-20 flex items-start bg-background">
           {isSearchMode ? null : (
             <BrowseFiltersSidebar
               categories={browseMeta.categories}

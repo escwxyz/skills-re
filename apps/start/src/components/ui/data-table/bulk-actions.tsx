@@ -187,7 +187,7 @@ export function DataTableBulkActions<TData>({
             </TooltipContent>
           </Tooltip>
 
-          <Separator className="h-5" orientation="vertical" aria-hidden="true" />
+          <Separator className="h-5" orientation="vertical" aria-hidden />
 
           <div className="flex items-center gap-x-1 text-sm" id="bulk-actions-description">
             <Badge
@@ -204,7 +204,7 @@ export function DataTableBulkActions<TData>({
             selected
           </div>
 
-          <Separator className="h-5" orientation="vertical" aria-hidden="true" />
+          <Separator className="h-5" orientation="vertical" aria-hidden />
 
           {children}
         </div>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import {
   createFileRoute,
@@ -19,7 +19,8 @@ import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { recordSkillView } from "@/functions/skills/record-skill-view";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
-import { skill_detail_verified } from "@/paraglide/messages";
+import { skill_detail_read_full_description, skill_detail_verified } from "@/paraglide/messages";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
@@ -83,6 +84,8 @@ function RouteComponent() {
   const location = useLocation();
 
   const isMobile = useIsMobile();
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const [isDescClipped, setIsDescClipped] = useState(false);
 
   const { author, repo, slug } = Route.useParams();
   const { skill } = data;
@@ -106,6 +109,13 @@ function RouteComponent() {
       wait: 1000,
     },
   );
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsDescClipped(el.scrollHeight > el.clientHeight);
+    }
+  }, [skill.description]);
 
   useEffect(() => {
     if (!skill.id) {
@@ -139,9 +149,26 @@ function RouteComponent() {
             ) : null}
           </h1>
 
-          <p className="text-muted-foreground m-0 mb-7 max-w-170 font-serif text-lg">
-            {skill.description}
-          </p>
+          <div className="mb-7 space-y-2">
+            <p
+              ref={descRef}
+              className="text-muted-foreground m-0 max-w-170 font-serif text-lg line-clamp-3"
+            >
+              {skill.description}
+            </p>
+            {isDescClipped && (
+              <Dialog>
+                <DialogTrigger className="font-mono text-[10.5px] uppercase tracking-[.14em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  {skill_detail_read_full_description()}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  <p className="font-serif text-base text-foreground/80 leading-relaxed">
+                    {skill.description}
+                  </p>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
 
           <div className="flex justify-between items-center gap-2">
             <div className="space-y-4">

@@ -27,7 +27,7 @@ export const BrowseSkillList = ({ skills }: Props) => {
   return (
     <div className="divide-rule divide-y">
       <div
-        className={`grid border-border border-b bg-muted/25 px-6 py-2.5 font-mono text-[10px] tracking-[.12em] uppercase text-muted-text ${colsCls}`}
+        className={`grid border-border border-b bg-muted/25 px-6 py-2.5 font-mono text-[10px] tracking-[.12em] uppercase text-muted-foreground ${colsCls}`}
       >
         <span>Title</span>
         <span>Description</span>
@@ -63,12 +63,12 @@ export const BrowseSkillList = ({ skills }: Props) => {
               className={`grid items-center px-6 py-3.5 transition-colors hover:bg-muted/40 ${colsCls}`}
             >
               <div className="min-w-0 pr-4">
-                <div className="truncate font-display font-semibold text-sm text-ink">
+                <div className="truncate font-display font-semibold text-sm text-foreground">
                   {skill.title}
                 </div>
               </div>
               <div className="min-w-0 pr-6">
-                <div className="truncate text-xs text-muted-text">{skill.description}</div>
+                <div className="truncate text-xs text-muted-foreground">{skill.description}</div>
               </div>
               <div className="flex min-w-0 items-center gap-1.5">
                 <Avatar className="size-4 shrink-0 rounded-none border-0 bg-background shadow-none after:rounded-none">
@@ -79,23 +79,25 @@ export const BrowseSkillList = ({ skills }: Props) => {
                       src={authorAvatarUrl}
                     />
                   ) : null}
-                  <AvatarFallback className="rounded-none bg-ink font-mono text-[8px] text-paper">
+                  <AvatarFallback className="rounded-none bg-foreground font-mono text-[8px] text-background">
                     {authorInitial}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate text-xs text-muted-text">{authorHandle}</span>
+                <span className="truncate text-xs text-muted-foreground">{authorHandle}</span>
               </div>
-              <div className="truncate text-muted-text text-xs">{categoryLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">{downloadsLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">{starsLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">
+              <div className="truncate text-muted-foreground text-xs">{categoryLabel}</div>
+              <div className="truncate font-mono text-muted-foreground text-xs">
+                {downloadsLabel}
+              </div>
+              <div className="truncate font-mono text-muted-foreground text-xs">{starsLabel}</div>
+              <div className="truncate font-mono text-muted-foreground text-xs">
                 {updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
               </div>
             </Link>
           );
         })
       ) : (
-        <div className="px-6 py-12 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-text">
+        <div className="px-6 py-12 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-foreground">
           {m.skills_browse_no_matches()}
         </div>
       )}

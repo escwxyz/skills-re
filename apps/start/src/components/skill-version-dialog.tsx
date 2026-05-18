@@ -66,7 +66,7 @@ export const SkillVersionDialog = ({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
         className={cn(
-          "border-border hover:bg-paper-2 flex items-center justify-between gap-3 border px-4 py-3 text-left transition-colors",
+          "border-border hover:bg-muted flex items-center justify-between gap-3 border px-4 py-3 text-left transition-colors",
           triggerClassName,
         )}
       >
@@ -101,7 +101,7 @@ export const SkillVersionDialog = ({
                     type="button"
                     className={cn(
                       "flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors",
-                      isPending ? "bg-paper-2" : "hover:bg-paper-2",
+                      isPending ? "bg-muted" : "hover:bg-muted",
                     )}
                     aria-pressed={isPending}
                     onClick={() => setPendingSnapshotId(version.snapshotId)}
@@ -131,7 +131,7 @@ export const SkillVersionDialog = ({
         <div className="border-border flex items-center justify-end gap-4 border-t px-5 py-4">
           <button
             type="button"
-            className="border-border bg-background hover:bg-paper-2 disabled:text-muted-foreground disabled:hover:bg-background border px-4 py-2 font-mono text-[10px] uppercase tracking-[.14em] transition-colors disabled:cursor-not-allowed"
+            className="border-border bg-background hover:bg-muted disabled:text-muted-foreground disabled:hover:bg-background border px-4 py-2 font-mono text-[10px] uppercase tracking-[.14em] transition-colors disabled:cursor-not-allowed"
             disabled={!canSwitch}
             onClick={() => {
               if (!pendingSnapshotId || !canSwitch) {

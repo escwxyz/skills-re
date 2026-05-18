@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Link } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
@@ -48,7 +48,7 @@ export const BrowseSkillsGrid = ({
   const viewMode = useAtomValue(skillsViewModeAtom);
   const getInitialPage = useServerFn(getSkillsBrowseInitialPage);
   const getPagination = useServerFn(getSkillsBrowsePagination);
-  const browseInput = buildBrowseInput(filters);
+  const browseInput = useMemo(() => buildBrowseInput(filters), [filters]);
 
   const query = useInfiniteQuery<SkillsBrowsePageSlice, Error>({
     getNextPageParam: (lastPage) =>
@@ -115,7 +115,7 @@ export const BrowseSkillsGrid = ({
     return (
       <div className="border-border border-t border-l px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase text-destructive">
         <div className="mb-2">{m.dashboard_skills_failed()}</div>
-        <div className="text-muted-text">{m.dashboard_skills_failed_description()}</div>
+        <div className="text-muted-foreground">{m.dashboard_skills_failed_description()}</div>
         <div className="mt-4">
           <Button onClick={() => query.refetch()}>{m.error_component_try_again_later()}</Button>
         </div>
@@ -168,10 +168,10 @@ export const BrowseSkillsGrid = ({
           ) : (
             <motion.div
               layout
-              className="col-span-full px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-text"
+              className="col-span-full px-6 py-16 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-foreground"
             >
               {m.skills_browse_no_matches()}{" "}
-              <Link className="text-ink underline underline-offset-3" to="/skills">
+              <Link className="text-foreground underline underline-offset-3" to="/skills">
                 {m.skills_browse_clear_all()}
               </Link>
             </motion.div>

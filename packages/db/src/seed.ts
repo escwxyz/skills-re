@@ -366,7 +366,7 @@ const SKILLS: SkillDef[] = [
     title: "TypeScript Type Guard Generator",
     slug: "typescript-type-guard-generator",
     description:
-      "Generates runtime type guards from TypeScript interfaces and union types. Paste your type definition and get a fully-typed, tree-shakeable guard function with exhaustive checks.",
+      "Generates runtime type guards from TypeScript interfaces, union types, and discriminated unions. Paste any type definition — from a simple object to a deeply nested conditional type — and receive a fully-typed, tree-shakeable guard function with exhaustive narrowing, optional unknown-input validation, and JSDoc comments. Supports generics, index signatures, mapped types, and template literal types. Output is compatible with strict mode and works seamlessly with libraries like Zod, io-ts, and Effect.",
     category: "code-craft",
     repoOwner: "anthropics-labs",
     tags: ["typescript", "code-review"],
@@ -400,7 +400,7 @@ const SKILLS: SkillDef[] = [
     title: "React Component Refactoring Assistant",
     slug: "react-component-refactoring",
     description:
-      "Analyzes a React component and suggests refactors: extracts hooks, splits oversized renders, memoizes correctly, and removes anti-patterns. Works with class and function components.",
+      "Analyzes a React component and suggests targeted refactors: extracts custom hooks, splits oversized render trees into composable children, memoizes with useMemo and useCallback where it actually helps, and removes common anti-patterns like prop drilling, inline object creation in JSX, and stale closure bugs. Works with both class and function components, understands concurrent mode constraints, and explains each suggestion so you learn — not just copy-paste.",
     category: "code-craft",
     repoOwner: "anthropics-labs",
     tags: ["react", "refactoring", "typescript"],
@@ -429,7 +429,7 @@ const SKILLS: SkillDef[] = [
     title: "Git Commit Message Writer",
     slug: "git-commit-message-writer",
     description:
-      "Writes conventional commit messages from a git diff or plain-text description. Respects conventional-commits spec, handles multi-scope changes, and optionally adds a body.",
+      "Writes conventional commit messages from a git diff or a plain-text change summary. Respects the Conventional Commits spec, handles multi-scope changes gracefully, and optionally adds a body with motivation and breaking-change notes.",
     category: "code-craft",
     repoOwner: "devpro",
     tags: ["git", "documentation"],
@@ -446,7 +446,7 @@ const SKILLS: SkillDef[] = [
     title: "Code Review Annotator",
     slug: "code-review-annotator",
     description:
-      "Reviews a pull request diff and produces structured inline comments: logic bugs, style nits, security concerns, and missing test coverage — in the format your team already uses.",
+      "Reviews a pull request diff and produces structured inline comments covering logic bugs, style nits, security concerns, and missing test coverage — formatted to match your team's existing PR conventions. Understands context across files, avoids flagging intentional patterns, and ranks findings by severity so reviewers know where to focus first.",
     category: "code-craft",
     repoOwner: "craftsman-dev",
     tags: ["code-review", "typescript"],
@@ -462,7 +462,7 @@ const SKILLS: SkillDef[] = [
     title: "Unit Test Case Generator",
     slug: "unit-test-case-generator",
     description:
-      "Generates comprehensive unit tests for a function or class: happy paths, edge cases, and error branches. Outputs in Jest, Vitest, or pytest depending on your stack.",
+      "Generates comprehensive unit tests for a function or class: happy paths, edge cases, and error branches. Outputs in Jest, Vitest, or pytest.",
     category: "code-craft",
     repoOwner: "anthropics-labs",
     tags: ["testing", "typescript"],

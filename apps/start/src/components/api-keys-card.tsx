@@ -8,7 +8,7 @@ import { useAppForm } from "@/hooks/form-hook";
 import { authClient } from "@/lib/auth-client";
 import { m } from "@/paraglide/messages";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
+import { FieldLabel, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
@@ -89,13 +89,13 @@ export function ApiKeysCard() {
   });
 
   return (
-    <Card className="rounded-none border-rule/70 bg-background">
-      <CardHeader className="border-b border-rule/60 pb-3">
-        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+    <Card className="rounded-none border-border/70 bg-background">
+      <CardHeader className="border-b border-border/60 pb-3">
+        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
           {m.dashboard_settings_api_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-display text-[1.35rem] leading-none tracking-[-0.03em]">
-          <KeyIcon className="size-5 text-muted-text" />
+          <KeyIcon className="size-5 text-muted-foreground" />
           {m.dashboard_settings_api_title()}
         </CardTitle>
       </CardHeader>
@@ -115,12 +115,9 @@ export function ApiKeysCard() {
             <form.AppField name="name">
               {(field) => (
                 <div className="space-y-1">
-                  <label
-                    className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text"
-                    htmlFor="api-key-name"
-                  >
+                  <FieldLabel className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                     {m.dashboard_settings_api_key_label()}
-                  </label>
+                  </FieldLabel>
                   <Input
                     autoComplete="off"
                     className="h-10"
@@ -170,13 +167,13 @@ export function ApiKeysCard() {
             apiKeys.map((key) => {
               const isDeleting = deletingId === key.id;
               return (
-                <div key={key.id} className="border border-rule/70 bg-paper/70 p-4">
+                <div key={key.id} className="border border-border/70 bg-background/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="font-display text-[18px] leading-[1.1]">
                         {key.name ?? m.dashboard_settings_api_unnamed_key()}
                       </p>
-                      <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text">
+                      <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
                         {key.prefix && key.start
                           ? `${key.prefix}${key.start}`
                           : (key.start ?? m.dashboard_settings_api_no_prefix())}{" "}
@@ -199,7 +196,7 @@ export function ApiKeysCard() {
                     </button>
                   </div>
 
-                  <p className="mt-3 text-[12px] leading-normal text-muted-text">
+                  <p className="mt-3 text-[12px] leading-normal text-muted-foreground">
                     {m.dashboard_settings_api_requests_window({ count: key.requestCount ?? 0 })}
                     {key.remaining === null || key.remaining === undefined
                       ? ""
@@ -209,11 +206,11 @@ export function ApiKeysCard() {
               );
             })
           ) : isLoading ? (
-            <p className="text-[13px] leading-normal text-muted-text">
+            <p className="text-[13px] leading-normal text-muted-foreground">
               {m.dashboard_settings_api_loading()}
             </p>
           ) : (
-            <p className="text-[13px] leading-normal text-muted-text">
+            <p className="text-[13px] leading-normal text-muted-foreground">
               {m.dashboard_settings_api_empty()}
             </p>
           )}

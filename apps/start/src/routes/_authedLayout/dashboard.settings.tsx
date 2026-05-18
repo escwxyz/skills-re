@@ -35,16 +35,16 @@ function SettingsRoute() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <section className="border bg-paper p-6 shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
+      <section className="border bg-background p-6 shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted-text">
+            <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted-foreground">
               {m.dashboard_settings_eyebrow()}
             </div>
             <h1 className="mt-3 font-display text-[clamp(2.2rem,4vw,4rem)] leading-[0.92] tracking-[-0.04em]">
               {m.dashboard_settings_title()}
             </h1>
-            <p className="mt-4 max-w-2xl text-[13px] leading-[1.65] text-muted-text">
+            <p className="mt-4 max-w-2xl text-[13px] leading-[1.65] text-muted-foreground">
               {m.dashboard_settings_description({ handle: displayHandle })}
             </p>
           </div>

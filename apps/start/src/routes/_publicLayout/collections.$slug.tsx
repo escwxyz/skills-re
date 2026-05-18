@@ -117,13 +117,13 @@ function RouteComponent() {
       <section className="border-border grid grid-cols-1 border-b md:grid-cols-[1fr_2fr] lg:grid-cols-3">
         <aside className="border-border border-b px-5 py-8 font-mono text-[11px] leading-relaxed text-muted-foreground md:border-r md:border-b-0 md:px-7">
           <b className="text-foreground mb-1.5 block font-medium tracking-widest uppercase">
-            § {collections_page_editors_note()}
+            {collections_page_editors_note()}
           </b>
           {collections_page_working_collection()}
           <br />
           <br />
           <b className="text-foreground mb-1.5 block font-medium tracking-widest uppercase">
-            § {collections_page_mount_all()}
+            {collections_page_mount_all()}
           </b>
           <span className="text-foreground break-all tracking-wider">
             skr install @skills.re/{data.slug}
@@ -138,7 +138,7 @@ function RouteComponent() {
 
         <aside className="hidden px-5 py-8 font-mono text-[11px] leading-relaxed text-muted-foreground md:px-7 lg:block">
           <b className="text-foreground mb-1.5 block font-medium tracking-widest uppercase">
-            § {collections_page_in_this_collection()}
+            {collections_page_in_this_collection()}
           </b>
           <div className="mt-2 leading-loose">
             {skills.map((s, i) => (

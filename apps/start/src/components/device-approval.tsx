@@ -66,7 +66,7 @@ export function DeviceApproval({ currentUser, userCode = "" }: Props) {
     <div className="flex min-h-[calc(100vh-var(--header-height))] items-center justify-center px-6 py-12">
       <Card className="w-full max-w-xl rounded-none border-border/70 bg-background">
         <CardHeader className="border-b border-border/60">
-          <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+          <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
             Device approval
           </CardDescription>
           <CardTitle className="mt-2 font-serif text-[clamp(1.8rem,2.5vw,2.6rem)] leading-[0.96] tracking-[-0.03em]">
@@ -89,7 +89,7 @@ export function DeviceApproval({ currentUser, userCode = "" }: Props) {
             >
               {(field) => (
                 <Field className="space-y-2">
-                  <FieldLabel className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+                  <FieldLabel className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-foreground">
                     User code
                   </FieldLabel>
                   <InputOTP maxLength={8} value={field.state.value} onChange={field.handleChange}>

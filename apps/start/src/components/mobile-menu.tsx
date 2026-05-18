@@ -64,7 +64,7 @@ export const MobileMenu = () => {
         </button>
       </DrawerTrigger>
 
-      <DrawerContent className="border-b border-border bg-paper data-[vaul-drawer-direction=top]:mb-0 data-[vaul-drawer-direction=top]:h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:max-h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:mt-(--header-height)">
+      <DrawerContent className="border-b border-border bg-background data-[vaul-drawer-direction=top]:mb-0 data-[vaul-drawer-direction=top]:h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:max-h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:mt-(--header-height)">
         <DrawerHeader className="border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">

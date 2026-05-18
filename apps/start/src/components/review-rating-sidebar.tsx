@@ -54,7 +54,7 @@ export const ReviewRatingSidebar = ({
           >
             <span className="text-muted-foreground">{stars}</span>
             <div className="h-1 bg-rule">
-              <div className="h-full bg-ink" style={{ width: `${pct}%` }} />
+              <div className="h-full bg-foreground" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-right text-muted-foreground">{count}</span>
           </div>
@@ -69,7 +69,7 @@ export const ReviewRatingSidebar = ({
           {mentionedTags.map((tag) => (
             <span
               key={tag}
-              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-ink-2"
+              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground"
             >
               {tag}
             </span>

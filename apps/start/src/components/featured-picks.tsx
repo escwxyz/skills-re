@@ -37,12 +37,14 @@ export const FeaturedPicks = ({ picks }: Props) => {
           <br />
           {featured_picks_unexpectedly_legible()}
         </h3>
-        <p className="font-serif text-[18px] leading-normal text-ink-2">{featured.description}</p>
+        <p className="font-serif text-[18px] leading-normal text-muted-foreground">
+          {featured.description}
+        </p>
         <div className="mt-4 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
           {featuredVersionLabel} · installs{" "}
           <b className="font-medium text-foreground">{featuredInstallsLabel}</b>
         </div>
-        <div className="ph mt-4.5 aspect-video border border-border bg-paper-2">
+        <div className="ph mt-4.5 aspect-video border border-border bg-muted">
           <span className="ph-label">
             {featured_picks_feature_screenshot()} — {featured.title}
           </span>
@@ -75,7 +77,7 @@ export const FeaturedPicks = ({ picks }: Props) => {
               <div className="font-display my-0.5 mb-1 text-[22px] leading-[1.1]">
                 {skill.title}
               </div>
-              <div className="font-serif text-[13px] leading-[1.4] text-ink-2">
+              <div className="font-serif text-[13px] leading-[1.4] text-muted-foreground">
                 {skill.description}
               </div>
             </div>

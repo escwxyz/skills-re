@@ -29,14 +29,16 @@ export const SkillMdFrontmatter = (props: SkillFrontmatterData) => {
         {m.skill_detail_frontmatter()}
       </h6>
       {fields.map((item) => (
-        <div key={item.label} className="border-border text-ink-2 border-t py-2">
-          <b className="text-ink block font-medium">{item.label}</b>
+        <div key={item.label} className="border-border text-muted-foreground border-t py-2">
+          <b className="text-foreground block font-medium">{item.label}</b>
           {item.value}
         </div>
       ))}
       {metadataEntries.length > 0 && (
-        <div className="border-border text-ink-2 border-t py-2">
-          <b className="text-ink block font-medium">{m.skill_detail_frontmatter_metadata()}</b>
+        <div className="border-border text-muted-foreground border-t py-2">
+          <b className="text-foreground block font-medium">
+            {m.skill_detail_frontmatter_metadata()}
+          </b>
           {metadataEntries.map(([key, value]) => (
             <div key={key}>
               <span className="text-muted-foreground">{key}:</span> {value}

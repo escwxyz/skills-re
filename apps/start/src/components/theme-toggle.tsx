@@ -37,7 +37,7 @@ export const ThemeToggle = ({ className }: { className?: string }) => {
       onClick={toggle}
       className={className}
     >
-      <Icon aria-hidden="true" className="size-5" />
+      <Icon size={16} />
     </button>
   );
 };

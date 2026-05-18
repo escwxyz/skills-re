@@ -35,7 +35,7 @@ function App() {
         <div className="section-title">
           <h3>{m.home_hero_skill_categories()}</h3>
           <div className="eyebrow">
-            § browse by category - <Link to="/categories">{m.home_hero_view_all()}</Link>
+            browse by category - <Link to="/categories">{m.home_hero_view_all()}</Link>
           </div>
         </div>
         <div className="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-4">

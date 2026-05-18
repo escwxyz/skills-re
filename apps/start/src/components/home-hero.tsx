@@ -41,7 +41,7 @@ export const HomeHero = () => (
         <em>{home_hero_instruction()}</em>
         {home_hero_not_an_install()}
       </h2>
-      <p className="text-ink-2 mb-5 max-w-155 font-serif text-[20px] leading-[1.4]">
+      <p className="text-muted-foreground mb-5 max-w-155 font-serif text-[20px] leading-[1.4]">
         {home_hero_description()}
       </p>
       <div className="mt-4.5 mb-2.5 flex flex-wrap gap-3">

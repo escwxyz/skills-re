@@ -82,7 +82,7 @@ export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
           search={{ snapshotId: snapshotId ?? undefined }}
           className={BASE_CLASS}
           activeProps={{ className: "bg-primary text-primary-foreground" }}
-          inactiveProps={{ className: "text-muted-text bg-transparent" }}
+          inactiveProps={{ className: "text-muted-foreground bg-transparent" }}
           activeOptions={tab.exact ? { exact: true } : undefined}
           aria-label={tab.label}
           title={tab.label}

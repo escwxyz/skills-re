@@ -73,17 +73,17 @@ export const SkillCardBrowse = ({ skill }: Props) => {
   const tags = skill.tags ?? [];
 
   return (
-    <div className="group flex h-full flex-col border-b border-r border-border p-5 transition-colors hover:bg-paper-2">
+    <div className="group flex h-full flex-col border-b border-r border-border p-5 transition-colors hover:bg-muted">
       <div className="mb-3 flex items-center justify-between font-mono text-[10px] tracking-[.14em] uppercase">
         <Link
           to="/categories/$slug"
           params={{ slug: skill.primaryCategory ?? "other" }}
-          className="text-muted-text"
+          className="text-muted-foreground"
         >
-          <span className="text-muted-text">{categoryLabel}</span>
+          <span className="text-muted-foreground">{categoryLabel}</span>
         </Link>
 
-        <span className="text-muted-text">
+        <span className="text-muted-foreground">
           {updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
         </span>
       </div>
@@ -98,7 +98,7 @@ export const SkillCardBrowse = ({ skill }: Props) => {
         className="block no-underline hover:no-underline"
       >
         <h3 className="font-display mb-2 text-[22px] font-normal leading-[1.1]">{skill.title}</h3>
-        <p className="text-ink-2 mb-4 line-clamp-3 font-serif text-[13px] leading-normal">
+        <p className="text-muted-foreground mb-4 line-clamp-3 font-serif text-[13px] leading-normal">
           {skill.description}
         </p>
       </Link>
@@ -107,7 +107,7 @@ export const SkillCardBrowse = ({ skill }: Props) => {
         {tags.slice(0, 4).map((tag) => (
           <span
             key={tag}
-            className="border-border text-muted-text border px-1.5 py-0.5 font-mono text-[9px] tracking-[.08em] uppercase"
+            className="border-border text-muted-foreground border px-1.5 py-0.5 font-mono text-[9px] tracking-[.08em] uppercase"
           >
             {tag}
           </span>
@@ -130,24 +130,24 @@ export const SkillCardBrowse = ({ skill }: Props) => {
                   src={authorAvatarUrl}
                 />
               ) : null}
-              <AvatarFallback className="rounded-none bg-ink font-mono text-[9px] text-paper">
+              <AvatarFallback className="rounded-none bg-foreground font-mono text-[9px] text-background">
                 {initial}
               </AvatarFallback>
             </Avatar>
           </Link>
-          <span className="text-muted-text max-w-30 truncate font-mono text-[10px]">
+          <span className="text-muted-foreground max-w-30 truncate font-mono text-[10px]">
             {authorLabel}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-3 font-mono text-[10px] tracking-widest uppercase">
           {starsLabel ? (
-            <span className="text-muted-text flex items-center gap-1">
-              <StarIcon /> <b className="text-ink font-medium">{starsLabel}</b>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <StarIcon /> <b className="text-foreground font-medium">{starsLabel}</b>
             </span>
           ) : null}
           {typeof auditScore === "number" ? (
-            <span className="text-muted-text">
-              Audit <b className="text-ink font-medium">{auditScore}</b>
+            <span className="text-muted-foreground">
+              Audit <b className="text-foreground font-medium">{auditScore}</b>
             </span>
           ) : null}
         </div>

@@ -93,7 +93,7 @@ function RouteComponent() {
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-text">
+            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               Navigation
             </SidebarGroupLabel>
 
@@ -293,7 +293,7 @@ function RouteComponent() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-20 flex h-(--header-height) items-center justify-between border-b  bg-paper/95 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-(--header-height) items-center justify-between border-b  bg-background/95 px-4 backdrop-blur">
           <div className="flex min-w-0 items-center gap-3">
             <SidebarTrigger className="bg-background text-foreground hover:bg-secondary" />
             <div className="min-w-0">

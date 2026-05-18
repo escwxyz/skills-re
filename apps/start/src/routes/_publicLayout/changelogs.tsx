@@ -39,7 +39,7 @@ function RouteComponent() {
     <div className="mx-auto max-w-3xl px-6 py-16">
       <div className="mb-12 border-b pb-8">
         <p className="text-muted-foreground mb-2 font-mono text-[10.5px] tracking-[.14em] uppercase">
-          § Platform
+          Platform
         </p>
         <h1 className="font-display text-5xl font-normal">{m.changelogs_meta_title()}</h1>
         <p className="text-muted-foreground mt-4 font-serif text-lg leading-relaxed">

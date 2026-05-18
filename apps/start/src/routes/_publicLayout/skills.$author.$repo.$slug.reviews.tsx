@@ -96,16 +96,16 @@ function RouteComponent() {
           </>
         ) : (
           <div className="px-4 py-8 md:px-7 md:py-10">
-            <div className="border-border bg-paper-2 border px-5 py-6">
+            <div className="border-border bg-muted border px-5 py-6">
               <div className="eyebrow text-editorial-red mb-2">
                 {m.reviews_page_section_header()}
               </div>
-              <p className="text-ink-2 m-0 max-w-110">{m.reviews_page_empty()}</p>
+              <p className="text-muted-foreground m-0 max-w-110">{m.reviews_page_empty()}</p>
             </div>
           </div>
         )}
 
-        <div className="border-border eyebrow text-muted-text flex items-center justify-between border-t px-4 py-5 md:px-7 md:py-6">
+        <div className="border-border eyebrow text-muted-foreground flex items-center justify-between border-t px-4 py-5 md:px-7 md:py-6">
           <span>{m.reviews_page_showing({ count: loaderData.totalReviews })}</span>
           <span>{m.reviews_page_latest_feedback()}</span>
         </div>

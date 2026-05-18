@@ -84,10 +84,10 @@ const SemanticSearchSkeleton = () => (
 
 const SemanticSearchEmpty = ({ query }: { query: string }) => (
   <div className="border-border border-t px-6 py-16 text-center">
-    <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
+    <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
       {query ? m.semantic_search_no_matches() : m.semantic_search_start_typing()}
     </div>
-    <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">
+    <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
       {query ? m.semantic_search_try_broader_phrase() : m.semantic_search_use_natural_language()}
     </p>
   </div>
@@ -109,7 +109,7 @@ const SemanticSearchHeader = ({
   }
 
   return (
-    <div className="flex items-center justify-between border-border border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+    <div className="flex items-center justify-between border-border border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
       <span>{query ? m.semantic_search_results_for({ query }) : m.semantic_search_title()}</span>
       <span>{statusLabel}</span>
     </div>
@@ -192,9 +192,9 @@ const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem
   }
 
   return (
-    <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-ink-2">
+    <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
       {skill.aiMatch?.sourcePath ? (
-        <div className="mb-1 text-[10px] tracking-[.12em] uppercase text-muted-text">
+        <div className="mb-1 text-[10px] tracking-[.12em] uppercase text-muted-foreground">
           {skill.aiMatch.sourcePath}
         </div>
       ) : null}
@@ -218,19 +218,19 @@ const SemanticResultRow = ({
 
   return (
     <Link
-      className="grid gap-5 border-border border-b px-6 py-6 text-ink no-underline transition-colors hover:bg-paper-2 md:grid-cols-[4.5rem_minmax(0,1fr)_8rem]"
+      className="grid gap-5 border-border border-b px-6 py-6 text-foreground no-underline transition-colors hover:bg-muted md:grid-cols-[4.5rem_minmax(0,1fr)_8rem]"
       to={getSkillHref(skill)}
     >
-      <div className="font-display text-5xl italic leading-none text-muted-text">
+      <div className="font-display text-5xl italic leading-none text-muted-foreground">
         {String(index + 1).padStart(2, "0")}.
       </div>
       <div className="min-w-0">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
+        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
           Skill · {skill.latestVersion ? `v.${skill.latestVersion} · ` : ""}
           {skill.authorHandle ?? "unknown"}
         </div>
         <h3 className="mt-2 font-display text-[30px] font-normal leading-none">{skill.title}</h3>
-        <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-ink-2">
+        <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-muted-foreground">
           {skill.description}
         </p>
         <MatchSnippet query={query} skill={skill} />
@@ -238,7 +238,7 @@ const SemanticResultRow = ({
           <div className="mt-4 flex flex-wrap gap-1.5">
             {skill.tags.slice(0, 5).map((tag) => (
               <span
-                className="border border-border px-2 py-1 font-mono text-[10px] tracking-widest uppercase text-muted-text"
+                className="border border-border px-2 py-1 font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
                 key={tag}
               >
                 {tag}
@@ -247,14 +247,14 @@ const SemanticResultRow = ({
           </div>
         ) : null}
       </div>
-      <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-text md:text-right">
+      <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-foreground md:text-right">
         {score ? (
           <div className="font-display text-3xl italic tracking-normal text-accent">{score}</div>
         ) : null}
         {score ? <div>{m.semantic_search_match_score()}</div> : null}
         <div className="mt-4">
           Inst
-          <b className="block font-display text-base font-normal tracking-normal text-ink">
+          <b className="block font-display text-base font-normal tracking-normal text-foreground">
             {downloads}
           </b>
         </div>
@@ -271,15 +271,15 @@ const SemanticSearchRail = ({
   const tags = getRelatedTags(items);
 
   return (
-    <aside className="hidden border-border border-l bg-paper-2 p-6 xl:block">
+    <aside className="hidden border-border border-l bg-muted p-6 xl:block">
       <div className="border border-border bg-card p-5">
-        <div className="font-serif text-base italic text-ink-2">
+        <div className="font-serif text-base italic text-muted-foreground">
           {m.semantic_search_did_you_mean()}
         </div>
         <div className="mt-4 font-display text-2xl italic">
           {query || m.semantic_search_describe_task()}
         </div>
-        <div className="mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase text-muted-text">
+        <div className="mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase text-muted-foreground">
           {meta
             ? m.semantic_search_matches_count({ count: formatInteger(meta.resultCount) })
             : m.semantic_search_index_label()}
@@ -288,13 +288,13 @@ const SemanticSearchRail = ({
 
       {tags.length ? (
         <section className="mt-8">
-          <h4 className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
+          <h4 className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
             {m.semantic_search_related_tags()}
           </h4>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <Link
-                className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-widest uppercase text-ink no-underline hover:bg-ink hover:text-paper"
+                className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-widest uppercase text-foreground no-underline hover:bg-foreground hover:text-background"
                 key={tag}
                 search={{ tag: [tag] }}
                 to="/skills"
@@ -320,20 +320,24 @@ export const SemanticSearchResults = ({
     if (isRateLimitedSearchError(error)) {
       return (
         <div className="border-border border-t px-6 py-16 text-center">
-          <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
+          <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
             {m.semantic_search_rate_limited()}
           </div>
-          <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
+          <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
+            {error.message}
+          </p>
         </div>
       );
     }
 
     return (
       <div className="border-border border-t px-6 py-16 text-center">
-        <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
+        <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
           {m.semantic_search_unavailable()}
         </div>
-        <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
+        <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
+          {error.message}
+        </p>
       </div>
     );
   }

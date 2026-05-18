@@ -33,11 +33,13 @@ function TabButton({
         "flex min-w-50 flex-1 items-center gap-3.5 border-0 px-5 py-4.5 text-left transition-colors",
         index === 0 && "border-r border-border",
         disabled ? "cursor-not-allowed opacity-40" : "",
-        !disabled && active ? "bg-primary text-primary-foreground" : "bg-transparent text-ink",
+        !disabled && active
+          ? "bg-primary text-primary-foreground"
+          : "bg-transparent text-foreground",
       )}
     >
       <div>
-        <span className="block font-mono text-xs uppercase text-muted-text">{subtitle}</span>
+        <span className="block font-mono text-xs uppercase text-muted-foreground">{subtitle}</span>
         <b className="mt-0.5 block font-display text-lg font-normal normal-case tracking-normal">
           {title}
         </b>

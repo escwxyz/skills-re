@@ -36,13 +36,13 @@ function RouteComponent() {
 
   return (
     <section className="p-4 md:p-6">
-      <div className="mb-1 font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+      <div className="mb-1 font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
         {m.dashboard_skills_published_eyebrow()}
       </div>
       <h2 className="font-display text-[1.6rem] leading-[0.96] tracking-[-0.03em]">
         {m.dashboard_skills_published_title()}
       </h2>
-      <p className="mt-2 text-[13px] leading-[1.6] text-muted-text">
+      <p className="mt-2 text-[13px] leading-[1.6] text-muted-foreground">
         {m.dashboard_skills_published_description({ handle: displayHandle })}
       </p>
 
@@ -54,12 +54,12 @@ function RouteComponent() {
             ))}
           </div>
         ) : (
-          <div className="border border-dashed border-rule bg-background px-5 py-12 text-center">
-            <CodeIcon className="mx-auto size-7 text-muted-text/60" />
+          <div className="border border-dashed border-border bg-background px-5 py-12 text-center">
+            <CodeIcon className="mx-auto size-7 text-muted-foreground/60" />
             <p className="mt-4 font-display text-[1.35rem] leading-none tracking-[-0.03em] text-foreground">
               {m.dashboard_skills_no_published_title()}
             </p>
-            <p className="mx-auto mt-3 max-w-md text-[13px] leading-[1.6] text-muted-text">
+            <p className="mx-auto mt-3 max-w-md text-[13px] leading-[1.6] text-muted-foreground">
               {m.dashboard_skills_no_published_description()}
             </p>
           </div>
