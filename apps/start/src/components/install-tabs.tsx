@@ -12,7 +12,8 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { m } from "@/paraglide/messages";
@@ -85,26 +86,33 @@ const CliToolDropdown = ({
 }: {
   cliTool: CliTool;
   onSelect: (tool: CliTool) => void;
-}) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger className="border-border hover:bg-muted data-popup-open:bg-muted flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
-      <span className="min-w-0 truncate">{CLI_TOOL_LABELS[cliTool]}</span>
-      <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" className="min-w-40">
-      {CLI_TOOLS.map((tool) => (
-        <DropdownMenuItem
-          key={tool}
-          data-current={tool === cliTool}
-          className="data-[current=true]:bg-accent data-[current=true]:text-accent-foreground"
-          onSelect={() => onSelect(tool)}
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger className="border-border hover:bg-muted data-popup-open:bg-muted flex min-w-28 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none">
+        <span className="min-w-0 truncate">{CLI_TOOL_LABELS[cliTool]}</span>
+        <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        <DropdownMenuRadioGroup
+          onValueChange={(value) => {
+            onSelect(value as CliTool);
+            setOpen(false);
+          }}
+          value={cliTool}
         >
-          {CLI_TOOL_LABELS[tool]}
-        </DropdownMenuItem>
-      ))}
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
+          {CLI_TOOLS.map((tool) => (
+            <DropdownMenuRadioItem key={tool} value={tool}>
+              {CLI_TOOL_LABELS[tool]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const CliToolDialog = ({
   cliTool,
