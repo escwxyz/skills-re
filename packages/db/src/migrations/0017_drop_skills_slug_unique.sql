@@ -1,0 +1,1 @@
+DROP INDEX `skills_slug_unique`;
