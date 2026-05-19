@@ -20,14 +20,20 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export type Cli = "npx" | "bunx" | "pnpm";
-export type CliTool = "skills.sh" | "openskills";
+export type CliTool = "skills-re" | "skills.sh" | "openskills";
 
 const CLI_TOOL_LABELS: Record<CliTool, string> = {
+  "skills-re": "skills-re",
   "skills.sh": "skills.sh",
   openskills: "openskills",
 };
 
 const CLI_COMMANDS: Record<CliTool, Record<Cli, string>> = {
+  "skills-re": {
+    npx: "npx @skills-re/cli install",
+    bunx: "bunx @skills-re/cli install",
+    pnpm: "pnpm dlx @skills-re/cli install",
+  },
   "skills.sh": {
     npx: "npx skills add",
     bunx: "bunx skills add",
@@ -41,7 +47,7 @@ const CLI_COMMANDS: Record<CliTool, Record<Cli, string>> = {
 };
 
 const CLI_LABELS: Cli[] = ["npx", "bunx", "pnpm"];
-const CLI_TOOLS: CliTool[] = ["skills.sh", "openskills"];
+const CLI_TOOLS: CliTool[] = ["skills-re", "skills.sh", "openskills"];
 
 interface Props {
   author: string;
@@ -62,6 +68,10 @@ const buildCommand = ({
   repo: string;
   slug: string;
 }) => {
+  if (cliTool === "skills-re") {
+    return `${CLI_COMMANDS[cliTool][cli]} ${author}/${repo}/${slug}`;
+  }
+
   if (cliTool === "openskills") {
     return `${CLI_COMMANDS[cliTool][cli]} ${author}/${repo}`;
   }
@@ -170,7 +180,7 @@ const CliToolPickerResponsive = ({ cliTool, onSelect }: PickerProps) => {
 
 export const InstallTabs = ({ author, repo, slug }: Props) => {
   const [cli, setCli] = useState<Cli>("npx");
-  const [cliTool, setCliTool] = useState<CliTool>("skills.sh");
+  const [cliTool, setCliTool] = useState<CliTool>("skills-re");
   const [copied, setCopied] = useState(false);
 
   const command = buildCommand({ author, cli, cliTool, repo, slug });

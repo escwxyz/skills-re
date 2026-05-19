@@ -3,7 +3,7 @@ export const helpText = `skills-re
 Usage:
   skills-re search <query> [--json]
   skills-re show <slug-or-path> [--json]
-  skills-re install <skill[@version]> [--agent codex] [--dir .codex/skills]
+  skills-re install <author/repo/skill[@version]> [--agent codex] [--dir .codex/skills]
   skills-re update [skill] [--agent codex]
   skills-re list [--json]
   skills-re lock --json

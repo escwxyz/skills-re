@@ -21,7 +21,7 @@ bun packages/cli/src/main.ts --help
 ```bash
 skills-re search "testing" [--json] [--category <csv>] [--tag <csv>] [--sort <sort>] [--limit <n>]
 skills-re show <slug-or-path> [--json]
-skills-re install <skill[@version]> [--agent codex] [--dir .codex/skills]
+skills-re install <author/repo/skill[@version]> [--agent codex] [--dir .codex/skills]
 skills-re install <github-url> [--git] [--agent codex]
 skills-re update [skill] [--agent codex]
 skills-re list [--json]
