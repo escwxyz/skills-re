@@ -41,6 +41,7 @@ const makeSkill = (overrides: Partial<SkillDetail> = {}): SkillDetail => ({
   forkCount: 0,
   id: "skill-1",
   isVerified: false,
+  latestAuditScore: undefined,
   latestSnapshotId: undefined,
   latestVersion: "1.0.0",
   license: undefined,
