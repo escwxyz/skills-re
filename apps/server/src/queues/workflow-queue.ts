@@ -1,3 +1,4 @@
+// oxlint-disable complexity
 import type { RepoStatsSyncWorkflowPayload } from "../workflows/repo-stats";
 import type {
   RepoSkillImportWorkflowPayload,
@@ -5,6 +6,7 @@ import type {
 } from "../workflows/repo-skills-discovery";
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
+import type { AiSearchBackfillWorkflowPayload } from "../workflows/ai-search-backfill";
 import type { WorkerLogger } from "../worker-logger";
 import { createWorkflowQueueLogger } from "../logging";
 import { logWorkflowFailure } from "../workflows/workflow-failure-log";
@@ -44,6 +46,11 @@ interface WorkflowCreateBinding<TPayload> {
 }
 
 export type WorkflowQueueMessage =
+  | {
+      kind: "ai-search-backfill";
+      payload: AiSearchBackfillWorkflowPayload;
+      workflowId: string;
+    }
   | {
       kind: "evaluation";
       payload: EvaluationWorkflowPayload;
@@ -96,6 +103,7 @@ export type WorkflowQueueMessage =
     };
 
 export type WorkflowQueueEnv = Env & {
+  AI_SEARCH_BACKFILL_WORKFLOW?: WorkflowCreateBinding<AiSearchBackfillWorkflowPayload>;
   EVALUATION_WORKFLOW?: WorkflowCreateBinding<EvaluationWorkflowPayload>;
   REPO_SKILL_IMPORT_WORKFLOW?: WorkflowCreateBinding<RepoSkillImportWorkflowPayload>;
   REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoSkillSnapshotSyncWorkflowPayload>;
@@ -160,6 +168,13 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
   if (value.kind === "snapshot-upload" || value.kind === "skills-upload") {
     return typeof (value.payload as Record<string, unknown>).stagingKey === "string";
   }
+  if (value.kind === "ai-search-backfill") {
+    const payload = value.payload as Record<string, unknown>;
+    return (
+      (payload.batchSize === undefined || typeof payload.batchSize === "number") &&
+      (payload.lastSeenId === undefined || typeof payload.lastSeenId === "string")
+    );
+  }
   if (value.kind === "repo-skill-import") {
     const payload = value.payload as Record<string, unknown>;
     return (
@@ -197,6 +212,9 @@ const assertUnreachable = (value: never): never => {
 
 const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
   switch (kind) {
+    case "ai-search-backfill": {
+      return "skills-re-v1-ai-search-backfill";
+    }
     case "evaluation": {
       return "skills-re-v1-evaluation";
     }
@@ -247,6 +265,16 @@ const startWorkflowFromQueueMessage = async (
   env: WorkflowQueueEnv,
 ) => {
   switch (message.kind) {
+    case "ai-search-backfill": {
+      await getWorkflowBinding<AiSearchBackfillWorkflowPayload>(
+        env,
+        "AI_SEARCH_BACKFILL_WORKFLOW",
+      ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
     case "evaluation": {
       await getWorkflowBinding<EvaluationWorkflowPayload>(env, "EVALUATION_WORKFLOW").create({
         id: message.workflowId,

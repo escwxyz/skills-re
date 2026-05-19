@@ -105,6 +105,10 @@ await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
   name: "skills-re-skills-upload-workflow",
   adopt: true,
 });
+await Queue("AI_SEARCH_BACKFILL_WORKFLOW_QUEUE", {
+  name: "skills-re-ai-search-backfill-workflow",
+  adopt: true,
+});
 await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
   name: "skills-re-skills-tagging-workflow",
   adopt: true,
@@ -155,6 +159,10 @@ const repoSkillSnapshotSyncWorkflowQueue = await Queue(
 
 const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-upload-workflow",
+});
+
+const aiSearchBackfillWorkflowQueue = await Queue("AI_SEARCH_BACKFILL_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-ai-search-backfill-workflow",
 });
 
 const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE_V1", {
@@ -253,6 +261,13 @@ const workflowQueueEventSources = [
     },
   },
   {
+    queue: aiSearchBackfillWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 2000,
+    },
+  },
+  {
     queue: snapshotUploadWorkflowQueue0,
     settings: {
       batchSize: 1,
@@ -342,6 +357,7 @@ const workflowQueueBindings = {
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE: skillsCategorizationWorkflowQueue,
   SKILLS_TAGGING_WORKFLOW_QUEUE: skillsTaggingWorkflowQueue,
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
+  AI_SEARCH_BACKFILL_WORKFLOW_QUEUE: aiSearchBackfillWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2: snapshotUploadWorkflowQueue2,

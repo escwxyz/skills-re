@@ -1,9 +1,14 @@
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { AiSearchItemsRuntime, SnapshotStorageRuntime } from "@skills-re/api/types";
-import type { AiSearchBackfillWorkflowPayload } from "./ai-search-backfill";
+import type {
+  AiSearchBackfillWorkflowPayload,
+  AiSearchBackfillWorkflowScheduler,
+} from "./ai-search-backfill";
 import type { AiSearchBackfillRow } from "@skills-re/api/modules/skills/repo";
 
-const DEFAULT_BATCH_SIZE = 50;
+const DEFAULT_BATCH_SIZE = 10;
+const MAX_BATCH_SIZE = 10;
+const CONTINUATION_DELAY_SECONDS = 1200;
 
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
@@ -20,6 +25,7 @@ export interface AiSearchBackfillWorkflowDeps {
     lastSeenId?: string;
   }) => Promise<AiSearchBackfillRow[]>;
   snapshotStorage: SnapshotStorageRuntime;
+  scheduleContinuation?: AiSearchBackfillWorkflowScheduler | null;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
 }
 
@@ -28,7 +34,10 @@ export const runAiSearchBackfillWorkflow = async (
   step: WorkflowStep,
   deps: AiSearchBackfillWorkflowDeps,
 ) => {
-  const batchSize = event.payload.batchSize ?? DEFAULT_BATCH_SIZE;
+  const batchSize = Math.max(
+    1,
+    Math.min(event.payload.batchSize ?? DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE),
+  );
   const { lastSeenId } = event.payload;
 
   const skills = await step.do(
@@ -77,6 +86,23 @@ export const runAiSearchBackfillWorkflow = async (
           skillId: skill.skillId,
         });
       },
+    );
+  }
+
+  if (nextLastSeenId !== null && deps.scheduleContinuation) {
+    await step.do(
+      "enqueue-ai-search-backfill-continuation",
+      workflowStepRetryPolicy.aiSearchBackfillBatch,
+      async () =>
+        await deps.scheduleContinuation?.enqueue(
+          {
+            batchSize,
+            lastSeenId: nextLastSeenId,
+          },
+          {
+            delaySeconds: CONTINUATION_DELAY_SECONDS,
+          },
+        ),
     );
   }
 
