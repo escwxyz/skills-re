@@ -532,6 +532,76 @@ describe("snapshots service", () => {
     });
   });
 
+  test("falls back to the public URL when the R2 body is unavailable", async () => {
+    const service = createSnapshotsService({
+      buildSnapshotFilePublicUrl: (key) => `https://cdn.example/${key}`,
+      getSnapshotById: () =>
+        Promise.resolve({
+          archiveR2Key: null,
+          description: "Widget skill snapshot",
+          directoryPath: "skills/acme/widget/",
+          entryPath: "skills/acme/widget/skill.md",
+          hash: "hash-1",
+          id: "snapshot-1",
+          isDeprecated: false,
+          name: "widget",
+          skillId: "skill-1",
+          sourceCommitDate: null,
+          sourceCommitMessage: null,
+          sourceCommitSha: null,
+          sourceCommitUrl: null,
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      getSnapshotFileByPath: (input) =>
+        Promise.resolve(
+          input.path === "guide.md"
+            ? {
+                contentType: "text/markdown; charset=utf-8",
+                fileHash: "hash-1",
+                path: "guide.md",
+                r2Key: "snapshots/acme/widget/guide.md",
+                size: 6,
+                sourceSha: "sha-1",
+              }
+            : null,
+        ),
+      readSnapshotFileObject: (_key, range) => {
+        expect(range).toEqual({
+          length: 3,
+          offset: 2,
+        });
+        return Promise.resolve({
+          arrayBuffer: () => Promise.reject(new Error("body missing")),
+          body: null,
+          size: 6,
+        });
+      },
+    });
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(new TextEncoder().encode("cde"))) as typeof fetch;
+
+    try {
+      await expect(
+        service.readSnapshotFileContent({
+          maxBytes: 3,
+          offset: 2,
+          path: "skills/acme/widget/guide.md",
+          snapshotId: "snapshot-1",
+        }),
+      ).resolves.toEqual({
+        bytesRead: 3,
+        content: "cde",
+        isTruncated: true,
+        offset: 2,
+        totalBytes: 6,
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   test("reads snapshot file content from relative paths using rooted snapshot files", async () => {
     const service = createSnapshotsService({
       getSnapshotById: () =>

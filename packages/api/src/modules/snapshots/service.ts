@@ -893,15 +893,13 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         throw new Error("File not found in snapshot.");
       }
 
-      const object = await deps.readSnapshotFileObject(file.r2Key, {
-        length: maxBytes,
-        offset,
+      const contentBuffer = await readSnapshotFileBytes(deps, {
+        key: file.r2Key,
+        range: {
+          length: maxBytes,
+          offset,
+        },
       });
-      if (!object?.body) {
-        throw new Error("File content is not available.");
-      }
-
-      const contentBuffer = await object.arrayBuffer();
       const bytesRead = contentBuffer.byteLength;
       const totalBytes = file.size;
       const isTruncated = offset + bytesRead < totalBytes;
@@ -998,6 +996,46 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       };
     },
   };
+};
+
+const getRangeHeaderValue = (range: { length: number; offset: number }) =>
+  `bytes=${range.offset}-${range.offset + range.length - 1}`;
+
+const readSnapshotFileBytes = async (
+  deps: Pick<SnapshotsServiceDeps, "buildSnapshotFilePublicUrl" | "readSnapshotFileObject">,
+  input: {
+    key: string;
+    range?: { length: number; offset: number };
+  },
+) => {
+  const object = await deps.readSnapshotFileObject(input.key, input.range);
+  if (object) {
+    try {
+      return await object.arrayBuffer();
+    } catch (error) {
+      console.warn("[snapshots.service] failed to read R2 body directly", {
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+              }
+            : { message: String(error) },
+        key: input.key,
+        range: input.range ?? null,
+      });
+    }
+  }
+
+  const response = await fetch(deps.buildSnapshotFilePublicUrl(input.key), {
+    headers: input.range ? { Range: getRangeHeaderValue(input.range) } : {},
+  });
+  if (!response.ok) {
+    throw new Error("File content is not available.");
+  }
+
+  return await response.arrayBuffer();
 };
 
 export type HistoricalSnapshotRunnerDeps = Pick<
