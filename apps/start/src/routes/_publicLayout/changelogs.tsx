@@ -27,7 +27,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 const TYPE_CLASS: Record<string, string> = {
   feature: "border-blue-500/60 text-blue-600 dark:text-blue-400",
-  major: "border-red-500/60 text-red-600 dark:text-red-400",
+  major: "border-green-500/60 text-green-600 dark:text-green-400",
   patch: "border-border text-muted-foreground",
 };
 
@@ -101,28 +101,6 @@ function RouteComponent() {
             )}
           </article>
         ))}
-      </div>
-
-      <div className="mt-4 border-t pt-8">
-        <p className="text-muted-foreground mb-4 font-mono text-[10.5px] tracking-[.14em] uppercase">
-          Stay up to date
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/changelogs/feed.xml"
-            className="border-border hover:bg-muted border px-4 py-2 font-mono text-xs tracking-[.06em] transition-colors"
-          >
-            RSS feed →
-          </a>
-          <a
-            href="https://github.com/skills-re/registry"
-            className="border-border hover:bg-muted border px-4 py-2 font-mono text-xs tracking-[.06em] transition-colors"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub →
-          </a>
-        </div>
       </div>
     </div>
   );
