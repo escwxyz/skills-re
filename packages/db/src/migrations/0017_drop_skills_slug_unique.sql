@@ -1,1 +1,1 @@
-DROP INDEX `skills_slug_unique`;
+DROP INDEX IF EXISTS `skills_slug_unique`;

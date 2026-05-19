@@ -10,6 +10,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@changesets/cli": "^2.31.0",
         "@cloudflare/workers-types": "catalog:",
         "@skills-re/config": "workspace:*",
         "@types/node": "catalog:",
@@ -194,7 +195,6 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@changesets/cli": "^2.31.0",
         "@skills-re/config": "workspace:*",
         "@types/node": "catalog:",
         "tsdown": "^0.16.5",
