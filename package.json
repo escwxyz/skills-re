@@ -70,7 +70,8 @@
     "oxlint": "^1.60.0",
     "turbo": "^2.8.12",
     "typescript": "catalog:",
-    "ultracite": "7.6.0"
+    "ultracite": "7.6.0",
+    "wrangler": "catalog:"
   },
   "engines": {
     "node": ">=25.0.0"
