@@ -85,6 +85,8 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           PUBLIC_SERVER_URL: ${{ vars.PUBLIC_SERVER_URL }}
           PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+          R2_PUBLIC_BASE_URL: ${{ vars.R2_PUBLIC_BASE_URL }}
+          R2_ARCHIVE_PUBLIC_BASE_URL: ${{vars.R2_ARCHIVE_PUBLIC_BASE_URL}}
           GH_PAT: ${{ secrets.GH_PAT }}
           GH_CLIENT_ID: ${{ vars.GH_CLIENT_ID }}
           GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
