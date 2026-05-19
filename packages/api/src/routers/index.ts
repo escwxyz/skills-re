@@ -163,7 +163,7 @@ export const appRouter = {
           if (!match?.[1] || !match?.[2]) {
             return { received: false };
           }
-          const [repoOwner] = match;
+          const [, repoOwner] = match;
           const repoName = match[2].replace(/\.git$/, "");
           const { findRepoByNameWithOwner } = await import("../modules/repos/repo");
           const existing = await findRepoByNameWithOwner(`${repoOwner}/${repoName}`);
