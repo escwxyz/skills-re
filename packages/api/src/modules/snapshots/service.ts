@@ -884,33 +884,66 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       const normalizedPath = normalizeSnapshotPath(input.path);
       const offset = input.offset ?? 0;
       const maxBytes = Math.min(input.maxBytes ?? 20_000, 200_000);
-      const file = await getSnapshotFileByPathWithFallback(deps, {
-        path: normalizedPath,
-        snapshotId: asSnapshotId(input.snapshotId),
-      });
+      let file: SnapshotFileRow | null = null;
 
-      if (!file?.r2Key) {
-        throw new Error("File not found in snapshot.");
-      }
+      try {
+        file = await getSnapshotFileByPathWithFallback(deps, {
+          path: normalizedPath,
+          snapshotId: asSnapshotId(input.snapshotId),
+        });
 
-      const contentBuffer = await readSnapshotFileBytes(deps, {
-        key: file.r2Key,
-        range: {
-          length: maxBytes,
+        if (!file?.r2Key) {
+          throw new Error("File not found in snapshot.");
+        }
+
+        const contentBuffer = await readSnapshotFileBytes(deps, {
+          key: file.r2Key,
+          range: {
+            length: maxBytes,
+            offset,
+          },
+        });
+        const bytesRead = contentBuffer.byteLength;
+        const totalBytes = file.size;
+        const isTruncated = offset + bytesRead < totalBytes;
+
+        return {
+          bytesRead,
+          content: new TextDecoder().decode(contentBuffer),
+          isTruncated,
           offset,
-        },
-      });
-      const bytesRead = contentBuffer.byteLength;
-      const totalBytes = file.size;
-      const isTruncated = offset + bytesRead < totalBytes;
-
-      return {
-        bytesRead,
-        content: new TextDecoder().decode(contentBuffer),
-        isTruncated,
-        offset,
-        totalBytes,
-      };
+          totalBytes,
+        };
+      } catch (error) {
+        console.error("[snapshots.service] readSnapshotFileContent failed", {
+          error:
+            error instanceof Error
+              ? {
+                  message: error.message,
+                  name: error.name,
+                  stack: error.stack,
+                }
+              : { message: String(error) },
+          request: {
+            maxBytes,
+            normalizedPath,
+            offset,
+            path: input.path,
+            snapshotId: input.snapshotId,
+          },
+          resolvedFile: file
+            ? {
+                contentType: file.contentType ?? null,
+                fileHash: file.fileHash,
+                path: file.path,
+                r2Key: file.r2Key ?? null,
+                size: file.size,
+                sourceSha: file.sourceSha ?? null,
+              }
+            : null,
+        });
+        throw error;
+      }
     },
 
     async uploadSnapshotFiles(
@@ -1013,7 +1046,7 @@ const readSnapshotFileBytes = async (
     try {
       return await object.arrayBuffer();
     } catch (error) {
-      console.warn("[snapshots.service] failed to read R2 body directly", {
+      console.error("[snapshots.service] failed to read R2 body directly", {
         error:
           error instanceof Error
             ? {
@@ -1022,16 +1055,31 @@ const readSnapshotFileBytes = async (
                 stack: error.stack,
               }
             : { message: String(error) },
+        hasBody: Boolean(object.body),
         key: input.key,
+        size: object.size ?? null,
         range: input.range ?? null,
       });
     }
+  } else {
+    console.error("[snapshots.service] snapshot file binding returned no object", {
+      key: input.key,
+      range: input.range ?? null,
+    });
   }
 
-  const response = await fetch(deps.buildSnapshotFilePublicUrl(input.key), {
+  const publicUrl = deps.buildSnapshotFilePublicUrl(input.key);
+  const response = await fetch(publicUrl, {
     headers: input.range ? { Range: getRangeHeaderValue(input.range) } : {},
   });
   if (!response.ok) {
+    console.error("[snapshots.service] snapshot file fallback fetch failed", {
+      key: input.key,
+      publicUrl,
+      range: input.range ?? null,
+      status: response.status,
+      statusText: response.statusText,
+    });
     throw new Error("File content is not available.");
   }
 
