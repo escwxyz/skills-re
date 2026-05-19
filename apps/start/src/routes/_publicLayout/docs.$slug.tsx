@@ -2,6 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
+import { m } from "@/paraglide/messages";
 import { getDocData } from "@/functions/get-doc-data";
 import { createSeo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,7 @@ function RouteComponent() {
         <aside className="hidden w-52 shrink-0 lg:block">
           <nav className="sticky top-8">
             <p className="text-muted-foreground mb-3 font-mono text-[10px] tracking-[.14em] uppercase">
-              Documentation
+              {m.footer_platform_docs()}
             </p>
             <ul className="space-y-0.5">
               {data.nav.map((doc) => {
@@ -78,7 +79,7 @@ function RouteComponent() {
             )}
             {data.updatedAt ? (
               <p className="text-muted-foreground mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase">
-                Last updated <TimeValue locale={locale} time={data.updatedAt} />
+                {m.docs_last_updated_prefix()} <TimeValue locale={locale} time={data.updatedAt} />
               </p>
             ) : null}
           </div>

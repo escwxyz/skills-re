@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { CookieConsent } from "@/components/cookie-consent";
+import { DotMap } from "./dotmap";
 
 interface InternalItem {
   label: string;
@@ -76,9 +77,18 @@ export const Footer = ({ className }: Props) => {
   const year = new Date().getFullYear();
   return (
     <footer
-      className={cn("border-border mx-auto mt-7.5 mb-1.5 border-t px-4 md:px-6 py-10", className)}
+      className={cn(
+        "border-border relative overflow-hidden mx-auto mt-7.5 mb-1.5 border-t px-4 md:px-6 py-10",
+        className,
+      )}
     >
-      <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] mb-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-screen sm:translate-y-[25vh] lg:translate-y-[35vh] opacity-90"
+      >
+        <DotMap className="h-full w-full" imageSrc="/images/hands.webp" />
+      </div>
+      <div className="relative z-10 grid w-full grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] mb-8">
         <div>
           <Link
             className="group mb-4 flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80"
@@ -117,7 +127,7 @@ export const Footer = ({ className }: Props) => {
           </div>
         ))}
       </div>
-      <div className="flex flex-col items-center justify-between gap-4 border-border border-t pt-8 font-mono text-muted-foreground text-xs md:flex-row">
+      <div className="relative z-10 flex flex-col items-center justify-between gap-4 border-border border-t pt-8 font-mono text-muted-foreground text-xs md:flex-row">
         <p>© {year} SKILLS.re. </p>
         <div className="flex items-center gap-4">
           <CookieConsent />

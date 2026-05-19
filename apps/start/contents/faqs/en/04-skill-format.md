@@ -1,9 +1,9 @@
 ---
 question: What format do skills use?
-order: 4
+order: 2
 ---
 
-A skill is a single markdown file named `SKILL.md`. It has two parts:
+A skill is a folder containing a `SKILL.md` file. The file has two parts:
 
 **Frontmatter** — YAML metadata at the top of the file:
 
@@ -13,13 +13,13 @@ name: my-skill
 description: A one-line summary.
 license: MIT
 compatibility: claude-code, claude-api
+version: 1.0.0
 metadata:
-  version: 1.0.0
   stage: stable
 allowed-tools: Bash Read
 ---
 ```
 
-**Body** — plain markdown containing the instructions your agent will follow. There is no special syntax for the body — write it as you would any agent system prompt, using markdown headings and lists to structure the content.
+**Body** — plain markdown containing the instructions your agent will follow. There is no special syntax — write it as you would any agent system prompt, using headings, lists, and clear step-by-step guidance.
 
-The full specification is documented in the [SKILL.md Spec](/docs/api-reference).
+The complete format reference is in the [Skill Specification](https://agentskills.io/specification). For guidance on writing effective skills, see the [Best Practices guide](https://agentskills.io/skill-creation/best-practices).

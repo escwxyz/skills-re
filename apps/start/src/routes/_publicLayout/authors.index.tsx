@@ -57,12 +57,12 @@ function RouteComponent() {
     },
     {
       label: String(authors_index_stats_verified()),
-      value: `▣ ${formatInteger(data.verifiedCount, locale)}`,
+      value: formatInteger(data.verifiedCount, locale),
       accent: "green" as const,
     },
     {
       label: String(authors_index_stats_new_this_week()),
-      value: `+ ${formatInteger(sumDailyMetrics(data.dailyMetrics).newSkills, locale)}`,
+      value: formatInteger(sumDailyMetrics(data.dailyMetrics).newSkills, locale),
     },
     {
       label: String(authors_index_stats_skills_published()),
