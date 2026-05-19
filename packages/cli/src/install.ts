@@ -1,6 +1,9 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { createHash } from "node:crypto";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { cp, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
+import { tmpdir } from "node:os";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { promisify } from "node:util";
 import { createGzipDecoder, unpackTar } from "modern-tar";
 
 import type { ApiClient } from "./api-client";
@@ -99,7 +102,7 @@ export const installSkill = async (input: {
     input.cwd,
     setLockedSkill(lockfile, skillName, {
       ...resolution.lockEntry,
-      computedHash: resolution.lockEntry.computedHash || resolution.snapshot.hash || archiveHash,
+      archiveHash: resolution.lockEntry.archiveHash || resolution.snapshot.hash || archiveHash,
       skillPath: resolution.lockEntry.skillPath || resolution.snapshot.entryPath,
       version: resolution.snapshot.version,
     }),
@@ -137,7 +140,7 @@ export const updateSkills = async (input: {
     const next = await input.apiClient.resolveInstall({ skill: name });
     if (
       existing?.version === next.snapshot.version &&
-      existing.computedHash === next.lockEntry.computedHash
+      existing.archiveHash === next.lockEntry.archiveHash
     ) {
       continue;
     }
@@ -155,3 +158,210 @@ export const updateSkills = async (input: {
 };
 
 export type { SnapshotInstallResolution };
+
+const execFileAsync = promisify(execFile);
+
+export interface GithubSpecifier {
+  owner: string;
+  repo: string;
+  ref?: string;
+  skillPath?: string;
+}
+
+export const parseGithubSpecifier = (
+  specifier: string,
+  gitFlag: boolean,
+): GithubSpecifier | null => {
+  if (/^https?:\/\/github\.com\//i.test(specifier)) {
+    try {
+      const url = new URL(specifier);
+      const parts = url.pathname.replace(/^\//, "").split("/").filter(Boolean);
+      const [owner, repoRaw, type, ref, ...pathParts] = parts;
+      if (!owner || !repoRaw) {
+        return null;
+      }
+      return {
+        owner,
+        repo: repoRaw.replace(/\.git$/, ""),
+        ref: type === "tree" || type === "blob" ? ref : undefined,
+        skillPath: pathParts.length > 0 ? pathParts.join("/") : undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+  if (gitFlag) {
+    const parts = specifier.split("/").filter(Boolean);
+    if (parts.length < 2) {
+      return null;
+    }
+    const [owner, repo, ...pathParts] = parts;
+    if (!owner || !repo) {
+      return null;
+    }
+    return {
+      owner,
+      repo,
+      skillPath: pathParts.length > 0 ? pathParts.join("/") : undefined,
+    };
+  }
+  return null;
+};
+
+const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "build", "__pycache__"]);
+
+const hasSkillMd = async (dir: string): Promise<boolean> => {
+  try {
+    const s = await stat(join(dir, "SKILL.md"));
+    return s.isFile();
+  } catch {
+    return false;
+  }
+};
+
+const findSkillDirsRecursive = async (dir: string, depth = 0): Promise<string[]> => {
+  if (depth > 5) {
+    return [];
+  }
+  try {
+    const [hasSkill, entries] = await Promise.all([
+      hasSkillMd(dir),
+      readdir(dir, { withFileTypes: true }).catch(() => []),
+    ]);
+    const subResults = await Promise.all(
+      entries
+        .filter((e) => e.isDirectory() && !SKIP_DIRS.has(e.name))
+        .map((e) => findSkillDirsRecursive(join(dir, e.name), depth + 1)),
+    );
+    return [...(hasSkill ? [dir] : []), ...subResults.flat()];
+  } catch {
+    return [];
+  }
+};
+
+const PRIORITY_SUBDIRS = ["skills", ".agents/skills", ".claude/skills", ".github/skills"];
+
+const discoverSkillDirs = async (searchRoot: string): Promise<string[]> => {
+  if (await hasSkillMd(searchRoot)) {
+    return [searchRoot];
+  }
+
+  const found: string[] = [];
+  const seen = new Set<string>();
+  for (const rel of PRIORITY_SUBDIRS) {
+    try {
+      const entries = await readdir(join(searchRoot, rel), { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) {
+          continue;
+        }
+        const skillDir = join(searchRoot, rel, entry.name);
+        if (!seen.has(skillDir) && (await hasSkillMd(skillDir))) {
+          found.push(skillDir);
+          seen.add(skillDir);
+        }
+      }
+    } catch {
+      // subdir doesn't exist
+    }
+  }
+  if (found.length > 0) {
+    return found;
+  }
+
+  return findSkillDirsRecursive(searchRoot);
+};
+
+export const installSkillFromGithub = async (input: {
+  apiClient: ApiClient;
+  cwd: string;
+  gitSpecifier: GithubSpecifier;
+  lockfilePath?: string;
+  skillsDir: string;
+  target: AgentTarget;
+}) => {
+  const { owner, repo, ref: urlRef, skillPath } = input.gitSpecifier;
+  const repoUrl = `https://github.com/${owner}/${repo}`;
+
+  try {
+    await execFileAsync("git", ["--version"]);
+  } catch {
+    throw new CliError("git is required for GitHub installs. Please install git first.");
+  }
+
+  const tempDir = join(tmpdir(), `skills-re-${randomUUID()}`);
+  try {
+    await execFileAsync(
+      "git",
+      [
+        "-c",
+        "filter.lfs.required=false",
+        "-c",
+        "filter.lfs.smudge=",
+        "-c",
+        "filter.lfs.clean=",
+        "-c",
+        "filter.lfs.process=",
+        "clone",
+        "--depth",
+        "1",
+        ...(urlRef ? ["--branch", urlRef] : []),
+        `${repoUrl}.git`,
+        tempDir,
+      ],
+      {
+        env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GIT_LFS_SKIP_SMUDGE: "1" },
+        timeout: 300_000,
+      },
+    );
+
+    const { stdout: headOut } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: tempDir });
+    const commitSha = headOut.trim();
+
+    const searchRoot = skillPath ? join(tempDir, skillPath) : tempDir;
+    const skillDirs = await discoverSkillDirs(searchRoot);
+    if (skillDirs.length === 0) {
+      throw new CliError(`No skills found in ${repoUrl}. Skills require a SKILL.md file.`);
+    }
+
+    const now = new Date().toISOString();
+    let lockfile = await readLockfile(input.cwd, input.lockfilePath);
+    const results = [];
+
+    for (const skillDir of skillDirs) {
+      const repoRelPath = relative(tempDir, skillDir);
+      const { stdout: treeOut } = await execFileAsync(
+        "git",
+        ["rev-parse", repoRelPath ? `HEAD:${repoRelPath}` : "HEAD^{tree}"],
+        { cwd: tempDir },
+      );
+      const skillFolderHash = treeOut.trim();
+      const skillName = basename(skillDir) === basename(tempDir) ? repo : basename(skillDir);
+      const installDir = join(input.skillsDir, skillName);
+
+      await rm(installDir, { force: true, recursive: true });
+      await cp(skillDir, installDir, {
+        recursive: true,
+        filter: (src) => basename(src) !== ".git",
+      });
+
+      lockfile = setLockedSkill(lockfile, skillName, {
+        source: `${owner}/${repo}`,
+        sourceType: "github",
+        sourceUrl: repoUrl,
+        ref: commitSha,
+        skillFolderHash,
+        installedAt: lockfile.skills[skillName]?.installedAt ?? now,
+        updatedAt: now,
+      });
+      results.push({ installDir, skillName, target: input.target.name, ref: commitSha });
+    }
+
+    await writeLockfile(input.cwd, lockfile, input.lockfilePath);
+    input.apiClient.notifyInstall({ repoUrl, ref: commitSha });
+
+    return results;
+  } finally {
+    await rm(tempDir, { force: true, recursive: true });
+  }
+};

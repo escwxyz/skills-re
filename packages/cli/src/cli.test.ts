@@ -235,12 +235,14 @@ describe("skills-lock.json", () => {
     }`);
 
     expect(parsed.skills.hono?.source).toBe("yusukebe/hono-skill");
+    // old computedHash field migrates to archiveHash
+    expect(parsed.skills.hono?.archiveHash).toBe("abc");
 
     const cwd = await createTempDir();
     await writeLockfile(
       cwd,
       setLockedSkill(parsed, "codex", {
-        computedHash: "def",
+        archiveHash: "def",
         source: "openai/codex",
         sourceType: "github",
       }),
@@ -283,7 +285,7 @@ describe("read and sync", () => {
       version: 1,
       skills: {
         demo: {
-          computedHash: "hash",
+          archiveHash: "hash",
           source: "acme/demo",
           sourceType: "github",
         },
@@ -309,7 +311,7 @@ describe("read and sync", () => {
       version: 1,
       skills: {
         demo: {
-          computedHash: "hash",
+          archiveHash: "hash",
           source: "acme/demo",
           sourceType: "github",
         },
@@ -352,7 +354,7 @@ describe("archive extraction", () => {
             downloadUrl: "https://api.example.com/skills/download?snapshotId=snap_1",
           },
           lockEntry: {
-            computedHash: "hash",
+            archiveHash: "hash",
             source: "acme/skills",
             sourceType: "github",
             skillPath: "SKILL.md",
@@ -391,7 +393,7 @@ describe("archive extraction", () => {
       version: 1,
       skills: {
         demo: {
-          computedHash: "hash",
+          archiveHash: "hash",
           source: "acme/skills",
           sourceType: "github",
           version: "1.0.0",
@@ -404,7 +406,7 @@ describe("archive extraction", () => {
         return Response.json({
           archive: { available: true, downloadUrl: "https://api.example.com/archive.tgz" },
           lockEntry: {
-            computedHash: "hash",
+            archiveHash: "hash",
             source: "acme/skills",
             sourceType: "github",
           },
@@ -441,7 +443,7 @@ describe("archive extraction", () => {
             downloadUrl: "https://api.example.com/skills/download?snapshotId=snap_1",
           },
           lockEntry: {
-            computedHash: "hash",
+            archiveHash: "hash",
             source: "acme/skills",
             sourceType: "github",
           },

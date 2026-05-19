@@ -1,3 +1,4 @@
+// oxlint-disable no-nested-ternary
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
@@ -19,11 +20,23 @@ const parseLockEntry = (name: string, value: unknown): SkillLockEntry => {
   if (typeof value.source !== "string" || typeof value.sourceType !== "string") {
     throw new CliError(`Invalid lock entry for ${name}`);
   }
+  const now = new Date().toISOString();
   return {
-    computedHash: typeof value.computedHash === "string" ? value.computedHash : "",
     source: value.source,
     sourceType: value.sourceType,
+    sourceUrl: typeof value.sourceUrl === "string" ? value.sourceUrl : undefined,
+    ref: typeof value.ref === "string" ? value.ref : undefined,
     skillPath: typeof value.skillPath === "string" ? value.skillPath : undefined,
+    skillFolderHash: typeof value.skillFolderHash === "string" ? value.skillFolderHash : undefined,
+    installedAt: typeof value.installedAt === "string" ? value.installedAt : now,
+    updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : now,
+    // our extensions
+    archiveHash:
+      typeof value.archiveHash === "string"
+        ? value.archiveHash
+        : typeof value.computedHash === "string"
+          ? value.computedHash
+          : undefined,
     version: typeof value.version === "string" ? value.version : undefined,
   };
 };

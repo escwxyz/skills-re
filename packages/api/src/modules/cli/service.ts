@@ -148,10 +148,11 @@ export const createCliService = (overrides: Partial<CliServiceDeps> = {}) => {
           fileName: `${sanitizeFileName(snapshot.name || skill.slug)}-v${snapshot.version}.tar.gz`,
         },
         lockEntry: {
-          computedHash: snapshot.hash,
           source,
           sourceType: "github",
+          sourceUrl: skill.repoUrl ?? undefined,
           skillPath: snapshot.entryPath,
+          archiveHash: snapshot.hash,
           version: snapshot.version,
         },
         skill: {

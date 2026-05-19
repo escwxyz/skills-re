@@ -157,6 +157,28 @@ export const appRouter = {
           }
         },
       ),
+      notifyInstall: publicProcedure.cli.skills.notifyInstall.handler(
+        async ({ input, context }) => {
+          const match = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)/i.exec(input.repoUrl);
+          if (!match?.[1] || !match?.[2]) {
+            return { received: false };
+          }
+          const [repoOwner] = match;
+          const repoName = match[2].replace(/\.git$/, "");
+          const { findRepoByNameWithOwner } = await import("../modules/repos/repo");
+          const existing = await findRepoByNameWithOwner(`${repoOwner}/${repoName}`);
+          // oxlint-disable-next-line unicorn/prefer-ternary
+          if (existing) {
+            await context.workflowSchedulers?.repoSnapshotSync?.enqueue({ repoName, repoOwner });
+          } else {
+            await context.workflowSchedulers?.repoSkillsDiscovery?.enqueue({
+              repoName,
+              repoOwner,
+            });
+          }
+          return { received: true };
+        },
+      ),
     },
   },
   collections: {
