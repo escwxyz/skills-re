@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { CategoriesStatsStrip } from "@/components/categories-stats-strip";
 import { CategoryCard } from "@/components/category-card";
@@ -31,13 +31,9 @@ export const Route = createFileRoute("/_publicLayout/categories/")({
 
 function RouteComponent() {
   const data = Route.useLoaderData();
-  if (!data) {
-    throw notFound();
-  }
 
   const { categories, skillsCount } = data;
   const locale = getLocale();
-  const totalSkills = categories.reduce((sum, category) => sum + category.count, 0);
 
   return (
     <>
@@ -51,7 +47,7 @@ function RouteComponent() {
             <span className="text-foreground mb-2 block tracking-[.16em] uppercase">
               {categories_index_reading_heading()}
             </span>
-            {categories_index_reading_body({ total: totalSkills.toLocaleString(locale) })}
+            {categories_index_reading_body({ total: skillsCount.toLocaleString(locale) })}
           </div>
         }
       >

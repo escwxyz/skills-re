@@ -39,43 +39,40 @@ skills-re search --tag testing
 skills-re search --category security --limit 5
 ```
 
-Jedes Ergebnis zeigt Titel, Slug, Beschreibung und Quellpfad (`author/repo/slug`). Der **Slug** wird beim Installieren übergeben.
+Jedes Ergebnis zeigt Titel, Beschreibung und vollständigen Pfad (`author/repo/slug`). Der **vollständige Pfad** wird beim Installieren übergeben.
 
 Details zu einem bestimmten Skill anzeigen:
 
 ```bash
-# per Slug
-skills-re show code-review
-
-# per vollständigem Registrypfad aus den Suchergebnissen
+# per vollständigem Registrypfad
 skills-re show anthropic-labs/my-repo/code-review
 ```
 
 ## Skill installieren
 
-Übergib den Slug des Skills an `install` und wähle deinen Agenten mit `--agent`:
+Übergib den vollständigen Skill-Pfad (`author/repo/skill`) an `install` und wähle deinen Agenten mit `--agent`:
 
 ```bash
 # Claude Code  →  .claude/skills/code-review/
-skills-re install code-review --agent claude
+skills-re install anthropic-labs/my-repo/code-review --agent claude
 
 # Codex        →  .codex/skills/code-review/  (Standard ohne --agent)
-skills-re install code-review --agent codex
+skills-re install anthropic-labs/my-repo/code-review --agent codex
 
 # Cursor       →  .cursor/skills/code-review/
-skills-re install code-review --agent cursor
+skills-re install anthropic-labs/my-repo/code-review --agent cursor
 
 # Windsurf     →  .windsurf/skills/code-review/
-skills-re install code-review --agent windsurf
+skills-re install anthropic-labs/my-repo/code-review --agent windsurf
 
 # Aider        →  .aider/skills/code-review/
-skills-re install code-review --agent aider
+skills-re install anthropic-labs/my-repo/code-review --agent aider
 ```
 
 Bestimmte Version mit `@version` festlegen:
 
 ```bash
-skills-re install code-review@2.4.1 --agent claude
+skills-re install anthropic-labs/my-repo/code-review@2.4.1 --agent claude
 ```
 
 Direkt aus einem GitHub-Repository installieren:

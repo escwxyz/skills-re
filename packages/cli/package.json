@@ -1,7 +1,16 @@
 {
   "name": "@skills-re/cli",
   "version": "0.0.0",
-  "description": "Command-line client for discovering, installing, locking, and exposing Skills.re skills.",
+  "description": "Command-line client for discovering, installing, locking, and exposing skills.re skills.",
+  "author": {
+    "name": "Jie Wang",
+    "email": "hi@jiewa.ng",
+    "url": "https://github.com/escwxyz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/escwxyz/skills-re.git"
+  },
   "bin": {
     "skills-re": "./dist/main.mjs"
   },
@@ -18,7 +27,8 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsdown",
@@ -33,6 +43,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@skills-re/config": "workspace:*",
     "@types/node": "catalog:",
     "tsdown": "^0.16.5",

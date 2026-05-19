@@ -62,7 +62,6 @@ export const skillsTable = sqliteTable(
     index("skills_slug_idx").on(table.slug),
     index("skills_syncTime_idx").on(table.syncTime),
     uniqueIndex("skills_repo_id_slug_unique").on(table.repoId, table.slug),
-    uniqueIndex("skills_slug_unique").on(table.slug),
   ],
 );
 

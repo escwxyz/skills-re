@@ -1,8 +1,8 @@
 export const TerminalPanel = () => (
-  <section className="my-8 overflow-hidden border border-border bg-foreground text-background">
+  <section className="my-8 overflow-hidden border border-border bg-foreground/80 text-background/80">
     <div className="flex items-center justify-between border-b border-background/15 px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase text-background/70">
       <span>guest@skills.re ~ %</span>
-      <span>install a skill in seconds</span>
+      <span className="hidden lg:block">install a skill in seconds</span>
     </div>
     <pre className="overflow-x-auto px-4 py-5 font-mono text-[11px] leading-6 text-background/85">
       <span className="text-background/60">

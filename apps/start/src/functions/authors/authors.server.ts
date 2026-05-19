@@ -99,6 +99,7 @@ export const fetchAuthorSkillsStats = async (input: {
   let totalStars = 0;
   let totalAuditScore = 0;
   let done = false;
+  const countedRepos = new Set<string>();
 
   while (!done) {
     const page = await input.client.skills.search({
@@ -111,7 +112,15 @@ export const fetchAuthorSkillsStats = async (input: {
     for (const skill of page.page) {
       skillCount += 1;
       totalDownloads += skill.downloadsAllTime ?? 0;
-      totalStars += skill.stargazerCount ?? 0;
+      // Stars are repo-level; deduplicate by repoName to avoid counting the same repo's stars for every skill
+      if (skill.repoName) {
+        if (!countedRepos.has(skill.repoName)) {
+          countedRepos.add(skill.repoName);
+          totalStars += skill.stargazerCount ?? 0;
+        }
+      } else {
+        totalStars += skill.stargazerCount ?? 0;
+      }
       totalAuditScore += skill.staticAudit?.overallScore ?? 0;
     }
 

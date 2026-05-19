@@ -27,13 +27,13 @@ interface StatItemProps {
 
 const StatItem = ({ icon, label, value, sub }: StatItemProps) => (
   <div className="space-y-1.5">
-    <div className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[.16em] text-muted-foreground">
+    <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">
       {icon}
       {label}
     </div>
-    <div className="font-display text-[28px] leading-none font-normal tabular-nums">{value}</div>
+    <div className="font-display text-2xl leading-none font-normal tabular-nums">{value}</div>
     {sub ? (
-      <div className="font-mono text-[9px] uppercase tracking-[.14em] text-muted-foreground">
+      <div className="font-mono text-xs uppercase tracking-[.14em] text-muted-foreground">
         {sub}
       </div>
     ) : null}

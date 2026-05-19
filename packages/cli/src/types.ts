@@ -36,13 +36,28 @@ export interface SkillsLockfile {
 export interface SearchSkillItem {
   authorHandle?: string;
   description: string;
+  downloadsAllTime?: number;
+  downloadsTrending?: number;
   id: string;
+  isVerified?: boolean;
+  latestAuditScore?: number;
   latestSnapshotId?: string;
   latestVersion?: string;
+  primaryCategory?: string;
   repoName?: string;
   repoUrl?: string;
   slug: string;
+  stargazerCount?: number;
+  staticAudit?: {
+    isBlocked: boolean;
+    overallScore: number;
+    riskLevel: "critical" | "high" | "low" | "medium" | "safe";
+    safeToPublish: boolean;
+    status: "fail" | "pass";
+  };
+  tags?: string[];
   title: string;
+  viewsAllTime?: number;
 }
 
 export interface SearchSkillsResult {

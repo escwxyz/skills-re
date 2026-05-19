@@ -7,7 +7,6 @@ import {
   home_hero_a_skill_is_an,
   home_hero_browse_index,
   home_hero_description,
-  home_hero_filed,
   home_hero_instruction,
   home_hero_leading,
   home_hero_newsletter_circulation,
@@ -23,6 +22,8 @@ import {
   login_dialog_privacy_policy,
   login_dialog_terms,
 } from "@/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "./ui/button";
 
 export const HomeHero = () => (
   <section className="border-border grid grid-cols-1 gap-8 border-b py-6 md:grid-cols-[3fr_2fr]">
@@ -45,22 +46,12 @@ export const HomeHero = () => (
         {home_hero_description()}
       </p>
       <div className="mt-4.5 mb-2.5 flex flex-wrap gap-3">
-        <Link
-          className="bg-foreground text-background hover:bg-foreground/90 inline-flex items-center gap-3 border border-foreground px-4 py-3 font-mono text-[11px] uppercase tracking-[.14em] no-underline transition-colors hover:no-underline"
-          to="/skills"
-        >
+        <Link className={cn(buttonVariants({ size: "lg", variant: "default" }))} to="/skills">
           {home_hero_browse_index()}
-          <span>→</span>
         </Link>
-        <Link
-          className="border-border bg-background hover:bg-muted inline-flex items-center gap-3 border px-4 py-3 font-mono text-[11px] uppercase tracking-[.14em] no-underline transition-colors hover:no-underline"
-          to="/submit"
-        >
+        <Link className={cn(buttonVariants({ size: "lg", variant: "secondary" }))} to="/submit">
           {home_hero_publish_skill()}
         </Link>
-      </div>
-      <div className="text-muted-foreground mt-6.5 font-mono text-[10.5px] tracking-[.14em] uppercase">
-        {home_hero_filed()}
       </div>
     </div>
 

@@ -39,43 +39,40 @@ skills-re search --tag testing
 skills-re search --category security --limit 5
 ```
 
-每条结果显示 Skill 的标题、slug、描述和来源路径（`author/repo/slug`）。**slug** 是安装时传入的标识符。
+每条结果显示 Skill 的标题、描述和完整路径（`author/repo/slug`）。**完整路径**是安装时传入的标识符。
 
 查看特定 Skill 的详情：
 
 ```bash
-# 按 slug 查找
-skills-re show code-review
-
-# 按搜索结果中显示的完整注册表路径查找
+# 按完整注册表路径查找
 skills-re show anthropic-labs/my-repo/code-review
 ```
 
 ## 安装 Skill
 
-将 Skill 的 slug 传给 `install`，并通过 `--agent` 指定代理：
+将完整 Skill 路径（`author/repo/skill`）传给 `install`，并通过 `--agent` 指定代理：
 
 ```bash
 # Claude Code  →  .claude/skills/code-review/
-skills-re install code-review --agent claude
+skills-re install anthropic-labs/my-repo/code-review --agent claude
 
 # Codex        →  .codex/skills/code-review/（省略 --agent 时的默认值）
-skills-re install code-review --agent codex
+skills-re install anthropic-labs/my-repo/code-review --agent codex
 
 # Cursor       →  .cursor/skills/code-review/
-skills-re install code-review --agent cursor
+skills-re install anthropic-labs/my-repo/code-review --agent cursor
 
 # Windsurf     →  .windsurf/skills/code-review/
-skills-re install code-review --agent windsurf
+skills-re install anthropic-labs/my-repo/code-review --agent windsurf
 
 # Aider        →  .aider/skills/code-review/
-skills-re install code-review --agent aider
+skills-re install anthropic-labs/my-repo/code-review --agent aider
 ```
 
 用 `@version` 指定特定版本：
 
 ```bash
-skills-re install code-review@2.4.1 --agent claude
+skills-re install anthropic-labs/my-repo/code-review@2.4.1 --agent claude
 ```
 
 直接从 GitHub 仓库安装：

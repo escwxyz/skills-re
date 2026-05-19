@@ -59,14 +59,6 @@ GET /skills/by-path?authorHandle=<handle>&skillSlug=<slug>
 GET /skills/by-path?authorHandle=<handle>&repoName=<repo>&skillSlug=<slug>
 ```
 
-### Resolve slug to full path
-
-```
-GET /skills/resolve-path?slug=<slug>
-```
-
-Returns `{ authorHandle, repoName, skillSlug }` for a given unique slug.
-
 ### Submit a GitHub repository
 
 ```
@@ -82,10 +74,10 @@ These endpoints are used by the `skills-re` CLI and follow the same authenticati
 ### Resolve install
 
 ```
-GET /cli/skills/resolve-install?skill=<slug>&version=<version>
+GET /cli/skills/resolve-install?skill=<author/repo/skill>&version=<version>
 ```
 
-Resolves the latest installable snapshot for a given slug (and optional pinned version). Returns archive download URL, lock entry, and snapshot metadata.
+Resolves the latest installable snapshot for a given skill path (and optional pinned version). Returns archive download URL, lock entry, and snapshot metadata.
 
 ### Download skill archive
 

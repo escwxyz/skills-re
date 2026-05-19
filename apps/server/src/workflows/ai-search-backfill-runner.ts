@@ -69,7 +69,7 @@ export const runAiSearchBackfillWorkflow = async (
           repoName: skill.repoName,
           skillId: skill.skillId,
           skillSlug: skill.skillSlug,
-          version: skill.version ?? "0.0.1",
+          version: skill.version ?? "1.0.0",
         });
 
         await deps.updateSkillAiSearchItemId({

@@ -296,7 +296,7 @@ export const skillsContract = {
       description: "Returns the latest snapshot metadata for a set of public skills.",
       method: "POST",
       path: "/skills/history-info",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "Skill history info",
       summary: "Read skill history info",
     })
@@ -318,7 +318,7 @@ export const skillsContract = {
       description: "Searches the managed AI Search corpus and returns the raw provider payload.",
       method: "POST",
       path: "/skills/ai-search",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "AI search result",
       summary: "Run AI search",
     })
@@ -403,7 +403,7 @@ export const skillsContract = {
       description: "Uploads a prepared GitHub skill payload into the background workflow pipeline.",
       method: "POST",
       path: "/skills/upload",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "Upload queued",
       summary: "Upload prepared skills",
     })

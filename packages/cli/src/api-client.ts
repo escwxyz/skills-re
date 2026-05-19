@@ -5,6 +5,7 @@ export interface ApiClientOptions {
   apiUrl: string;
   fetchImpl?: typeof fetch;
   token?: string;
+  version?: string;
 }
 
 export interface RequestOptions {
@@ -31,11 +32,13 @@ export class ApiClient {
   private readonly apiUrl: string;
   private readonly fetchImpl: typeof fetch;
   private readonly token?: string;
+  private readonly userAgent: string;
 
   constructor(options: ApiClientOptions) {
     this.apiUrl = options.apiUrl;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.token = options.token;
+    this.userAgent = `skills-re-cli/${options.version ?? "0.0.0"}`;
   }
 
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -44,6 +47,7 @@ export class ApiClient {
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       headers: {
         Accept: "application/json",
+        "User-Agent": this.userAgent,
         ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
         ...((options.token ?? this.token)
           ? { Authorization: `Bearer ${options.token ?? this.token}` }

@@ -178,6 +178,14 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
           title: "OpenAPI References",
           version: "1.0.0",
         },
+        filter: ({ contract, path }) => {
+          const INTERNAL_NAMESPACES = new Set(["github", "metrics", "staticAudits"]);
+          if (INTERNAL_NAMESPACES.has(path[0] ?? "")) {
+            return false;
+          }
+          const tags = contract["~orpc"].route?.tags ?? [];
+          return !tags.includes("Internal");
+        },
       },
     }),
   ],

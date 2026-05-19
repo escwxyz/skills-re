@@ -59,14 +59,6 @@ GET /skills/by-path?authorHandle=<handle>&skillSlug=<slug>
 GET /skills/by-path?authorHandle=<handle>&repoName=<repo>&skillSlug=<slug>
 ```
 
-### 将 Slug 解析为完整路径
-
-```
-GET /skills/resolve-path?slug=<slug>
-```
-
-返回给定唯一 slug 对应的 `{ authorHandle, repoName, skillSlug }`。
-
 ### 提交 GitHub 仓库
 
 ```
@@ -82,10 +74,10 @@ POST /skills/submit-github-repo-public
 ### 解析安装
 
 ```
-GET /cli/skills/resolve-install?skill=<slug>&version=<version>
+GET /cli/skills/resolve-install?skill=<author/repo/skill>&version=<version>
 ```
 
-解析给定 slug 的最新可安装快照，返回归档下载 URL、锁文件条目和快照元数据。
+解析给定 Skill 路径的最新可安装快照，返回归档下载 URL、锁文件条目和快照元数据。
 
 ### 下载 Skill 归档
 

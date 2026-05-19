@@ -59,14 +59,6 @@ GET /skills/by-path?authorHandle=<handle>&skillSlug=<slug>
 GET /skills/by-path?authorHandle=<handle>&repoName=<repo>&skillSlug=<slug>
 ```
 
-### Slug zu vollständigem Pfad auflösen
-
-```
-GET /skills/resolve-path?slug=<slug>
-```
-
-Gibt `{ authorHandle, repoName, skillSlug }` für einen gegebenen eindeutigen Slug zurück.
-
 ### GitHub-Repository einreichen
 
 ```
@@ -82,10 +74,10 @@ Diese Endpunkte werden von der `skills-re` CLI verwendet.
 ### Installation auflösen
 
 ```
-GET /cli/skills/resolve-install?skill=<slug>&version=<version>
+GET /cli/skills/resolve-install?skill=<author/repo/skill>&version=<version>
 ```
 
-Löst den neuesten installierbaren Snapshot für einen gegebenen Slug auf.
+Löst den neuesten installierbaren Snapshot für einen gegebenen Skill-Pfad auf.
 
 ### Skill-Archiv herunterladen
 

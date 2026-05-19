@@ -95,7 +95,7 @@ const uploadSnapshotFilesContract = baseContract
     description: "Uploads a snapshot payload to the storage workflow.",
     method: "POST",
     path: "/snapshots/upload-files",
-    tags: ["Snapshots"],
+    tags: ["Snapshots", "Internal"],
     successDescription: "Snapshot upload queued",
     summary: "Upload snapshot files",
   })
@@ -155,7 +155,7 @@ const createHistoricalSnapshotsContract = baseContract
     description: "Creates historical snapshots for older commits of a repository.",
     method: "POST",
     path: "/snapshots/historical",
-    tags: ["Snapshots"],
+    tags: ["Snapshots", "Internal"],
     successDescription: "Historical snapshots created",
     summary: "Create historical snapshots",
   })
