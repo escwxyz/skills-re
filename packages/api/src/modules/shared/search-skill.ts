@@ -1,3 +1,5 @@
+import { githubOwnerSchema, githubRepoSchema } from "@skills-re/contract/common/slugs";
+
 export interface SearchSkillRow {
   authorHandle: string;
   createdAt: number;
@@ -25,13 +27,19 @@ export interface SearchSkillRow {
   tags?: string[];
 }
 
+const isValidGithubOwner = (value: string) => githubOwnerSchema.safeParse(value).success;
+
+const isValidGithubRepo = (value: string) => githubRepoSchema.safeParse(value).success;
+
 export const toSearchSkillItem = (row: SearchSkillRow) => ({
-  author: {
-    avatarUrl: row.ownerAvatarUrl ?? undefined,
-    githubUrl: `https://github.com/${row.authorHandle}`,
-    handle: row.authorHandle,
-  },
-  authorHandle: row.authorHandle,
+  author: isValidGithubOwner(row.authorHandle)
+    ? {
+        avatarUrl: row.ownerAvatarUrl ?? undefined,
+        githubUrl: `https://github.com/${row.authorHandle}`,
+        handle: row.authorHandle,
+      }
+    : undefined,
+  authorHandle: isValidGithubOwner(row.authorHandle) ? row.authorHandle : undefined,
   createdAt: row.createdAt,
   description: row.description,
   downloadsAllTime: row.downloadsAllTime,
@@ -45,7 +53,7 @@ export const toSearchSkillItem = (row: SearchSkillRow) => ({
   latestVersion: row.latestVersion ?? undefined,
   license: row.license ?? undefined,
   primaryCategory: row.primaryCategory ?? undefined,
-  repoName: row.repoName,
+  repoName: isValidGithubRepo(row.repoName) ? row.repoName : undefined,
   repoUrl: row.repoUrl ?? undefined,
   slug: row.slug,
   stargazerCount: row.stargazerCount,
