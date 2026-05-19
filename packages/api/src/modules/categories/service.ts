@@ -1,5 +1,5 @@
-import { toSearchSkillItem } from "../shared/search-skill";
-import type { SearchSkillRow } from "../shared/search-skill";
+import { toValidSearchSkillItem } from "../shared/search-skill";
+import type { SearchSkillRow, toSearchSkillItem } from "../shared/search-skill";
 import { createDepGetter } from "../shared/deps";
 import {
   generateSkillCategoriesBatch as generateSkillCategoriesBatchImpl,
@@ -161,10 +161,8 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
       }
 
       const getRelatedTagsByCategorySlug = await getDep("getRelatedTagsByCategorySlug");
-      const getTopSkillsByCategorySlug = await getDep("getTopSkillsByCategorySlug");
 
       const relatedTags = await getRelatedTagsByCategorySlug(input.slug);
-      const topSkills = await getTopSkillsByCategorySlug(input.slug);
 
       return {
         count: row.count,
@@ -175,7 +173,24 @@ export const createCategoriesService = (overrides: Partial<CategoriesServiceDeps
           slug: related.slug,
         })),
         slug: row.slug,
-        topSkills: topSkills.map(toSearchSkillItem),
+      };
+    },
+
+    async getTopSkillsByCategorySlug(input: { slug: string }) {
+      const findCategoryBySlug = await getDep("findCategoryBySlug");
+      const row = await findCategoryBySlug(input.slug);
+      if (!row) {
+        return null;
+      }
+
+      const getTopSkillsByCategorySlug = await getDep("getTopSkillsByCategorySlug");
+      const topSkills = await getTopSkillsByCategorySlug(input.slug);
+
+      return {
+        count: row.count,
+        topSkills: topSkills
+          .map(toValidSearchSkillItem)
+          .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
       };
     },
 
@@ -311,6 +326,11 @@ export async function listCategoriesPublic(input?: { all?: boolean; limit?: numb
 export async function getCategoryBySlug(input: { slug: string }) {
   const service = createCategoriesService();
   return await service.getCategoryBySlug(input);
+}
+
+export async function getCategoryTopSkillsBySlug(input: { slug: string }) {
+  const service = createCategoriesService();
+  return await service.getTopSkillsByCategorySlug(input);
 }
 
 export async function listCategoriesForAiPublic(input?: { limit?: number }) {

@@ -1,5 +1,5 @@
-import { toSearchSkillItem } from "../shared/search-skill";
-import type { SearchSkillRow } from "../shared/search-skill";
+import { toValidSearchSkillItem } from "../shared/search-skill";
+import type { SearchSkillRow, toSearchSkillItem } from "../shared/search-skill";
 import { createDepGetter } from "../shared/deps";
 import type { CategorySlug } from "../categories/taxonomy";
 
@@ -218,13 +218,11 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
 
       const getRelatedCategoriesByTagSlug = await getDep("getRelatedCategoriesByTagSlug");
       const getRelatedTagsByTagSlug = await getDep("getRelatedTagsByTagSlug");
-      const getTopSkillsByTagSlug = await getDep("getTopSkillsByTagSlug");
       const minCount = getIndexableTagMinCount();
 
-      const [relatedCategories, relatedTags, topSkills] = await Promise.all([
+      const [relatedCategories, relatedTags] = await Promise.all([
         getRelatedCategoriesByTagSlug(input.slug),
         getRelatedTagsByTagSlug(input.slug),
-        getTopSkillsByTagSlug(input.slug),
       ]);
 
       return {
@@ -241,7 +239,24 @@ export const createTagsService = (overrides: Partial<TagsServiceDeps> = {}) => {
           slug: related.slug,
         })),
         slug: row.slug,
-        topSkills: topSkills.map(toSearchSkillItem),
+      };
+    },
+
+    async getTopSkillsBySlug(input: { slug: string }) {
+      const findTagBySlug = await getDep("findTagBySlug");
+      const row = await findTagBySlug(input.slug);
+      if (!(row && row.status === "active")) {
+        return null;
+      }
+
+      const getTopSkillsByTagSlug = await getDep("getTopSkillsByTagSlug");
+      const topSkills = await getTopSkillsByTagSlug(input.slug);
+
+      return {
+        count: row.count,
+        topSkills: topSkills
+          .map(toValidSearchSkillItem)
+          .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
       };
     },
 
@@ -419,6 +434,10 @@ export async function listTagsPublic(input?: { all?: boolean; limit?: number }) 
 
 export async function getTagBySlug(input: { slug: string }) {
   return await createTagsService().getBySlug(input);
+}
+
+export async function getTagTopSkillsBySlug(input: { slug: string }) {
+  return await createTagsService().getTopSkillsBySlug(input);
 }
 
 export async function listTagsForSeoPublic(input?: { limit?: number }) {

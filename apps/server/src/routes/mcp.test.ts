@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { asSkillUsageEventId } from "@skills-re/db/utils";
+import { asSkillId, asSkillUsageEventId, type SkillId } from "@skills-re/db/utils";
 import { describe, expect, test } from "bun:test";
 import { Hono } from "hono";
 
@@ -24,10 +24,11 @@ const createSession = (userId = "user-1") => ({
 });
 
 type SkillDetail = NonNullable<Awaited<ReturnType<McpRouteDeps["getSkillByPath"]>>>;
+type SkillDetailWithId = Omit<SkillDetail, "id"> & { id: SkillId };
 type SavedSkillsPage = Awaited<ReturnType<McpRouteDeps["listMineSavedSkills"]>>;
 type RecentUsagePage = Awaited<ReturnType<McpRouteDeps["listMyRecentSkillUsage"]>>;
 
-const makeSkill = (overrides: Partial<SkillDetail> = {}): SkillDetail => ({
+const makeSkill = (overrides: Partial<SkillDetailWithId> = {}): SkillDetailWithId => ({
   author: {
     avatarUrl: undefined,
     githubUrl: "https://github.com/acme",
@@ -39,12 +40,12 @@ const makeSkill = (overrides: Partial<SkillDetail> = {}): SkillDetail => ({
   downloadsAllTime: 0,
   downloadsTrending: 0,
   forkCount: 0,
-  id: "skill-1",
+  id: asSkillId("skill-1"),
   isVerified: false,
   latestAuditScore: undefined,
   latestSnapshotId: undefined,
   latestSnapshotTotalBytes: undefined,
-  latestVersion: "1.0.0",
+  latestVersion: undefined,
   license: undefined,
   primaryCategory: undefined,
   repoName: "skills",
@@ -75,15 +76,26 @@ const createDeps = (authed = false): Partial<McpRouteDeps> => ({
           repoName: input.repoName ?? "skills",
           slug: input.skillSlug,
         }),
-  getSkillRecommendations: async () => ({
-    page: [
-      {
-        reason: "Saved in your Skills.re library.",
-        skill: makeSkill(),
-      },
-    ],
-    query: "testing",
-  }),
+  getSkillRecommendations: async () =>
+    ({
+      page: [
+        {
+          reason: "Saved in your Skills.re library.",
+          skill: {
+            authorHandle: undefined,
+            createdAt: 1,
+            description: "Demo skill",
+            id: asSkillId("skill-1"),
+            latestVersion: undefined,
+            repoName: undefined,
+            slug: "demo",
+            title: "Demo",
+            updatedAt: 2,
+          },
+        },
+      ],
+      query: "testing",
+    }) as Awaited<ReturnType<McpRouteDeps["getSkillRecommendations"]>>,
   listMineSavedSkills: async ({ userId }): Promise<SavedSkillsPage> => ({
     continueCursor: "",
     isDone: true,

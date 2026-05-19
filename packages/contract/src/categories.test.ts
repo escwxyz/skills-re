@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import {
   categoryDetailSchema,
   categoryListItemSchema,
+  categoryTopSkillsSchema,
   relatedCategorySchema,
 } from "./common/content";
 import { categoriesContract } from "./categories";
@@ -39,15 +40,6 @@ describe("categories contract", () => {
           },
         ],
         slug: "tools-platforms",
-        topSkills: [
-          {
-            description: "Widget skill",
-            id: "skill-1",
-            slug: "widget",
-            syncTime: 123,
-            title: "Widget",
-          },
-        ],
       }),
     ).toEqual({
       count: 5,
@@ -60,6 +52,25 @@ describe("categories contract", () => {
         },
       ],
       slug: "tools-platforms",
+    });
+  });
+
+  test("accepts a category top skills payload", () => {
+    expect(
+      categoryTopSkillsSchema.parse({
+        count: 5,
+        topSkills: [
+          {
+            description: "Widget skill",
+            id: "skill-1",
+            slug: "widget",
+            syncTime: 123,
+            title: "Widget",
+          },
+        ],
+      }),
+    ).toEqual({
+      count: 5,
       topSkills: [
         {
           description: "Widget skill",
@@ -90,6 +101,7 @@ describe("categories contract", () => {
     expect(categoriesContract.list).toBeDefined();
     expect(categoriesContract.count).toBeDefined();
     expect(categoriesContract.getBySlug).toBeDefined();
+    expect(categoriesContract.getTopSkillsBySlug).toBeDefined();
     expect(categoriesContract.listForAi).toBeDefined();
   });
 });

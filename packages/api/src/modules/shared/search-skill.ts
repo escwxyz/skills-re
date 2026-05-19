@@ -1,12 +1,13 @@
+import { searchSkillListItemSchema } from "@skills-re/contract/common/content";
 import { githubOwnerSchema, githubRepoSchema } from "@skills-re/contract/common/slugs";
 
 export interface SearchSkillRow {
   authorHandle: string;
-  createdAt: number;
+  createdAt: number | null;
   description: string;
-  downloadsAllTime: number;
-  downloadsTrending: number;
-  forkCount: number;
+  downloadsAllTime: number | null;
+  downloadsTrending: number | null;
+  forkCount: number | null;
   id: string;
   isVerified: boolean;
   latestAuditScore?: number | null;
@@ -19,17 +20,20 @@ export interface SearchSkillRow {
   repoName: string;
   repoUrl: string | null;
   slug: string;
-  stargazerCount: number;
-  syncTime: number;
+  stargazerCount: number | null;
+  syncTime: number | null;
   title: string;
-  updatedAt: number;
-  viewsAllTime: number;
+  updatedAt: number | null;
+  viewsAllTime: number | null;
   tags?: string[];
 }
 
 const isValidGithubOwner = (value: string) => githubOwnerSchema.safeParse(value).success;
 
 const isValidGithubRepo = (value: string) => githubRepoSchema.safeParse(value).success;
+
+const toOptionalNumber = (value: number | null | undefined) =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
 export const toSearchSkillItem = (row: SearchSkillRow) => ({
   author: isValidGithubOwner(row.authorHandle)
@@ -40,11 +44,11 @@ export const toSearchSkillItem = (row: SearchSkillRow) => ({
       }
     : undefined,
   authorHandle: isValidGithubOwner(row.authorHandle) ? row.authorHandle : undefined,
-  createdAt: row.createdAt,
+  createdAt: toOptionalNumber(row.createdAt),
   description: row.description,
-  downloadsAllTime: row.downloadsAllTime,
-  downloadsTrending: row.downloadsTrending,
-  forkCount: row.forkCount,
+  downloadsAllTime: toOptionalNumber(row.downloadsAllTime),
+  downloadsTrending: toOptionalNumber(row.downloadsTrending),
+  forkCount: toOptionalNumber(row.forkCount),
   id: row.id,
   isVerified: row.isVerified,
   latestAuditScore: row.latestAuditScore ?? undefined,
@@ -56,10 +60,16 @@ export const toSearchSkillItem = (row: SearchSkillRow) => ({
   repoName: isValidGithubRepo(row.repoName) ? row.repoName : undefined,
   repoUrl: row.repoUrl ?? undefined,
   slug: row.slug,
-  stargazerCount: row.stargazerCount,
-  syncTime: row.syncTime,
+  stargazerCount: toOptionalNumber(row.stargazerCount),
+  syncTime: toOptionalNumber(row.syncTime),
   title: row.title,
-  updatedAt: row.updatedAt,
-  viewsAllTime: row.viewsAllTime,
+  updatedAt: toOptionalNumber(row.updatedAt),
+  viewsAllTime: toOptionalNumber(row.viewsAllTime),
   tags: row.tags?.length ? row.tags : undefined,
 });
+
+export const toValidSearchSkillItem = (row: SearchSkillRow) => {
+  const item = toSearchSkillItem(row);
+  const parsed = searchSkillListItemSchema.safeParse(item);
+  return parsed.success ? parsed.data : null;
+};

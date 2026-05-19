@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { baseContract } from "./common/base";
-import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
+import {
+  categoryDetailSchema,
+  categoryListItemSchema,
+  categoryTopSkillsSchema,
+} from "./common/content";
 
 const listCategoriesInputSchema = z
   .object({
@@ -40,8 +44,7 @@ const categoriesCountContract = baseContract
 
 const categoryBySlugContract = baseContract
   .route({
-    description:
-      "Returns the public category detail payload, including related tags and top skills.",
+    description: "Returns the public category detail payload, including related tags.",
     method: "GET",
     path: "/categories/by-slug",
     tags: ["Categories", "Internal"],
@@ -50,6 +53,18 @@ const categoryBySlugContract = baseContract
   })
   .input(categoryLookupInputSchema)
   .output(categoryDetailSchema.nullable());
+
+const categoryTopSkillsBySlugContract = baseContract
+  .route({
+    description: "Returns the top skills for a public category detail page.",
+    method: "GET",
+    path: "/categories/by-slug/top-skills",
+    tags: ["Categories", "Internal"],
+    successDescription: "Category top skills payload",
+    summary: "Read category top skills by slug",
+  })
+  .input(categoryLookupInputSchema)
+  .output(categoryTopSkillsSchema.nullable());
 
 const listCategoriesForAiContract = baseContract
   .route({
@@ -65,6 +80,7 @@ const listCategoriesForAiContract = baseContract
 export const categoriesContract = {
   count: categoriesCountContract,
   getBySlug: categoryBySlugContract,
+  getTopSkillsBySlug: categoryTopSkillsBySlugContract,
   list: categoriesListContract,
   listForAi: listCategoriesForAiContract,
 } as const;

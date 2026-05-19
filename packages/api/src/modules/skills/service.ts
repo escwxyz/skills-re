@@ -10,7 +10,7 @@ import type {
 import { buildAiSearchResult } from "../ai-search";
 import type { AiSearchResult } from "../ai-search";
 import { findSnapshotByContentHashes } from "../snapshots/repo";
-import { toSearchSkillItem } from "../shared/search-skill";
+import { toSearchSkillItem, toValidSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
 
 interface SkillListRow {
@@ -464,7 +464,12 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     > {
       const browseSearch = async () => {
         const result = await deps.searchSkillsPageByFilters(input);
-        return { ...result, page: result.page.map(toSearchSkillItem) };
+        return {
+          ...result,
+          page: result.page
+            .map(toValidSearchSkillItem)
+            .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
+        };
       };
 
       if (!input.query) {

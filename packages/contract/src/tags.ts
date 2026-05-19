@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { baseContract } from "./common/base";
 import { cursorPaginationInputSchema, paginatedResponseSchema } from "./common/pagination";
-import { tagDetailSchema, tagListItemSchema } from "./common/content";
+import { tagDetailSchema, tagListItemSchema, tagTopSkillsSchema } from "./common/content";
 import { tagSlugSchema } from "./common/slugs";
 
 const listTagsInputSchema = z
@@ -51,7 +51,7 @@ const tagsCountContract = baseContract
 const tagBySlugContract = baseContract
   .route({
     description:
-      "Returns the SEO-oriented public tag detail payload, including related categories and top skills.",
+      "Returns the SEO-oriented public tag detail payload, including related categories.",
     method: "GET",
     path: "/tags/by-slug",
     tags: ["Tags"],
@@ -60,6 +60,18 @@ const tagBySlugContract = baseContract
   })
   .input(tagLookupInputSchema)
   .output(tagDetailSchema.nullable());
+
+const tagTopSkillsBySlugContract = baseContract
+  .route({
+    description: "Returns the top skills for a public tag detail page.",
+    method: "GET",
+    path: "/tags/by-slug/top-skills",
+    tags: ["Tags"],
+    successDescription: "Tag top skills payload",
+    summary: "Read tag top skills by slug",
+  })
+  .input(tagLookupInputSchema)
+  .output(tagTopSkillsSchema.nullable());
 
 const listTagsForSeoContract = baseContract
   .route({
@@ -100,6 +112,7 @@ const listTagsPageContract = baseContract
 export const tagsContract = {
   count: tagsCountContract,
   getBySlug: tagBySlugContract,
+  getTopSkillsBySlug: tagTopSkillsBySlugContract,
   list: tagsListContract,
   listForSeo: listTagsForSeoContract,
   listIndexable: listIndexableTagsContract,

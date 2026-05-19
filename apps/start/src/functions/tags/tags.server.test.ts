@@ -115,15 +115,6 @@ describe("fetchTagDetail", () => {
             relatedCategories: [{ count: 2, name: "Code Frameworks", slug: "code-frameworks" }],
             relatedTags: [{ count: 4, slug: "workflow" }],
             slug,
-            topSkills: [
-              {
-                description: "Builds workflows",
-                id: "skill-1",
-                slug: "workflow-builder",
-                syncTime: 1710000000,
-                title: "Workflow Builder",
-              },
-            ],
           });
         },
       },
@@ -146,15 +137,11 @@ describe("fetchTagTopSkills", () => {
     const calls: string[] = [];
     const client = {
       tags: {
-        getBySlug: ({ slug }: { slug: string }) => {
+        getTopSkillsBySlug: ({ slug }: { slug: string }) => {
           calls.push(slug);
           return Promise.resolve({
             count: 11,
             id: "tag-2",
-            indexable: true,
-            relatedCategories: [{ count: 2, name: "Code Frameworks", slug: "code-frameworks" }],
-            relatedTags: [{ count: 4, slug: "workflow" }],
-            slug,
             topSkills: [
               {
                 authorHandle: "alex",

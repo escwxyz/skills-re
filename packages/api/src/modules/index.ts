@@ -103,10 +103,12 @@ export {
   listTagsForSeoPublic as listTagsForSeo,
   listTagsPagePublic as listTagsPage,
   listTagsPublic as listTags,
+  getTagTopSkillsBySlug,
 } from "./tags/service";
 export {
   countCategoriesPublic as countCategories,
   getCategoryBySlug,
+  getCategoryTopSkillsBySlug,
   listCategoriesForAiPublic as listCategoriesForAi,
   listCategoriesPublic as listCategories,
 } from "./categories/service";

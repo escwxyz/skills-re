@@ -117,6 +117,10 @@ export const tagDetailSchema = z.object({
   relatedCategories: z.array(relatedCategorySchema),
   relatedTags: z.array(relatedTagSchema),
   slug: tagSlugSchema,
+});
+
+export const tagTopSkillsSchema = z.object({
+  count: z.number().int().nonnegative(),
   topSkills: z.array(searchSkillListItemSchema),
 });
 
@@ -133,6 +137,10 @@ export const categoryDetailSchema = z.object({
   name: z.string(),
   relatedTags: z.array(relatedTagSchema),
   slug: categorySlugSchema,
+});
+
+export const categoryTopSkillsSchema = z.object({
+  count: z.number().int().nonnegative(),
   topSkills: z.array(searchSkillListItemSchema),
 });
 

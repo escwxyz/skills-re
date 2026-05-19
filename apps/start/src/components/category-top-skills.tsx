@@ -25,8 +25,7 @@ export const CategoryTopSkills = ({ slug }: { slug: string }) => {
   if (isError || !data) {
     return (
       <div className="border-border border px-6 py-10 font-mono text-sm text-destructive">
-        {/** todo i18n */}
-        Something went wrong while loading the top skills for this category. Please try again later.
+        {m.categories_page_load_error()}
       </div>
     );
   }

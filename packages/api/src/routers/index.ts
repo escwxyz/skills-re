@@ -30,6 +30,7 @@ import {
   getAuthorByHandle,
   getBasicSkill,
   getCategoryBySlug,
+  getCategoryTopSkillsBySlug,
   getBySkillAndVersion,
   getSkillByPath,
   getSkillsHistoryInfo,
@@ -37,6 +38,7 @@ import {
   getSnapshotFileSignedUrl,
   getSnapshotTreeEntries,
   getTagBySlug,
+  getTagTopSkillsBySlug,
   listAuthors,
   listCategories,
   listCategoriesForAi,
@@ -119,6 +121,9 @@ export const appRouter = {
     count: publicProcedure.categories.count.handler(() => countCategories()),
     getBySlug: publicProcedure.categories.getBySlug.handler(({ input }) =>
       getCategoryBySlug(input),
+    ),
+    getTopSkillsBySlug: publicProcedure.categories.getTopSkillsBySlug.handler(({ input }) =>
+      getCategoryTopSkillsBySlug(input),
     ),
     list: publicProcedure.categories.list.handler(({ input }) => listCategories(input)),
     listForAi: publicProcedure.categories.listForAi.handler(({ input }) =>
@@ -596,6 +601,9 @@ export const appRouter = {
   tags: {
     count: publicProcedure.tags.count.handler(() => countTags()),
     getBySlug: publicProcedure.tags.getBySlug.handler(({ input }) => getTagBySlug(input)),
+    getTopSkillsBySlug: publicProcedure.tags.getTopSkillsBySlug.handler(({ input }) =>
+      getTagTopSkillsBySlug(input),
+    ),
     list: publicProcedure.tags.list.handler(({ input }) => listTags(input)),
     listForSeo: publicProcedure.tags.listForSeo.handler(({ input }) =>
       listTagsForSeo(input as { limit?: number } | undefined),
