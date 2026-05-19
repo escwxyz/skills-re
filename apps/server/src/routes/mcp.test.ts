@@ -43,6 +43,7 @@ const makeSkill = (overrides: Partial<SkillDetail> = {}): SkillDetail => ({
   isVerified: false,
   latestAuditScore: undefined,
   latestSnapshotId: undefined,
+  latestSnapshotTotalBytes: undefined,
   latestVersion: "1.0.0",
   license: undefined,
   primaryCategory: undefined,
