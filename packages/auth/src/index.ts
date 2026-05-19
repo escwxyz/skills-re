@@ -180,103 +180,115 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
           "skills:library",
           "skills:usage",
         ],
+        silenceWarnings: {
+          oauthAuthServerConfig: true,
+          openidConfig: true,
+        },
         validAudiences: [env.PUBLIC_SERVER_URL, `${env.PUBLIC_SERVER_URL}/mcp`],
       }),
-      agentAuth({
-        capabilities: [
-          {
-            description: "Fetch a public page from skills.re by path.",
-            input: {
-              additionalProperties: false,
-              properties: {
-                path: {
-                  type: "string",
+      // todo: review
+      // Strip the /device/code endpoint from agentAuth to avoid conflict with
+      // the deviceAuthorization plugin. We only use CIBA for agent approval
+      // (approvalMethods: ["ciba"]), so this endpoint is unused.
+      (() => {
+        const plugin = agentAuth({
+          capabilities: [
+            {
+              description: "Fetch a public page from skills.re by path.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  path: {
+                    type: "string",
+                  },
                 },
+                required: ["path"],
+                type: "object",
               },
-              required: ["path"],
-              type: "object",
+              name: "read_public_page",
             },
-            name: "read_public_page",
-          },
-          {
-            description: "Fetch the public search page for a query string.",
-            input: {
-              additionalProperties: false,
-              properties: {
-                query: {
-                  type: "string",
+            {
+              description: "Fetch the public search page for a query string.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  query: {
+                    type: "string",
+                  },
                 },
+                required: ["query"],
+                type: "object",
               },
-              required: ["query"],
-              type: "object",
+              name: "search_site",
             },
-            name: "search_site",
-          },
-          {
-            description: "Resolve public skill install metadata for CLI or MCP clients.",
-            input: {
-              additionalProperties: false,
-              properties: {
-                skill: {
-                  type: "string",
+            {
+              description: "Resolve public skill install metadata for CLI or MCP clients.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  skill: {
+                    type: "string",
+                  },
+                  version: {
+                    type: "string",
+                  },
                 },
-                version: {
-                  type: "string",
-                },
+                required: ["skill"],
+                type: "object",
               },
-              required: ["skill"],
-              type: "object",
+              name: "resolve_skill_install",
             },
-            name: "resolve_skill_install",
+          ],
+          approvalMethods: ["ciba"],
+          modes: ["delegated"],
+          providerDescription: "Public website content and content discovery for AI agents.",
+          providerName: "skills.re",
+          onExecute: async ({ capability, arguments: args }) => {
+            if (capability === "read_public_page") {
+              if (!args || typeof args !== "object" || typeof args.path !== "string") {
+                throw new Error("read_public_page requires a string path.");
+              }
+
+              return await fetchPublicContent(args.path, env.PUBLIC_SITE_URL);
+            }
+
+            if (capability === "search_site") {
+              if (!args || typeof args !== "object" || typeof args.query !== "string") {
+                throw new Error("search_site requires a string query.");
+              }
+
+              const searchUrl = new URL("/skills", env.PUBLIC_SITE_URL);
+              searchUrl.searchParams.set("mode", "search");
+              searchUrl.searchParams.set("q", args.query);
+              return await fetchPublicContent(
+                searchUrl.pathname + searchUrl.search,
+                env.PUBLIC_SITE_URL,
+              );
+            }
+
+            if (capability === "resolve_skill_install") {
+              if (!args || typeof args !== "object" || typeof args.skill !== "string") {
+                throw new Error("resolve_skill_install requires a string skill.");
+              }
+
+              const installUrl = new URL("/cli/skills/resolve-install", env.PUBLIC_SERVER_URL);
+              installUrl.searchParams.set("skill", args.skill);
+              if (typeof args.version === "string") {
+                installUrl.searchParams.set("version", args.version);
+              }
+              const response = await fetch(installUrl);
+              if (!response.ok) {
+                throw new Error(`Install metadata request failed: ${response.status}`);
+              }
+              return await response.json();
+            }
+
+            throw new Error(`Unsupported agent capability: ${capability}`);
           },
-        ],
-        approvalMethods: ["ciba"],
-        modes: ["delegated"],
-        providerDescription: "Public website content and content discovery for AI agents.",
-        providerName: "skills.re",
-        onExecute: async ({ capability, arguments: args }) => {
-          if (capability === "read_public_page") {
-            if (!args || typeof args !== "object" || typeof args.path !== "string") {
-              throw new Error("read_public_page requires a string path.");
-            }
-
-            return await fetchPublicContent(args.path, env.PUBLIC_SITE_URL);
-          }
-
-          if (capability === "search_site") {
-            if (!args || typeof args !== "object" || typeof args.query !== "string") {
-              throw new Error("search_site requires a string query.");
-            }
-
-            const searchUrl = new URL("/skills", env.PUBLIC_SITE_URL);
-            searchUrl.searchParams.set("mode", "search");
-            searchUrl.searchParams.set("q", args.query);
-            return await fetchPublicContent(
-              searchUrl.pathname + searchUrl.search,
-              env.PUBLIC_SITE_URL,
-            );
-          }
-
-          if (capability === "resolve_skill_install") {
-            if (!args || typeof args !== "object" || typeof args.skill !== "string") {
-              throw new Error("resolve_skill_install requires a string skill.");
-            }
-
-            const installUrl = new URL("/cli/skills/resolve-install", env.PUBLIC_SERVER_URL);
-            installUrl.searchParams.set("skill", args.skill);
-            if (typeof args.version === "string") {
-              installUrl.searchParams.set("version", args.version);
-            }
-            const response = await fetch(installUrl);
-            if (!response.ok) {
-              throw new Error(`Install metadata request failed: ${response.status}`);
-            }
-            return await response.json();
-          }
-
-          throw new Error(`Unsupported agent capability: ${capability}`);
-        },
-      }),
+        });
+        const { deviceCode: _deviceCode, ...agentEndpoints } = plugin.endpoints;
+        return { ...plugin, endpoints: agentEndpoints as typeof plugin.endpoints };
+      })(),
       deviceAuthorization({
         schema: {},
         validateClient: (clientId) => clientId === "cli",

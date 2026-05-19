@@ -15,7 +15,10 @@ import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
-import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
+import {
+  oauthProviderAuthServerMetadata,
+  oauthProviderOpenIdConfigMetadata,
+} from "@better-auth/oauth-provider";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
@@ -139,6 +142,10 @@ app.get("/.well-known/agent-configuration", async (c) => {
 // The authorization server is Better Auth; this Worker is the resource server.
 app.get("/.well-known/oauth-authorization-server", async (c) => {
   const response = await oauthProviderAuthServerMetadata(createRuntimeAuth())(c.req.raw);
+  return c.newResponse(response.body, response);
+});
+app.get("/.well-known/openid-configuration", async (c) => {
+  const response = await oauthProviderOpenIdConfigMetadata(createRuntimeAuth())(c.req.raw);
   return c.newResponse(response.body, response);
 });
 app.get("/.well-known/oauth-protected-resource", (c) =>

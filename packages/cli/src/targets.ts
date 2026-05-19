@@ -2,6 +2,8 @@ import { join } from "node:path";
 
 import { CliError } from "./errors";
 
+// TODO: support more agents
+
 export type AgentTargetName = "aider" | "claude" | "codex" | "cursor" | "universal" | "windsurf";
 
 export interface AgentTarget {

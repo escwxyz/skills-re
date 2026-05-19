@@ -28,6 +28,8 @@ import { Route as PublicLayoutImprintRouteImport } from './routes/_publicLayout/
 import { Route as PublicLayoutFaqRouteImport } from './routes/_publicLayout/faq'
 import { Route as PublicLayoutCookiesRouteImport } from './routes/_publicLayout/cookies'
 import { Route as PublicLayoutChangelogsRouteImport } from './routes/_publicLayout/changelogs'
+import { Route as DotwellKnownOpenidConfigurationRouteImport } from './routes/[.]well-known/openid-configuration'
+import { Route as DotwellKnownOauthAuthorizationServerRouteImport } from './routes/[.]well-known/oauth-authorization-server'
 import { Route as DotwellKnownApiCatalogRouteImport } from './routes/[.]well-known/api-catalog'
 import { Route as DotwellKnownAgentConfigurationRouteImport } from './routes/[.]well-known/agent-configuration'
 import { Route as AuthedLayoutDashboardRouteRouteImport } from './routes/_authedLayout/dashboard.route'
@@ -37,6 +39,7 @@ import { Route as PublicLayoutDocsIndexRouteImport } from './routes/_publicLayou
 import { Route as PublicLayoutCollectionsIndexRouteImport } from './routes/_publicLayout/collections.index'
 import { Route as PublicLayoutCategoriesIndexRouteImport } from './routes/_publicLayout/categories.index'
 import { Route as PublicLayoutAuthorsIndexRouteImport } from './routes/_publicLayout/authors.index'
+import { Route as AuthedLayoutDeviceIndexRouteImport } from './routes/_authedLayout/device.index'
 import { Route as AuthedLayoutDashboardIndexRouteImport } from './routes/_authedLayout/dashboard.index'
 import { Route as SitemapSkillsPageRouteImport } from './routes/sitemap.skills.$page'
 import { Route as PublicLayoutTagsSlugRouteImport } from './routes/_publicLayout/tags.$slug'
@@ -47,7 +50,6 @@ import { Route as PublicLayoutCategorySlugRouteImport } from './routes/_publicLa
 import { Route as PublicLayoutCategoriesSlugRouteImport } from './routes/_publicLayout/categories.$slug'
 import { Route as PublicLayoutAuthorsHandleRouteImport } from './routes/_publicLayout/authors.$handle'
 import { Route as PublicLayoutAuthorHandleRouteImport } from './routes/_publicLayout/author.$handle'
-import { Route as AuthedLayoutDeviceIndexRouteImport } from './routes/_authedLayout/device.index'
 import { Route as AuthedLayoutDeviceCapabilitiesRouteImport } from './routes/_authedLayout/device.capabilities'
 import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authedLayout/dashboard.skills'
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
@@ -167,6 +169,18 @@ const PublicLayoutChangelogsRoute = PublicLayoutChangelogsRouteImport.update({
   path: '/changelogs',
   getParentRoute: () => PublicLayoutRoute,
 } as any)
+const DotwellKnownOpenidConfigurationRoute =
+  DotwellKnownOpenidConfigurationRouteImport.update({
+    id: '/.well-known/openid-configuration',
+    path: '/.well-known/openid-configuration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotwellKnownOauthAuthorizationServerRoute =
+  DotwellKnownOauthAuthorizationServerRouteImport.update({
+    id: '/.well-known/oauth-authorization-server',
+    path: '/.well-known/oauth-authorization-server',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DotwellKnownApiCatalogRoute = DotwellKnownApiCatalogRouteImport.update({
   id: '/.well-known/api-catalog',
   path: '/.well-known/api-catalog',
@@ -217,6 +231,11 @@ const PublicLayoutAuthorsIndexRoute =
     path: '/authors/',
     getParentRoute: () => PublicLayoutRoute,
   } as any)
+const AuthedLayoutDeviceIndexRoute = AuthedLayoutDeviceIndexRouteImport.update({
+  id: '/device/',
+  path: '/device/',
+  getParentRoute: () => AuthedLayoutRoute,
+} as any)
 const AuthedLayoutDashboardIndexRoute =
   AuthedLayoutDashboardIndexRouteImport.update({
     id: '/',
@@ -273,11 +292,6 @@ const PublicLayoutAuthorHandleRoute =
     path: '/author/$handle',
     getParentRoute: () => PublicLayoutRoute,
   } as any)
-const AuthedLayoutDeviceIndexRoute = AuthedLayoutDeviceIndexRouteImport.update({
-  id: '/device/',
-  path: '/device/',
-  getParentRoute: () => AuthedLayoutRoute,
-} as any)
 const AuthedLayoutDeviceCapabilitiesRoute =
   AuthedLayoutDeviceCapabilitiesRouteImport.update({
     id: '/device/capabilities',
@@ -422,6 +436,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
+  '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
   '/changelogs': typeof PublicLayoutChangelogsRoute
   '/cookies': typeof PublicLayoutCookiesRoute
   '/faq': typeof PublicLayoutFaqRoute
@@ -484,6 +500,8 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
+  '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
   '/changelogs': typeof PublicLayoutChangelogsRoute
   '/cookies': typeof PublicLayoutCookiesRoute
   '/faq': typeof PublicLayoutFaqRoute
@@ -548,6 +566,8 @@ export interface FileRoutesById {
   '/_authedLayout/dashboard': typeof AuthedLayoutDashboardRouteRouteWithChildren
   '/.well-known/agent-configuration': typeof DotwellKnownAgentConfigurationRoute
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
+  '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
   '/_publicLayout/changelogs': typeof PublicLayoutChangelogsRoute
   '/_publicLayout/cookies': typeof PublicLayoutCookiesRoute
   '/_publicLayout/faq': typeof PublicLayoutFaqRoute
@@ -566,7 +586,6 @@ export interface FileRoutesById {
   '/_authedLayout/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
   '/_authedLayout/dashboard/skills': typeof AuthedLayoutDashboardSkillsRouteWithChildren
   '/_authedLayout/device/capabilities': typeof AuthedLayoutDeviceCapabilitiesRoute
-  '/_authedLayout/device/': typeof AuthedLayoutDeviceIndexRoute
   '/_publicLayout/author/$handle': typeof PublicLayoutAuthorHandleRoute
   '/_publicLayout/authors/$handle': typeof PublicLayoutAuthorsHandleRoute
   '/_publicLayout/categories/$slug': typeof PublicLayoutCategoriesSlugRoute
@@ -577,6 +596,7 @@ export interface FileRoutesById {
   '/_publicLayout/tags/$slug': typeof PublicLayoutTagsSlugRoute
   '/sitemap/skills/$page': typeof SitemapSkillsPageRoute
   '/_authedLayout/dashboard/': typeof AuthedLayoutDashboardIndexRoute
+  '/_authedLayout/device/': typeof AuthedLayoutDeviceIndexRoute
   '/_publicLayout/authors/': typeof PublicLayoutAuthorsIndexRoute
   '/_publicLayout/categories/': typeof PublicLayoutCategoriesIndexRoute
   '/_publicLayout/collections/': typeof PublicLayoutCollectionsIndexRoute
@@ -614,6 +634,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/.well-known/agent-configuration'
     | '/.well-known/api-catalog'
+    | '/.well-known/oauth-authorization-server'
+    | '/.well-known/openid-configuration'
     | '/changelogs'
     | '/cookies'
     | '/faq'
@@ -676,6 +698,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.well-known/agent-configuration'
     | '/.well-known/api-catalog'
+    | '/.well-known/oauth-authorization-server'
+    | '/.well-known/openid-configuration'
     | '/changelogs'
     | '/cookies'
     | '/faq'
@@ -739,6 +763,8 @@ export interface FileRouteTypes {
     | '/_authedLayout/dashboard'
     | '/.well-known/agent-configuration'
     | '/.well-known/api-catalog'
+    | '/.well-known/oauth-authorization-server'
+    | '/.well-known/openid-configuration'
     | '/_publicLayout/changelogs'
     | '/_publicLayout/cookies'
     | '/_publicLayout/faq'
@@ -757,7 +783,6 @@ export interface FileRouteTypes {
     | '/_authedLayout/dashboard/settings'
     | '/_authedLayout/dashboard/skills'
     | '/_authedLayout/device/capabilities'
-    | '/_authedLayout/device/'
     | '/_publicLayout/author/$handle'
     | '/_publicLayout/authors/$handle'
     | '/_publicLayout/categories/$slug'
@@ -768,6 +793,7 @@ export interface FileRouteTypes {
     | '/_publicLayout/tags/$slug'
     | '/sitemap/skills/$page'
     | '/_authedLayout/dashboard/'
+    | '/_authedLayout/device/'
     | '/_publicLayout/authors/'
     | '/_publicLayout/categories/'
     | '/_publicLayout/collections/'
@@ -804,6 +830,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownAgentConfigurationRoute: typeof DotwellKnownAgentConfigurationRoute
   DotwellKnownApiCatalogRoute: typeof DotwellKnownApiCatalogRoute
+  DotwellKnownOauthAuthorizationServerRoute: typeof DotwellKnownOauthAuthorizationServerRoute
+  DotwellKnownOpenidConfigurationRoute: typeof DotwellKnownOpenidConfigurationRoute
   SitemapAuthorsDotxmlRoute: typeof SitemapAuthorsDotxmlRoute
   SitemapCollectionsDotxmlRoute: typeof SitemapCollectionsDotxmlRoute
   SitemapDocsDotxmlRoute: typeof SitemapDocsDotxmlRoute
@@ -958,6 +986,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLayoutChangelogsRouteImport
       parentRoute: typeof PublicLayoutRoute
     }
+    '/.well-known/openid-configuration': {
+      id: '/.well-known/openid-configuration'
+      path: '/.well-known/openid-configuration'
+      fullPath: '/.well-known/openid-configuration'
+      preLoaderRoute: typeof DotwellKnownOpenidConfigurationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-authorization-server': {
+      id: '/.well-known/oauth-authorization-server'
+      path: '/.well-known/oauth-authorization-server'
+      fullPath: '/.well-known/oauth-authorization-server'
+      preLoaderRoute: typeof DotwellKnownOauthAuthorizationServerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.well-known/api-catalog': {
       id: '/.well-known/api-catalog'
       path: '/.well-known/api-catalog'
@@ -1020,6 +1062,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/authors/'
       preLoaderRoute: typeof PublicLayoutAuthorsIndexRouteImport
       parentRoute: typeof PublicLayoutRoute
+    }
+    '/_authedLayout/device/': {
+      id: '/_authedLayout/device/'
+      path: '/device'
+      fullPath: '/device/'
+      preLoaderRoute: typeof AuthedLayoutDeviceIndexRouteImport
+      parentRoute: typeof AuthedLayoutRoute
     }
     '/_authedLayout/dashboard/': {
       id: '/_authedLayout/dashboard/'
@@ -1096,13 +1145,6 @@ declare module '@tanstack/react-router' {
       path: '/device/capabilities'
       fullPath: '/device/capabilities'
       preLoaderRoute: typeof AuthedLayoutDeviceCapabilitiesRouteImport
-      parentRoute: typeof AuthedLayoutRoute
-    }
-    '/_authedLayout/device/': {
-      id: '/_authedLayout/device/'
-      path: '/device/'
-      fullPath: '/device/'
-      preLoaderRoute: typeof AuthedLayoutDeviceIndexRouteImport
       parentRoute: typeof AuthedLayoutRoute
     }
     '/_authedLayout/dashboard/skills': {
@@ -1418,6 +1460,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownAgentConfigurationRoute: DotwellKnownAgentConfigurationRoute,
   DotwellKnownApiCatalogRoute: DotwellKnownApiCatalogRoute,
+  DotwellKnownOauthAuthorizationServerRoute:
+    DotwellKnownOauthAuthorizationServerRoute,
+  DotwellKnownOpenidConfigurationRoute: DotwellKnownOpenidConfigurationRoute,
   SitemapAuthorsDotxmlRoute: SitemapAuthorsDotxmlRoute,
   SitemapCollectionsDotxmlRoute: SitemapCollectionsDotxmlRoute,
   SitemapDocsDotxmlRoute: SitemapDocsDotxmlRoute,
