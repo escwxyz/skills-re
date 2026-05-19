@@ -1,7 +1,14 @@
 import { setTimeout as sleep } from "node:timers/promises";
+import { spinner } from "@clack/prompts";
 import { ApiClient } from "./api-client";
 import { parseArgs, getFlag, hasFlag, parseLimit } from "./args";
-import { DEFAULT_API_URL, deleteCredential, readCredential, writeCredential } from "./config";
+import {
+  DEFAULT_API_URL,
+  DEFAULT_SITE_URL,
+  deleteCredential,
+  readCredential,
+  writeCredential,
+} from "./config";
 import { CliError } from "./errors";
 import {
   installSkill,
@@ -15,6 +22,7 @@ import { resolveAgentTarget, resolveMetadataPath, resolveSkillsDir } from "./tar
 import { syncAgentMetadata } from "./sync";
 import type { CommandContext, GlobalOptions, SearchSkillItem } from "./types";
 import { pc, writeJson } from "./ui";
+import { readPackageVersion } from "./version";
 
 const splitCsv = (value: string | undefined) =>
   value
@@ -23,10 +31,11 @@ const splitCsv = (value: string | undefined) =>
     .filter(Boolean);
 
 const createApiClient = async (ctx: CommandContext) => {
-  const credential = await readCredential(ctx.env);
+  const [credential, version] = await Promise.all([readCredential(ctx.env), readPackageVersion()]);
   return new ApiClient({
     apiUrl: DEFAULT_API_URL,
     token: credential?.apiUrl === DEFAULT_API_URL ? credential.token : undefined,
+    version,
   });
 };
 
@@ -34,13 +43,90 @@ const print = (ctx: CommandContext, value: string) => {
   ctx.stdout.write(value);
 };
 
-const printSkill = (skill: SearchSkillItem) => {
+const INDENT = "   ";
+
+const wordWrap = (text: string, maxWidth: number): string => {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (current.length === 0) {
+      current = word;
+    } else if (current.length + 1 + word.length <= maxWidth) {
+      current += ` ${word}`;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) {
+    lines.push(current);
+  }
+  return lines.join(`\n${INDENT}`);
+};
+
+const fmtNum = (n: number) => {
+  if (n >= 1_000_000) {
+    return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+  if (n >= 1000) {
+    return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  }
+  return String(n);
+};
+
+const auditColor = (risk: NonNullable<SearchSkillItem["staticAudit"]>["riskLevel"]) => {
+  if (risk === "safe") {
+    return pc.green(risk);
+  }
+  if (risk === "low") {
+    return pc.yellow(risk);
+  }
+  return pc.red(risk);
+};
+
+const printSkill = (skill: SearchSkillItem, index?: number) => {
   const version = skill.latestVersion ? `@${skill.latestVersion}` : "";
-  const source = [skill.authorHandle, skill.repoName, skill.slug].filter(Boolean).join("/");
-  return `${pc.bold(skill.title)} ${pc.dim(`${skill.slug}${version}`)}
-${skill.description}
-${pc.dim(source)}
-`;
+  const pathParts = [skill.authorHandle, skill.repoName, skill.slug].filter(Boolean);
+  const url = `${DEFAULT_SITE_URL}/${pathParts.join("/")}`;
+
+  const stats: string[] = [];
+  if (skill.downloadsAllTime) {
+    stats.push(`↓ ${fmtNum(skill.downloadsAllTime)}`);
+  }
+  if (skill.viewsAllTime) {
+    stats.push(`◎ ${fmtNum(skill.viewsAllTime)}`);
+  }
+  if (skill.stargazerCount) {
+    stats.push(`★ ${fmtNum(skill.stargazerCount)}`);
+  }
+  if (skill.staticAudit) {
+    stats.push(
+      `audit ${skill.staticAudit.overallScore}/100 ${auditColor(skill.staticAudit.riskLevel)}`,
+    );
+  }
+
+  const num = index === undefined ? "" : pc.dim(`${index}.`);
+  const heading = [
+    num,
+    pc.bold(skill.title),
+    pc.dim(`${skill.slug}${version}`),
+    skill.isVerified ? pc.cyan("✓") : "",
+  ]
+    .filter(Boolean)
+    .join("  ");
+
+  const cols = process.stdout.columns ?? 80;
+  const desc = wordWrap(skill.description, Math.max(40, cols - INDENT.length));
+
+  return [
+    heading,
+    `${INDENT}${desc}`,
+    `${INDENT}${pc.dim(url)}`,
+    stats.length > 0 ? `${INDENT}${pc.dim(stats.join("  ·  "))}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 };
 
 export const runSearchCommand = async (
@@ -51,15 +137,25 @@ export const runSearchCommand = async (
   const args = parseArgs(argv);
   const query = args.positionals.join(" ").trim();
   const apiClient = await createApiClient(ctx);
-  const result = await apiClient.searchSkills({
-    categories: splitCsv(getFlag(args, "category")),
-    cursor: getFlag(args, "cursor"),
-    limit: parseLimit(getFlag(args, "limit"), 20),
-    query: query || undefined,
-    rewriteQuery: !hasFlag(args, "no-rewrite-query"),
-    sort: getFlag(args, "sort"),
-    tags: splitCsv(getFlag(args, "tag")),
-  });
+
+  const s = globalOptions.json ? null : spinner();
+  s?.start("Searching…");
+  let result;
+  try {
+    result = await apiClient.searchSkills({
+      categories: splitCsv(getFlag(args, "category")),
+      cursor: getFlag(args, "cursor"),
+      limit: parseLimit(getFlag(args, "limit"), 20),
+      query: query || undefined,
+      rewriteQuery: !hasFlag(args, "no-rewrite-query"),
+      sort: getFlag(args, "sort"),
+      tags: splitCsv(getFlag(args, "tag")),
+    });
+    s?.stop();
+  } catch (error) {
+    s?.stop("Search failed");
+    throw error;
+  }
 
   if (globalOptions.json) {
     print(ctx, writeJson(result));
@@ -69,7 +165,7 @@ export const runSearchCommand = async (
     print(ctx, "No skills found.\n");
     return;
   }
-  print(ctx, `${result.page.map(printSkill).join("\n")}\n`);
+  print(ctx, `${result.page.map((skill, i) => printSkill(skill, i + 1)).join("\n\n")}\n`);
 };
 
 export const runShowCommand = async (
@@ -83,7 +179,18 @@ export const runShowCommand = async (
     throw new CliError("Usage: skills-re show <slug-or-path>");
   }
   const apiClient = await createApiClient(ctx);
-  const skill = await apiClient.showSkill(identifier);
+
+  const s = globalOptions.json ? null : spinner();
+  s?.start("Loading…");
+  let skill;
+  try {
+    skill = await apiClient.showSkill(identifier);
+    s?.stop();
+  } catch (error) {
+    s?.stop("Failed to load skill");
+    throw error;
+  }
+
   if (!skill) {
     throw new CliError(`Skill not found: ${identifier}`, 4);
   }
