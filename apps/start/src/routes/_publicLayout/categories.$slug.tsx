@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { CategoryOtherClassifications } from "@/components/category-other-classifications";
@@ -13,6 +14,8 @@ import {
   categories_page_eyebrow,
   categories_page_related_tags,
   categories_page_skills_indexed,
+  categories_page_tags_show_all,
+  categories_page_tags_show_fewer,
   categories_page_title,
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
@@ -44,6 +47,7 @@ function RouteComponent() {
   }
 
   const { count, relatedTags, slug } = data;
+  const [tagsExpanded, setTagsExpanded] = useState(false);
   const locale = getLocale();
   const presentation = getCategoryPresentation(slug, undefined, locale);
   const titleVariantClass = TITLE_VARIANT_CLASS[presentation.variant ?? "default"] ?? "";
@@ -91,17 +95,30 @@ function RouteComponent() {
             {categories_page_related_tags()}
           </div>
           <div className="flex flex-wrap gap-2">
-            {relatedTags.map(({ slug: tag, count: tagCount }) => (
-              <Link
-                key={tag}
-                to="/skills"
-                search={{ tag: [tag] }}
-                className="border-border text-muted-foreground hover:border-foreground hover:text-foreground rounded-none border px-3 py-1.5 font-mono text-[10.5px] tracking-widest uppercase transition-colors"
-              >
-                #{tag} · {tagCount}
-              </Link>
-            ))}
+            {(tagsExpanded ? relatedTags : relatedTags.slice(0, 30)).map(
+              ({ slug: tag, count: tagCount }) => (
+                <Link
+                  key={tag}
+                  to="/skills"
+                  search={{ tag: [tag] }}
+                  className="border-border text-muted-foreground hover:border-foreground hover:text-foreground rounded-none border px-3 py-1.5 font-mono text-[10.5px] tracking-widest uppercase transition-colors"
+                >
+                  #{tag} · {tagCount}
+                </Link>
+              ),
+            )}
           </div>
+          {relatedTags.length > 30 && (
+            <button
+              type="button"
+              onClick={() => setTagsExpanded((v) => !v)}
+              className="text-muted-foreground hover:text-foreground mt-3 font-mono text-[10px] tracking-[.16em] uppercase transition-colors"
+            >
+              {tagsExpanded
+                ? String(categories_page_tags_show_fewer())
+                : String(categories_page_tags_show_all({ count: relatedTags.length }))}
+            </button>
+          )}
         </section>
       )}
 

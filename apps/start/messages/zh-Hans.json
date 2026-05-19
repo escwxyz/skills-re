@@ -79,6 +79,8 @@
   "categories_page_no_skills_yet": "该分类下尚未发布任何 skill。",
   "categories_page_other_classifications": "其他分类",
   "categories_page_related_tags": "相关标签",
+  "categories_page_tags_show_all": "显示全部 {count} 个标签",
+  "categories_page_tags_show_fewer": "收起",
   "categories_page_see_all_skills": "查看全部 Skills →",
   "categories_page_skills_in_this_classification": "该分类下有 {count} 个 skill",
   "categories_page_skills_indexed": "已索引 Skills",

@@ -79,6 +79,8 @@
   "categories_page_no_skills_yet": "No skills published in this classification yet.",
   "categories_page_other_classifications": "Other Classifications",
   "categories_page_related_tags": "Related Tags",
+  "categories_page_tags_show_all": "Show all {count} tags",
+  "categories_page_tags_show_fewer": "Show fewer",
   "categories_page_see_all_skills": "See All Skills →",
   "categories_page_skills_in_this_classification": "{count} skills in this classification",
   "categories_page_skills_indexed": "Skills Indexed",
