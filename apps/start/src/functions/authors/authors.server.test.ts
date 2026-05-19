@@ -207,6 +207,7 @@ describe("fetchAuthorSkillsStats", () => {
                   description: "Builds workflows",
                   downloadsAllTime: 10,
                   id: "skill-1",
+                  repoName: "repo-a",
                   slug: "workflow-builder",
                   staticAudit: { overallScore: 80 },
                   stargazerCount: 2,
@@ -225,6 +226,7 @@ describe("fetchAuthorSkillsStats", () => {
                 description: "Automates ops",
                 downloadsAllTime: 30,
                 id: "skill-2",
+                repoName: "repo-b",
                 slug: "ops-automator",
                 staticAudit: { overallScore: 60 },
                 stargazerCount: 4,
@@ -262,5 +264,48 @@ describe("fetchAuthorSkillsStats", () => {
         sort: "downloads-all-time",
       },
     ]);
+  });
+
+  test("counts repo stars only once when multiple skills share the same repo", async () => {
+    const client = {
+      skills: {
+        search: () =>
+          Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [
+              {
+                description: "Skill A",
+                downloadsAllTime: 5,
+                id: "skill-a",
+                repoName: "shared-repo",
+                slug: "skill-a",
+                staticAudit: { overallScore: 90 },
+                stargazerCount: 1000,
+                syncTime: 1710000000,
+                title: "Skill A",
+              },
+              {
+                description: "Skill B",
+                downloadsAllTime: 15,
+                id: "skill-b",
+                repoName: "shared-repo",
+                slug: "skill-b",
+                staticAudit: { overallScore: 50 },
+                stargazerCount: 1000,
+                syncTime: 1710000001,
+                title: "Skill B",
+              },
+            ],
+          }),
+      },
+    } as unknown as AuthorSkillsStatsClient;
+
+    await expect(fetchAuthorSkillsStats({ client, handle: "acme" })).resolves.toEqual({
+      averageAuditScore: 70,
+      skillCount: 2,
+      totalDownloads: 20,
+      totalStars: 1000,
+    });
   });
 });
