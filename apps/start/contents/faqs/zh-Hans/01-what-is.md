@@ -1,8 +1,10 @@
 ---
-question: 什么是 Agent Skill Registry？
+question: 什么是 Agent Skills？
 order: 1
 ---
 
-Agent Skill Registry（skills.re）是一个集中式仓库，用于发现、版本控制和分发 AI 代理的 Skill。Skill 是一个结构化的 Markdown 文件（`SKILL.md`），它告诉代理如何执行特定任务——例如代码审查、编写测试或对问题进行分类。
+Agent Skills 是一种轻量级、开放的格式，用于通过专业知识、工作流和约束来扩展 AI 代理。一个 Skill 存放在一个文件夹中，包含一个 `SKILL.md` 文件，其中包含元数据（至少 `name` 和 `description`）以及代理应遵循的指令。Skills 还可以打包脚本、模板、示例或其他辅助文件。
 
-与通用提示词库不同，Skill 经过版本控制、签名，并在被列入注册表之前通过标准评估套件的测试。这意味着您安装的 Skill 行为与描述一致，值得信赖。
+与松散的提示词库不同，Skills 遵循定义良好的[规范](https://agentskills.io/specification)，并且设计为可移植。任何能够读取文本文件并执行 markdown 格式指令的代理都可以使用它们。
+
+**Agent Skill Registry**（skills.re）是发现、分享和分发 Skills 的中心入口。注册表中的 Skills 会进行版本控制，并在发布前通过标准测试套件评估，因此你安装时可以更放心它们按描述工作。

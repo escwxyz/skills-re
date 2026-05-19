@@ -1,17 +1,16 @@
 ---
-question: Welche KI-Agenten werden unterstützt?
-order: 3
+question: Welche Coding-Agenten unterstützen SKILL.md?
+order: 5
 ---
 
-Skills sind agentenagnostisch konzipiert — jeder Agent, der eine Textdatei lesen und markdownformatierte Anweisungen befolgen kann, kann sie verwenden. Das Registry listet getestete Kompatibilität für folgende Runtimes:
+Skills sind für Coding-Agenten gedacht, die das `SKILL.md`-Format unterstützen. Das Registry verfolgt getestete Kompatibilität für gängige Agenten wie:
 
-- **Claude Code** (Anthropic CLI)
+- **Claude Code**
 - **Claude API**
-- **Codex** (OpenAI)
+- **Codex**
 - **Cursor**
-- **GitHub Copilot** (Workspace-Modus)
+- **GitHub Copilot**
 - **Google Gemini**
-- **Kiro** (AWS)
+- **Kiro**
 - **OpenCode**
-
-Das Feld `compatibility` im Frontmatter jedes Skills gibt an, welche Runtimes der Autor getestet hat.
+- und mehr
