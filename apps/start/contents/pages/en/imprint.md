@@ -1,7 +1,7 @@
 ---
 title: Imprint
 description: Legal disclosure and contact information for skills.re.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## Service Operator

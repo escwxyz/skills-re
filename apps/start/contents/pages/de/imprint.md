@@ -1,7 +1,7 @@
 ---
 title: Impressum
 description: Gesetzlich vorgeschriebene Angaben gemäß § 5 TMG.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## Angaben gemäß § 5 TMG

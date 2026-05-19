@@ -1,7 +1,7 @@
 ---
 title: 服务条款
 description: 管理您使用 skills.re 的条款与条件。
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. 接受条款

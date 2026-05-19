@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: How skills.re collects, uses, and protects your personal data.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. Data We Collect

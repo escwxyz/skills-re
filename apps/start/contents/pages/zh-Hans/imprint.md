@@ -1,7 +1,7 @@
 ---
 title: 法律声明
 description: skills.re 的法律披露与联系信息。
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 服务运营方

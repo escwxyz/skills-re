@@ -25,6 +25,8 @@ export const FeaturedPicks = ({ picks }: Props) => {
   const featuredVersionLabel = featured.latestVersion ? `v${featured.latestVersion}` : "latest";
   const featuredInstallsLabel = formatCompactNumber(featured.downloadsAllTime ?? 0, locale);
 
+  const { authorHandle, author } = featured;
+
   return (
     <section className="grid grid-cols-1 border-b-[3px] border-border md:grid-cols-[1.2fr_1fr]">
       <div className="flex flex-col border-b border-border py-7 md:border-b-0 md:border-r md:pr-8">
@@ -37,15 +39,15 @@ export const FeaturedPicks = ({ picks }: Props) => {
             <br />
             {featured_picks_unexpectedly_legible()}
           </h3>
-          {(featured.authorHandle ?? featured.author?.handle) && (
+          {(authorHandle ?? author?.handle) && (
             <div className="mb-4 font-mono text-[10.5px] tracking-wider text-muted-foreground">
               by{" "}
               <Link
                 to="/authors/$handle"
-                params={{ handle: (featured.authorHandle ?? featured.author?.handle)! }}
+                params={{ handle: (authorHandle ?? author?.handle) as string }}
                 className="text-foreground no-underline hover:underline"
               >
-                @{featured.authorHandle ?? featured.author?.handle}
+                @{authorHandle ?? author?.handle}
               </Link>
               {featured.primaryCategory && (
                 <>

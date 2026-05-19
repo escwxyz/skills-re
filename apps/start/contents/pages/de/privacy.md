@@ -1,7 +1,7 @@
 ---
 title: Datenschutzerklärung
 description: Wie skills.re Ihre personenbezogenen Daten erhebt, verwendet und schützt.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. Erhobene Daten
