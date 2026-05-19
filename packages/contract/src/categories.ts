@@ -20,7 +20,7 @@ const categoriesListContract = baseContract
       "Returns the public category index used by browse pages and SEO discovery surfaces.",
     method: "GET",
     path: "/categories",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Public category list",
     summary: "List public categories",
   })
@@ -32,7 +32,7 @@ const categoriesCountContract = baseContract
     description: "Returns the total number of public categories currently available.",
     method: "GET",
     path: "/categories/count",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Public category count",
     summary: "Count public categories",
   })
@@ -44,7 +44,7 @@ const categoryBySlugContract = baseContract
       "Returns the public category detail payload, including related tags and top skills.",
     method: "GET",
     path: "/categories/by-slug",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Category detail page payload",
     summary: "Read a category by slug",
   })
@@ -56,7 +56,7 @@ const listCategoriesForAiContract = baseContract
     description: "Returns the category slug list used by AI-assisted categorization prompts.",
     method: "GET",
     path: "/categories/ai",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "AI category list",
     summary: "List categories for AI",
   })
