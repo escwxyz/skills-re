@@ -4,7 +4,6 @@ import { buildSkillDetailPath } from "@/lib/skill-path";
 import {
   featured_picks_eyebrow,
   featured_picks_editors_picks,
-  featured_picks_feature_screenshot,
   featured_picks_unexpectedly_legible,
 } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
@@ -14,7 +13,7 @@ import type { BrowseSkillItem } from "@/utils/types";
 interface Props {
   picks: BrowseSkillItem[];
 }
-// todo i18n
+
 export const FeaturedPicks = ({ picks }: Props) => {
   const locale = getLocale();
   const [featured, ...rest] = picks;
@@ -28,26 +27,86 @@ export const FeaturedPicks = ({ picks }: Props) => {
 
   return (
     <section className="grid grid-cols-1 border-b-[3px] border-border md:grid-cols-[1.2fr_1fr]">
-      <div className="border-b border-border py-7 md:border-b-0 md:border-r md:pr-8">
-        <div className="mb-2 font-mono text-[10.5px] tracking-[.2em] uppercase text-destructive">
-          {featured_picks_eyebrow()}
+      <div className="flex flex-col border-b border-border py-7 md:border-b-0 md:border-r md:pr-8">
+        <div>
+          <div className="mb-2 font-mono text-[10.5px] tracking-[.2em] uppercase text-destructive">
+            {featured_picks_eyebrow()}
+          </div>
+          <h3 className="font-display m-0 mb-3 text-[clamp(36px,4vw,54px)] font-normal italic leading-none">
+            {featured.title},
+            <br />
+            {featured_picks_unexpectedly_legible()}
+          </h3>
+          {(featured.authorHandle ?? featured.author?.handle) && (
+            <div className="mb-4 font-mono text-[10.5px] tracking-wider text-muted-foreground">
+              by{" "}
+              <Link
+                to="/authors/$handle"
+                params={{ handle: (featured.authorHandle ?? featured.author?.handle)! }}
+                className="text-foreground no-underline hover:underline"
+              >
+                @{featured.authorHandle ?? featured.author?.handle}
+              </Link>
+              {featured.primaryCategory && (
+                <>
+                  {" "}
+                  · <span className="text-foreground">{featured.primaryCategory}</span>
+                </>
+              )}
+            </div>
+          )}
+          <p className="font-serif text-[18px] leading-normal text-muted-foreground">
+            {featured.description}
+          </p>
         </div>
-        <h3 className="font-display m-0 mb-3.5 text-[clamp(36px,4vw,54px)] font-normal italic leading-none">
-          {featured.title},
-          <br />
-          {featured_picks_unexpectedly_legible()}
-        </h3>
-        <p className="font-serif text-[18px] leading-normal text-muted-foreground">
-          {featured.description}
-        </p>
-        <div className="mt-4 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
-          {featuredVersionLabel} · installs{" "}
-          <b className="font-medium text-foreground">{featuredInstallsLabel}</b>
-        </div>
-        <div className="ph mt-4.5 aspect-video border border-border bg-muted">
-          <span className="ph-label">
-            {featured_picks_feature_screenshot()} — {featured.title}
-          </span>
+
+        <div className="mt-auto pt-7">
+          {featured.tags && featured.tags.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {featured.tags.slice(0, 6).map((tag) => (
+                <span
+                  key={tag}
+                  className="border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[.08em] uppercase text-muted-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+            <span>{featuredVersionLabel}</span>
+            <span>
+              installs <b className="font-medium text-foreground">{featuredInstallsLabel}</b>
+            </span>
+            {!!featured.stargazerCount && (
+              <span>
+                stars{" "}
+                <b className="font-medium text-foreground">
+                  {formatCompactNumber(featured.stargazerCount, locale)}
+                </b>
+              </span>
+            )}
+            {!!featured.downloadsTrending && (
+              <span>
+                trending{" "}
+                <b className="font-medium text-foreground">
+                  +{formatCompactNumber(featured.downloadsTrending, locale)}
+                </b>
+              </span>
+            )}
+          </div>
+          <div className="mt-5">
+            <Link
+              to={buildSkillDetailPath({
+                authorHandle: featured.authorHandle ?? featured.author?.handle,
+                repoName: featured.repoName ?? "unknown-repo",
+                skillSlug: featured.slug,
+              })}
+              className="border-b border-current pb-px font-mono text-[10.5px] tracking-wider uppercase text-foreground no-underline hover:no-underline"
+            >
+              View Skill →
+            </Link>
+          </div>
         </div>
       </div>
 

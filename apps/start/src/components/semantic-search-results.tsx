@@ -266,6 +266,7 @@ const SemanticResultRow = ({
 const SemanticSearchRail = ({
   items,
   meta,
+  // todo: this should be a rewritten query
   query,
 }: Pick<SemanticSearchResultsProps, "items" | "meta" | "query">) => {
   const tags = getRelatedTags(items);

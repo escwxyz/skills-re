@@ -8,7 +8,6 @@ import { TerminalPanel } from "@/components/terminal-panel";
 import { m } from "@/paraglide/messages";
 import { CategoryCard } from "@/components/category-card";
 import { FeaturedPicks } from "@/components/featured-picks";
-import { BlogSection } from "@/components/blog-section";
 import { HowItWorks } from "@/components/how-it-works";
 
 export const Route = createFileRoute("/_publicLayout/")({
@@ -26,16 +25,19 @@ export const Route = createFileRoute("/_publicLayout/")({
 function App() {
   const data = Route.useLoaderData();
   return (
-    <div className="mx-auto max-w-360 px-6 pb-15">
+    <div className="mx-auto max-w-360 px-6 pb-15 space-y-4">
       <Nameplate />
       <HomeHero />
       <TerminalPanel />
 
       <section>
-        <div className="section-title">
-          <h3>{m.home_hero_skill_categories()}</h3>
-          <div className="eyebrow">
-            browse by category - <Link to="/categories">{m.home_hero_view_all()}</Link>
+        <div className="flex items-baseline justify-between gap-3 py-3">
+          <h3 className="font-display m-0 font-semibold text-4xl">
+            {m.home_hero_skill_categories()}
+          </h3>
+          <div className="font-mono text-xs uppercase text-muted-foreground">
+            {m.home_hero_browse_by_category()}{" "}
+            <Link to="/categories">{m.home_hero_view_all()}</Link>
           </div>
         </div>
         <div className="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-4">
@@ -46,7 +48,7 @@ function App() {
       </section>
 
       {data.featuredPicks.length > 0 ? <FeaturedPicks picks={data.featuredPicks} /> : null}
-      <BlogSection />
+      {/* <BlogSection /> */}
       <HowItWorks />
     </div>
   );
