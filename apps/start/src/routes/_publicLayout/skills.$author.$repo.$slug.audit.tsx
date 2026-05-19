@@ -80,7 +80,9 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-10 md:py-12">
       <div className="border-border mb-8 flex items-start justify-between gap-6 border-b pb-6">
         <div>
-          <div className="eyebrow text-editorial-red mb-3"> {m.skill_audit_section_label()}</div>
+          <div className="font-mono text-xs uppercase text-muted-foreground mb-3">
+            {m.skill_audit_section_label()}
+          </div>
           <h2 className="font-display text-[clamp(36px,5vw,52px)] font-normal leading-none tracking-tight">
             {m.skill_detail_static_audit()}
           </h2>

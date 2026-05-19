@@ -1,5 +1,6 @@
 // oxlint-disable jsx_a11y/label-has-associated-control
 // oxlint-disable no-nested-ternary
+// TODO
 import { useState } from "react";
 
 import { useAppForm } from "@/hooks/form-hook";
@@ -441,7 +442,7 @@ export const ManualSubmitForm = () => {
 
                 return (
                   <>
-                    <p className="eyebrow mb-4.5 text-muted-foreground">
+                    <p className="font-mono text-xs uppercase text-muted-foreground mb-4.5">
                       Live Preview — how your skill appears in the registry
                     </p>
 
@@ -505,7 +506,10 @@ export const ManualSubmitForm = () => {
 
                     {/* Style note */}
                     <div className="mt-6 border-t border-border pt-4.5">
-                      <b className="eyebrow mb-1 block text-foreground"> Style note</b>
+                      <b className="font-mono text-xs uppercase mb-1 block text-foreground">
+                        {" "}
+                        Style note
+                      </b>
                       <p className="font-serif text-[13px] italic leading-relaxed text-muted-foreground">
                         The registry deliberately under-formats skill cards. What distinguishes
                         yours is the one-liner. Be specific. "Reads a diff the way a careful

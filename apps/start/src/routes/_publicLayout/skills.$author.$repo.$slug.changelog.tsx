@@ -144,7 +144,9 @@ function RouteComponent() {
         </div>
       ) : (
         <div className="border-border bg-muted border px-5 py-6">
-          <div className="eyebrow text-editorial-red mb-2">{m.skill_changelog_empty_eyebrow()}</div>
+          <div className="font-mono text-xs uppercase text-muted-foreground mb-2">
+            {m.skill_changelog_empty_eyebrow()}
+          </div>
           <p className="text-muted-foreground m-0 max-w-110">{m.skill_changelog_empty_body()}</p>
         </div>
       )}

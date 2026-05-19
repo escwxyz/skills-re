@@ -125,7 +125,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="stars">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-foreground block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_rating_label()}
               </FieldLabel>
               <Rating
@@ -145,7 +145,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="title">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-foreground block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_headline_label()}
               </FieldLabel>
               <Input
@@ -163,7 +163,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="body">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-foreground block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_body_label()}
               </FieldLabel>
               <Textarea
@@ -178,7 +178,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         </form.AppField>
 
         {submitError && (
-          <p className="font-mono text-[11px] tracking-[.12em] text-editorial-red">{submitError}</p>
+          <p className="font-mono text-xs uppercase text-destructive">{submitError}</p>
         )}
 
         <div className="flex gap-3 pt-1">
