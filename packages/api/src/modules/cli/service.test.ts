@@ -63,10 +63,11 @@ describe("createCliService", () => {
       "https://api.example.com/skills/download?snapshotId=snap_1",
     );
     expect(result.lockEntry).toEqual({
-      computedHash: "hash-1",
       source: "acme/skills",
       sourceType: "github",
+      sourceUrl: "https://github.com/acme/skills",
       skillPath: "skills/demo/SKILL.md",
+      archiveHash: "hash-1",
       version: "1.0.0",
     });
   });

@@ -49,13 +49,13 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
       {
         label: "GitHub",
         Icon: GithubLogoIcon,
-        href: "https://github.com/skills-re",
+        href: "https://github.com/escwxyz",
         external: true,
       },
       {
         label: "X(Twitter)",
         Icon: XLogoIcon,
-        href: "https://x.com/skills_re",
+        href: "https://x.com/escw_xyz",
         external: true,
       },
       {

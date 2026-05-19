@@ -185,6 +185,14 @@ export class ApiClient {
     });
   }
 
+  notifyInstall(input: { repoUrl: string; ref: string }): void {
+    void this.request("/cli/skills/notify-install", {
+      body: input,
+      method: "POST",
+      throwOnError: false,
+    });
+  }
+
   async readAgentConfiguration() {
     return await this.request<unknown>("/.well-known/agent-configuration");
   }

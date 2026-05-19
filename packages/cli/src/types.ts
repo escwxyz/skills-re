@@ -14,10 +14,17 @@ export interface CommandContext {
 }
 
 export interface SkillLockEntry {
-  computedHash: string;
+  // skills.sh-compatible fields
   source: string;
   sourceType: "github" | "local" | "registry" | string;
+  sourceUrl?: string;
+  ref?: string;
   skillPath?: string;
+  skillFolderHash?: string;
+  installedAt?: string;
+  updatedAt?: string;
+  // our extensions
+  archiveHash?: string;
   version?: string;
 }
 

@@ -15,10 +15,13 @@ const cliResolveInstallOutputSchema = z.object({
     size: z.number().int().nonnegative().optional(),
   }),
   lockEntry: z.object({
-    computedHash: z.string(),
     source: z.string(),
     sourceType: z.string(),
+    sourceUrl: z.string().optional(),
+    ref: z.string().optional(),
     skillPath: z.string().optional(),
+    skillFolderHash: z.string().optional(),
+    archiveHash: z.string().optional(),
     version: z.string().optional(),
   }),
   skill: z.object({
@@ -86,5 +89,17 @@ export const cliContract = {
       })
       .input(cliResolveInstallInputSchema)
       .output(cliResolveInstallOutputSchema),
+    notifyInstall: baseContract
+      .route({
+        description:
+          "Notifies the backend that a skill was installed from a GitHub repository, triggering ingestion or sync.",
+        method: "POST",
+        path: "/cli/skills/notify-install",
+        successDescription: "Notification acknowledged",
+        summary: "Notify CLI GitHub skill install",
+        tags: ["CLI"],
+      })
+      .input(z.object({ repoUrl: z.string().url(), ref: z.string() }))
+      .output(z.object({ received: z.boolean() })),
   },
 } as const;

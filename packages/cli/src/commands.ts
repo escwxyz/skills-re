@@ -3,7 +3,12 @@ import { ApiClient } from "./api-client";
 import { parseArgs, getFlag, hasFlag, parseLimit } from "./args";
 import { DEFAULT_API_URL, deleteCredential, readCredential, writeCredential } from "./config";
 import { CliError } from "./errors";
-import { installSkill, updateSkills } from "./install";
+import {
+  installSkill,
+  installSkillFromGithub,
+  parseGithubSpecifier,
+  updateSkills,
+} from "./install";
 import { readLockfile } from "./lockfile";
 import { readInstalledSkillContent } from "./read";
 import { resolveAgentTarget, resolveMetadataPath, resolveSkillsDir } from "./targets";
@@ -108,7 +113,7 @@ export const runListCommand = async (
         ([name, entry]) =>
           `${pc.bold(name)} ${pc.dim(entry.sourceType)}
   source: ${entry.source}
-  hash: ${entry.computedHash || "(none)"}${entry.skillPath ? `\n  path: ${entry.skillPath}` : ""}`,
+  hash: ${entry.archiveHash || entry.skillFolderHash || "(none)"}${entry.skillPath ? `\n  path: ${entry.skillPath}` : ""}`,
       )
       .join("\n\n")}\n`,
   );
@@ -167,14 +172,38 @@ export const runInstallCommand = async (
   const args = parseArgs(argv);
   const [specifier] = args.positionals;
   if (!specifier) {
-    throw new CliError("Usage: skills-re install <skill[@version]>");
+    throw new CliError("Usage: skills-re install <skill[@version]|github-url> [--git]");
   }
   const target = resolveAgentTarget(getFlag(args, "agent"));
+  const skillsDir = resolveSkillsDir(ctx.cwd, target, getFlag(args, "dir"));
+  const apiClient = await createApiClient(ctx);
+  const lockfilePath = getFlag(args, "lockfile");
+
+  const githubSpecifier = parseGithubSpecifier(specifier, hasFlag(args, "git"));
+  if (githubSpecifier) {
+    const results = await installSkillFromGithub({
+      apiClient,
+      cwd: ctx.cwd,
+      gitSpecifier: githubSpecifier,
+      lockfilePath,
+      skillsDir,
+      target,
+    });
+    if (globalOptions.json) {
+      print(ctx, writeJson(results));
+    } else {
+      for (const r of results) {
+        print(ctx, `Installed ${r.skillName}@${r.ref.slice(0, 7)} to ${r.installDir}\n`);
+      }
+    }
+    return;
+  }
+
   const result = await installSkill({
-    apiClient: await createApiClient(ctx),
+    apiClient,
     cwd: ctx.cwd,
-    lockfilePath: getFlag(args, "lockfile"),
-    skillsDir: resolveSkillsDir(ctx.cwd, target, getFlag(args, "dir")),
+    lockfilePath,
+    skillsDir,
     specifier,
     target,
   });

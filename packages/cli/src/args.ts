@@ -5,7 +5,7 @@ export interface ParsedArgs {
   positionals: string[];
 }
 
-const booleanFlags = new Set(["help", "json", "yes", "no-rewrite-query", "version"]);
+const booleanFlags = new Set(["git", "help", "json", "yes", "no-rewrite-query", "version"]);
 
 export const parseArgs = (argv: string[]): ParsedArgs => {
   const flags = new Map<string, string | true>();
