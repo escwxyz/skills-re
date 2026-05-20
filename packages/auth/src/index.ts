@@ -173,7 +173,6 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         allowUnauthenticatedClientRegistration: true,
         consentPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
         grantTypes: ["authorization_code", "refresh_token"],
-        // todo: add new routes in tanstack start
         loginPage: `${env.PUBLIC_SITE_URL}/auth`,
         scopes: [
           "openid",

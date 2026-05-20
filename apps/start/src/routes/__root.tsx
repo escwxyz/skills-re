@@ -100,7 +100,7 @@ function RootComponent() {
 }
 
 function PendingActionBootstrap() {
-  const { currentUser } = useRouteContext({ from: "__root__" });
+  const { currentUser, queryClient } = useRouteContext({ from: "__root__" });
   const pendingAction = useAtomValue(pendingActionAtom);
   const setPendingAction = useSetAtom(pendingActionAtom);
   const setWriteReviewDialog = useSetAtom(writeReviewDialogAtom);
@@ -129,6 +129,13 @@ function PendingActionBootstrap() {
             ),
           saveSkill: async (slug) => await saveSkillMutation.mutateAsync({ slug }),
         });
+
+        if (pendingAction.type === "save-skill") {
+          const savedQueryKey = ["skillCheckSaved", pendingAction.slug] as const;
+          queryClient.setQueryData(savedQueryKey, { saved: true });
+          await queryClient.invalidateQueries({ queryKey: savedQueryKey });
+        }
+
         setPendingAction(null);
       } catch (error) {
         console.error("Failed to execute pending action", error);
@@ -143,6 +150,7 @@ function PendingActionBootstrap() {
     saveSkillMutation,
     setPendingAction,
     setWriteReviewDialog,
+    queryClient,
   ]);
 
   return null;
