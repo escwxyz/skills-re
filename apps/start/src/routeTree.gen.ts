@@ -28,6 +28,7 @@ import { Route as PublicLayoutImprintRouteImport } from './routes/_publicLayout/
 import { Route as PublicLayoutFaqRouteImport } from './routes/_publicLayout/faq'
 import { Route as PublicLayoutCookiesRouteImport } from './routes/_publicLayout/cookies'
 import { Route as PublicLayoutChangelogsRouteImport } from './routes/_publicLayout/changelogs'
+import { Route as PublicLayoutAuthRouteImport } from './routes/_publicLayout/auth'
 import { Route as DotwellKnownOpenidConfigurationRouteImport } from './routes/[.]well-known/openid-configuration'
 import { Route as DotwellKnownOauthAuthorizationServerRouteImport } from './routes/[.]well-known/oauth-authorization-server'
 import { Route as DotwellKnownApiCatalogRouteImport } from './routes/[.]well-known/api-catalog'
@@ -167,6 +168,11 @@ const PublicLayoutCookiesRoute = PublicLayoutCookiesRouteImport.update({
 const PublicLayoutChangelogsRoute = PublicLayoutChangelogsRouteImport.update({
   id: '/changelogs',
   path: '/changelogs',
+  getParentRoute: () => PublicLayoutRoute,
+} as any)
+const PublicLayoutAuthRoute = PublicLayoutAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => PublicLayoutRoute,
 } as any)
 const DotwellKnownOpenidConfigurationRoute =
@@ -438,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
   '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
+  '/auth': typeof PublicLayoutAuthRoute
   '/changelogs': typeof PublicLayoutChangelogsRoute
   '/cookies': typeof PublicLayoutCookiesRoute
   '/faq': typeof PublicLayoutFaqRoute
@@ -502,6 +509,7 @@ export interface FileRoutesByTo {
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
   '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
+  '/auth': typeof PublicLayoutAuthRoute
   '/changelogs': typeof PublicLayoutChangelogsRoute
   '/cookies': typeof PublicLayoutCookiesRoute
   '/faq': typeof PublicLayoutFaqRoute
@@ -568,6 +576,7 @@ export interface FileRoutesById {
   '/.well-known/api-catalog': typeof DotwellKnownApiCatalogRoute
   '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/.well-known/openid-configuration': typeof DotwellKnownOpenidConfigurationRoute
+  '/_publicLayout/auth': typeof PublicLayoutAuthRoute
   '/_publicLayout/changelogs': typeof PublicLayoutChangelogsRoute
   '/_publicLayout/cookies': typeof PublicLayoutCookiesRoute
   '/_publicLayout/faq': typeof PublicLayoutFaqRoute
@@ -636,6 +645,7 @@ export interface FileRouteTypes {
     | '/.well-known/api-catalog'
     | '/.well-known/oauth-authorization-server'
     | '/.well-known/openid-configuration'
+    | '/auth'
     | '/changelogs'
     | '/cookies'
     | '/faq'
@@ -700,6 +710,7 @@ export interface FileRouteTypes {
     | '/.well-known/api-catalog'
     | '/.well-known/oauth-authorization-server'
     | '/.well-known/openid-configuration'
+    | '/auth'
     | '/changelogs'
     | '/cookies'
     | '/faq'
@@ -765,6 +776,7 @@ export interface FileRouteTypes {
     | '/.well-known/api-catalog'
     | '/.well-known/oauth-authorization-server'
     | '/.well-known/openid-configuration'
+    | '/_publicLayout/auth'
     | '/_publicLayout/changelogs'
     | '/_publicLayout/cookies'
     | '/_publicLayout/faq'
@@ -984,6 +996,13 @@ declare module '@tanstack/react-router' {
       path: '/changelogs'
       fullPath: '/changelogs'
       preLoaderRoute: typeof PublicLayoutChangelogsRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_publicLayout/auth': {
+      id: '/_publicLayout/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof PublicLayoutAuthRouteImport
       parentRoute: typeof PublicLayoutRoute
     }
     '/.well-known/openid-configuration': {
@@ -1393,6 +1412,7 @@ const PublicLayoutSkillsAuthorRepoSlugRouteRouteWithChildren =
   )
 
 interface PublicLayoutRouteChildren {
+  PublicLayoutAuthRoute: typeof PublicLayoutAuthRoute
   PublicLayoutChangelogsRoute: typeof PublicLayoutChangelogsRoute
   PublicLayoutCookiesRoute: typeof PublicLayoutCookiesRoute
   PublicLayoutFaqRoute: typeof PublicLayoutFaqRoute
@@ -1420,6 +1440,7 @@ interface PublicLayoutRouteChildren {
 }
 
 const PublicLayoutRouteChildren: PublicLayoutRouteChildren = {
+  PublicLayoutAuthRoute: PublicLayoutAuthRoute,
   PublicLayoutChangelogsRoute: PublicLayoutChangelogsRoute,
   PublicLayoutCookiesRoute: PublicLayoutCookiesRoute,
   PublicLayoutFaqRoute: PublicLayoutFaqRoute,

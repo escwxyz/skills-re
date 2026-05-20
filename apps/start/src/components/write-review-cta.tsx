@@ -4,7 +4,7 @@ import { cloneElement, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEventHandler, ReactElement } from "react";
 import { z } from "zod/v4";
 
-import { loginDialogAtom, writeReviewDialogAtom } from "@/atoms/app";
+import { loginDialogAtom, pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +37,8 @@ import {
 } from "@/paraglide/messages";
 import { ArrowRightIcon, XIcon } from "@phosphor-icons/react";
 import { useRouteContext } from "@tanstack/react-router";
+
+import { openLoginDialog } from "@/utils/login-dialog";
 
 const reviewFormSchema = z.object({
   body: z.string().trim().min(1),
@@ -266,6 +268,7 @@ export function WriteReviewCta({ skillId, trigger }: WriteReviewCtaProps) {
   const { currentUser } = useRouteContext({ from: "__root__" });
   const setWriteReviewDialog = useSetAtom(writeReviewDialogAtom);
   const setLoginDialog = useSetAtom(loginDialogAtom);
+  const setPendingAction = useSetAtom(pendingActionAtom);
 
   const handleClick = () => {
     if (currentUser) {
@@ -273,7 +276,11 @@ export function WriteReviewCta({ skillId, trigger }: WriteReviewCtaProps) {
       return;
     }
 
-    setLoginDialog((prev) => ({ ...prev, open: true }));
+    setPendingAction({
+      skillId,
+      type: "write-review",
+    });
+    openLoginDialog(setLoginDialog);
   };
 
   if (trigger) {

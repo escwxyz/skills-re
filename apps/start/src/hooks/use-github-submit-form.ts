@@ -25,6 +25,7 @@ import type {
   InvalidSkillPreview,
 } from "@/hooks/github-submit-diagnostics";
 import { isRateLimitedError } from "@/utils/is-rate-limited-error";
+import { openLoginDialog } from "@/utils/login-dialog";
 
 export type { RepoPreview, SkillPreview, InvalidSkillPreview, PreviewDiagnosticMessages };
 
@@ -331,8 +332,7 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
       const errorMessage = getSubmitErrorMessage(error);
 
       if (isRateLimitedError(error)) {
-        setLoginDialog({
-          open: true,
+        openLoginDialog(setLoginDialog, {
           onlyGithub: true,
           title: "GitHub submission limit reached",
           description: errorMessage,

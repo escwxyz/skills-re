@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useSetAtom } from "jotai";
 import { loginDialogAtom } from "@/atoms/app";
 import { LoginDialog } from "@/components/login-dialog";
+import { openLoginDialog, resetLoginDialog } from "@/utils/login-dialog";
 
 export const Route = createFileRoute("/_authedLayout")({
   ssr: "data-only",
@@ -16,9 +17,12 @@ function LoginGate() {
 
   useEffect(() => {
     if (!currentUser) {
-      setLoginDialog((prev) => ({ ...prev, open: true }));
+      openLoginDialog(setLoginDialog, {
+        callbackUrl: "/dashboard",
+        intent: "dashboard",
+      });
     }
-    return () => setLoginDialog((prev) => ({ ...prev, open: false }));
+    return () => resetLoginDialog(setLoginDialog);
   }, [currentUser, setLoginDialog]);
 
   return (

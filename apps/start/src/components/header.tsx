@@ -4,9 +4,7 @@ import { MobileMenu } from "@/components/mobile-menu";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { CloudArrowUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { useSetAtom } from "jotai";
 import { LoginDialog } from "@/components/login-dialog";
-import { loginDialogAtom } from "@/atoms/app";
 import { DesktopMenu } from "@/components/desktop-menu";
 import { NavUser } from "@/components/nav-user";
 import { HumanHand, RobotHand } from "@/components/logo";
@@ -15,8 +13,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Header = () => {
   const { currentUser } = useRouteContext({ from: "__root__" });
-
-  const setLoginDialog = useSetAtom(loginDialogAtom);
 
   return (
     <header className="h-(--header-height) bg-background sticky top-0 z-100 grid place-items-center border-b px-4 md:px-6 font-mono text-[11px] tracking-[0.08em] uppercase backdrop-blur-sm">
@@ -69,13 +65,7 @@ export const Header = () => {
             <CloudArrowUpIcon />
             <span className="normal-case">{m.header_submit()}</span>
           </Link>
-          {currentUser ? (
-            <NavUser currentUser={currentUser} />
-          ) : (
-            <LoginDialog
-              onOpenChange={(open) => !open && setLoginDialog((prev) => ({ ...prev, open: false }))}
-            />
-          )}
+          {currentUser ? <NavUser currentUser={currentUser} /> : <LoginDialog />}
         </div>
       </nav>
     </header>

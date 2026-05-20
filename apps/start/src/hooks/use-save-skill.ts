@@ -1,7 +1,8 @@
-import { loginDialogAtom } from "@/atoms/app";
+import { loginDialogAtom, pendingActionAtom } from "@/atoms/app";
 import { getSkillCheckSaved } from "@/functions/skills/get-skill-check-saved";
 import { saveSkill } from "@/functions/skills/save-skill";
 import { unsaveSkill } from "@/functions/skills/unsave-skill";
+import { openLoginDialog } from "@/utils/login-dialog";
 import { useAsyncDebouncer } from "@tanstack/react-pacer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
@@ -21,6 +22,7 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
   const unsaveSkillFn = useServerFn(unsaveSkill);
 
   const setLoginDialog = useSetAtom(loginDialogAtom);
+  const setPendingAction = useSetAtom(pendingActionAtom);
   const savedQueryKey = ["skillCheckSaved", slug] as const;
 
   const { data: savedData } = useQuery({
@@ -71,7 +73,11 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
 
   const handleClick = () => {
     if (!currentUser) {
-      setLoginDialog((prev) => ({ ...prev, open: true }));
+      setPendingAction({
+        slug,
+        type: "save-skill",
+      });
+      openLoginDialog(setLoginDialog);
       return;
     }
 

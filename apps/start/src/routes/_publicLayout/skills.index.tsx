@@ -26,6 +26,7 @@ import { createSeo } from "@/lib/seo";
 import { getLocale } from "@/paraglide/runtime";
 import { isRateLimitedSearchError } from "@/utils/is-rate-limited-search-error";
 import { BrowseToolbar } from "@/components/browse-toolbar";
+import { openLoginDialog } from "@/utils/login-dialog";
 
 const browseSortValues = [
   "newest",
@@ -146,8 +147,7 @@ function RouteComponent() {
       isRateLimitedSearchError(semanticQuery.error)
     ) {
       setIsSearchBlocked(true);
-      setLoginDialog({
-        open: true,
+      openLoginDialog(setLoginDialog, {
         onlyGithub: false,
         title: "Search limit reached",
         description: semanticQuery.error.message,

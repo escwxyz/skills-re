@@ -116,6 +116,10 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
       ipAddress: {
         ipAddressHeaders: ["x-client-ip", "x-forwarded-for", "cf-connecting-ip"],
       },
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: ".skills.re",
+      },
     },
     basePath: "/auth",
     baseURL: env.PUBLIC_SERVER_URL,
