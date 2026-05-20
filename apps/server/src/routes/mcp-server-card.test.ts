@@ -35,11 +35,11 @@ describe("MCP server card discovery", () => {
   });
 
   test("describes the Skills.re remote MCP transport and capabilities", () => {
-    expect(createMcpServerCard("https://api.skills.re")).toMatchObject({
+    const card = createMcpServerCard("https://api.skills.re");
+
+    expect(card).toMatchObject({
       capabilities: {
-        prompts: false,
-        resources: false,
-        tools: true,
+        tools: {},
       },
       remotes: [
         {
@@ -56,6 +56,10 @@ describe("MCP server card discovery", () => {
         type: "streamable-http",
       },
     });
+
+    expect(card.capabilities.tools).toEqual({});
+    expect("prompts" in card.capabilities).toBe(false);
+    expect("resources" in card.capabilities).toBe(false);
   });
 
   test("lists the currently registered remote MCP tools in metadata", () => {

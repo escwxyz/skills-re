@@ -11,9 +11,7 @@ export const createMcpServerCard = (baseUrl: string) => {
   return {
     $schema: "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
     capabilities: {
-      prompts: false,
-      resources: false,
-      tools: true,
+      tools: {},
     },
     description: "Skills.re remote MCP server for discovering and managing agent skills.",
     name: "re.skills/mcp",
