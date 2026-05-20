@@ -23,7 +23,7 @@ describe("MCP server card discovery", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("cache-control")).toBe("public, max-age=3600");
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
-    await expect(response.json()).resolves.toMatchObject({
+    expect(response.json()).resolves.toMatchObject({
       serverInfo: {
         name: "skills-re",
         version: "1.0.0",
@@ -77,7 +77,7 @@ describe("MCP server card discovery", () => {
 
     expect(headers.get("access-control-allow-origin")).toBe("*");
     expect(headers.get("access-control-allow-methods")).toBe("GET, OPTIONS");
-    expect(headers.get("access-control-allow-headers")).toBe("Content-Type");
+    expect(headers.get("access-control-allow-headers")).toBe("Content-Type, MCP-Protocol-Version");
     expect(headers.get("cache-control")).toBe("public, max-age=3600");
   });
 });

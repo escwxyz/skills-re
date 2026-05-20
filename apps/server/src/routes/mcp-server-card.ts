@@ -39,7 +39,7 @@ export const createMcpServerCard = (baseUrl: string) => {
 };
 
 export const setMcpServerCardHeaders = (headers: Headers) => {
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, MCP-Protocol-Version");
   headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Cache-Control", "public, max-age=3600");
