@@ -326,6 +326,10 @@ const workflowBindings = {
     className: "SnapshotsArchiveUploadWorkflow",
     workflowName: "skills-re-v1-snapshots-archive-upload",
   }),
+  SNAPSHOT_RAW_FILES_BACKFILL_WORKFLOW: Workflow("SNAPSHOT_RAW_FILES_BACKFILL_WORKFLOW", {
+    className: "SnapshotRawFilesBackfillWorkflow",
+    workflowName: "skills-re-v1-snapshot-raw-files-backfill",
+  }),
   SNAPSHOT_UPLOAD_WORKFLOW: Workflow("SNAPSHOT_UPLOAD_WORKFLOW", {
     className: "SnapshotUploadWorkflow",
     workflowName: "skills-re-v1-snapshot-upload",

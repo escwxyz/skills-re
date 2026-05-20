@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, lte, sql } from "drizzle-orm";
 
 import { reposTable } from "@skills-re/db/schema/repos";
 import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
@@ -38,6 +38,16 @@ export interface SnapshotFileRow {
   r2Key: string | null;
   size: number;
   sourceSha: string | null;
+}
+
+export interface LatestSnapshotRawFilesBackfillRow {
+  directoryPath: string;
+  repoName: string;
+  repoOwner: string;
+  skillId: string;
+  snapshotId: string;
+  sourceCommitSha: string;
+  syncTime: number;
 }
 
 const selectSnapshotFields = {
@@ -380,6 +390,65 @@ export const listSnapshotFiles = async (snapshotId: SnapshotId): Promise<Snapsho
     .from(snapshotFilesTable)
     .where(eq(snapshotFilesTable.snapshotId, snapshotId))
     .orderBy(snapshotFilesTable.path);
+
+export async function listLatestSnapshotsForRawFilesBackfill(input: {
+  batchSize: number;
+  lastSeenSkillId?: string;
+  maxSyncTime?: number;
+  repoName?: string;
+  repoOwner?: string;
+}): Promise<LatestSnapshotRawFilesBackfillRow[]> {
+  const filters = [
+    eq(skillsTable.visibility, "public"),
+    isNotNull(skillsTable.latestSnapshotId),
+    isNotNull(snapshotsTable.sourceCommitSha),
+    sql`length(trim(${snapshotsTable.sourceCommitSha})) > 0`,
+  ];
+
+  if (input.lastSeenSkillId) {
+    filters.push(gt(skillsTable.id, asSkillId(input.lastSeenSkillId)));
+  }
+
+  if (input.maxSyncTime !== undefined) {
+    filters.push(lte(snapshotsTable.syncTime, input.maxSyncTime));
+  }
+
+  if (input.repoOwner) {
+    filters.push(eq(reposTable.ownerHandle, input.repoOwner));
+  }
+
+  if (input.repoName) {
+    filters.push(eq(reposTable.name, input.repoName));
+  }
+
+  return await db
+    .select({
+      directoryPath: snapshotsTable.directoryPath,
+      repoName: reposTable.name,
+      repoOwner: reposTable.ownerHandle,
+      skillId: skillsTable.id,
+      snapshotId: snapshotsTable.id,
+      sourceCommitSha: snapshotsTable.sourceCommitSha,
+      syncTime: snapshotsTable.syncTime,
+    })
+    .from(skillsTable)
+    .innerJoin(snapshotsTable, eq(snapshotsTable.id, skillsTable.latestSnapshotId))
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .where(and(...filters))
+    .orderBy(asc(skillsTable.id))
+    .limit(input.batchSize)
+    .then((rows) =>
+      rows.map((row) => ({
+        directoryPath: row.directoryPath,
+        repoName: row.repoName,
+        repoOwner: row.repoOwner,
+        skillId: row.skillId,
+        snapshotId: row.snapshotId,
+        sourceCommitSha: row.sourceCommitSha ?? "",
+        syncTime: row.syncTime,
+      })),
+    );
+}
 
 export const getSnapshotFileByPath = async (input: {
   snapshotId: SnapshotId;
