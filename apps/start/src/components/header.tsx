@@ -21,6 +21,8 @@ export const Header = () => {
         <MobileMenu />
         <Link
           to="/"
+          title="skills.re"
+          aria-label="skills.re"
           className="font-display text-foreground flex items-center justify-center gap-1 text-[22px] tracking-normal normal-case italic"
         >
           <motion.span
@@ -51,12 +53,15 @@ export const Header = () => {
           <Link
             to="/skills"
             search={{ mode: "search" }}
+            title={m.header_search()}
+            aria-label={m.header_search()}
             className={cn("no-underline", buttonVariants({ variant: "ghost" }))}
           >
             <MagnifyingGlassIcon />
           </Link>
           <Link
             to="/submit"
+            title={m.header_submit()}
             className={cn(
               "no-underline hidden! md:inline-flex!",
               buttonVariants({ variant: "secondary" }),

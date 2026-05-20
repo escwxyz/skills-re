@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SITE_URL } from "@/lib/constants";
 import { createServerORPCClient } from "@/lib/orpc.server";
 import { fetchCollectionsListPage } from "@/functions/collections/collections.server";
-import { renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
+import { getAllMultilingualUrls, renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
 
 export const Route = createFileRoute("/sitemap/collections.xml")({
   server: {
@@ -29,12 +29,14 @@ export const Route = createFileRoute("/sitemap/collections.xml")({
         }
 
         const xml = wrapUrlSet(
-          entries.map((collection) =>
-            renderUrlEntry({
-              changefreq: "weekly",
-              loc: `${SITE_URL}/collections/${collection.slug}`,
-              priority: "0.7",
-            }),
+          entries.flatMap((collection) =>
+            getAllMultilingualUrls([`/collections/${collection.slug}`]).map((path) =>
+              renderUrlEntry({
+                changefreq: "weekly",
+                loc: `${SITE_URL}${path}`,
+                priority: "0.7",
+              }),
+            ),
           ),
         );
 

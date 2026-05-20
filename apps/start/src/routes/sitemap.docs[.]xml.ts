@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { allDocs } from "content-collections";
 
 import { SITE_URL } from "@/lib/constants";
-import { renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
+import { getAllMultilingualUrls, renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
 
 const DOCS = allDocs
   .filter((doc) => doc._meta.directory === "en")
@@ -13,12 +13,14 @@ export const Route = createFileRoute("/sitemap/docs.xml")({
     handlers: {
       GET: async () => {
         const xml = wrapUrlSet(
-          DOCS.map((doc) =>
-            renderUrlEntry({
-              changefreq: "weekly",
-              loc: `${SITE_URL}/docs/${doc._meta.path.split("/")[1]}`,
-              priority: "0.6",
-            }),
+          DOCS.flatMap((doc) =>
+            getAllMultilingualUrls([`/docs/${doc._meta.path.split("/")[1]}`]).map((path) =>
+              renderUrlEntry({
+                changefreq: "weekly",
+                loc: `${SITE_URL}${path}`,
+                priority: "0.6",
+              }),
+            ),
           ),
         );
 

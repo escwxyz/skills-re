@@ -93,6 +93,7 @@ export const Footer = ({ className }: Props) => {
           <Link
             className="group mb-4 flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80"
             to="/"
+            title="skills.re"
           >
             <Logo size={48} />
             <div className="font-display text-4xl leading-none italic">
@@ -113,13 +114,16 @@ export const Footer = ({ className }: Props) => {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title={item.label}
                       className="flex items-center gap-1.5"
                     >
                       {item.Icon ? <item.Icon /> : null}
                       {item.label}
                     </a>
                   ) : (
-                    <Link to={item.href}>{item.label}</Link>
+                    <Link to={item.href} title={item.label}>
+                      {item.label}
+                    </Link>
                   )}
                 </li>
               ))}

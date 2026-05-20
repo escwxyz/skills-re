@@ -101,6 +101,7 @@ export const MobileMenu = () => {
               <li key={link.to} className="border-b border-border last:border-b-0">
                 <DrawerClose asChild>
                   <Link
+                    title={link.label}
                     to={link.to}
                     className="block py-4 font-mono text-2xl transition-colors hover:text-foreground"
                     inactiveProps={{ className: "text-foreground/70" }}
@@ -119,6 +120,8 @@ export const MobileMenu = () => {
             <DrawerClose asChild>
               <Link
                 to="/submit"
+                title={m.header_submit()}
+                aria-label={m.header_submit()}
                 className={cn(
                   "no-underline! inline-flex font-mono",
                   buttonVariants({ variant: "ghost", size: "lg" }),

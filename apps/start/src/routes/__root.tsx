@@ -8,22 +8,24 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { orpc } from "@/lib/orpc";
-import type { QueryClient } from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
-import { getLocale } from "@/paraglide/runtime";
-import { getUser } from "@/functions/get-user";
-import { useEffect, useRef } from "react";
-import { Provider, useAtomValue, useSetAtom } from "jotai";
-import { getTheme } from "@/functions/get-theme";
-import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
-import { Toaster } from "@/components/ui/sonner";
 import { ClarityConsent } from "@/components/clarity-consent";
 import { GoogleAnalyticsConsent } from "@/components/google-analytics-consent";
-import { env } from "@skills-re/env/start";
-import { GoogleAnalytics, useGoogleAnalytics } from "tanstack-router-ga4";
+import { Toaster } from "@/components/ui/sonner";
+import { getUser } from "@/functions/get-user";
+import { orpc } from "@/lib/orpc";
+import { createSeo } from "@/lib/seo";
+import { getTheme } from "@/functions/get-theme";
 import { pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
+import { registerTheme, ThemeProvider, themeScript } from "@/lib/theme";
 import { executePendingAction } from "@/utils/pending-action";
+import { env } from "@skills-re/env/start";
+import type { QueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { Provider, useAtomValue, useSetAtom } from "jotai";
+import { useEffect, useRef } from "react";
+import { GoogleAnalytics, useGoogleAnalytics } from "tanstack-router-ga4";
+import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -50,26 +52,37 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     themeState: await getTheme(),
   }),
 
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "TanStack Start Starter",
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
+  head: () => {
+    const defaultSeo = createSeo({
+      canonicalPath: "/",
+      description: m.home_meta_description(),
+      includePageStructuredData: false,
+      includeSiteStructuredData: true,
+      locale: getLocale(),
+      title: m.home_meta_title(),
+    });
+
+    return {
+      meta: [
+        {
+          charSet: "utf-8",
+        },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
+        },
+        ...defaultSeo.meta,
+      ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        ...defaultSeo.links,
+      ],
+      scripts: defaultSeo.scripts,
+    };
+  },
   shellComponent: RootDocument,
   component: RootComponent,
 });

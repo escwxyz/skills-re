@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/constants";
 import { createServerORPCClient } from "@/lib/orpc.server";
 import {
   SITEMAP_SKILLS_PAGE_SIZE,
+  getAllMultilingualUrls,
   parseSitemapSkillsPageParam,
   renderUrlEntry,
   wrapUrlSet,
@@ -50,31 +51,25 @@ export const Route = createFileRoute("/sitemap/skills/$page")({
             });
 
             return [
-              renderUrlEntry({
-                changefreq: "weekly",
-                loc: `${SITE_URL}${detailPath}`,
-                priority: "0.8",
-              }),
-              renderUrlEntry({
-                changefreq: "weekly",
-                loc: `${SITE_URL}${detailPath}/audit`,
-                priority: "0.6",
-              }),
-              renderUrlEntry({
-                changefreq: "weekly",
-                loc: `${SITE_URL}${detailPath}/changelog`,
-                priority: "0.6",
-              }),
-              renderUrlEntry({
-                changefreq: "weekly",
-                loc: `${SITE_URL}${detailPath}/file-tree`,
-                priority: "0.6",
-              }),
-              renderUrlEntry({
-                changefreq: "weekly",
-                loc: `${SITE_URL}${detailPath}/reviews`,
-                priority: "0.6",
-              }),
+              ...getAllMultilingualUrls([detailPath]).map((path) =>
+                renderUrlEntry({
+                  changefreq: "weekly",
+                  loc: `${SITE_URL}${path}`,
+                  priority: "0.8",
+                }),
+              ),
+              ...getAllMultilingualUrls([
+                `${detailPath}/audit`,
+                `${detailPath}/changelog`,
+                `${detailPath}/file-tree`,
+                `${detailPath}/reviews`,
+              ]).map((path) =>
+                renderUrlEntry({
+                  changefreq: "weekly",
+                  loc: `${SITE_URL}${path}`,
+                  priority: "0.6",
+                }),
+              ),
             ];
           }),
         );

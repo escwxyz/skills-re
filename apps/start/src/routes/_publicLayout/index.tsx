@@ -40,7 +40,7 @@ function App() {
             <Link to="/categories">{m.home_hero_view_all()}</Link>
           </div>
         </div>
-        <div className="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] sm:grid-cols-2 md:grid-cols-4">
+        <div className="border-border bg-border grid grid-cols-1 gap-px border-b-[3px] md:grid-cols-2 lg:grid-cols-4">
           {data.categories.map((category, index) => (
             <CategoryCard key={category.slug} category={category} index={index} />
           ))}

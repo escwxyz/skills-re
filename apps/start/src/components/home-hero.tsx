@@ -46,10 +46,18 @@ export const HomeHero = () => (
         {home_hero_description()}
       </p>
       <div className="mt-4.5 mb-2.5 flex flex-wrap gap-3">
-        <Link className={cn(buttonVariants({ size: "lg", variant: "default" }))} to="/skills">
+        <Link
+          className={cn(buttonVariants({ size: "lg", variant: "default" }))}
+          title={home_hero_browse_index()}
+          to="/skills"
+        >
           {home_hero_browse_index()}
         </Link>
-        <Link className={cn(buttonVariants({ size: "lg", variant: "secondary" }))} to="/submit">
+        <Link
+          className={cn(buttonVariants({ size: "lg", variant: "secondary" }))}
+          title={home_hero_publish_skill()}
+          to="/submit"
+        >
           {home_hero_publish_skill()}
         </Link>
       </div>
@@ -94,11 +102,15 @@ export const HomeHero = () => (
           </span>
           <p className="text-muted-foreground mt-1 font-serif text-[12px] leading-[1.4] italic">
             {home_hero_newsletter_terms_prefix()}{" "}
-            <Link to="/terms" className="underline underline-offset-2">
+            <Link to="/terms" title={login_dialog_terms()} className="underline underline-offset-2">
               {login_dialog_terms()}
             </Link>{" "}
             {login_dialog_and()}{" "}
-            <Link to="/privacy" className="underline underline-offset-2">
+            <Link
+              to="/privacy"
+              title={login_dialog_privacy_policy()}
+              className="underline underline-offset-2"
+            >
               {login_dialog_privacy_policy()}
             </Link>
             .
