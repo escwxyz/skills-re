@@ -131,6 +131,7 @@ export interface SnapshotsServiceDeps {
   createSnapshotArchiveBuffer: (entries: SnapshotArchiveTarEntry[]) => Promise<Uint8Array>;
   snapshotUploadScheduler: SnapshotUploadScheduler | null;
   snapshotArchiveUploadScheduler: SnapshotArchiveUploadScheduler | null;
+  deleteSnapshotFilesByPaths: (input: { paths: string[]; snapshotId: SnapshotId }) => Promise<void>;
   upsertSnapshotFiles: (
     snapshotId: SnapshotId,
     files: {
@@ -231,6 +232,10 @@ const defaultDeps: SnapshotsServiceDeps = {
   createSnapshotArchiveBuffer: (entries) => createSnapshotArchiveBuffer(entries),
   snapshotUploadScheduler: null,
   snapshotArchiveUploadScheduler: null,
+  deleteSnapshotFilesByPaths: async (input) => {
+    const { deleteSnapshotFilesByPaths } = await import("./repo");
+    return await deleteSnapshotFilesByPaths(input);
+  },
   upsertSnapshotFiles: () => Promise.reject(new Error("Snapshot file storage is not configured.")),
   putSnapshotFileObject: () =>
     Promise.reject(new Error("Snapshot file storage is not configured.")),
@@ -1001,10 +1006,13 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         });
       }
 
+      const existingFiles = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
+      const manifestPaths = new Set(manifest.map((entry) => entry.path));
+      const staleFiles = existingFiles.filter((file) => !manifestPaths.has(file.path));
+
       try {
         await deps.upsertSnapshotFiles(asSnapshotId(input.snapshotId), manifest);
       } catch (error) {
-        const existingFiles = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
         const existingR2KeyByPath = new Map(
           existingFiles
             .filter((file): file is typeof file & { r2Key: string } => Boolean(file.r2Key))
@@ -1017,6 +1025,18 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
           toDelete.map((entry) => deps.deleteSnapshotFileObject(entry.r2Key)),
         );
         throw error;
+      }
+
+      if (staleFiles.length > 0) {
+        await deps.deleteSnapshotFilesByPaths({
+          paths: staleFiles.map((file) => file.path),
+          snapshotId: asSnapshotId(input.snapshotId),
+        });
+        await Promise.allSettled(
+          staleFiles
+            .filter((file): file is typeof file & { r2Key: string } => Boolean(file.r2Key))
+            .map((file) => deps.deleteSnapshotFileObject(file.r2Key)),
+        );
       }
 
       if (deps.snapshotArchiveUploadScheduler) {

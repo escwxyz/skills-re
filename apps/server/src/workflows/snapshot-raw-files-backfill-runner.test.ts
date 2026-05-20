@@ -35,7 +35,7 @@ describe("runSnapshotRawFilesBackfillWorkflow", () => {
             files: [
               {
                 content: "# backfilled",
-                path: `${input.skillRootPath}/SKILL.md`,
+                path: "SKILL.md",
               },
             ],
           });
@@ -132,7 +132,7 @@ describe("runSnapshotRawFilesBackfillWorkflow", () => {
         files: [
           {
             content: "# backfilled",
-            path: "skills/acme/widget/SKILL.md",
+            path: "SKILL.md",
           },
         ],
         snapshotId: "snapshot-1",
@@ -141,7 +141,7 @@ describe("runSnapshotRawFilesBackfillWorkflow", () => {
         files: [
           {
             content: "# backfilled",
-            path: "skills/acme/agent/SKILL.md",
+            path: "SKILL.md",
           },
         ],
         snapshotId: "snapshot-2",
@@ -199,7 +199,7 @@ describe("runSnapshotRawFilesBackfillWorkflow", () => {
             files: [
               {
                 content: "# backfilled",
-                path: `${input.skillRootPath}/SKILL.md`,
+                path: "SKILL.md",
               },
             ],
           });
@@ -255,7 +255,7 @@ describe("runSnapshotRawFilesBackfillWorkflow", () => {
         files: [
           {
             content: "# backfilled",
-            path: "skills/working/SKILL.md",
+            path: "SKILL.md",
           },
         ],
         snapshotId: "snapshot-2",

@@ -270,6 +270,27 @@ export async function upsertSnapshotFiles(
   }
 }
 
+export async function deleteSnapshotFilesByPaths(
+  input: {
+    paths: string[];
+    snapshotId: SnapshotId;
+  },
+  database = db,
+) {
+  if (input.paths.length === 0) {
+    return;
+  }
+
+  await database
+    .delete(snapshotFilesTable)
+    .where(
+      and(
+        eq(snapshotFilesTable.snapshotId, input.snapshotId),
+        inArray(snapshotFilesTable.path, input.paths),
+      ),
+    );
+}
+
 export async function setSnapshotArchiveR2Key(
   input: {
     archiveR2Key: string;
