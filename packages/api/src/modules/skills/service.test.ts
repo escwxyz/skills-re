@@ -4,7 +4,13 @@ import { describe, expect, test } from "bun:test";
 
 import type { SkillsUploadContentPayload } from "../../types";
 import { encodeRepoCursor } from "../repos/cursor";
-import { aiSearch, createSkillsService, submitGithubRepoPublic, uploadSkills } from "./service";
+import {
+  aiSearch,
+  createSkillsService,
+  submitGithubPreparedPublic,
+  submitGithubRepoPublic,
+  uploadSkills,
+} from "./service";
 
 describe("skills service", () => {
   test("returns paginated authors from the public authors list contract", async () => {
@@ -694,6 +700,63 @@ describe("skills service", () => {
     });
     expect(scheduledPayloads).toHaveLength(1);
     expect(scheduledPayloads[0]?.skills.map((skill) => skill.slug)).toEqual(["selected"]);
+  });
+
+  test("submits a prepared public github payload without rebuilding the repo payload", async () => {
+    const scheduledPayloads: SkillsUploadContentPayload[] = [];
+
+    const result = await submitGithubPreparedPublic(
+      {
+        recentCommits: [{ sha: "abc123" }],
+        repo: {
+          createdAt: 1,
+          defaultBranch: "main",
+          forks: 2,
+          license: "MIT",
+          nameWithOwner: "example/skills",
+          owner: {
+            handle: "example",
+          },
+          stars: 3,
+          updatedAt: 4,
+        },
+        skills: [
+          {
+            description: "Prepared skill",
+            directoryPath: "skills/prepared/",
+            entryPath: "skills/prepared/SKILL.md",
+            frontmatterHash: "frontmatter-hash",
+            initialSnapshot: {
+              files: [{ content: "prepared", path: "SKILL.md" }],
+              sourceCommitDate: 1,
+              sourceCommitSha: "abc123",
+              sourceRef: "main",
+              tree: [{ path: "SKILL.md", sha: "abc123", type: "blob" }],
+            },
+            skillContentHash: "content-hash",
+            slug: "prepared-skill",
+            sourceLocator: "github:example/skills/skills/prepared/SKILL.md",
+            sourceType: "github",
+            title: "Prepared skill",
+          },
+        ],
+      },
+      {
+        enqueue: (input) => {
+          scheduledPayloads.push(input);
+          return Promise.resolve({ workId: "workflow-prepared" });
+        },
+      },
+      () => Promise.resolve(null),
+    );
+
+    expect(result).toEqual({
+      skillsCount: 1,
+      status: "submitted",
+      workflowId: "workflow-prepared",
+    });
+    expect(scheduledPayloads).toHaveLength(1);
+    expect(scheduledPayloads[0]?.skills.map((skill) => skill.slug)).toEqual(["prepared-skill"]);
   });
 
   test("returns snapshot history info for the requested skills", async () => {

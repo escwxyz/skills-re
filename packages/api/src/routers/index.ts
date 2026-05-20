@@ -71,6 +71,7 @@ import {
   updateRepoStats,
   updateFeedbackResponse,
   updateFeedbackStatus,
+  submitGithubPreparedPublic,
   submitGithubRepoPublic,
   uploadSnapshotFiles,
   readSnapshotFileContent,
@@ -587,6 +588,16 @@ export const appRouter = {
         }
 
         return submitGithubRepoPublic(input, runtime, context.workflowSchedulers?.skillsUpload);
+      },
+    ),
+    submitGithubPreparedPublic: publicProcedure.skills.submitGithubPreparedPublic.handler(
+      ({ input, context }) => {
+        const scheduler = context.workflowSchedulers?.skillsUpload;
+        if (!scheduler) {
+          throw new ORPCError("SERVICE_UNAVAILABLE");
+        }
+
+        return submitGithubPreparedPublic(input, scheduler);
       },
     ),
     uploadSkills: protectedProcedure.skills.uploadSkills.handler(({ input, context }) => {

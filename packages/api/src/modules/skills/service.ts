@@ -111,6 +111,28 @@ const filterSelectedPayloadSkills = (
       )
     : skills;
 
+const filterNewSkillsByContent = async (
+  skills: SkillsUploadContentPayload["skills"],
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
+): Promise<SkillsUploadContentPayload["skills"]> => {
+  const filteredSkills = await Promise.all(
+    skills.map(async (skill) => {
+      if (skill.frontmatterHash && skill.skillContentHash) {
+        const duplicate = await findSnapshotByContentHashesFn({
+          frontmatterHash: skill.frontmatterHash,
+          skillContentHash: skill.skillContentHash,
+        });
+        if (duplicate) {
+          return null;
+        }
+      }
+      return skill;
+    }),
+  );
+
+  return filteredSkills.filter((skill): skill is NonNullable<typeof skill> => skill !== null);
+};
+
 interface SearchSkillRow {
   authorHandle: string;
   createdAt: number;
@@ -644,6 +666,7 @@ export async function submitGithubRepoPublic(
   input: SubmitGithubRepoPublicInput,
   runtime: GithubSubmitRuntime,
   scheduler?: SkillsUploadScheduler,
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
 ): Promise<SubmitGithubRepoPublicResult> {
   const selectedSkillRootPaths = getSelectedSkillRootPathSet(input.skillRootPaths);
   const result = await runtime.buildPayload({
@@ -673,22 +696,10 @@ export async function submitGithubRepoPublic(
     };
   }
 
-  const filteredSkills = await Promise.all(
-    selectedPayloadSkills.map(async (skill) => {
-      if (skill.frontmatterHash && skill.skillContentHash) {
-        const duplicate = await findSnapshotByContentHashes({
-          frontmatterHash: skill.frontmatterHash,
-          skillContentHash: skill.skillContentHash,
-        });
-        if (duplicate) {
-          return null;
-        }
-      }
-      return skill;
-    }),
+  const newSkills = await filterNewSkillsByContent(
+    selectedPayloadSkills,
+    findSnapshotByContentHashesFn,
   );
-
-  const newSkills = filteredSkills.filter((s) => s !== null);
 
   if (newSkills.length === 0) {
     return {
@@ -705,6 +716,44 @@ export async function submitGithubRepoPublic(
     },
     scheduler,
   );
+  return {
+    skillsCount: newSkills.length,
+    status: "submitted",
+    workflowId: uploaded.workId,
+  };
+}
+
+export async function submitGithubPreparedPublic(
+  input: SkillsUploadContentPayload,
+  scheduler?: SkillsUploadScheduler,
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
+): Promise<SubmitGithubRepoPublicResult> {
+  if (input.skills.length === 0) {
+    return {
+      reason: "no-valid-skills",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
+  const newSkills = await filterNewSkillsByContent(input.skills, findSnapshotByContentHashesFn);
+
+  if (newSkills.length === 0) {
+    return {
+      reason: "duplicate-content",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
+  const uploaded = await uploadSkills(
+    {
+      ...input,
+      skills: newSkills,
+    },
+    scheduler,
+  );
+
   return {
     skillsCount: newSkills.length,
     status: "submitted",

@@ -8,8 +8,12 @@ import { useSetAtom } from "jotai";
 import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 import { loginDialogAtom } from "@/atoms/app";
+import type { GithubSubmitPreparedPreview } from "@/lib/github-submit-prepared";
+import {
+  buildPreparedGithubSkillBatches,
+  DEFAULT_GITHUB_SUBMIT_BATCH_SIZE,
+} from "@/lib/github-submit-prepared";
 import { githubSubmitUrlSchema } from "@/lib/github-submit";
-import type { GithubSubmitInput } from "@/lib/github-submit";
 import { orpc } from "@/lib/orpc";
 import { m } from "@/paraglide/messages";
 import { useAppForm } from "@/hooks/form-hook";
@@ -26,6 +30,7 @@ export type { RepoPreview, SkillPreview, InvalidSkillPreview, PreviewDiagnosticM
 
 export type FetchStatus = "idle" | "fetching" | "fetched" | "error";
 export type SubmitStatus = "idle" | "submitting" | "submitted" | "error";
+const SUBMIT_BATCH_SIZE = DEFAULT_GITHUB_SUBMIT_BATCH_SIZE;
 
 export interface StatusItem {
   id: string;
@@ -57,7 +62,7 @@ export interface GithubSubmitFormModel {
   logBoxRef: RefObject<HTMLDivElement | null>;
   logs: string[];
   previewDiagnostics: string[];
-  repoPreview: RepoPreview | null;
+  repoPreview: GithubSubmitPreparedPreview | null;
   selectedSkillRootPaths: string[];
   selectedSummary: string;
   statusItems: readonly StatusItem[];
@@ -79,16 +84,19 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>("idle");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [repoTarget, setRepoTarget] = useState<GithubSubmitInput | null>(null);
-  const [repoPreview, setRepoPreview] = useState<RepoPreview | null>(null);
+  const [repoPreview, setRepoPreview] = useState<GithubSubmitPreparedPreview | null>(null);
   const [submitLocked, setSubmitLocked] = useState(false);
+  const [submitBatchProgress, setSubmitBatchProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const setLoginDialog = useSetAtom(loginDialogAtom);
   const logBoxRef = useRef<HTMLDivElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchRepoMutation = useMutation(orpc.github.fetchRepo.mutationOptions({}));
   const submitGithubRepoPublicMutation = useMutation(
-    orpc.skills.submitGithubRepoPublic.mutationOptions({}),
+    orpc.skills.submitGithubPreparedPublic.mutationOptions({}),
   );
 
   const form = useAppForm({
@@ -103,8 +111,8 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
         setFetchStatus("error");
         setSubmitStatus("idle");
         setSubmitError(null);
-        setRepoTarget(null);
         setRepoPreview(null);
+        setSubmitBatchProgress(null);
         form.setFieldValue("selectedSkillRootPaths", []);
         setLogs([
           `> ${m.logs_error_prefix({})} ${parsed.error.issues[0]?.message ?? m.logs_invalid_url_error({})}`,
@@ -114,11 +122,11 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
 
       const target = parsed.data;
       form.setFieldValue("repoUrl", target.githubUrl);
-      setRepoTarget(target);
       setFetchStatus("fetching");
       setSubmitStatus("idle");
       setSubmitError(null);
       setRepoPreview(null);
+      setSubmitBatchProgress(null);
       form.setFieldValue("selectedSkillRootPaths", []);
       setSubmitLocked(false);
       setLogs([
@@ -206,8 +214,8 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
       setFetchStatus("idle");
       setSubmitStatus("idle");
       setSubmitError(null);
-      setRepoTarget(null);
       setRepoPreview(null);
+      setSubmitBatchProgress(null);
       setSubmitLocked(false);
       form.reset();
     }, RESET_DELAY_MS);
@@ -221,95 +229,126 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
     setSubmitLocked(true);
     setSubmitStatus("submitting");
     setSubmitError(null);
-    setLogs((prev) => [
-      ...prev,
-      `> ${m.logs_submitting_selected({
-        count: selectedSkillRootPaths.length,
-      })}`,
-    ]);
+    setSubmitBatchProgress(null);
 
     try {
-      await submitGithubRepoPublicMutation.mutateAsync(
-        {
-          owner: repoPreview.owner,
-          repo: repoPreview.repo,
-          skillRootPath: repoTarget?.skillRootPath,
-          skillRootPaths: selectedSkillRootPaths,
-        },
-        {
-          onError: (error) => {
-            const errorMessage = getSubmitErrorMessage(error);
+      const batches = await buildPreparedGithubSkillBatches({
+        batchSize: SUBMIT_BATCH_SIZE,
+        preview: repoPreview,
+        selectedSkillRootPaths,
+      });
 
-            if (isRateLimitedError(error)) {
-              setLoginDialog({
-                open: true,
-                onlyGithub: true,
-                title: "GitHub submission limit reached",
-                description: errorMessage,
-              });
-            } else {
-              console.error("Failed to submit GitHub repository", error);
-            }
+      setLogs((prev) => [
+        ...prev,
+        `> ${m.logs_submitting_selected({
+          count: selectedSkillRootPaths.length,
+        })}`,
+        `> Preparing ${batches.length} batch${batches.length === 1 ? "" : "es"} (${SUBMIT_BATCH_SIZE} skills max per batch).`,
+      ]);
 
-            setLogs((prev) => [
-              ...prev,
-              `> ${m.logs_submission_failed({})}`,
-              `> ${isRateLimitedError(error) ? errorMessage : m.logs_live_api_request_failed({})}`,
-            ]);
-            setSubmitError(errorMessage);
-            setSubmitStatus("error");
-            setSubmitLocked(false);
-          },
-          onSuccess: (data) => {
-            if (data.status === "submitted") {
-              ga.event("github_repo_submit", {
-                owner: repoPreview.owner,
-                repo: repoPreview.repo,
-                skills_count: data.skillsCount,
-              });
-              setLogs((prev) => [
-                ...prev,
-                data.workflowId
-                  ? `> ${m.logs_job_queued_with_id({
-                      workflowId: data.workflowId,
-                    })}`
-                  : `> ${m.logs_job_queued({})}`,
-                `> ${m.logs_submitted_skills({
-                  count: data.skillsCount,
-                })}`,
-                `> ${m.logs_skills_being_processed({})}`,
-              ]);
-              setSubmitError(null);
-              setSubmitStatus("submitted");
-              scheduleReset();
-              return;
-            }
+      let queuedBatchCount = 0;
+      let queuedSkillsCount = 0;
+      let duplicateOnlyBatchCount = 0;
 
-            if (data.reason === "duplicate-content") {
-              setLogs((prev) => [...prev, `> ${m.logs_duplicate_skill({})}`]);
-              setSubmitError(
-                "This skill is already in the registry. Each unique skill can only be published once, regardless of who submits it.",
-              );
-              setSubmitStatus("error");
-              setSubmitLocked(false);
-              return;
-            }
+      for (const [index, batch] of batches.entries()) {
+        const currentBatch = index + 1;
+        setSubmitBatchProgress({
+          current: currentBatch,
+          total: batches.length,
+        });
+        setLogs((prev) => [
+          ...prev,
+          `> Submitting batch ${currentBatch}/${batches.length} (${batch.skills.length} skills)...`,
+        ]);
 
-            setLogs((prev) => [
-              ...prev,
-              `> ${m.logs_submission_skipped({
-                reason: data.reason ?? "unknown",
+        const data = await submitGithubRepoPublicMutation.mutateAsync(batch);
+
+        if (data.status === "submitted") {
+          queuedBatchCount += 1;
+          queuedSkillsCount += data.skillsCount;
+          setLogs((prev) => [
+            ...prev,
+            data.workflowId
+              ? `> ${m.logs_job_queued_with_id({
+                  workflowId: data.workflowId,
+                })}`
+              : `> ${m.logs_job_queued({})}`,
+            `> Batch ${currentBatch}/${batches.length} queued with ${data.skillsCount} skills.`,
+          ]);
+          continue;
+        }
+
+        if (data.reason === "duplicate-content") {
+          duplicateOnlyBatchCount += 1;
+          setLogs((prev) => [
+            ...prev,
+            `> Batch ${currentBatch}/${batches.length} skipped because all selected skills already exist.`,
+          ]);
+          continue;
+        }
+
+        setLogs((prev) => [
+          ...prev,
+          `> ${m.logs_submission_skipped({
+            reason: data.reason ?? "unknown",
+          })}`,
+        ]);
+      }
+
+      ga.event("github_repo_submit", {
+        owner: repoPreview.owner,
+        repo: repoPreview.repo,
+        skills_count: queuedSkillsCount,
+      });
+
+      if (queuedBatchCount > 0) {
+        setLogs((prev) => [
+          ...prev,
+          `> Queued ${queuedSkillsCount} skills across ${queuedBatchCount} batch${queuedBatchCount === 1 ? "" : "es"}.`,
+          duplicateOnlyBatchCount > 0
+            ? `> Skipped ${duplicateOnlyBatchCount} duplicate-only batch${duplicateOnlyBatchCount === 1 ? "" : "es"}.`
+            : `> ${m.logs_submitted_skills({
+                count: queuedSkillsCount,
               })}`,
-            ]);
-            setSubmitError(
-              "Submission was skipped. Please review the selected skills and try again.",
-            );
-            setSubmitStatus("error");
-            setSubmitLocked(false);
-          },
-        },
+          `> ${m.logs_skills_being_processed({})}`,
+        ]);
+        setSubmitBatchProgress(null);
+        setSubmitError(null);
+        setSubmitStatus("submitted");
+        scheduleReset();
+        return;
+      }
+
+      setSubmitBatchProgress(null);
+      setSubmitError(
+        duplicateOnlyBatchCount > 0
+          ? "All selected skills are already in the registry."
+          : "Submission was skipped. Please review the selected skills and try again.",
       );
-    } catch {
+      setSubmitStatus("error");
+      setSubmitLocked(false);
+    } catch (error) {
+      const errorMessage = getSubmitErrorMessage(error);
+
+      if (isRateLimitedError(error)) {
+        setLoginDialog({
+          open: true,
+          onlyGithub: true,
+          title: "GitHub submission limit reached",
+          description: errorMessage,
+        });
+      } else {
+        console.error("Failed to submit GitHub repository", error);
+      }
+
+      setLogs((prev) => [
+        ...prev,
+        `> ${m.logs_submission_failed({})}`,
+        `> ${isRateLimitedError(error) ? errorMessage : m.logs_live_api_request_failed({})}`,
+      ]);
+      setSubmitBatchProgress(null);
+      setSubmitError(errorMessage);
+      setSubmitStatus("error");
       setSubmitLocked(false);
     }
   };
@@ -351,7 +390,9 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
   ] as const;
   const submitLabel: ReactNode =
     submitStatus === "submitting"
-      ? m.footer_submitting({})
+      ? submitBatchProgress
+        ? `Submitting ${submitBatchProgress.current}/${submitBatchProgress.total}...`
+        : m.footer_submitting({})
       : submitStatus === "submitted"
         ? m.footer_queued({})
         : m.footer_submit({});
@@ -361,8 +402,8 @@ export const useGithubSubmitForm = (): GithubSubmitFormModel => {
     setFetchStatus("idle");
     setSubmitStatus("idle");
     setSubmitError(null);
-    setRepoTarget(null);
     setRepoPreview(null);
+    setSubmitBatchProgress(null);
     form.setFieldValue("selectedSkillRootPaths", []);
     setSubmitLocked(false);
   };

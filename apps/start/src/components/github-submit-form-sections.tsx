@@ -190,7 +190,7 @@ export const GithubSubmitPreviewPanel = (props: {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {props.repoPreview.skills.map((skill) => {
           const isSelected = props.selectedSkillRootPaths.includes(skill.skillRootPath);
           const checkboxId = `skill-${skill.skillRootPath || "repo-root"}`;

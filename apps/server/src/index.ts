@@ -220,7 +220,9 @@ app.use("/mcp/*", mcpRateLimiter);
 app.route("/mcp", mcpRouter);
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
+app.use("/rpc/skills/submitGithubPreparedPublic", submitPublicRateLimiter);
 app.use("/skills/submit", submitPublicRateLimiter);
+app.use("/skills/submit-prepared", submitPublicRateLimiter);
 app.use("/rpc/skills/search", searchRateLimiter);
 app.use("/skills/search", searchRateLimiter);
 

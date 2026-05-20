@@ -409,6 +409,18 @@ export const skillsContract = {
     })
     .input(submitGithubPreparedOutputSchema)
     .output(uploadSkillsResultSchema),
+  submitGithubPreparedPublic: baseContract
+    .route({
+      description:
+        "Submits a prepared GitHub skill payload for public ingestion without rebuilding the repository payload.",
+      method: "POST",
+      path: "/skills/submit-prepared",
+      tags: ["Skills"],
+      successDescription: "Prepared GitHub submission result",
+      summary: "Submit prepared public GitHub skills",
+    })
+    .input(submitGithubPreparedOutputSchema)
+    .output(submitGithubRepoPublicResultSchema),
   submitGithubRepoPublic: baseContract
     .route({
       description:

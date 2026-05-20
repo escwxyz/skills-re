@@ -14,6 +14,7 @@ export {
   listSkills,
   searchSkills,
   resolvePathBySlug,
+  submitGithubPreparedPublic,
   submitGithubRepoPublic,
   uploadSkills,
 } from "./skills/service";
