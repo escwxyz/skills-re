@@ -406,6 +406,7 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
     AUTOMATION_API_TOKEN: alchemy.secret.env.AUTOMATION_API_TOKEN!,
+    AUTH_COOKIE_DOMAIN: alchemy.env.AUTH_COOKIE_DOMAIN ?? "",
     R2_PUBLIC_BASE_URL: alchemy.env.R2_PUBLIC_BASE_URL!,
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
     TEST_USER: devTestUserEnabled ? "true" : "false",

@@ -6,8 +6,17 @@ import { createSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 
+const relativeCallbackUrlSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined))
+  .refine((value) => value === undefined || (value.startsWith("/") && !value.startsWith("//")), {
+    error: "callbackUrl must be a safe relative path",
+  });
+
 const searchSchema = z.object({
-  callbackUrl: z.string().trim().optional(),
+  callbackUrl: relativeCallbackUrlSchema,
   description: z.string().trim().optional(),
   intent: z.enum(["continue", "dashboard"]).optional(),
   onlyGitHub: z.enum(["1", "true"]).optional(),
