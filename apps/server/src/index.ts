@@ -9,6 +9,7 @@ import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { mcpRouter } from "./routes/mcp";
 import { mcpRateLimiter } from "./middlewares/mcp-rate-limiter";
+import { createMcpServerCard, setMcpServerCardHeaders } from "./routes/mcp-server-card";
 import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
@@ -123,6 +124,14 @@ app.use("/*", async (c, next) => {
       status: completedStatus,
     });
   }
+});
+app.get("/.well-known/mcp/server-card.json", (c) => {
+  setMcpServerCardHeaders(c.res.headers);
+  return c.json(createMcpServerCard(c.env.PUBLIC_SERVER_URL));
+});
+app.options("/.well-known/mcp/server-card.json", (c) => {
+  setMcpServerCardHeaders(c.res.headers);
+  return c.body(null, 204);
 });
 app.use("/*", (c, next) =>
   cors({
