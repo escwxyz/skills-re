@@ -11,9 +11,7 @@ export const createMcpServerCard = (baseUrl: string) => {
   return {
     $schema: "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
     capabilities: {
-      prompts: false,
-      resources: false,
-      tools: true,
+      tools: {},
     },
     description: "Skills.re remote MCP server for discovering and managing agent skills.",
     name: "re.skills/mcp",
@@ -41,7 +39,7 @@ export const createMcpServerCard = (baseUrl: string) => {
 };
 
 export const setMcpServerCardHeaders = (headers: Headers) => {
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, MCP-Protocol-Version");
   headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Cache-Control", "public, max-age=3600");

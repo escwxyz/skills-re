@@ -23,7 +23,7 @@ describe("MCP server card discovery", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("cache-control")).toBe("public, max-age=3600");
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
-    await expect(response.json()).resolves.toMatchObject({
+    expect(response.json()).resolves.toMatchObject({
       serverInfo: {
         name: "skills-re",
         version: "1.0.0",
@@ -35,11 +35,11 @@ describe("MCP server card discovery", () => {
   });
 
   test("describes the Skills.re remote MCP transport and capabilities", () => {
-    expect(createMcpServerCard("https://api.skills.re")).toMatchObject({
+    const card = createMcpServerCard("https://api.skills.re");
+
+    expect(card).toMatchObject({
       capabilities: {
-        prompts: false,
-        resources: false,
-        tools: true,
+        tools: {},
       },
       remotes: [
         {
@@ -56,6 +56,10 @@ describe("MCP server card discovery", () => {
         type: "streamable-http",
       },
     });
+
+    expect(card.capabilities.tools).toEqual({});
+    expect("prompts" in card.capabilities).toBe(false);
+    expect("resources" in card.capabilities).toBe(false);
   });
 
   test("lists the currently registered remote MCP tools in metadata", () => {
@@ -73,7 +77,7 @@ describe("MCP server card discovery", () => {
 
     expect(headers.get("access-control-allow-origin")).toBe("*");
     expect(headers.get("access-control-allow-methods")).toBe("GET, OPTIONS");
-    expect(headers.get("access-control-allow-headers")).toBe("Content-Type");
+    expect(headers.get("access-control-allow-headers")).toBe("Content-Type, MCP-Protocol-Version");
     expect(headers.get("cache-control")).toBe("public, max-age=3600");
   });
 });
