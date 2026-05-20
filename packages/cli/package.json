@@ -1,6 +1,6 @@
 {
   "name": "@skills-re/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Command-line client for discovering, installing, locking, and exposing skills.re skills.",
   "author": {
     "name": "Jie Wang",
