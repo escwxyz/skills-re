@@ -34,6 +34,7 @@ export { RepoSkillSnapshotSyncWorkflow } from "./workflows/repo-skill-snapshot-s
 export { RepoSkillsDiscoveryWorkflow } from "./workflows/repo-skills-discovery-workflow";
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
+export { SnapshotRawFilesBackfillWorkflow } from "./workflows/snapshot-raw-files-backfill-workflow";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
 export { SnapshotsArchiveUploadWorkflow } from "./workflows/snapshots-archive-upload-workflow";
 export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization";
