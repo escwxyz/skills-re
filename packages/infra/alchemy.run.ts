@@ -42,7 +42,7 @@ const db = await D1Database("database", {
 });
 
 const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
-  name: "skills-re",
+  name: "skills-re-snapshots",
   adopt: true,
   dev: {
     remote: true,
@@ -62,7 +62,7 @@ const aiSearch = await AiSearch("skills-re-ai-search", {
 });
 
 const archiveFilesBucket = await R2Bucket("skills-re-archives", {
-  name: "skills-re-archive",
+  name: "skills-re-archives",
   adopt: true,
   dev: {
     remote: true,

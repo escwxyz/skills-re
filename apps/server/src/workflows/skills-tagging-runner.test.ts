@@ -83,7 +83,7 @@ describe("runSkillsTaggingWorkflow", () => {
         },
       ),
     ).rejects.toThrow(
-      "Skills categorization workflow binding is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW.",
+      "Skills categorization workflow scheduler is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW_QUEUE or SKILLS_CATEGORIZATION_WORKFLOW.",
     );
 
     expect(pipelineCalls).toHaveLength(0);

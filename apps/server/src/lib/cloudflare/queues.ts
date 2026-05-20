@@ -10,6 +10,13 @@ export interface QueueBinding<TMessage> {
 export const CLOUDFLARE_QUEUE_MAX_MESSAGE_BYTES = 128_000;
 
 const getUtf8ByteLength = (value: string) => new TextEncoder().encode(value).byteLength;
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + (value.codePointAt(index) ?? 0)) % 2_147_483_647;
+  }
+  return hash;
+};
 
 export const assertQueueMessageSize = <TMessage>(input: {
   context?: string;
@@ -54,4 +61,15 @@ export const enqueueQueueMessage = async <TMessage>(input: {
   await input.binding.send(input.message, {
     delaySeconds: input.delaySeconds,
   });
+};
+
+export const getDeterministicQueueDelaySeconds = (input: {
+  seed: string;
+  spreadSeconds: number;
+}) => {
+  if (input.spreadSeconds <= 0) {
+    return 0;
+  }
+
+  return hashString(input.seed) % (input.spreadSeconds + 1);
 };
