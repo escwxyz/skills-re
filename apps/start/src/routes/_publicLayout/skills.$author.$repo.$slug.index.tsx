@@ -33,7 +33,7 @@ function RouteComponent() {
   return (
     <section className="px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto grid max-w-350 gap-8 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
-        {data.tocItems.length > 0 ? <SkillMdToc items={data.tocItems} /> : null}
+        <SkillMdToc items={data.tocItems} />
         <SkillMdContent contentHtml={data.contentHtml} entryMetaLabel={data.entryMetaLabel} />
         {data.frontmatter && <SkillMdFrontmatter {...data.frontmatter} />}
       </div>

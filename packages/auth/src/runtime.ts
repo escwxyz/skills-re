@@ -10,6 +10,7 @@ export function createRuntimeAuth(): AuthInstance {
     env: {
       ADMIN: env.ADMIN,
       BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
+      AUTH_COOKIE_DOMAIN: env.AUTH_COOKIE_DOMAIN,
       PUBLIC_SERVER_URL: env.PUBLIC_SERVER_URL,
       PUBLIC_SITE_URL: env.PUBLIC_SITE_URL,
       GITHUB_CLIENT_ID: env.GITHUB_CLIENT_ID,

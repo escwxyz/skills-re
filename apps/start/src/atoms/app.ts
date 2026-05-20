@@ -1,11 +1,30 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { atomWithStorage, createJSONStorage } from "jotai/utils";
+
+export type LoginIntent = "continue" | "dashboard";
+
+export type PendingAction =
+  | {
+      type: "save-skill";
+      slug: string;
+    }
+  | {
+      type: "claim-author";
+      slug: string;
+    }
+  | {
+      initialStars?: number;
+      skillId: string;
+      type: "write-review";
+    };
 
 export interface LoginDialogState {
   open: boolean;
-  onlyGithub: boolean;
-  title: string | null;
-  description: string | null;
+  onlyGithub?: boolean;
+  title?: string | null;
+  description?: string | null;
+  callbackUrl?: string;
+  intent?: LoginIntent;
 }
 
 export const loginDialogAtom = atom<LoginDialogState>({
@@ -13,7 +32,17 @@ export const loginDialogAtom = atom<LoginDialogState>({
   onlyGithub: false,
   title: null,
   description: null,
+  callbackUrl: undefined,
+  intent: "continue",
 });
+
+const pendingActionStorage = createJSONStorage<PendingAction | null>(() => sessionStorage);
+
+export const pendingActionAtom = atomWithStorage<PendingAction | null>(
+  "pending-action",
+  null,
+  pendingActionStorage,
+);
 
 export interface WriteReviewDialogState {
   open: boolean;

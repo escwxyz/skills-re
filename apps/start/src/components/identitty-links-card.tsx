@@ -14,6 +14,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
+import { createAuthRedirectUrl } from "@/utils/create-auth-redirect-url";
 
 interface LinkedAccount {
   id: string;
@@ -94,7 +95,7 @@ export function IdentityLinksCard() {
     setErrorMessage(null);
     try {
       await authClient.linkSocial({
-        callbackURL: localizeHref("/dashboard/settings"),
+        callbackURL: createAuthRedirectUrl(localizeHref("/dashboard/settings")),
         provider,
       });
     } catch (error) {

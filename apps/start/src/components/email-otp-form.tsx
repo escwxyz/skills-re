@@ -12,7 +12,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { m } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
+import { createAuthRedirectUrl } from "@/utils/create-auth-redirect-url";
 
 const formatCountdown = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -20,7 +20,13 @@ const formatCountdown = (seconds: number) => {
   return `${minutes}:${remaining.toString().padStart(2, "0")}`;
 };
 
-export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
+export const EmailOtpForm = ({
+  callbackUrl,
+  onBack,
+}: {
+  callbackUrl?: string;
+  onBack: () => void;
+}) => {
   const [didSend, setDidSend] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -58,11 +64,7 @@ export const EmailOtpForm = ({ onBack }: { onBack: () => void }) => {
       try {
         await authClient.signIn.emailOtp({
           email: value.email,
-          fetchOptions: {
-            onSuccess: () => {
-              window.location.href = localizeHref("/dashboard");
-            },
-          },
+          callbackURL: createAuthRedirectUrl(callbackUrl),
           otp: value.otp,
         });
       } catch {

@@ -10,6 +10,7 @@ const auth: AuthInstance = createAuth({
   env: {
     ADMIN: process.env.ADMIN ?? "",
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "local-dev-secret-local-dev-secret",
+    AUTH_COOKIE_DOMAIN: process.env.AUTH_COOKIE_DOMAIN,
     PUBLIC_SERVER_URL: process.env.PUBLIC_SERVER_URL ?? "http://localhost:3000",
     PUBLIC_SITE_URL: process.env.PUBLIC_SITE_URL ?? "http://localhost:4321",
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ?? "",

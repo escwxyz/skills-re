@@ -16,6 +16,7 @@ import type { createDb } from "@skills-re/db/runtime";
 export interface AuthEnv {
   ADMIN: string;
   BETTER_AUTH_SECRET: string;
+  AUTH_COOKIE_DOMAIN?: string;
   PUBLIC_SERVER_URL: string;
   PUBLIC_SITE_URL: string;
   GITHUB_CLIENT_ID: string;
@@ -116,6 +117,14 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
       ipAddress: {
         ipAddressHeaders: ["x-client-ip", "x-forwarded-for", "cf-connecting-ip"],
       },
+      crossSubDomainCookies: env.AUTH_COOKIE_DOMAIN
+        ? {
+            enabled: true,
+            domain: env.AUTH_COOKIE_DOMAIN,
+          }
+        : {
+            enabled: false,
+          },
     },
     basePath: "/auth",
     baseURL: env.PUBLIC_SERVER_URL,
@@ -169,7 +178,6 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         allowUnauthenticatedClientRegistration: true,
         consentPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
         grantTypes: ["authorization_code", "refresh_token"],
-        // todo: add new routes in tanstack start
         loginPage: `${env.PUBLIC_SITE_URL}/auth`,
         scopes: [
           "openid",
@@ -186,7 +194,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         },
         validAudiences: [env.PUBLIC_SERVER_URL, `${env.PUBLIC_SERVER_URL}/mcp`],
       }),
-      // todo: review
+      // Keep agentAuth's /device/code endpoint out of the public auth surface.
       // Strip the /device/code endpoint from agentAuth to avoid conflict with
       // the deviceAuthorization plugin. We only use CIBA for agent approval
       // (approvalMethods: ["ciba"]), so this endpoint is unused.
