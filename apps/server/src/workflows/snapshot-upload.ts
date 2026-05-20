@@ -1,8 +1,12 @@
 import { z } from "zod/v4";
+import { nanoid } from "nanoid";
 
 import type { SnapshotUploadScheduler } from "@skills-re/api/types";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
+import { enqueueQueueMessage, getDeterministicQueueDelaySeconds } from "../lib/cloudflare/queues";
+import type { QueueBinding } from "../lib/cloudflare/queues";
+import type { WorkflowQueueMessage } from "../queues/workflow-queue";
 
 const snapshotUploadContentPayloadSchema = z.object({
   files: z.array(
@@ -43,8 +47,37 @@ export interface SnapshotUploadStagingBucket extends SnapshotUploadStagingReader
 
 type SnapshotUploadWorkflowEnv = Env & {
   SNAPSHOT_FILES?: SnapshotUploadStagingBucket;
+  SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0?: QueueBinding<WorkflowQueueMessage>;
+  SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1?: QueueBinding<WorkflowQueueMessage>;
+  SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2?: QueueBinding<WorkflowQueueMessage>;
+  SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3?: QueueBinding<WorkflowQueueMessage>;
   SNAPSHOT_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotUploadWorkflowPayload>;
 };
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + (value.codePointAt(index) ?? 0)) % 2_147_483_647;
+  }
+  return hash;
+};
+
+const getSnapshotUploadQueueBinding = (env: SnapshotUploadWorkflowEnv, snapshotId: string) => {
+  const queueBindings = [
+    env.SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0,
+    env.SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1,
+    env.SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2,
+    env.SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3,
+  ].filter((binding): binding is NonNullable<typeof binding> => binding !== undefined);
+
+  if (queueBindings.length === 0) {
+    return null;
+  }
+
+  return queueBindings[hashString(snapshotId) % queueBindings.length] ?? null;
+};
+
+const SNAPSHOT_UPLOAD_QUEUE_SPREAD_SECONDS = 90;
 
 export const getSnapshotUploadStagingKey = (input: SnapshotUploadWorkflowPayload) =>
   input.stagingKey;
@@ -108,7 +141,8 @@ export const getSnapshotUploadWorkflowScheduler = (
   env: SnapshotUploadWorkflowEnv,
 ): SnapshotUploadScheduler | null => {
   const binding = env.SNAPSHOT_UPLOAD_WORKFLOW;
-  if (!binding) {
+  const queueBindingAvailable = Boolean(getSnapshotUploadQueueBinding(env, "probe"));
+  if (!binding && !queueBindingAvailable) {
     return null;
   }
 
@@ -121,6 +155,30 @@ export const getSnapshotUploadWorkflowScheduler = (
 
       const stagedPayload = await stageSnapshotUploadPayload(bucket, payload);
       try {
+        const queueBinding = getSnapshotUploadQueueBinding(env, payload.snapshotId);
+        const workflowId = `snapshot-upload-${nanoid()}`;
+
+        if (queueBinding) {
+          await enqueueQueueMessage({
+            binding: queueBinding,
+            context: "snapshot-upload",
+            delaySeconds: getDeterministicQueueDelaySeconds({
+              seed: payload.snapshotId,
+              spreadSeconds: SNAPSHOT_UPLOAD_QUEUE_SPREAD_SECONDS,
+            }),
+            message: {
+              kind: "snapshot-upload",
+              payload: stagedPayload,
+              workflowId,
+            },
+          });
+          return { workId: workflowId };
+        }
+
+        if (!binding) {
+          throw new Error("Snapshot upload workflow is not configured.");
+        }
+
         return await makeWorkflowScheduler("snapshot-upload", binding).enqueue(stagedPayload);
       } catch (error) {
         await cleanupStagedSnapshotUploadPayload(bucket, stagedPayload);

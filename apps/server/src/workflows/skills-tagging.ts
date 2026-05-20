@@ -3,33 +3,21 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 
 import { createAiTasksRuntime } from "../ai-tasks";
 import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
-import {
-  createCategorizationWorkflowScheduler,
-  runSkillsTaggingWorkflow,
-} from "./skills-tagging-runner";
+import { getSkillsCategorizationWorkflowScheduler } from "./skills-categorization-scheduler";
+import { runSkillsTaggingWorkflow } from "./skills-tagging-runner";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import type { SkillsTaggingWorkflowPayload } from "./skills-tagging-runner";
-import type { WorkflowCreateBinding } from "./lib/scheduler";
 import { createSnapshotsService } from "@skills-re/api/modules/snapshots/service";
-
-type SkillsTaggingWorkflowEnv = Env & {
-  SKILLS_CATEGORIZATION_WORKFLOW?: WorkflowCreateBinding<{
-    skillIds: string[];
-  }>;
-};
 
 export class SkillsTaggingWorkflow extends WorkflowEntrypoint<Env, SkillsTaggingWorkflowPayload> {
   run(event: Readonly<WorkflowEvent<SkillsTaggingWorkflowPayload>>, _step: WorkflowStep) {
-    const env = this.env as SkillsTaggingWorkflowEnv;
-    const aiTasks = createAiTasksRuntime(env);
-    const snapshotStorage = createSnapshotArchiveStorageRuntime(env);
+    const aiTasks = createAiTasksRuntime(this.env);
+    const snapshotStorage = createSnapshotArchiveStorageRuntime(this.env);
     const snapshotsService = createSnapshotsService({
       buildSnapshotFilePublicUrl: snapshotStorage.buildSnapshotFilePublicUrl,
       readSnapshotFileObject: snapshotStorage.getSnapshotFileObject,
     });
-    const scheduleCategorization = createCategorizationWorkflowScheduler(
-      env.SKILLS_CATEGORIZATION_WORKFLOW,
-    );
+    const categorizationScheduler = getSkillsCategorizationWorkflowScheduler(this.env);
 
     return runWorkflowWithFailureLog({
       entrypoint: "SkillsTaggingWorkflow",
@@ -40,7 +28,7 @@ export class SkillsTaggingWorkflow extends WorkflowEntrypoint<Env, SkillsTagging
           {
             aiTasks,
             readSnapshotFileContent: snapshotsService.readSnapshotFileContent,
-            scheduleCategorization,
+            scheduleCategorization: categorizationScheduler?.enqueue,
           },
           _step,
         ),

@@ -16,6 +16,7 @@ import type { StaticAuditWorkflowTarget } from "@skills-re/api/modules/static-au
 import {
   createSkill,
   checkSkillExistingBySlug,
+  listRepoSkillSnapshotHeadsByRepoId,
   updateSkillAiSearchItemId,
 } from "@skills-re/api/modules/skills/repo";
 import { normalizeSkillTags } from "@skills-re/api/modules/tags/ai-tagging";
@@ -23,6 +24,7 @@ import { syncSkillTags } from "@skills-re/api/modules/tags/service";
 import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
+import { asRepoId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
 import type {
@@ -60,6 +62,7 @@ export interface RunSkillsUploadWorkflowDeps {
   findSnapshotByContentHashes?: typeof findSnapshotByContentHashes;
   deprecateSnapshotsBeyondLimit?: typeof deprecateSnapshotsBeyondLimit;
   ensureRepo?: typeof ensureRepo;
+  listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
@@ -161,6 +164,7 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
 interface ProcessUploadSkillParams {
   authorHandle: string;
   deps: RunSkillsUploadWorkflowDeps;
+  existingRepoSkillIdByDirectoryPath: Map<string, string>;
   repoId: string;
   repoName: string;
   skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number];
@@ -173,6 +177,7 @@ interface ProcessUploadSkillParams {
 const processUploadSkill = async ({
   authorHandle,
   deps,
+  existingRepoSkillIdByDirectoryPath,
   repoId,
   repoName,
   skill,
@@ -206,31 +211,47 @@ const processUploadSkill = async ({
     }
   }
 
-  const slug = await step.do(
-    `resolve-upload-skill-slug-${skillIndex}`,
-    workflowStepRetryPolicy.skillsUploadPipeline,
-    async () =>
-      await resolveUploadSkillSlug({
-        checkSkillExistingBySlug: deps.checkSkillExistingBySlug ?? checkSkillExistingBySlug,
-        preferredSlug: skill.slug,
-        usedSlugs,
-      }),
-  );
+  const normalizedDirectoryPath = normalizeUploadDirectoryPath(skill.directoryPath);
+  const existingSkillId = existingRepoSkillIdByDirectoryPath.get(normalizedDirectoryPath) ?? null;
 
-  const skillId = await step.do(
-    `create-upload-skill-${skillIndex}`,
-    workflowStepRetryPolicy.skillsUploadPipeline,
-    async () =>
-      await (deps.createSkill ?? createSkill)({
-        description: skill.description,
-        repoId,
-        slug,
-        syncTime,
-        title: skill.title,
-        userId: null,
-        visibility: "public",
-      }),
-  );
+  let { slug } = skill;
+  let skillId = existingSkillId;
+
+  if (existingSkillId) {
+    usedSlugs.add(slug);
+  } else {
+    slug = await step.do(
+      `resolve-upload-skill-slug-${skillIndex}`,
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await resolveUploadSkillSlug({
+          checkSkillExistingBySlug: deps.checkSkillExistingBySlug ?? checkSkillExistingBySlug,
+          preferredSlug: skill.slug,
+          usedSlugs,
+        }),
+    );
+
+    skillId = await step.do(
+      `create-upload-skill-${skillIndex}`,
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await (deps.createSkill ?? createSkill)({
+          description: skill.description,
+          repoId,
+          slug,
+          syncTime,
+          title: skill.title,
+          userId: null,
+          visibility: "public",
+        }),
+    );
+
+    existingRepoSkillIdByDirectoryPath.set(normalizedDirectoryPath, skillId);
+  }
+
+  if (!skillId) {
+    throw new Error("Failed to resolve skill record for upload.");
+  }
 
   const snapshotVersion = skill.preferredVersion ?? "1.0.0";
   const snapshotId = await step.do(
@@ -239,7 +260,7 @@ const processUploadSkill = async ({
     async () =>
       await (deps.createSnapshot ?? createSnapshot)({
         description: skill.description,
-        directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
+        directoryPath: normalizedDirectoryPath,
         entryPath: normalizeUploadEntryPath(skill.entryPath),
         frontmatterHash: effectiveFrontmatterHash,
         hash: skill.snapshotHash,
@@ -521,18 +542,33 @@ export const runSkillsUploadWorkflow = async (
       workflowStepRetryPolicy.skillsUploadPipeline,
       async () => await (deps.ensureRepo ?? ensureRepo)(buildEnsureRepoInput(repo)),
     );
+    const existingRepoSkills = await step.do(
+      "list-existing-upload-repo-skills",
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await (deps.listRepoSkillSnapshotHeadsByRepoId ?? listRepoSkillSnapshotHeadsByRepoId)(
+          asRepoId(repoId),
+        ),
+    );
 
     const [authorHandle = "", repoName = ""] = repo.nameWithOwner.split("/");
     const createdSkillIds: string[] = [];
     const auditTargets: StaticAuditWorkflowTarget[] = [];
     let firstWorkId: string | null = null;
     const usedSlugs = new Set<string>();
+    const existingRepoSkillIdByDirectoryPath = new Map(
+      existingRepoSkills.map((existingSkill) => [
+        normalizeUploadDirectoryPath(existingSkill.directoryPath),
+        existingSkill.skillId,
+      ]),
+    );
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
       const result = await processUploadSkill({
         authorHandle,
         deps,
+        existingRepoSkillIdByDirectoryPath,
         repoId,
         repoName,
         skill,
