@@ -67,6 +67,9 @@ const normalizeCommitSha = async (
   return await deps.fetchCommitSha(input);
 };
 
+const formatErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
 export const runSnapshotRawFilesBackfillWorkflow = async (
   event: Readonly<WorkflowEvent<SnapshotRawFilesBackfillWorkflowPayload>>,
   step: WorkflowStep,
@@ -98,53 +101,69 @@ export const runSnapshotRawFilesBackfillWorkflow = async (
     string,
     { path: string; sha: string; size?: number; type: "blob" | "tree" }[]
   >();
+  const failedSnapshots: { error: string; snapshotId: string }[] = [];
+  const uploadedSnapshotIds: string[] = [];
+  const skippedSnapshotIds: string[] = [];
 
   for (const row of rows) {
-    await step.do(
-      `snapshot-raw-files-backfill-upload-${row.snapshotId}`,
-      workflowStepRetryPolicy.snapshotRawFilesBackfillBatch,
-      async () => {
-        const commitSha = await normalizeCommitSha(deps, {
-          owner: row.repoOwner,
-          ref: row.sourceCommitSha,
-          repo: row.repoName,
-        });
-        const treeCacheKey = `${row.repoOwner}/${row.repoName}@${commitSha}`;
-        let tree = treeByRepoAndCommit.get(treeCacheKey);
-        if (!tree) {
-          tree = await deps.fetchTree({
-            commitSha,
+    try {
+      const itemResult = await step.do(
+        `snapshot-raw-files-backfill-upload-${row.snapshotId}`,
+        workflowStepRetryPolicy.snapshotRawFilesBackfillBatch,
+        async () => {
+          const commitSha = await normalizeCommitSha(deps, {
             owner: row.repoOwner,
+            ref: row.sourceCommitSha,
             repo: row.repoName,
           });
-          treeByRepoAndCommit.set(treeCacheKey, tree);
-        }
+          const treeCacheKey = `${row.repoOwner}/${row.repoName}@${commitSha}`;
+          let tree = treeByRepoAndCommit.get(treeCacheKey);
+          if (!tree) {
+            tree = await deps.fetchTree({
+              commitSha,
+              owner: row.repoOwner,
+              repo: row.repoName,
+            });
+            treeByRepoAndCommit.set(treeCacheKey, tree);
+          }
 
-        const filesResponse = await deps.fetchSkillFilesForRoot({
-          owner: row.repoOwner,
-          repo: row.repoName,
-          skillRootPath: row.directoryPath,
-          tree,
-        });
-        if (filesResponse.files.length === 0) {
-          return {
-            reason: "missing-skill-files",
+          const filesResponse = await deps.fetchSkillFilesForRoot({
+            owner: row.repoOwner,
+            repo: row.repoName,
+            skillRootPath: row.directoryPath,
+            tree,
+          });
+          if (filesResponse.files.length === 0) {
+            return {
+              reason: "missing-skill-files",
+              snapshotId: row.snapshotId,
+              status: "skipped" as const,
+            };
+          }
+
+          await deps.runUploadSnapshotFilesPipeline({
+            files: filesResponse.files,
             snapshotId: row.snapshotId,
-            status: "skipped" as const,
+          });
+
+          return {
+            snapshotId: row.snapshotId,
+            status: "uploaded" as const,
           };
-        }
+        },
+      );
 
-        await deps.runUploadSnapshotFilesPipeline({
-          files: filesResponse.files,
-          snapshotId: row.snapshotId,
-        });
-
-        return {
-          snapshotId: row.snapshotId,
-          status: "uploaded" as const,
-        };
-      },
-    );
+      if (itemResult.status === "uploaded") {
+        uploadedSnapshotIds.push(itemResult.snapshotId);
+      } else {
+        skippedSnapshotIds.push(itemResult.snapshotId);
+      }
+    } catch (error) {
+      failedSnapshots.push({
+        error: formatErrorMessage(error),
+        snapshotId: row.snapshotId,
+      });
+    }
   }
 
   const nextLastSeenSkillId = rows.at(-1)?.skillId;
@@ -166,11 +185,17 @@ export const runSnapshotRawFilesBackfillWorkflow = async (
   }
 
   return {
+    failedCount: failedSnapshots.length,
+    failedSnapshots,
     hasMore,
     lastSeenSkillId: nextLastSeenSkillId ?? null,
     processed: rows.length,
     repoName: repoName ?? null,
     repoOwner: repoOwner ?? null,
     targetSnapshotIds: rows.map((row) => row.snapshotId),
+    uploadedCount: uploadedSnapshotIds.length,
+    uploadedSnapshotIds,
+    skippedCount: skippedSnapshotIds.length,
+    skippedSnapshotIds,
   };
 };
