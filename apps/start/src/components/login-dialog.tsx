@@ -1,8 +1,8 @@
 /** biome-ignore-all lint/style/noNestedTernary: <ignore> */
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { SignInIcon } from "@phosphor-icons/react";
 
-import { loginDialogAtom } from "@/atoms/app";
+import { loginDialogAtom, pendingActionAtom } from "@/atoms/app";
 import { resetLoginDialog } from "@/utils/login-dialog";
 
 import { AuthLoginPanel } from "@/components/auth-login-panel";
@@ -19,6 +19,7 @@ interface LoginDialogProps {
 
 export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDialogProps) => {
   const [dialog, setDialog] = useAtom(loginDialogAtom);
+  const setPendingAction = useSetAtom(pendingActionAtom);
   const {
     open: isOpen,
     onlyGithub: isGithubOnlyMode,
@@ -39,6 +40,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
       : `${window.location.pathname}${window.location.search}${window.location.hash}`);
 
   const closeDialog = () => {
+    setPendingAction(null);
     resetLoginDialog(setDialog);
   };
 
@@ -49,7 +51,7 @@ export const LoginDialog = ({ onOpenChange, callbackUrl, onlyGitHub }: LoginDial
         if (open) {
           setDialog((prev) => ({ ...prev, open: true }));
         } else {
-          resetLoginDialog(setDialog);
+          closeDialog();
         }
       }}
       open={isOpen}
