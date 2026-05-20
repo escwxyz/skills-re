@@ -97,7 +97,7 @@ function RouteComponent() {
       <PageHero
         alignItems="center"
         eyebrow={String(author_page_eyebrow())}
-        description={String(author_page_description({ handle }))}
+        // description={String(author_page_description({ handle }))}
         media={
           <div className="flex flex-col items-center justify-center px-2">
             <Avatar className="size-60 overflow-hidden rounded-none border-4 border-double border-background bg-foreground shadow-none after:rounded-none">

@@ -10,7 +10,7 @@ interface Stat {
 
 interface PageHeroProps {
   eyebrow: string;
-  description: string;
+  description?: string;
   descriptionItalic?: boolean;
   stats?: Stat[];
   borderThick?: boolean;

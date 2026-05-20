@@ -428,7 +428,7 @@ export const start = await TanStackStart("start", {
   compatibilityFlags: ["global_fetch_strictly_public"],
   compatibilityDate: "2026-03-10",
   bindings: {
-    VITE_SERVER_URL: server.url!,
+    VITE_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     VITE_TEST_USER: devTestUserEnabled ? "true" : "false",
     VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,

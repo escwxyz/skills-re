@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["@skills-re/db", "@skills-re/config", "@skills-re/env", "@skills-re/utils"]
 }

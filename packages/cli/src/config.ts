@@ -3,7 +3,6 @@ import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 
 export const DEFAULT_API_URL = "https://api.skills.re";
-// export const DEFAULT_API_URL = "https://skills-re-server-prod.synoem.workers.dev";
 export const DEFAULT_SITE_URL = "https://skills.re";
 
 export interface StoredCredential {
