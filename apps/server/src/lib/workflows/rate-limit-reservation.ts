@@ -1,4 +1,5 @@
-import type { WorkflowRateLimitReservation } from "@/dos/workflow-rate-limiter";
+import type { AiWorkflowRateLimitReservation } from "@/dos/ai-workflow-rate-limiter";
+import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
 
 export interface WorkflowRateLimiterNamespace {
   get(id: unknown): {
@@ -15,7 +16,7 @@ export interface WorkflowRateLimitOptions {
   units?: number;
 }
 
-const DEFAULT_RESERVATION: WorkflowRateLimitReservation = {
+const DEFAULT_RESERVATION: AiWorkflowRateLimitReservation | AiSearchUploadRateLimitReservation = {
   delaySeconds: 0,
   notBeforeMs: 0,
 };
@@ -26,7 +27,9 @@ export const reserveWorkflowRateLimitSlot = async ({
   scope,
   spacingMs,
   units = 1,
-}: WorkflowRateLimitOptions): Promise<WorkflowRateLimitReservation> => {
+}: WorkflowRateLimitOptions): Promise<
+  AiWorkflowRateLimitReservation | AiSearchUploadRateLimitReservation
+> => {
   if (!namespace) {
     return DEFAULT_RESERVATION;
   }
@@ -48,5 +51,7 @@ export const reserveWorkflowRateLimitSlot = async ({
     throw new Error(`Workflow rate limiter failed with status ${response.status}.`);
   }
 
-  return (await response.json()) as WorkflowRateLimitReservation;
+  return (await response.json()) as
+    | AiWorkflowRateLimitReservation
+    | AiSearchUploadRateLimitReservation;
 };

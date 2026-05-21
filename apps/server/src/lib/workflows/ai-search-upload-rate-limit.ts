@@ -1,3 +1,4 @@
+import { parsePositiveInteger } from "@/utils";
 import { reserveWorkflowRateLimitSlot } from "./rate-limit-reservation";
 import type {
   WorkflowRateLimiterNamespace,
@@ -12,14 +13,6 @@ interface AiSearchUploadRateLimitEnv {
   AI_SEARCH_UPLOAD_DAILY_LIMIT?: string;
   AI_SEARCH_UPLOAD_SPACING_SECONDS?: string;
 }
-
-const parsePositiveInteger = (value: string | undefined, fallback: number) => {
-  if (!value) {
-    return fallback;
-  }
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-};
 
 export const reserveAiSearchUploadSlot = async (
   env: AiSearchUploadRateLimitEnv,

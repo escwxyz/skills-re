@@ -45,7 +45,8 @@ export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-w
 export { McpRateLimiter } from "./dos/mcp-rate-limiter";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
-export { WorkflowRateLimiter } from "./dos/workflow-rate-limiter";
+export { AiWorkflowRateLimiter } from "./dos/ai-workflow-rate-limiter";
+export { AiSearchUploadRateLimiter } from "./dos/ai-search-upload-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";

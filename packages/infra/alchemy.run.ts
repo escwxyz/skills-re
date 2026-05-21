@@ -94,13 +94,13 @@ const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limit
 });
 
 const aiWorkflowRateLimiterDurableObject = DurableObjectNamespace("ai-workflow-rate-limiter", {
-  className: "WorkflowRateLimiter",
+  className: "AiWorkflowRateLimiter",
 });
 
 const aiSearchUploadRateLimiterDurableObject = DurableObjectNamespace(
   "ai-search-upload-rate-limiter",
   {
-    className: "WorkflowRateLimiter",
+    className: "AiSearchUploadRateLimiter",
   },
 );
 

@@ -1,47 +1,35 @@
+import { getUtcDayKey, MS_PER_DAY, parsePositiveInteger } from "@/utils";
 import { DurableObject } from "cloudflare:workers";
+import type {
+  AiWorkflowRateLimitReservation,
+  AiWorkflowRateLimitReservationRequest,
+} from "./ai-workflow-rate-limiter";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+type AiSearchUploadRateLimitReservationRequest = AiWorkflowRateLimitReservationRequest;
 
-interface WorkflowRateLimitReservationRequest {
-  dailyLimit?: number;
-  spacingMs?: number;
-  units?: number;
-}
-
-export interface WorkflowRateLimitReservation {
-  delaySeconds: number;
-  notBeforeMs: number;
-}
-
-const parsePositiveInteger = (value: unknown, fallback: number) => {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return fallback;
-  }
-
-  return Math.max(1, Math.trunc(value));
-};
-
-const getUtcDayKey = (timeMs: number) => new Date(timeMs).toISOString().slice(0, 10);
+export type AiSearchUploadRateLimitReservation = AiWorkflowRateLimitReservation;
 
 const getNextUtcDayStartMs = (timeMs: number) => {
   const date = new Date(timeMs);
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
 };
 
-export class WorkflowRateLimiter extends DurableObject<Env> {
+export class AiSearchUploadRateLimiter extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
 
-    const input = (await request.json().catch(() => ({}))) as WorkflowRateLimitReservationRequest;
+    const input = (await request
+      .json()
+      .catch(() => ({}))) as AiSearchUploadRateLimitReservationRequest;
     const result = await this.reserve(input);
     return Response.json(result);
   }
 
   private async reserve(
-    input: WorkflowRateLimitReservationRequest,
-  ): Promise<WorkflowRateLimitReservation> {
+    input: AiSearchUploadRateLimitReservationRequest,
+  ): Promise<AiSearchUploadRateLimitReservation> {
     const dailyLimit = parsePositiveInteger(input.dailyLimit, 100);
     const spacingMs = parsePositiveInteger(input.spacingMs, 60_000);
     const units = Math.min(parsePositiveInteger(input.units, 1), dailyLimit);
