@@ -5,7 +5,7 @@ import type {
   AiSearchBackfillWorkflowScheduler,
 } from "./ai-search-backfill";
 import type { AiSearchBackfillRow } from "@skills-re/api/modules/skills/repo";
-import type { WorkflowRateLimitReservation } from "@/dos/workflow-rate-limiter";
+import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
 
 const DEFAULT_BATCH_SIZE = 10;
 const MAX_BATCH_SIZE = 10;
@@ -26,7 +26,7 @@ export interface AiSearchBackfillWorkflowDeps {
     batchSize: number;
     lastSeenId?: string;
   }) => Promise<AiSearchBackfillRow[]>;
-  reserveAiSearchUploadSlot?: () => Promise<WorkflowRateLimitReservation>;
+  reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
   snapshotStorage: SnapshotStorageRuntime;
   scheduleContinuation?: AiSearchBackfillWorkflowScheduler | null;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;

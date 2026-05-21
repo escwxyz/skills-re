@@ -24,7 +24,7 @@ import { syncSkillTags } from "@skills-re/api/modules/tags/service";
 import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
-import type { WorkflowRateLimitReservation } from "@/dos/workflow-rate-limiter";
+import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
 import { asRepoId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
@@ -65,7 +65,7 @@ export interface RunSkillsUploadWorkflowDeps {
   deprecateSnapshotsBeyondLimit?: typeof deprecateSnapshotsBeyondLimit;
   ensureRepo?: typeof ensureRepo;
   listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
-  reserveAiSearchUploadSlot?: () => Promise<WorkflowRateLimitReservation>;
+  reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
