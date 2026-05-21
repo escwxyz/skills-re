@@ -103,6 +103,10 @@ jobs:
           TEST_USER: ${{ vars.TEST_USER }}
           CLARITY_PROJECT_ID: ${{ vars.CLARITY_PROJECT_ID }}
           GA_MEASURE_ID: ${{ vars.GA_MEASURE_ID }}
+          AI_SEARCH_UPLOAD_DAILY_LIMIT: ${{ vars.AI_SEARCH_UPLOAD_DAILY_LIMIT }}
+          AI_SEARCH_UPLOAD_SPACING_SECONDS: ${{ vars.AI_SEARCH_UPLOAD_SPACING_SECONDS }}
+          AI_WORKFLOW_DAILY_SKILL_LIMIT: ${{ vars.AI_WORKFLOW_DAILY_SKILL_LIMIT  }}
+          AI_WORKFLOW_SPACING_SECONDS: ${{ vars.AI_WORKFLOW_SPACING_SECONDS }}
 
   cleanup:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
