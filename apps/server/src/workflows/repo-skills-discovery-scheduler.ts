@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { enqueueQueueMessage } from "../lib/cloudflare/queues";
+import { enqueueQueueMessage, getDeterministicQueueDelaySeconds } from "../lib/cloudflare/queues";
 import type { QueueBinding } from "../lib/cloudflare/queues";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 import type { WorkflowCreateBinding, WorkflowScheduler } from "./lib/scheduler";
@@ -12,6 +12,7 @@ import type {
 } from "./repo-skills-discovery";
 
 type RepoSkillsDiscoveryWorkflowEnv = Env & {
+  REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE?: QueueBinding<WorkflowQueueMessage>;
   REPO_SKILLS_DISCOVERY_WORKFLOW?: WorkflowCreateBinding<RepoSkillsDiscoveryWorkflowPayload>;
 };
 
@@ -27,6 +28,28 @@ export const getRepoSkillsDiscoveryWorkflowScheduler = (
   env: RepoSkillsDiscoveryWorkflowEnv,
 ): WorkflowScheduler<RepoSkillsDiscoveryWorkflowPayload> | null => {
   const binding = env.REPO_SKILLS_DISCOVERY_WORKFLOW;
+  const queueBinding = env.REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE;
+  if (queueBinding) {
+    return {
+      async enqueue(payload) {
+        const workflowId = `repo-skills-discovery-${nanoid()}`;
+        await enqueueQueueMessage({
+          binding: queueBinding,
+          context: "repo-skills-discovery",
+          delaySeconds: getDeterministicQueueDelaySeconds({
+            seed: `${payload.repoOwner}/${payload.repoName}`,
+            spreadSeconds: 300,
+          }),
+          message: {
+            kind: "repo-skills-discovery",
+            payload,
+            workflowId,
+          },
+        });
+        return { workId: workflowId };
+      },
+    };
+  }
   return binding ? makeWorkflowScheduler("repo-skills-discovery", binding) : null;
 };
 

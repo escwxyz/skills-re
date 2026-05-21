@@ -3,6 +3,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 
 import { createAiSearchItemsRuntime } from "../ai-search";
 import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
+import { reserveAiSearchUploadSlot } from "../lib/workflows/ai-search-upload-rate-limit";
 import { getAiSearchBackfillWorkflowScheduler } from "./ai-search-backfill";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
 import { runAiSearchBackfillWorkflow } from "./ai-search-backfill-runner";
@@ -38,6 +39,8 @@ export class AiSearchBackfillWorkflow extends WorkflowEntrypoint<
           {
             aiSearchItems,
             listSkillsForAiSearchBackfill,
+            reserveAiSearchUploadSlot: async () =>
+              await reserveAiSearchUploadSlot(this.env as never),
             snapshotStorage,
             scheduleContinuation: getAiSearchBackfillWorkflowScheduler(this.env),
             updateSkillAiSearchItemId,

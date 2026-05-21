@@ -1,23 +1,37 @@
 import { nanoid } from "nanoid";
 
-import { enqueueQueueMessage, getDeterministicQueueDelaySeconds } from "../lib/cloudflare/queues";
+import { enqueueQueueMessage } from "../lib/cloudflare/queues";
 import type { QueueBinding } from "../lib/cloudflare/queues";
 import type { WorkflowQueueMessage } from "../queues/workflow-queue";
 import { makeWorkflowScheduler } from "./lib/scheduler";
 import type { WorkflowCreateBinding } from "./lib/scheduler";
+import { reserveWorkflowRateLimitSlot } from "@/lib/workflows/rate-limit-reservation";
+import type { WorkflowRateLimiterNamespace } from "@/lib/workflows/rate-limit-reservation";
 
 export interface SkillsCategorizationScheduler {
   enqueue(input: { skillIds: string[] }): Promise<{ workId: string }>;
 }
 
-type SkillsCategorizationWorkflowEnv = Env & {
+interface SkillsCategorizationWorkflowEnv {
+  AI_WORKFLOW_RATE_LIMITER?: unknown;
+  AI_WORKFLOW_DAILY_SKILL_LIMIT?: string;
+  AI_WORKFLOW_SPACING_SECONDS?: string;
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE?: QueueBinding<WorkflowQueueMessage>;
   SKILLS_CATEGORIZATION_WORKFLOW?: WorkflowCreateBinding<{
     skillIds: string[];
   }>;
-};
+}
 
-const SKILLS_CATEGORIZATION_QUEUE_SPREAD_SECONDS = 45;
+const DEFAULT_AI_WORKFLOW_DAILY_SKILL_LIMIT = 100;
+const DEFAULT_AI_WORKFLOW_SPACING_SECONDS = 60;
+
+const parsePositiveInteger = (value: string | undefined, fallback: number) => {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 export const getSkillsCategorizationWorkflowScheduler = (
   env: SkillsCategorizationWorkflowEnv,
@@ -33,15 +47,27 @@ export const getSkillsCategorizationWorkflowScheduler = (
       const workflowId = `skills-categorization-${nanoid()}`;
 
       if (queueBinding) {
+        const reservation = await reserveWorkflowRateLimitSlot({
+          dailyLimit: parsePositiveInteger(
+            env.AI_WORKFLOW_DAILY_SKILL_LIMIT,
+            DEFAULT_AI_WORKFLOW_DAILY_SKILL_LIMIT,
+          ),
+          namespace: env.AI_WORKFLOW_RATE_LIMITER as WorkflowRateLimiterNamespace | undefined,
+          scope: "skills-categorization",
+          spacingMs:
+            parsePositiveInteger(
+              env.AI_WORKFLOW_SPACING_SECONDS,
+              DEFAULT_AI_WORKFLOW_SPACING_SECONDS,
+            ) * 1000,
+          units: payload.skillIds.length,
+        });
         await enqueueQueueMessage({
           binding: queueBinding,
           context: "skills-categorization",
-          delaySeconds: getDeterministicQueueDelaySeconds({
-            seed: payload.skillIds.join(","),
-            spreadSeconds: SKILLS_CATEGORIZATION_QUEUE_SPREAD_SECONDS,
-          }),
+          delaySeconds: reservation.delaySeconds,
           message: {
             kind: "skills-categorization",
+            notBeforeMs: reservation.notBeforeMs,
             payload,
             workflowId,
           },

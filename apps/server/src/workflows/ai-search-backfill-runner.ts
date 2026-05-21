@@ -5,6 +5,7 @@ import type {
   AiSearchBackfillWorkflowScheduler,
 } from "./ai-search-backfill";
 import type { AiSearchBackfillRow } from "@skills-re/api/modules/skills/repo";
+import type { WorkflowRateLimitReservation } from "@/dos/workflow-rate-limiter";
 
 const DEFAULT_BATCH_SIZE = 10;
 const MAX_BATCH_SIZE = 10;
@@ -16,6 +17,7 @@ export interface WorkflowEvent<TPayload> {
 
 export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+  sleep?(name: string, duration: string | number): Promise<void>;
 }
 
 export interface AiSearchBackfillWorkflowDeps {
@@ -24,6 +26,7 @@ export interface AiSearchBackfillWorkflowDeps {
     batchSize: number;
     lastSeenId?: string;
   }) => Promise<AiSearchBackfillRow[]>;
+  reserveAiSearchUploadSlot?: () => Promise<WorkflowRateLimitReservation>;
   snapshotStorage: SnapshotStorageRuntime;
   scheduleContinuation?: AiSearchBackfillWorkflowScheduler | null;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
@@ -55,6 +58,20 @@ export const runAiSearchBackfillWorkflow = async (
   for (const skill of skills) {
     if (!skill.skillMdR2Key) {
       continue;
+    }
+
+    if (deps.reserveAiSearchUploadSlot) {
+      const reservation = await step.do(
+        `ai-search-backfill-reserve-upload-${skill.skillId}`,
+        workflowStepRetryPolicy.aiSearchBackfillBatch,
+        async () => await deps.reserveAiSearchUploadSlot?.(),
+      );
+      if (reservation && reservation.delaySeconds > 0) {
+        await step.sleep?.(
+          `ai-search-backfill-wait-upload-${skill.skillId}`,
+          `${reservation.delaySeconds} seconds`,
+        );
+      }
     }
 
     await step.do(

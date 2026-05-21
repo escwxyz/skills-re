@@ -89,16 +89,16 @@ describe("runRepoStatsSyncWorkflow", () => {
       },
     );
 
-    expect(discoveryCalls).toHaveLength(25);
+    expect(discoveryCalls).toHaveLength(5);
     expect(discoveryCalls[0]).toEqual({
       expectedUpdatedAt: 123,
       repoName: "skills",
       repoOwner: "acme",
     });
     expect(result).toEqual({
-      changedCount: 25,
+      changedCount: 5,
       continueCursor: "cursor-next",
-      processedPages: 25,
+      processedPages: 5,
       status: "partial",
     });
   });

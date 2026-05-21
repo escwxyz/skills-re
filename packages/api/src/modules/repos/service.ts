@@ -41,6 +41,7 @@ interface RepoOverview {
 export interface RepoStatsSyncSchedulerInput {
   cursor?: string;
   limit?: number;
+  maxPages?: number;
   runAfterMs?: number;
 }
 
@@ -379,9 +380,13 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
       });
     },
 
-    async enqueueStatsSync(scheduler: RepoStatsSyncScheduler, input?: { limit?: number }) {
+    async enqueueStatsSync(
+      scheduler: RepoStatsSyncScheduler,
+      input?: { limit?: number; maxPages?: number },
+    ) {
       return await scheduler.enqueue({
         limit: input?.limit ?? 20,
+        maxPages: input?.maxPages,
         runAfterMs: 0,
       });
     },
@@ -701,8 +706,10 @@ export const ensureRepo = (input: {
   };
 }) => reposService.ensureRepo(input);
 
-export const enqueueStatsSync = (scheduler: RepoStatsSyncScheduler, input?: { limit?: number }) =>
-  reposService.enqueueStatsSync(scheduler, input);
+export const enqueueStatsSync = (
+  scheduler: RepoStatsSyncScheduler,
+  input?: { limit?: number; maxPages?: number },
+) => reposService.enqueueStatsSync(scheduler, input);
 
 export const getById = (id: string) => reposService.getById(id);
 

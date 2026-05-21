@@ -8,6 +8,7 @@ export interface QueueBinding<TMessage> {
 }
 
 export const CLOUDFLARE_QUEUE_MAX_MESSAGE_BYTES = 128_000;
+export const CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS = 86_400;
 
 const getUtf8ByteLength = (value: string) => new TextEncoder().encode(value).byteLength;
 const hashString = (value: string) => {
@@ -59,7 +60,10 @@ export const enqueueQueueMessage = async <TMessage>(input: {
     message: input.message,
   });
   await input.binding.send(input.message, {
-    delaySeconds: input.delaySeconds,
+    delaySeconds:
+      typeof input.delaySeconds === "number"
+        ? Math.min(CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS, Math.max(0, input.delaySeconds))
+        : undefined,
   });
 };
 

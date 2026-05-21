@@ -22,6 +22,7 @@ export interface RepoStatsSyncScheduler {
   enqueue(input: {
     cursor?: string;
     limit?: number;
+    maxPages?: number;
     runAfterMs?: number;
   }): Promise<{ workId: string }>;
 }

@@ -93,6 +93,17 @@ const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limit
   className: "SearchRateLimiter",
 });
 
+const aiWorkflowRateLimiterDurableObject = DurableObjectNamespace("ai-workflow-rate-limiter", {
+  className: "WorkflowRateLimiter",
+});
+
+const aiSearchUploadRateLimiterDurableObject = DurableObjectNamespace(
+  "ai-search-upload-rate-limiter",
+  {
+    className: "WorkflowRateLimiter",
+  },
+);
+
 await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
   name: "skills-re-repo-sync-workflow",
   adopt: true,
@@ -144,6 +155,10 @@ const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE_V
 
 const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-snapshot-sync-workflow",
+});
+
+const repoSkillsDiscoveryWorkflowQueue = await Queue("REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-repo-skills-discovery-workflow",
 });
 
 const repoSkillImportWorkflowQueue = await Queue("REPO_SKILL_IMPORT_WORKFLOW_QUEUE_V1", {
@@ -204,6 +219,13 @@ const workflowQueueEventSources = [
   //     maxWaitTimeMs: 2000,
   //   },
   // },
+  {
+    queue: repoSkillsDiscoveryWorkflowQueue,
+    settings: {
+      batchSize: 2,
+      maxWaitTimeMs: 2000,
+    },
+  },
   {
     queue: repoSnapshotSyncWorkflowQueue,
     settings: {
@@ -355,6 +377,7 @@ const workflowBindings = {
 const workflowQueueBindings = {
   REPO_SKILL_IMPORT_WORKFLOW_QUEUE: repoSkillImportWorkflowQueue,
   REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSkillSnapshotSyncWorkflowQueue,
+  REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE: repoSkillsDiscoveryWorkflowQueue,
   REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSnapshotSyncWorkflowQueue,
   REPO_STATS_SYNC_WORKFLOW_QUEUE: repoStatsSyncWorkflowQueue,
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE: snapshotsArchiveUploadWorkflowQueue,
@@ -411,6 +434,12 @@ export const server = await Worker("server", {
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
     TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
+    AI_SEARCH_UPLOAD_DAILY_LIMIT: alchemy.env.AI_SEARCH_UPLOAD_DAILY_LIMIT ?? "10000",
+    AI_SEARCH_UPLOAD_RATE_LIMITER: aiSearchUploadRateLimiterDurableObject,
+    AI_SEARCH_UPLOAD_SPACING_SECONDS: alchemy.env.AI_SEARCH_UPLOAD_SPACING_SECONDS ?? "2",
+    AI_WORKFLOW_DAILY_SKILL_LIMIT: alchemy.env.AI_WORKFLOW_DAILY_SKILL_LIMIT ?? "100",
+    AI_WORKFLOW_RATE_LIMITER: aiWorkflowRateLimiterDurableObject,
+    AI_WORKFLOW_SPACING_SECONDS: alchemy.env.AI_WORKFLOW_SPACING_SECONDS ?? "60",
     MCP_RATE_LIMITER: mcpRateLimiterDurableObject,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,

@@ -279,13 +279,14 @@ describe("repos service", () => {
   });
 
   test("enqueues repo stats sync with the default scheduler input", async () => {
-    const enqueued: { limit: number; runAfterMs: number }[] = [];
+    const enqueued: { limit: number; maxPages?: number; runAfterMs: number }[] = [];
     const service = createReposService();
 
     const result = await service.enqueueStatsSync({
       enqueue: (input) => {
         enqueued.push({
           limit: input.limit ?? 20,
+          maxPages: input.maxPages,
           runAfterMs: input.runAfterMs ?? 0,
         });
         return { workId: "work_123" };
@@ -293,7 +294,7 @@ describe("repos service", () => {
     });
 
     expect(result).toEqual({ workId: "work_123" });
-    expect(enqueued).toEqual([{ limit: 20, runAfterMs: 0 }]);
+    expect(enqueued).toEqual([{ limit: 20, maxPages: undefined, runAfterMs: 0 }]);
   });
 
   test("delegates repo stat updates to the repository updater", async () => {

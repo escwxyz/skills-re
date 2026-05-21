@@ -3,12 +3,14 @@ import type { RepoStatsSyncWorkflowPayload } from "../workflows/repo-stats";
 import type {
   RepoSkillImportWorkflowPayload,
   RepoSkillSnapshotSyncWorkflowPayload,
+  RepoSkillsDiscoveryWorkflowPayload,
 } from "../workflows/repo-skills-discovery";
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
 import type { AiSearchBackfillWorkflowPayload } from "../workflows/ai-search-backfill";
 import type { WorkerLogger } from "../worker-logger";
 import { createWorkflowQueueLogger } from "../logging";
+import { CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS } from "../lib/cloudflare/queues";
 import { logWorkflowFailure } from "../workflows/workflow-failure-log";
 
 export interface EvaluationWorkflowPayload {
@@ -48,56 +50,73 @@ interface WorkflowCreateBinding<TPayload> {
 export type WorkflowQueueMessage =
   | {
       kind: "ai-search-backfill";
+      notBeforeMs?: number;
       payload: AiSearchBackfillWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "evaluation";
+      notBeforeMs?: number;
       payload: EvaluationWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "repo-skill-import";
+      notBeforeMs?: number;
       payload: RepoSkillImportWorkflowPayload;
       workflowId: string;
     }
   | {
+      kind: "repo-skills-discovery";
+      notBeforeMs?: number;
+      payload: RepoSkillsDiscoveryWorkflowPayload;
+      workflowId: string;
+    }
+  | {
       kind: "repo-skill-snapshot-sync";
+      notBeforeMs?: number;
       payload: RepoSkillSnapshotSyncWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "repo-snapshot-sync";
+      notBeforeMs?: number;
       payload: RepoSnapshotSyncWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "repo-stats-sync";
+      notBeforeMs?: number;
       payload: RepoStatsSyncWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "snapshot-archive-upload";
+      notBeforeMs?: number;
       payload: SnapshotArchiveUploadWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "snapshot-upload";
+      notBeforeMs?: number;
       payload: SnapshotUploadWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "skills-categorization";
+      notBeforeMs?: number;
       payload: SkillsCategorizationWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "skills-tagging";
+      notBeforeMs?: number;
       payload: SkillsTaggingWorkflowPayload;
       workflowId: string;
     }
   | {
       kind: "skills-upload";
+      notBeforeMs?: number;
       payload: SkillsUploadWorkflowPayload;
       workflowId: string;
     };
@@ -106,6 +125,7 @@ export type WorkflowQueueEnv = Env & {
   AI_SEARCH_BACKFILL_WORKFLOW?: WorkflowCreateBinding<AiSearchBackfillWorkflowPayload>;
   EVALUATION_WORKFLOW?: WorkflowCreateBinding<EvaluationWorkflowPayload>;
   REPO_SKILL_IMPORT_WORKFLOW?: WorkflowCreateBinding<RepoSkillImportWorkflowPayload>;
+  REPO_SKILLS_DISCOVERY_WORKFLOW?: WorkflowCreateBinding<RepoSkillsDiscoveryWorkflowPayload>;
   REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoSkillSnapshotSyncWorkflowPayload>;
   REPO_SNAPSHOT_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoSnapshotSyncWorkflowPayload>;
   REPO_STATS_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoStatsSyncWorkflowPayload>;
@@ -183,6 +203,10 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
       typeof payload.skillRootPath === "string"
     );
   }
+  if (value.kind === "repo-skills-discovery") {
+    const payload = value.payload as Record<string, unknown>;
+    return typeof payload.repoName === "string" && typeof payload.repoOwner === "string";
+  }
   if (value.kind === "repo-skill-snapshot-sync") {
     const payload = value.payload as Record<string, unknown>;
     return (
@@ -223,6 +247,9 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
     }
     case "repo-skill-import": {
       return "skills-re-v1-repo-skill-import";
+    }
+    case "repo-skills-discovery": {
+      return "skills-re-v1-repo-skills-discovery";
     }
     case "repo-skill-snapshot-sync": {
       return "skills-re-v1-repo-skill-snapshot-sync";
@@ -296,6 +323,16 @@ const startWorkflowFromQueueMessage = async (
       await getWorkflowBinding<RepoSkillImportWorkflowPayload>(
         env,
         "REPO_SKILL_IMPORT_WORKFLOW",
+      ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
+    case "repo-skills-discovery": {
+      await getWorkflowBinding<RepoSkillsDiscoveryWorkflowPayload>(
+        env,
+        "REPO_SKILLS_DISCOVERY_WORKFLOW",
       ).create({
         id: message.workflowId,
         params: message.payload,
@@ -388,6 +425,17 @@ export const processWorkflowQueueBatch = async (
         ...summarizeInvalidQueueBody(message.body),
       });
       message.ack();
+      continue;
+    }
+
+    const { notBeforeMs } = message.body;
+    if (typeof notBeforeMs === "number" && Date.now() < notBeforeMs) {
+      message.retry({
+        delaySeconds: Math.min(
+          CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS,
+          Math.max(1, Math.ceil((notBeforeMs - Date.now()) / 1000)),
+        ),
+      });
       continue;
     }
 

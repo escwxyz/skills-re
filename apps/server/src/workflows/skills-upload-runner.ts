@@ -24,6 +24,7 @@ import { syncSkillTags } from "@skills-re/api/modules/tags/service";
 import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
+import type { WorkflowRateLimitReservation } from "@/dos/workflow-rate-limiter";
 import { asRepoId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
@@ -52,6 +53,7 @@ export interface WorkflowEvent<TPayload> {
 
 export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+  sleep?(name: string, duration: string | number): Promise<void>;
 }
 
 export interface RunSkillsUploadWorkflowDeps {
@@ -63,6 +65,7 @@ export interface RunSkillsUploadWorkflowDeps {
   deprecateSnapshotsBeyondLimit?: typeof deprecateSnapshotsBeyondLimit;
   ensureRepo?: typeof ensureRepo;
   listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
+  reserveAiSearchUploadSlot?: () => Promise<WorkflowRateLimitReservation>;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
@@ -173,6 +176,28 @@ interface ProcessUploadSkillParams {
   syncTime: number;
   usedSlugs: Set<string>;
 }
+
+const waitForAiSearchUploadSlot = async ({
+  deps,
+  skillIndex,
+  step,
+}: Pick<ProcessUploadSkillParams, "deps" | "skillIndex" | "step">) => {
+  if (!deps.reserveAiSearchUploadSlot) {
+    return;
+  }
+
+  const reservation = await step.do(
+    `reserve-upload-skill-ai-search-${skillIndex}`,
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () => await deps.reserveAiSearchUploadSlot?.(),
+  );
+  if (reservation && reservation.delaySeconds > 0) {
+    await step.sleep?.(
+      `wait-upload-skill-ai-search-${skillIndex}`,
+      `${reservation.delaySeconds} seconds`,
+    );
+  }
+};
 
 const processUploadSkill = async ({
   authorHandle,
@@ -340,11 +365,15 @@ const processUploadSkill = async ({
       }),
   );
 
+  const skillMdFile = findSkillMdFile(skill);
+  if (deps.aiSearchItems && skillMdFile && deps.reserveAiSearchUploadSlot) {
+    await waitForAiSearchUploadSlot({ deps, skillIndex, step });
+  }
+
   const aiSearchItemId = await step.do(
     `upload-skill-ai-search-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
     async () => {
-      const skillMdFile = findSkillMdFile(skill);
       if (!deps.aiSearchItems) {
         console.warn("[skills-upload] ai-search skipped: binding not configured", {
           skillId,

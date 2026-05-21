@@ -4,6 +4,7 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { asSkillId } from "@skills-re/db/utils";
 import { createAiSearchItemsRuntime } from "../ai-search";
 import { createSnapshotArchiveStorageRuntime } from "../lib/cloudflare/r2";
+import { reserveAiSearchUploadSlot } from "../lib/workflows/ai-search-upload-rate-limit";
 import { createGithubSnapshotHistoryHelpers } from "../github-history";
 import { createStaticAuditGithubRuntime } from "../static-audits-github";
 import { createSnapshotsHistoryRuntime } from "../snapshots-history";
@@ -85,6 +86,7 @@ export class SkillsUploadWorkflow extends WorkflowEntrypoint<Env, unknown> {
         runSkillsUploadWorkflow(event, step, {
           aiSearchItems,
           dispatchStaticAuditWorkflow: staticAuditRuntime.dispatchStaticAuditWorkflow,
+          reserveAiSearchUploadSlot: async () => await reserveAiSearchUploadSlot(this.env as never),
           scheduleSkillsTagging: getSkillsTaggingWorkflowScheduler(this.env),
           snapshotFilesBucket: this.env.SNAPSHOT_FILES,
           snapshotHistory,
