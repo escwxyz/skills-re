@@ -27,12 +27,12 @@ describe("skills schema", () => {
     expect(skillsTable.latestCommitUrl.name).toBe("latest_commit_url");
     expect(skillsTable.latestCommitDate.name).toBe("latest_commit_date");
     expect(skillsTable.latestCommitMessage.name).toBe("latest_commit_message");
+    expect(skillsTable.canonicalSlug.name).toBe("canonical_slug");
     expect(skillsTable.createdAt.name).toBe("created_at");
     expect(skillsTable.downloadsTrending.name).toBe("downloads_trending");
     expect(skillsTable.latestVersion.name).toBe("latest_version");
     expect(skillsTable.primaryCategory.name).toBe("primary_category");
     expect(skillsTable.downloadsAllTime.name).toBe("downloads_all_time");
-    expect(skillsTable.stargazerCount.name).toBe("stargazer_count");
     expect(skillsTable.viewsAllTime.name).toBe("views_all_time");
   });
 

@@ -164,9 +164,12 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
       })
     : skill.initialSnapshot.files.find((file) => file.path.split("/").at(-1) === SKILL_FILENAME);
 
+const normalizeCanonicalSlug = (value: string) => value.trim().toLowerCase();
+
 interface ProcessUploadSkillParams {
   authorHandle: string;
   deps: RunSkillsUploadWorkflowDeps;
+  existingRepoSkillIdByCanonicalSlug: Map<string, string>;
   existingRepoSkillIdByDirectoryPath: Map<string, string>;
   repoId: string;
   repoName: string;
@@ -199,9 +202,76 @@ const waitForAiSearchUploadSlot = async ({
   }
 };
 
+const resolveUploadSkillRecord = async ({
+  deps,
+  existingRepoSkillIdByCanonicalSlug,
+  existingRepoSkillIdByDirectoryPath,
+  repoId,
+  skill,
+  skillIndex,
+  step,
+  syncTime,
+  usedSlugs,
+}: Omit<ProcessUploadSkillParams, "authorHandle" | "repoName">) => {
+  const normalizedDirectoryPath = normalizeUploadDirectoryPath(skill.directoryPath);
+  const canonicalSlug = normalizeCanonicalSlug(skill.slug);
+  const existingSkillId =
+    existingRepoSkillIdByDirectoryPath.get(normalizedDirectoryPath) ??
+    existingRepoSkillIdByCanonicalSlug.get(canonicalSlug) ??
+    null;
+
+  if (existingSkillId) {
+    usedSlugs.add(skill.slug);
+    return {
+      canonicalSlug,
+      normalizedDirectoryPath,
+      skillId: existingSkillId,
+      slug: skill.slug,
+    };
+  }
+
+  const slug = await step.do(
+    `resolve-upload-skill-slug-${skillIndex}`,
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () =>
+      await resolveUploadSkillSlug({
+        checkSkillExistingBySlug: deps.checkSkillExistingBySlug ?? checkSkillExistingBySlug,
+        preferredSlug: skill.slug,
+        usedSlugs,
+      }),
+  );
+
+  const skillId = await step.do(
+    `create-upload-skill-${skillIndex}`,
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () =>
+      await (deps.createSkill ?? createSkill)({
+        canonicalSlug,
+        description: skill.description,
+        repoId,
+        slug,
+        syncTime,
+        title: skill.title,
+        userId: null,
+        visibility: "public",
+      }),
+  );
+
+  existingRepoSkillIdByDirectoryPath.set(normalizedDirectoryPath, skillId);
+  existingRepoSkillIdByCanonicalSlug.set(canonicalSlug, skillId);
+
+  return {
+    canonicalSlug,
+    normalizedDirectoryPath,
+    skillId,
+    slug,
+  };
+};
+
 const processUploadSkill = async ({
   authorHandle,
   deps,
+  existingRepoSkillIdByCanonicalSlug,
   existingRepoSkillIdByDirectoryPath,
   repoId,
   repoName,
@@ -236,47 +306,17 @@ const processUploadSkill = async ({
     }
   }
 
-  const normalizedDirectoryPath = normalizeUploadDirectoryPath(skill.directoryPath);
-  const existingSkillId = existingRepoSkillIdByDirectoryPath.get(normalizedDirectoryPath) ?? null;
-
-  let { slug } = skill;
-  let skillId = existingSkillId;
-
-  if (existingSkillId) {
-    usedSlugs.add(slug);
-  } else {
-    slug = await step.do(
-      `resolve-upload-skill-slug-${skillIndex}`,
-      workflowStepRetryPolicy.skillsUploadPipeline,
-      async () =>
-        await resolveUploadSkillSlug({
-          checkSkillExistingBySlug: deps.checkSkillExistingBySlug ?? checkSkillExistingBySlug,
-          preferredSlug: skill.slug,
-          usedSlugs,
-        }),
-    );
-
-    skillId = await step.do(
-      `create-upload-skill-${skillIndex}`,
-      workflowStepRetryPolicy.skillsUploadPipeline,
-      async () =>
-        await (deps.createSkill ?? createSkill)({
-          description: skill.description,
-          repoId,
-          slug,
-          syncTime,
-          title: skill.title,
-          userId: null,
-          visibility: "public",
-        }),
-    );
-
-    existingRepoSkillIdByDirectoryPath.set(normalizedDirectoryPath, skillId);
-  }
-
-  if (!skillId) {
-    throw new Error("Failed to resolve skill record for upload.");
-  }
+  const { normalizedDirectoryPath, skillId, slug } = await resolveUploadSkillRecord({
+    deps,
+    existingRepoSkillIdByCanonicalSlug,
+    existingRepoSkillIdByDirectoryPath,
+    repoId,
+    skill,
+    skillIndex,
+    step,
+    syncTime,
+    usedSlugs,
+  });
 
   const snapshotVersion = skill.preferredVersion ?? "1.0.0";
   const snapshotId = await step.do(
@@ -591,12 +631,19 @@ export const runSkillsUploadWorkflow = async (
         existingSkill.skillId,
       ]),
     );
+    const existingRepoSkillIdByCanonicalSlug = new Map(
+      existingRepoSkills.map((existingSkill) => [
+        normalizeCanonicalSlug(existingSkill.canonicalSlug ?? existingSkill.slug),
+        existingSkill.skillId,
+      ]),
+    );
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
       const result = await processUploadSkill({
         authorHandle,
         deps,
+        existingRepoSkillIdByCanonicalSlug,
         existingRepoSkillIdByDirectoryPath,
         repoId,
         repoName,

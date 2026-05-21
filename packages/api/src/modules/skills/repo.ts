@@ -144,6 +144,7 @@ export async function listSkillsByUserId(input: { userId: string; limit?: number
 }
 
 export async function createSkill(input: {
+  canonicalSlug?: string | null;
   description: string;
   repoId: string;
   slug: string;
@@ -155,6 +156,7 @@ export async function createSkill(input: {
   const rows = await db
     .insert(skillsTable)
     .values({
+      canonicalSlug: input.canonicalSlug ?? null,
       description: input.description,
       id: asSkillId(createId()),
       latestCommitDate: null,
@@ -181,11 +183,29 @@ export async function createSkill(input: {
     return created.id;
   }
 
+  if (input.canonicalSlug) {
+    const [existingByCanonicalSlug] = await db
+      .select({ id: skillsTable.id })
+      .from(skillsTable)
+      .where(
+        and(
+          eq(skillsTable.repoId, asRepoId(input.repoId)),
+          eq(skillsTable.canonicalSlug, input.canonicalSlug),
+        ),
+      )
+      .limit(1);
+
+    if (existingByCanonicalSlug) {
+      return existingByCanonicalSlug.id;
+    }
+  }
+
   // Conflict: another concurrent workflow already inserted this slug — reuse its ID.
   const [existing] = await db
     .select({ id: skillsTable.id })
     .from(skillsTable)
-    .where(eq(skillsTable.slug, input.slug));
+    .where(and(eq(skillsTable.repoId, asRepoId(input.repoId)), eq(skillsTable.slug, input.slug)))
+    .limit(1);
 
   if (!existing) {
     throw new Error("Failed to create or find skill record");
@@ -855,6 +875,7 @@ async function listRepoSkillDirectoryPathsByRepoOwnerAndName(input: {
 }
 
 export interface RepoSkillSnapshotHead {
+  canonicalSlug: string | null;
   directoryPath: string;
   entryPath: string;
   latestDescription: string;
@@ -870,6 +891,7 @@ export interface RepoSkillSnapshotHead {
 export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
   const rows = await db
     .select({
+      canonicalSlug: skillsTable.canonicalSlug,
       description: snapshotsTable.description,
       directoryPath: snapshotsTable.directoryPath,
       entryPath: snapshotsTable.entryPath,
@@ -903,6 +925,7 @@ export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
     }
 
     latestBySkillId.set(row.skillId, {
+      canonicalSlug: row.canonicalSlug,
       directoryPath: row.directoryPath,
       entryPath: row.entryPath,
       latestDescription: row.description ?? "",
