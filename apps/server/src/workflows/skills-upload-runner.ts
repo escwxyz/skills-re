@@ -166,6 +166,28 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
 
 const normalizeCanonicalSlug = (value: string) => value.trim().toLowerCase();
 
+const buildUniqueSkillIdByCanonicalSlug = (
+  existingRepoSkills: Awaited<ReturnType<typeof listRepoSkillSnapshotHeadsByRepoId>>,
+) => {
+  const skillIdsBySlug = new Map<string, string[]>();
+  for (const existingSkill of existingRepoSkills) {
+    const canonicalSlug = normalizeCanonicalSlug(existingSkill.canonicalSlug ?? existingSkill.slug);
+    const skillIds = skillIdsBySlug.get(canonicalSlug) ?? [];
+    skillIds.push(existingSkill.skillId);
+    skillIdsBySlug.set(canonicalSlug, skillIds);
+  }
+
+  const uniqueSkillIds = new Map<string, string>();
+  for (const [canonicalSlug, skillIds] of skillIdsBySlug) {
+    const [skillId] = skillIds;
+    if (skillIds.length === 1 && skillId) {
+      uniqueSkillIds.set(canonicalSlug, skillId);
+    }
+  }
+
+  return uniqueSkillIds;
+};
+
 interface ProcessUploadSkillParams {
   authorHandle: string;
   deps: RunSkillsUploadWorkflowDeps;
@@ -258,7 +280,6 @@ const resolveUploadSkillRecord = async ({
   );
 
   existingRepoSkillIdByDirectoryPath.set(normalizedDirectoryPath, skillId);
-  existingRepoSkillIdByCanonicalSlug.set(canonicalSlug, skillId);
 
   return {
     canonicalSlug,
@@ -631,12 +652,8 @@ export const runSkillsUploadWorkflow = async (
         existingSkill.skillId,
       ]),
     );
-    const existingRepoSkillIdByCanonicalSlug = new Map(
-      existingRepoSkills.map((existingSkill) => [
-        normalizeCanonicalSlug(existingSkill.canonicalSlug ?? existingSkill.slug),
-        existingSkill.skillId,
-      ]),
-    );
+    const existingRepoSkillIdByCanonicalSlug =
+      buildUniqueSkillIdByCanonicalSlug(existingRepoSkills);
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {

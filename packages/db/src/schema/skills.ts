@@ -61,9 +61,6 @@ export const skillsTable = sqliteTable(
     index("skills_visibility_syncTime_id_idx").on(table.visibility, table.syncTime, table.id),
     index("skills_slug_idx").on(table.slug),
     index("skills_syncTime_idx").on(table.syncTime),
-    uniqueIndex("skills_repo_id_canonical_slug_unique")
-      .on(table.repoId, table.canonicalSlug)
-      .where(sql`${table.canonicalSlug} IS NOT NULL`),
     uniqueIndex("skills_repo_id_slug_unique").on(table.repoId, table.slug),
   ],
 );

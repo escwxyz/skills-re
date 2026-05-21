@@ -904,4 +904,165 @@ describe("runSkillsUploadWorkflow", () => {
       workId: "snapshot-upload-existing",
     });
   });
+
+  test("does not reuse a skill created earlier in the same upload batch by canonical slug", async () => {
+    const storage = new Map<string, string>();
+    const calls = {
+      createSkill: [] as unknown[],
+      createSnapshot: [] as unknown[],
+    };
+    const bucket = {
+      delete(key: string) {
+        storage.delete(key);
+        return Promise.resolve();
+      },
+      get(key: string) {
+        const value = storage.get(key);
+        return Promise.resolve(
+          value
+            ? {
+                text: () => Promise.resolve(value),
+              }
+            : null,
+        );
+      },
+      put(key: string, value: string) {
+        storage.set(key, value);
+        return Promise.resolve({});
+      },
+    };
+
+    const stagedPayload = await stageSkillsUploadPayload(bucket, {
+      repo: {
+        createdAt: 1,
+        defaultBranch: "main",
+        forks: 1,
+        license: "MIT",
+        nameWithOwner: "acme/skills",
+        owner: {
+          handle: "acme",
+        },
+        stars: 2,
+        updatedAt: 2,
+      },
+      skills: [
+        {
+          description: "Widget A",
+          directoryPath: "skills/widget-a",
+          entryPath: "skills/widget-a/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: widget\ndescription: Widget A\n---\n# Widget A",
+                path: "skills/widget-a/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 2,
+            sourceCommitSha: "commit-2",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/widget-a/SKILL.md",
+                sha: "sha-a",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/widget-a/SKILL.md",
+          sourceType: "github",
+          title: "Widget A",
+        },
+        {
+          description: "Widget B",
+          directoryPath: "skills/widget-b",
+          entryPath: "skills/widget-b/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: widget\ndescription: Widget B\n---\n# Widget B",
+                path: "skills/widget-b/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 2,
+            sourceCommitSha: "commit-2",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/widget-b/SKILL.md",
+                sha: "sha-b",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/widget-b/SKILL.md",
+          sourceType: "github",
+          title: "Widget B",
+        },
+      ],
+    });
+
+    const result = await runSkillsUploadWorkflow(
+      {
+        payload: stagedPayload,
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        aiSearchItems: {
+          deleteItem: (_itemId: string) => Promise.resolve(),
+          uploadItem: () => Promise.resolve({ id: "ai-search-existing" }),
+        },
+        checkSkillExistingBySlug: () => Promise.resolve(false),
+        createSkill: (input: unknown) => {
+          calls.createSkill.push(input);
+          return Promise.resolve(`skill-${calls.createSkill.length}`);
+        },
+        createSnapshot: (input: unknown) => {
+          calls.createSnapshot.push(input);
+          return Promise.resolve(`snapshot-${calls.createSnapshot.length}`);
+        },
+        findSnapshotByContentHashes: () => Promise.resolve(null),
+        deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+        ensureRepo: () => Promise.resolve("repo-1"),
+        listRepoSkillSnapshotHeadsByRepoId: () => Promise.resolve([]),
+        scheduleSkillsTagging: {
+          enqueue: () => Promise.resolve({ workId: "tagging-existing" }),
+        },
+        setSkillLatestSnapshot: () => Promise.resolve(),
+        syncSkillTags: () => Promise.resolve([]),
+        updateSkillAiSearchItemId: () => Promise.resolve(),
+        dispatchStaticAuditWorkflow: () =>
+          Promise.resolve({
+            dispatched: true as const,
+            repository: "acme/skills-audit",
+            workflowFile: "skill-audit-submit.yml",
+          }),
+        uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-existing" }),
+        snapshotFilesBucket: bucket,
+      } as never,
+    );
+
+    expect(calls.createSkill).toEqual([
+      expect.objectContaining({
+        canonicalSlug: "widget",
+        slug: "widget",
+      }),
+      expect.objectContaining({
+        canonicalSlug: "widget",
+        slug: "widget-2",
+      }),
+    ]);
+    expect(calls.createSnapshot).toEqual([
+      expect.objectContaining({
+        directoryPath: "skills/widget-a",
+        skillId: "skill-1",
+      }),
+      expect.objectContaining({
+        directoryPath: "skills/widget-b",
+        skillId: "skill-2",
+      }),
+    ]);
+    expect(result.ids).toEqual(["skill-1", "skill-2"]);
+  });
 });

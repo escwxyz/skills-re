@@ -30,6 +30,11 @@ export interface SkillClaimContext {
 const isDefined = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 
+export const normalizeSkillCanonicalSlug = (value: string | null | undefined) => {
+  const normalized = value?.trim();
+  return normalized || null;
+};
+
 interface AuthorListCursor {
   sort: "alphabetical" | "popular";
   handle: string;
@@ -153,10 +158,11 @@ export async function createSkill(input: {
   userId?: string | null;
   visibility?: "public" | "private";
 }) {
+  const canonicalSlug = normalizeSkillCanonicalSlug(input.canonicalSlug);
   const rows = await db
     .insert(skillsTable)
     .values({
-      canonicalSlug: input.canonicalSlug ?? null,
+      canonicalSlug,
       description: input.description,
       id: asSkillId(createId()),
       latestCommitDate: null,
@@ -181,23 +187,6 @@ export async function createSkill(input: {
   const [created] = rows;
   if (created) {
     return created.id;
-  }
-
-  if (input.canonicalSlug) {
-    const [existingByCanonicalSlug] = await db
-      .select({ id: skillsTable.id })
-      .from(skillsTable)
-      .where(
-        and(
-          eq(skillsTable.repoId, asRepoId(input.repoId)),
-          eq(skillsTable.canonicalSlug, input.canonicalSlug),
-        ),
-      )
-      .limit(1);
-
-    if (existingByCanonicalSlug) {
-      return existingByCanonicalSlug.id;
-    }
   }
 
   // Conflict: another concurrent workflow already inserted this slug — reuse its ID.

@@ -3068,15 +3068,6 @@
             "slug"
           ],
           "isUnique": true
-        },
-        "skills_repo_id_canonical_slug_unique": {
-          "name": "skills_repo_id_canonical_slug_unique",
-          "columns": [
-            "repo_id",
-            "canonical_slug"
-          ],
-          "isUnique": true,
-          "where": "\"skills\".\"canonical_slug\" IS NOT NULL"
         }
       },
       "foreignKeys": {
