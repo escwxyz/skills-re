@@ -1163,7 +1163,7 @@ async function main() {
       downloadsAllTime: skill.downloadsAllTime,
       downloadsTrending: skill.downloadsTrending,
       viewsAllTime: skill.viewsAllTime,
-      stargazerCount: repo.stars,
+      canonicalSlug: skill.slug,
       isVerified: false,
       visibility: "public",
       userId: skill.ownedByTestUser ? TEST_USER_ID : null,

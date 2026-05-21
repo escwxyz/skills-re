@@ -127,6 +127,13 @@
       "when": 1779204065962,
       "tag": "0017_drop_skills_slug_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1779391521805,
+      "tag": "0018_add_skill_canonical_slug",
+      "breakpoints": true
     }
   ]
 }

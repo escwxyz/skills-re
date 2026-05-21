@@ -190,6 +190,7 @@ export interface SkillsServiceDeps {
   }) => Promise<SkillPathRow | null>;
   claimSkillById: (input: { skillId: string; userId: string }) => Promise<void>;
   createSkill: (input: {
+    canonicalSlug?: string | null;
     description: string;
     repoId: string;
     slug: string;

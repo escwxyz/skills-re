@@ -30,6 +30,11 @@ export interface SkillClaimContext {
 const isDefined = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 
+export const normalizeSkillCanonicalSlug = (value: string | null | undefined) => {
+  const normalized = value?.trim();
+  return normalized || null;
+};
+
 interface AuthorListCursor {
   sort: "alphabetical" | "popular";
   handle: string;
@@ -144,6 +149,7 @@ export async function listSkillsByUserId(input: { userId: string; limit?: number
 }
 
 export async function createSkill(input: {
+  canonicalSlug?: string | null;
   description: string;
   repoId: string;
   slug: string;
@@ -152,9 +158,11 @@ export async function createSkill(input: {
   userId?: string | null;
   visibility?: "public" | "private";
 }) {
+  const canonicalSlug = normalizeSkillCanonicalSlug(input.canonicalSlug);
   const rows = await db
     .insert(skillsTable)
     .values({
+      canonicalSlug,
       description: input.description,
       id: asSkillId(createId()),
       latestCommitDate: null,
@@ -185,7 +193,8 @@ export async function createSkill(input: {
   const [existing] = await db
     .select({ id: skillsTable.id })
     .from(skillsTable)
-    .where(eq(skillsTable.slug, input.slug));
+    .where(and(eq(skillsTable.repoId, asRepoId(input.repoId)), eq(skillsTable.slug, input.slug)))
+    .limit(1);
 
   if (!existing) {
     throw new Error("Failed to create or find skill record");
@@ -855,6 +864,7 @@ async function listRepoSkillDirectoryPathsByRepoOwnerAndName(input: {
 }
 
 export interface RepoSkillSnapshotHead {
+  canonicalSlug: string | null;
   directoryPath: string;
   entryPath: string;
   latestDescription: string;
@@ -870,6 +880,7 @@ export interface RepoSkillSnapshotHead {
 export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
   const rows = await db
     .select({
+      canonicalSlug: skillsTable.canonicalSlug,
       description: snapshotsTable.description,
       directoryPath: snapshotsTable.directoryPath,
       entryPath: snapshotsTable.entryPath,
@@ -903,6 +914,7 @@ export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
     }
 
     latestBySkillId.set(row.skillId, {
+      canonicalSlug: row.canonicalSlug,
       directoryPath: row.directoryPath,
       entryPath: row.entryPath,
       latestDescription: row.description ?? "",
