@@ -2,11 +2,16 @@
 
 export interface WorkflowStepStubOptions {
   onDo?: (name: string) => void;
+  onSleep?: (name: string, duration: string | number) => void;
 }
 
 export const createWorkflowStepStub = (options: WorkflowStepStubOptions = {}) => ({
   async do<T>(name: string, _policy: unknown, callback: () => Promise<T>): Promise<T> {
     options.onDo?.(name);
     return await callback();
+  },
+  sleep(name: string, duration: string | number): Promise<void> {
+    options.onSleep?.(name, duration);
+    return Promise.resolve();
   },
 });

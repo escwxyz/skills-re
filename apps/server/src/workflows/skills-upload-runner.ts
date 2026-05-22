@@ -25,6 +25,7 @@ import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
+import type { StaticAuditDispatchRateLimitReservation } from "@/dos/static-audit-dispatch-rate-limiter";
 import { asRepoId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
@@ -66,6 +67,7 @@ export interface RunSkillsUploadWorkflowDeps {
   ensureRepo?: typeof ensureRepo;
   listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
   reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
+  reserveStaticAuditDispatchSlot?: () => Promise<StaticAuditDispatchRateLimitReservation>;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
@@ -221,6 +223,29 @@ const waitForAiSearchUploadSlot = async ({
       `wait-upload-skill-ai-search-${skillIndex}`,
       `${reservation.delaySeconds} seconds`,
     );
+  }
+};
+
+const waitForStaticAuditDispatchSlot = async ({
+  auditTargets,
+  deps,
+  step,
+}: {
+  auditTargets: StaticAuditWorkflowTarget[];
+  deps: RunSkillsUploadWorkflowDeps;
+  step: WorkflowStep;
+}) => {
+  if (!deps.reserveStaticAuditDispatchSlot || auditTargets.length === 0) {
+    return;
+  }
+
+  const reservation = await step.do(
+    "reserve-static-audit-dispatch",
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () => await deps.reserveStaticAuditDispatchSlot?.(),
+  );
+  if (reservation && reservation.delaySeconds > 0) {
+    await step.sleep?.("wait-static-audit-dispatch", `${reservation.delaySeconds} seconds`);
   }
 };
 
@@ -521,53 +546,60 @@ const dispatchUploadStaticAudit = async ({
   createdSkillIds: string[];
   deps: RunSkillsUploadWorkflowDeps;
   step: WorkflowStep;
-}) =>
-  await step.do("dispatch-static-audit", workflowStepRetryPolicy.skillsUploadPipeline, async () => {
-    const dispatchStaticAuditWorkflow =
-      deps.dispatchStaticAuditWorkflow ??
-      (() => ({
-        dispatched: false as const,
-        reason: "missing-dispatch-runtime",
-      }));
+}) => {
+  const dispatchStaticAuditWorkflow =
+    deps.dispatchStaticAuditWorkflow ??
+    (() => ({
+      dispatched: false as const,
+      reason: "missing-dispatch-runtime",
+    }));
 
-    console.info("[skills-upload] preparing static audit dispatch", {
-      createdSkillsCount: createdSkillIds.length,
-      auditTargetsCount: auditTargets.length,
-      auditTargets: auditTargets.map((target) => ({
-        owner: target.owner,
-        repo: target.repo,
-        skillRootPath: target.skillRootPath ?? null,
-        snapshotId: target.snapshotId ?? null,
-        sourceCommitSha: target.sourceCommitSha ?? null,
-        sourceRef: target.sourceRef ?? null,
-      })),
-    });
+  console.info("[skills-upload] preparing static audit dispatch", {
+    createdSkillsCount: createdSkillIds.length,
+    auditTargetsCount: auditTargets.length,
+    auditTargets: auditTargets.map((target) => ({
+      owner: target.owner,
+      repo: target.repo,
+      skillRootPath: target.skillRootPath ?? null,
+      snapshotId: target.snapshotId ?? null,
+      sourceCommitSha: target.sourceCommitSha ?? null,
+      sourceRef: target.sourceRef ?? null,
+    })),
+  });
 
-    try {
-      const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
-      if (auditDispatch.dispatched) {
-        console.info("[skills-upload] static audit workflow dispatched", {
-          createdSkillsCount: createdSkillIds.length,
-          repository: auditDispatch.repository,
-          step: "dispatch-static-audit",
-          workflowFile: auditDispatch.workflowFile,
-        });
-      } else {
+  try {
+    await waitForStaticAuditDispatchSlot({ auditTargets, deps, step });
+    await step.do(
+      "dispatch-static-audit",
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () => {
+        const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
+        if (auditDispatch.dispatched) {
+          console.info("[skills-upload] static audit workflow dispatched", {
+            createdSkillsCount: createdSkillIds.length,
+            repository: auditDispatch.repository,
+            step: "dispatch-static-audit",
+            workflowFile: auditDispatch.workflowFile,
+          });
+          return;
+        }
+
         console.warn("[skills-upload] static audit workflow not dispatched", {
           createdSkillsCount: createdSkillIds.length,
           reason: auditDispatch.reason,
           step: "dispatch-static-audit",
           targetCount: auditTargets.length,
         });
-      }
-    } catch (error) {
-      console.warn("[skills-upload] failed to dispatch static audit workflow", {
-        createdSkillsCount: createdSkillIds.length,
-        message: formatErrorMessage(error),
-        step: "dispatch-static-audit",
-      });
-    }
-  });
+      },
+    );
+  } catch (error) {
+    console.warn("[skills-upload] failed to dispatch static audit workflow", {
+      createdSkillsCount: createdSkillIds.length,
+      message: formatErrorMessage(error),
+      step: "dispatch-static-audit",
+    });
+  }
+};
 
 const createHistoricalSnapshotsIfNeeded = async ({
   authorHandle,

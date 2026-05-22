@@ -454,6 +454,116 @@ describe("runSkillsUploadWorkflow", () => {
     });
   });
 
+  test("reserves a static audit dispatch slot before dispatching", async () => {
+    const events: string[] = [];
+    const storage = new Map<string, string>();
+    const bucket = {
+      delete(key: string) {
+        storage.delete(key);
+        return Promise.resolve();
+      },
+      get(key: string) {
+        const value = storage.get(key);
+        return Promise.resolve(
+          value
+            ? {
+                text: () => Promise.resolve(value),
+              }
+            : null,
+        );
+      },
+      put(key: string, value: string) {
+        storage.set(key, value);
+        return Promise.resolve({});
+      },
+    };
+
+    const stagedPayload = await stageSkillsUploadPayload(bucket, {
+      repo: {
+        createdAt: 1,
+        defaultBranch: "main",
+        forks: 1,
+        license: "MIT",
+        nameWithOwner: "acme/skills",
+        owner: {
+          handle: "acme",
+        },
+        stars: 2,
+        updatedAt: 2,
+      },
+      skills: [
+        {
+          description: "Widget skill",
+          directoryPath: "skills/acme/widget",
+          entryPath: "skills/acme/widget/SKILL.md",
+          initialSnapshot: {
+            files: [
+              {
+                content: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
+                path: "skills/acme/widget/SKILL.md",
+              },
+            ],
+            sourceCommitDate: 1,
+            sourceCommitSha: "commit-1",
+            sourceRef: "main",
+            tree: [
+              {
+                path: "skills/acme/widget/SKILL.md",
+                sha: "sha-1",
+                type: "blob",
+              },
+            ],
+          },
+          slug: "widget",
+          sourceLocator: "github:acme/skills/skills/acme/widget/SKILL.md",
+          sourceType: "github",
+          title: "Widget",
+        },
+      ],
+    });
+
+    await runSkillsUploadWorkflow(
+      {
+        payload: stagedPayload,
+      } as never,
+      createWorkflowStepStub({
+        onSleep: (name, duration) => {
+          events.push(`sleep:${name}:${duration}`);
+        },
+      }) as never,
+      {
+        checkSkillExistingBySlug: () => Promise.resolve(false),
+        createSkill: () => Promise.resolve("skill-1"),
+        createSnapshot: () => Promise.resolve("snapshot-1"),
+        findSnapshotByContentHashes: () => Promise.resolve(null),
+        deprecateSnapshotsBeyondLimit: () => Promise.resolve(),
+        ensureRepo: () => Promise.resolve("repo-1"),
+        listRepoSkillSnapshotHeadsByRepoId: () => Promise.resolve([]),
+        reserveStaticAuditDispatchSlot: () => {
+          events.push("reserve");
+          return Promise.resolve({
+            delaySeconds: 7,
+            notBeforeMs: 123,
+          });
+        },
+        setSkillLatestSnapshot: () => Promise.resolve(),
+        syncSkillTags: () => Promise.resolve([]),
+        dispatchStaticAuditWorkflow: () => {
+          events.push("dispatch");
+          return Promise.resolve({
+            dispatched: true as const,
+            repository: "acme/skills-audit",
+            workflowFile: "skill-audit-submit.yml",
+          });
+        },
+        uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        snapshotFilesBucket: bucket,
+      } as never,
+    );
+
+    expect(events).toEqual(["reserve", "sleep:wait-static-audit-dispatch:7 seconds", "dispatch"]);
+  });
+
   test("prefers the declared entry path for ai search file selection", async () => {
     const aiSearchUploads: { content: string; key: string }[] = [];
     const storage = new Map<string, string>();

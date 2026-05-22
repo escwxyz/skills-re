@@ -47,6 +47,7 @@ export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
 export { AiWorkflowRateLimiter } from "./dos/ai-workflow-rate-limiter";
 export { AiSearchUploadRateLimiter } from "./dos/ai-search-upload-rate-limiter";
+export { StaticAuditDispatchRateLimiter } from "./dos/static-audit-dispatch-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
