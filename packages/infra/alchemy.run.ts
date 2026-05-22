@@ -104,6 +104,13 @@ const aiSearchUploadRateLimiterDurableObject = DurableObjectNamespace(
   },
 );
 
+const staticAuditDispatchRateLimiterDurableObject = DurableObjectNamespace(
+  "static-audit-dispatch-rate-limiter",
+  {
+    className: "StaticAuditDispatchRateLimiter",
+  },
+);
+
 await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
   name: "skills-re-repo-sync-workflow",
   adopt: true,
@@ -440,6 +447,9 @@ export const server = await Worker("server", {
     AI_WORKFLOW_DAILY_SKILL_LIMIT: alchemy.env.AI_WORKFLOW_DAILY_SKILL_LIMIT!,
     AI_WORKFLOW_RATE_LIMITER: aiWorkflowRateLimiterDurableObject,
     AI_WORKFLOW_SPACING_SECONDS: alchemy.env.AI_WORKFLOW_SPACING_SECONDS!,
+    STATIC_AUDIT_DISPATCH_DAILY_LIMIT: alchemy.env.STATIC_AUDIT_DISPATCH_DAILY_LIMIT!,
+    STATIC_AUDIT_DISPATCH_RATE_LIMITER: staticAuditDispatchRateLimiterDurableObject,
+    STATIC_AUDIT_DISPATCH_SPACING_SECONDS: alchemy.env.STATIC_AUDIT_DISPATCH_SPACING_SECONDS!,
     MCP_RATE_LIMITER: mcpRateLimiterDurableObject,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,

@@ -1,5 +1,6 @@
 import type { AiWorkflowRateLimitReservation } from "@/dos/ai-workflow-rate-limiter";
 import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
+import type { StaticAuditDispatchRateLimitReservation } from "@/dos/static-audit-dispatch-rate-limiter";
 
 export interface WorkflowRateLimiterNamespace {
   get(id: unknown): {
@@ -16,7 +17,10 @@ export interface WorkflowRateLimitOptions {
   units?: number;
 }
 
-const DEFAULT_RESERVATION: AiWorkflowRateLimitReservation | AiSearchUploadRateLimitReservation = {
+const DEFAULT_RESERVATION:
+  | AiWorkflowRateLimitReservation
+  | AiSearchUploadRateLimitReservation
+  | StaticAuditDispatchRateLimitReservation = {
   delaySeconds: 0,
   notBeforeMs: 0,
 };
@@ -28,7 +32,9 @@ export const reserveWorkflowRateLimitSlot = async ({
   spacingMs,
   units = 1,
 }: WorkflowRateLimitOptions): Promise<
-  AiWorkflowRateLimitReservation | AiSearchUploadRateLimitReservation
+  | AiWorkflowRateLimitReservation
+  | AiSearchUploadRateLimitReservation
+  | StaticAuditDispatchRateLimitReservation
 > => {
   if (!namespace) {
     return DEFAULT_RESERVATION;
@@ -53,5 +59,6 @@ export const reserveWorkflowRateLimitSlot = async ({
 
   return (await response.json()) as
     | AiWorkflowRateLimitReservation
-    | AiSearchUploadRateLimitReservation;
+    | AiSearchUploadRateLimitReservation
+    | StaticAuditDispatchRateLimitReservation;
 };
