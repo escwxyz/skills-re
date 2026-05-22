@@ -154,7 +154,8 @@ describe("createAiTasksRuntime", () => {
         call.model,
       );
       expect(call.config.apiKey).toBe("token-a");
-      expect(call.config.gatewayId).toBeUndefined();
+      expect(call.config.cfApiKey).toBe("token-a");
+      expect(call.config.gatewayId).toBe("gateway-a");
     }
 
     for (const call of workersAiCallsB) {
@@ -162,7 +163,8 @@ describe("createAiTasksRuntime", () => {
         call.model,
       );
       expect(call.config.apiKey).toBe("token-b");
-      expect(call.config.gatewayId).toBeUndefined();
+      expect(call.config.cfApiKey).toBe("token-b");
+      expect(call.config.gatewayId).toBe("gateway-b");
     }
 
     const originalFetch = globalThis.fetch;

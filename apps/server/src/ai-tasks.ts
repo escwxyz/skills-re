@@ -108,7 +108,9 @@ export const createAiTasksRuntime = (
     const createWorkersAiAdapter = (model: WorkersAiTaskModel) =>
       createWorkersAiChatClient(model, {
         accountId,
+        cfApiKey,
         apiKey: cfApiKey,
+        gatewayId,
       }) as unknown as AiTaskAdapter;
 
     const adaptersByTask = getTaskAdapters({
