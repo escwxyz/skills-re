@@ -100,7 +100,6 @@ jobs:
           SKILL_AUDIT_GITHUB_WORKFLOW_REF: ${{ vars.SKILL_AUDIT_GITHUB_WORKFLOW_REF }}
           PULL_REQUEST: ${{ github.event.number }}
           GITHUB_SHA: ${{ github.sha }}
-          TEST_USER: ${{ vars.TEST_USER }}
           CLARITY_PROJECT_ID: ${{ vars.CLARITY_PROJECT_ID }}
           GA_MEASURE_ID: ${{ vars.GA_MEASURE_ID }}
           AI_SEARCH_UPLOAD_DAILY_LIMIT: ${{ vars.AI_SEARCH_UPLOAD_DAILY_LIMIT }}

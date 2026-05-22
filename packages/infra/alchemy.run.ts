@@ -18,7 +18,6 @@ import { GitHubComment } from "alchemy/github";
 import { CloudflareStateStore } from "alchemy/state";
 
 import { config } from "dotenv";
-import { resolveDevTestUserEnabled } from "@skills-re/config/dev";
 
 config({ path: "./.env" });
 config({ path: "../../apps/start/.env" });
@@ -28,12 +27,6 @@ const app = await alchemy("skills-re", {
   adopt: process.env.NODE_ENV === "production",
   stateStore:
     process.env.NODE_ENV === "production" ? (scope) => new CloudflareStateStore(scope) : undefined,
-});
-
-const isProductionBuild = process.env.NODE_ENV === "production";
-const devTestUserEnabled = resolveDevTestUserEnabled({
-  configuredValue: alchemy.env.TEST_USER,
-  isProduction: isProductionBuild,
 });
 
 const db = await D1Database("database", {
@@ -439,7 +432,6 @@ export const server = await Worker("server", {
     AUTH_COOKIE_DOMAIN: alchemy.env.AUTH_COOKIE_DOMAIN ?? "",
     R2_PUBLIC_BASE_URL: alchemy.env.R2_PUBLIC_BASE_URL!,
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
-    TEST_USER: devTestUserEnabled ? "true" : "false",
     VIEW_EVENTS: viewEventsDataset,
     AI_SEARCH_UPLOAD_DAILY_LIMIT: alchemy.env.AI_SEARCH_UPLOAD_DAILY_LIMIT!,
     AI_SEARCH_UPLOAD_RATE_LIMITER: aiSearchUploadRateLimiterDurableObject,
@@ -470,7 +462,6 @@ export const start = await TanStackStart("start", {
   bindings: {
     VITE_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
-    VITE_TEST_USER: devTestUserEnabled ? "true" : "false",
     VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,
     VITE_GA_MEASURE_ID: alchemy.env.GA_MEASURE_ID!,
   },
