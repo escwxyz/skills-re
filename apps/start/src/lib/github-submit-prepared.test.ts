@@ -113,4 +113,47 @@ describe("buildPreparedGithubSkillBatches", () => {
       slug: "Beta",
     });
   });
+
+  test("uses selected skill frontmatter license for repo payload when preview has no license", async () => {
+    const batches = await buildPreparedGithubSkillBatches({
+      preview: {
+        branch: "main",
+        commitDate: "2026-05-20T10:00:00.000Z",
+        commitMessage: "feat: add skill",
+        commitSha: "abc123",
+        forkCount: 0,
+        invalidSkills: [],
+        licenseInfo: null,
+        nameWithOwner: "acme/skills",
+        owner: "acme",
+        ownerAvatarUrl: null,
+        ownerHandle: "acme",
+        ownerName: "Acme",
+        recentCommits: [{ sha: "abc123" }],
+        repo: "skills",
+        repoCreatedAt: "2026-05-18T10:00:00.000Z",
+        repoUpdatedAt: "2026-05-20T10:00:00.000Z",
+        requestedSkillPath: null,
+        skills: [
+          {
+            files: [{ content: "---\nname: Alpha\nlicense: MIT\n---\nalpha", path: "SKILL.md" }],
+            frontmatter: {
+              license: "MIT",
+            },
+            skillDescription: "Alpha skill",
+            skillMdContent: "---\nname: Alpha\nlicense: MIT\n---\nalpha",
+            skillMdPath: "skills/alpha/SKILL.md",
+            skillRootPath: "skills/alpha",
+            skillTitle: "Alpha",
+          },
+        ],
+        stargazerCount: 0,
+        tree: [{ path: "skills/alpha/SKILL.md", sha: "sha-1", type: "blob" }],
+      },
+      selectedSkillRootPaths: ["skills/alpha"],
+    });
+
+    expect(batches[0]?.repo.license).toBe("MIT");
+    expect(batches[0]?.skills[0]?.license).toBe("MIT");
+  });
 });

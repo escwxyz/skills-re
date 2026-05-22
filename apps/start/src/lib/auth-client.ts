@@ -11,4 +11,9 @@ export const authClient = createAuthClient({
   sessionOptions: {
     refetchOnWindowFocus: false,
   },
+  fetchOptions: {
+    onError: (ctx) => {
+      console.error("Auth error:", ctx.error);
+    },
+  },
 });

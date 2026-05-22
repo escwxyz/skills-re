@@ -27,11 +27,12 @@ const buildSubmitRepoPayload = (
     repo: string;
   },
   overview: GithubRepoOverview,
+  fallbackLicense?: string,
 ) => ({
   createdAt: Date.parse(overview.repo.createdAt ?? "") || Date.now(),
   defaultBranch: overview.defaultBranch,
   forks: overview.repo.forkCount ?? 0,
-  license: overview.repo.licenseName ?? "Unknown",
+  license: overview.repo.licenseName ?? fallbackLicense ?? "Unknown",
   nameWithOwner: overview.repo.nameWithOwner ?? `${input.owner}/${input.repo}`,
   owner: {
     avatarUrl: overview.owner.avatarUrl ?? undefined,
@@ -41,6 +42,9 @@ const buildSubmitRepoPayload = (
   stars: overview.repo.stargazerCount ?? 0,
   updatedAt: Date.parse(overview.repo.updatedAt ?? "") || Date.now(),
 });
+
+const getFallbackLicenseFromSkills = (skills: { license?: string }[]) =>
+  skills.map((skill) => skill.license?.trim()).find(Boolean);
 
 const buildSubmitSkill = async (
   input: {
@@ -188,7 +192,7 @@ const buildPayloadFromOverview = async (input: {
   return {
     payload: {
       recentCommits: overview.commits,
-      repo: buildSubmitRepoPayload(input, overview),
+      repo: buildSubmitRepoPayload(input, overview, getFallbackLicenseFromSkills(skills)),
       skills,
     },
     reason: undefined,

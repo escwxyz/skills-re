@@ -187,6 +187,13 @@ const getSkillLicense = (
     return frontmatter.license;
   }
 
+  if (typeof frontmatter.metadata === "object" && frontmatter.metadata !== null) {
+    const { license } = frontmatter.metadata as Record<string, unknown>;
+    if (typeof license === "string") {
+      return license;
+    }
+  }
+
   return typeof preview.licenseInfo?.name === "string" ? preview.licenseInfo.name : undefined;
 };
 
@@ -230,13 +237,19 @@ const buildPreparedSkill = async (
   };
 };
 
-const buildSharedPayload = (preview: GithubSubmitPreparedPreview) => ({
+const getFallbackLicenseFromSkills = (skills: { license?: string }[]) =>
+  skills.map((skill) => skill.license?.trim()).find(Boolean);
+
+const buildSharedPayload = (
+  preview: GithubSubmitPreparedPreview,
+  skills: { license?: string }[],
+) => ({
   recentCommits: preview.recentCommits,
   repo: {
     createdAt: Date.parse(preview.repoCreatedAt ?? "") || Date.now(),
     defaultBranch: preview.branch,
     forks: preview.forkCount ?? 0,
-    license: preview.licenseInfo?.name ?? "Unknown",
+    license: preview.licenseInfo?.name ?? getFallbackLicenseFromSkills(skills) ?? "Unknown",
     nameWithOwner: preview.nameWithOwner ?? `${preview.owner}/${preview.repo}`,
     owner: {
       avatarUrl: preview.ownerAvatarUrl ?? undefined,
@@ -266,7 +279,7 @@ export const buildPreparedGithubSkillBatches = async (input: {
   );
 
   return chunk(preparedSkills, batchSize).map((skills) => ({
-    ...buildSharedPayload(input.preview),
+    ...buildSharedPayload(input.preview, skills),
     skills,
   }));
 };
