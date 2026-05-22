@@ -2,8 +2,14 @@ export const getUtcDayKey = (timeMs: number) => new Date(timeMs).toISOString().s
 
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const INTEGER_STRING_PATTERN = /^\s*[+-]?\d+\s*$/;
+
 export const parsePositiveInteger = (value: unknown, fallback: number) => {
   if (typeof value !== "number" && typeof value !== "string") {
+    return fallback;
+  }
+
+  if (typeof value === "string" && !INTEGER_STRING_PATTERN.test(value)) {
     return fallback;
   }
 

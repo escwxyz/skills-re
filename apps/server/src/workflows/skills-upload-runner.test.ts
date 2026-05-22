@@ -202,7 +202,6 @@ describe("runSkillsUploadWorkflow", () => {
       "upload-skill-ai-search-0",
       "link-skill-ai-search-0",
       "schedule-upload-skill-tagging-0",
-      "dispatch-static-audit",
       "create-upload-historical-snapshots",
       "cleanup-staging",
     ]);
@@ -831,7 +830,6 @@ describe("runSkillsUploadWorkflow", () => {
       "upload-skill-ai-search-0",
       "link-skill-ai-search-0",
       "schedule-upload-skill-tagging-0",
-      "dispatch-static-audit",
       "cleanup-staging",
     ]);
     expect(calls.createSkill).toEqual([]);

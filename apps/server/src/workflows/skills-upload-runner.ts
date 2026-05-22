@@ -569,29 +569,23 @@ const dispatchUploadStaticAudit = async ({
 
   try {
     await waitForStaticAuditDispatchSlot({ auditTargets, deps, step });
-    await step.do(
-      "dispatch-static-audit",
-      workflowStepRetryPolicy.skillsUploadPipeline,
-      async () => {
-        const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
-        if (auditDispatch.dispatched) {
-          console.info("[skills-upload] static audit workflow dispatched", {
-            createdSkillsCount: createdSkillIds.length,
-            repository: auditDispatch.repository,
-            step: "dispatch-static-audit",
-            workflowFile: auditDispatch.workflowFile,
-          });
-          return;
-        }
+    const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
+    if (auditDispatch.dispatched) {
+      console.info("[skills-upload] static audit workflow dispatched", {
+        createdSkillsCount: createdSkillIds.length,
+        repository: auditDispatch.repository,
+        step: "dispatch-static-audit",
+        workflowFile: auditDispatch.workflowFile,
+      });
+      return;
+    }
 
-        console.warn("[skills-upload] static audit workflow not dispatched", {
-          createdSkillsCount: createdSkillIds.length,
-          reason: auditDispatch.reason,
-          step: "dispatch-static-audit",
-          targetCount: auditTargets.length,
-        });
-      },
-    );
+    console.warn("[skills-upload] static audit workflow not dispatched", {
+      createdSkillsCount: createdSkillIds.length,
+      reason: auditDispatch.reason,
+      step: "dispatch-static-audit",
+      targetCount: auditTargets.length,
+    });
   } catch (error) {
     console.warn("[skills-upload] failed to dispatch static audit workflow", {
       createdSkillsCount: createdSkillIds.length,
