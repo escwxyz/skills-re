@@ -30,8 +30,8 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
       { label: m.footer_platform_changelogs(), href: "/changelogs" },
       { label: m.footer_platform_docs(), href: "/docs" },
       {
-        label: m.footer_platform_feedbacks(),
-        href: "/dashboard/feedbacks",
+        label: m.footer_platform_faq(),
+        href: "/faq",
       },
     ],
   },

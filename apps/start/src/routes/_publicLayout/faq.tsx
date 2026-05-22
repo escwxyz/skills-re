@@ -1,15 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { Thing, WithContext } from "schema-dts";
+
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { getFaqData } from "@/functions/get-faq-data";
 import { createSeo } from "@/lib/seo";
 
+const buildFaqStructuredData = (
+  faqs: { bodyHtml: string; question: string }[],
+): WithContext<Thing> => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.bodyHtml,
+    },
+    name: faq.question,
+  })),
+});
+
 export const Route = createFileRoute("/_publicLayout/faq")({
   loader: () => getFaqData({ data: { locale: getLocale() } }),
-  head: () =>
+  head: ({ loaderData }) =>
     createSeo({
       canonicalPath: "/faq",
       description: m.faq_meta_description(),
+      structuredData: loaderData ? [buildFaqStructuredData(loaderData)] : [],
       title: m.faq_meta_title(),
       locale: getLocale(),
     }),
