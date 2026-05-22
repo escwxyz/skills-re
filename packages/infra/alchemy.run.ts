@@ -13,8 +13,6 @@ import {
   TanStackStart,
 } from "alchemy/cloudflare";
 
-import { GitHubComment } from "alchemy/github";
-
 import { CloudflareStateStore } from "alchemy/state";
 
 import { config } from "dotenv";
@@ -469,25 +467,5 @@ export const start = await TanStackStart("start", {
 
 console.log(`Start -> ${start.url}`);
 console.log(`Server -> ${server.url}`);
-
-if (process.env.PULL_REQUEST) {
-  // if this is a PR, add a comment to the PR with the preview URL
-  // it will auto-update with each push
-  await GitHubComment("preview-comment", {
-    owner: "escwxyz",
-    repository: "skills-re",
-    issueNumber: Number(process.env.PULL_REQUEST),
-    body: `## 🚀 Preview Deployed
-
-Your changes have been deployed to a preview environment:
-
-**🌐 Website:** ${start.url}
-
-Built from commit ${process.env.GITHUB_SHA?.slice(0, 7)}
-
-+---
-<sub>🤖 This comment updates automatically with each push.</sub>`,
-  });
-}
 
 await app.finalize();
