@@ -1,4 +1,12 @@
-import type { Person, ProfilePage, Thing, WebPage, WithContext } from "schema-dts";
+import type {
+  BreadcrumbList,
+  ListItem,
+  Person,
+  ProfilePage,
+  Thing,
+  WebPage,
+  WithContext,
+} from "schema-dts";
 
 import { OG_IMAGE_DEFAULT, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/constants";
 import { m } from "@/paraglide/messages";
@@ -124,6 +132,88 @@ export const createProfilePageSchema = ({
   } as Person,
   url: canonicalUrl,
 });
+
+export const createBreadcrumbListSchema = (
+  items: { item?: string; name: string }[],
+): WithContext<BreadcrumbList> => ({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: items.map(
+    (item, index) =>
+      ({
+        "@type": "ListItem",
+        ...(item.item ? { item: item.item } : {}),
+        name: item.name,
+        position: index + 1,
+      }) as ListItem,
+  ),
+});
+
+export const createSkillBreadcrumbSchema = ({
+  authorHandle,
+  currentPath,
+  skillTitle,
+}: {
+  authorHandle: string;
+  currentPath: string;
+  skillTitle: string;
+}): WithContext<BreadcrumbList> =>
+  createBreadcrumbListSchema([
+    {
+      item: `${SITE_URL}/skills`,
+      name: String(m.skill_breadcrumb_root({})),
+    },
+    {
+      item: `${SITE_URL}/authors/${authorHandle}`,
+      name: authorHandle,
+    },
+    {
+      item: `${SITE_URL}${currentPath}`,
+      name: skillTitle,
+    },
+  ]);
+
+export const createSkillDetailSeo = ({
+  authorHandle,
+  canonicalPath,
+  description,
+  image,
+  locale,
+  skillTitle,
+  tabLabel,
+}: {
+  authorHandle: string;
+  canonicalPath: string;
+  description?: string;
+  image?: string;
+  locale: Locale;
+  skillTitle?: string;
+  tabLabel?: string;
+}) => {
+  let title: string | undefined;
+  if (skillTitle) {
+    title = tabLabel ? `${tabLabel} · ${skillTitle}` : skillTitle;
+  }
+
+  const structuredData = skillTitle
+    ? [
+        createSkillBreadcrumbSchema({
+          authorHandle,
+          currentPath: canonicalPath,
+          skillTitle,
+        }),
+      ]
+    : [];
+
+  return createSeo({
+    canonicalPath,
+    description,
+    image,
+    structuredData,
+    title,
+    locale,
+  });
+};
 
 const createStructuredDataScripts = ({
   canonicalUrl,

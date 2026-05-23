@@ -7,7 +7,7 @@ import { SkillAuditReport } from "@/components/skill-audit-report";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { getSkillVersionHistory } from "@/functions/skills/get-skill-version-history";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 
@@ -37,9 +37,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/audit`,
-      // todo: use audit description?
       description: loaderData?.skillDescription,
       image:
         buildSkillOgImagePath({
@@ -47,10 +47,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_static_audit()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_static_audit()),
     }),
   component: RouteComponent,
 });
@@ -65,7 +64,6 @@ function RouteComponent() {
     queryKey: ["skillVersionHistory", skillId],
     queryFn: () => getVersionHistory({ data: { skillId } }),
     enabled: !!skillId,
-    // todo will depend on how often we update the snapshot
     refetchInterval: 12 * 60 * 60 * 1000,
   });
 

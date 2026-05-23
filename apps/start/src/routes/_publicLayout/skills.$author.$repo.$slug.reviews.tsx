@@ -8,7 +8,7 @@ import { ReviewCard } from "@/components/review-card";
 import { ReviewRatingSidebar } from "@/components/review-rating-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getSkillReviewsInitial } from "@/functions/skills/get-skill-reviews-initial";
@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   loader: ({ params }) => getSkillReviewsInitial({ data: { skillSlug: params.slug } }),
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/reviews`,
       description: loaderData?.skillDescription,
       image:
@@ -31,10 +32,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_review_tab()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_review_tab()),
     }),
   component: RouteComponent,
 });

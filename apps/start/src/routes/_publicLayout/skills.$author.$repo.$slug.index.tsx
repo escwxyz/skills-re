@@ -5,6 +5,7 @@ import { SkillMdFrontmatter } from "@/components/skill-md-frontmatter";
 import { SkillMdContent } from "@/components/skill-md-content";
 import { SkillMdToc } from "@/components/skill-md-toc";
 import { getSkillDocument } from "@/functions/skills/get-skill-document";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { getLocale } from "@/paraglide/runtime";
 
 const searchSchema = z.object({
@@ -24,6 +25,14 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
     return data;
   },
   validateSearch: searchSchema,
+  head: ({ loaderData, params }) =>
+    createSkillDetailSeo({
+      authorHandle: params.author,
+      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/`,
+      description: loaderData?.frontmatter?.description,
+      locale: getLocale(),
+      skillTitle: loaderData?.frontmatter?.name,
+    }),
   component: RouteComponent,
 });
 

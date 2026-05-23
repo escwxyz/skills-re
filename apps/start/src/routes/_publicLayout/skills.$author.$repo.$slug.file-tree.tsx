@@ -11,7 +11,7 @@ import { getSkillFileTree } from "@/functions/skills/get-skill-file-tree";
 import { getSkillFileContent } from "@/functions/skills/get-skill-file-content";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { cn } from "@/lib/utils";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getFileIconForPath } from "@/utils/file-icon";
@@ -57,7 +57,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
       },
     }),
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/file-tree`,
       description: loaderData?.skillDescription,
       image:
@@ -66,10 +67,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_file_tree()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_file_tree()),
     }),
   validateSearch: searchSchema,
   component: RouteComponent,

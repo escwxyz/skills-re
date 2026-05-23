@@ -3,7 +3,7 @@ import { ArrowUpRightIcon, CircleIcon, TriangleIcon } from "@phosphor-icons/reac
 import { z } from "zod/v4";
 // import { SkillSnapshotDiffDialog } from "@/components/skill-snapshot-diff-dialog";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getSkillChangelog } from "@/functions/skills/get-skill-changelog";
@@ -36,7 +36,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/changelog`,
       description: loaderData?.skillDescription,
       image:
@@ -45,10 +46,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_changelog()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_changelog()),
     }),
   component: RouteComponent,
 });

@@ -18,10 +18,6 @@ import { SkillVersionPanel } from "@/components/skill-version-panel";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { recordSkillView } from "@/functions/skills/record-skill-view";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
-import { skill_detail_read_full_description, skill_detail_verified } from "@/paraglide/messages";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
@@ -31,6 +27,10 @@ import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { WriteReviewDialog } from "@/components/write-review-cta";
 import { SkillDetailStats } from "@/components/skill-detail-stats";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { createSkillDetailSeo } from "@/lib/seo";
+import { skill_detail_read_full_description, skill_detail_verified } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
@@ -63,8 +63,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug"
   },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
-      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}`,
+    createSkillDetailSeo({
+      authorHandle: params.author,
+      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/`,
       description: loaderData?.skill.description,
       image:
         buildSkillOgImagePath({
@@ -72,8 +73,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug"
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skill.title,
       locale: getLocale(),
+      skillTitle: loaderData?.skill.title,
     }),
   component: RouteComponent,
 });
