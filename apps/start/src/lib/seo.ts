@@ -1,4 +1,4 @@
-import type { Thing, WebPage, WithContext } from "schema-dts";
+import type { Person, ProfilePage, Thing, WebPage, WithContext } from "schema-dts";
 
 import { OG_IMAGE_DEFAULT, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/constants";
 import { m } from "@/paraglide/messages";
@@ -89,6 +89,39 @@ const createWebPageSchema = ({
     "@id": `${SITE_URL}/#website`,
   },
   name: title,
+  url: canonicalUrl,
+});
+
+export const createProfilePageSchema = ({
+  canonicalUrl,
+  description,
+  identifier,
+  image,
+  name,
+  sameAs,
+  alternateName,
+}: {
+  alternateName?: string;
+  canonicalUrl: string;
+  description?: string;
+  identifier?: string;
+  image?: string;
+  name: string;
+  sameAs?: string[];
+}): WithContext<ProfilePage> => ({
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  ...(description ? { description } : {}),
+  ...(image ? { image } : {}),
+  mainEntity: {
+    "@type": "Person",
+    ...(alternateName ? { alternateName } : {}),
+    ...(description ? { description } : {}),
+    ...(identifier ? { identifier } : {}),
+    ...(image ? { image } : {}),
+    ...(sameAs?.length ? { sameAs } : {}),
+    name,
+  } as Person,
   url: canonicalUrl,
 });
 

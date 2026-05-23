@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
 import { getAuthorRepos } from "@/functions/authors/get-author-repos";
 import { buildAuthorOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createProfilePageSchema, createSeo } from "@/lib/seo";
+import { SITE_URL } from "@/lib/constants";
 import {
   author_page_description,
   author_page_eyebrow,
@@ -49,7 +50,21 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
       description: loaderData
         ? String(author_page_description({ handle: loaderData.author.handle }))
         : undefined,
+      includePageStructuredData: false,
       image: loaderData ? buildAuthorOgImagePath(loaderData.author.handle) : undefined,
+      structuredData: loaderData
+        ? [
+            createProfilePageSchema({
+              alternateName: loaderData.author.handle,
+              canonicalUrl: `${SITE_URL}/authors/${loaderData.author.handle}`,
+              description: String(author_page_description({ handle: loaderData.author.handle })),
+              identifier: loaderData.author.handle,
+              image: loaderData.author.avatarUrl ?? undefined,
+              name: loaderData.author.name ?? `@${loaderData.author.handle}`,
+              sameAs: loaderData.author.githubUrl ? [loaderData.author.githubUrl] : undefined,
+            }),
+          ]
+        : [],
       title: loaderData?.author.name ?? `@${loaderData?.author.handle}`,
       locale: getLocale(),
     }),
