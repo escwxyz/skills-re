@@ -102,57 +102,8 @@ const staticAuditDispatchRateLimiterDurableObject = DurableObjectNamespace(
   },
 );
 
-await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
-  name: "skills-re-repo-sync-workflow",
-  adopt: true,
-});
-await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", {
-  name: "skills-re-repo-snapshot-sync-workflow",
-  adopt: true,
-});
-await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-upload-workflow",
-  adopt: true,
-});
-await Queue("AI_SEARCH_BACKFILL_WORKFLOW_QUEUE", {
-  name: "skills-re-ai-search-backfill-workflow",
-  adopt: true,
-});
-await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-tagging-workflow",
-  adopt: true,
-});
-await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", {
-  name: "skills-re-skills-categorization-workflow",
-  adopt: true,
-});
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", {
-  name: "skills-re-snapshot-upload-workflow-0",
-  adopt: true,
-});
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", {
-  name: "skills-re-snapshot-upload-workflow-1",
-  adopt: true,
-});
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", {
-  name: "skills-re-snapshot-upload-workflow-2",
-  adopt: true,
-});
-await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", {
-  name: "skills-re-snapshot-upload-workflow-3",
-  adopt: true,
-});
-await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
-  name: "skills-re-snapshot-archive-upload-workflow",
-  adopt: true,
-});
-
 const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-sync-workflow",
-});
-
-const repoSnapshotSyncWorkflowQueue = await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE_V1", {
-  name: "skills-re-v1-repo-snapshot-sync-workflow",
 });
 
 const repoSkillsDiscoveryWorkflowQueue = await Queue("REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE_V1", {
@@ -221,13 +172,6 @@ const workflowQueueEventSources = [
     queue: repoSkillsDiscoveryWorkflowQueue,
     settings: {
       batchSize: 2,
-      maxWaitTimeMs: 2000,
-    },
-  },
-  {
-    queue: repoSnapshotSyncWorkflowQueue,
-    settings: {
-      batchSize: 3,
       maxWaitTimeMs: 2000,
     },
   },
@@ -376,7 +320,6 @@ const workflowQueueBindings = {
   REPO_SKILL_IMPORT_WORKFLOW_QUEUE: repoSkillImportWorkflowQueue,
   REPO_SKILL_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSkillSnapshotSyncWorkflowQueue,
   REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE: repoSkillsDiscoveryWorkflowQueue,
-  REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE: repoSnapshotSyncWorkflowQueue,
   REPO_STATS_SYNC_WORKFLOW_QUEUE: repoStatsSyncWorkflowQueue,
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE: snapshotsArchiveUploadWorkflowQueue,
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE: skillsCategorizationWorkflowQueue,
