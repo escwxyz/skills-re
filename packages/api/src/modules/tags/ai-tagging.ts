@@ -119,15 +119,15 @@ const preferExistingTag = (
 
 const resolveTaggingDeps = (deps?: {
   generateText?: typeof generateText;
-  getModel: AiTaskRuntime["getModel"];
+  getModels: AiTaskRuntime["getModels"];
 }) => {
-  if (!deps?.getModel) {
+  if (!deps?.getModels) {
     throw new Error("AI tagging runtime is unavailable.");
   }
 
   return {
     generateText: deps.generateText ?? generateText,
-    getModel: deps.getModel,
+    getModels: deps.getModels,
   };
 };
 
@@ -280,7 +280,7 @@ export const generateSkillTagsBatch = async (
   },
   deps?: {
     generateText?: typeof generateText;
-    getModel: AiTaskRuntime["getModel"];
+    getModels: AiTaskRuntime["getModels"];
   },
 ) => {
   const resolvedDeps = resolveTaggingDeps(deps);
@@ -325,17 +325,17 @@ export const generateSkillTagsBatch = async (
       "\n\n",
     )}\n\nExisting tags (prefer reusing these): ${existingTagsText}\n\nRules:\n- tags must be lowercase kebab-case\n- each tag entry must include: { tag, source, matchScore }\n- source must be existing or new\n- matchScore is 0..1 semantic fit confidence\n- each dimension (techStack/domain/skillType) must have 1-2 entries\n- avoid synonyms/duplicates across dimensions\n- do not invent or rewrite key; copy input key exactly\n- output items length must equal input skills length\n- forbidden tags: best-practice, best-practices\n- response must be pure JSON object only\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","confidence":0.0,"reason":"<short reason>","dimensions":{"techStack":[{"tag":"<slug>","source":"existing","matchScore":0.99}],"domain":[{"tag":"<slug>","source":"existing","matchScore":0.99}],"skillType":[{"tag":"<slug>","source":"existing","matchScore":0.99}]}}]}`;
 
-  const model = wrapLanguageModel({
-    middleware: extractJsonMiddleware(),
-    model: resolvedDeps.getModel("skill-tagging"),
-  });
+  const models = resolvedDeps.getModels("skill-tagging");
   let lastError: unknown = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (const [attempt, model] of models.entries()) {
     try {
       const result = await retryAiTaskCall(() =>
         resolvedDeps.generateText({
           maxOutputTokens: 4096,
-          model,
+          model: wrapLanguageModel({
+            middleware: extractJsonMiddleware(),
+            model,
+          }),
           prompt: userPrompt,
           system: systemPrompt,
         }),
@@ -351,6 +351,10 @@ export const generateSkillTagsBatch = async (
         returnedKeys.some((key) => !expectedKeys.has(key))
       ) {
         lastError = new Error("Tagging response keys did not match the input batch.");
+        console.warn("[ai-tagging] model output invalid, trying next", {
+          attempt: attempt + 1,
+          error: (lastError as Error).message,
+        });
         continue;
       }
 
@@ -446,6 +450,10 @@ export const generateSkillTagsBatch = async (
       };
     } catch (error) {
       lastError = error;
+      console.warn("[ai-tagging] model failed, trying next", {
+        attempt: attempt + 1,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

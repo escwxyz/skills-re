@@ -59,39 +59,77 @@ describe("createAiTasksRuntime", () => {
       },
     );
 
-    const taggingModel = runtime.getModel("skill-tagging");
-    const categorizationModel = runtime.getModel("skill-categorization");
+    const taggingModels = runtime.getModels("skill-tagging") as unknown;
+    const categorizationModels = runtime.getModels("skill-categorization") as unknown;
 
-    expect(taggingModel as unknown).toEqual({
-      kind: "gateway-model",
-      models: [
-        {
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          provider: "groq",
-        },
-        {
-          model: "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct",
-          provider: "unified",
-        },
-        { model: "openai/gpt-oss-120b", provider: "groq" },
-        { model: "workers-ai/@cf/openai/gpt-oss-120b", provider: "unified" },
-      ],
-    });
-    expect(categorizationModel as unknown).toEqual({
-      kind: "gateway-model",
-      models: [
-        { model: "openai/gpt-oss-120b", provider: "groq" },
-        { model: "workers-ai/@cf/openai/gpt-oss-120b", provider: "unified" },
-        {
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          provider: "groq",
-        },
-        {
-          model: "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct",
-          provider: "unified",
-        },
-      ],
-    });
+    expect(taggingModels).toHaveLength(4);
+    expect(categorizationModels).toHaveLength(4);
+    expect(taggingModels).toEqual([
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+            provider: "groq",
+          },
+        ],
+      },
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct",
+            provider: "unified",
+          },
+        ],
+      },
+      {
+        kind: "gateway-model",
+        models: [{ model: "openai/gpt-oss-120b", provider: "groq" }],
+      },
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "workers-ai/@cf/openai/gpt-oss-120b",
+            provider: "unified",
+          },
+        ],
+      },
+    ]);
+    expect(categorizationModels).toEqual([
+      {
+        kind: "gateway-model",
+        models: [{ model: "openai/gpt-oss-120b", provider: "groq" }],
+      },
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "workers-ai/@cf/openai/gpt-oss-120b",
+            provider: "unified",
+          },
+        ],
+      },
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+            provider: "groq",
+          },
+        ],
+      },
+      {
+        kind: "gateway-model",
+        models: [
+          {
+            model: "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct",
+            provider: "unified",
+          },
+        ],
+      },
+    ]);
 
     expect(gatewayCalls).toEqual([
       {
@@ -106,7 +144,7 @@ describe("createAiTasksRuntime", () => {
         },
       },
     ]);
-    expect(routedModels).toHaveLength(2);
+    expect(routedModels).toHaveLength(8);
     expect(groqCalls).toHaveLength(1);
     expect(unifiedCalls).toHaveLength(1);
     expect(getHeader(groqCalls[0]?.headers, "cf-aig-authorization")).toBe("Bearer token-a");

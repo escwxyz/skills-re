@@ -11,9 +11,12 @@ import {
 } from "./ai-categorization";
 
 describe("categorization ai helpers", () => {
-  test("parses raw categorization JSON and falls back across adapters", async () => {
-    const model = new MockLanguageModelV3({
-      modelId: "gateway-model",
+  test("advances to the fallback model when primary categorization output is invalid", async () => {
+    const primaryModel = new MockLanguageModelV3({
+      modelId: "primary-model",
+    });
+    const fallbackModel = new MockLanguageModelV3({
+      modelId: "fallback-model",
     });
     const generateTextCalls: {
       options: { maxOutputTokens?: number; model?: unknown };
@@ -48,8 +51,30 @@ describe("categorization ai helpers", () => {
               model: options.model,
             },
           });
-          if (generateTextCalls.length === 1) {
-            throw new Error("primary adapter failed");
+          const modelId = (options.model as { modelId?: string } | undefined)?.modelId;
+          if (modelId === "primary-model") {
+            return {
+              text: JSON.stringify({
+                items: [
+                  {
+                    confidence: 0.87,
+                    primaryCategory: "code-frameworks",
+                    reasoning: "missing key should trigger fallback",
+                    scores: {
+                      "analysis-insights": 1,
+                      "code-frameworks": 10,
+                      "communication-strategy": 0,
+                      "design-creative": 0,
+                      "domain-expertise": 2,
+                      "operations-automation": 0,
+                      other: 0,
+                      "process-methodology": 1,
+                      "tools-platforms": 2,
+                    },
+                  },
+                ],
+              }),
+            };
           }
 
           return {
@@ -76,7 +101,7 @@ describe("categorization ai helpers", () => {
             }),
           };
         }) as never,
-        getModel: () => model,
+        getModels: () => [primaryModel, fallbackModel],
       } as never,
     );
 
@@ -90,14 +115,10 @@ describe("categorization ai helpers", () => {
     expect(generateTextCalls).toHaveLength(2);
     expect(generateTextCalls.every((call) => call.options.maxOutputTokens === 4096)).toBe(true);
     expect(
-      generateTextCalls.every((call) => call.options.model === generateTextCalls[0]?.options.model),
-    ).toBe(true);
-    expect(generateTextCalls[0]?.options.model).toEqual(
-      expect.objectContaining({
-        modelId: "gateway-model",
-        specificationVersion: "v3",
-      }),
-    );
+      generateTextCalls.map(
+        (call) => (call.options.model as { modelId?: string } | undefined)?.modelId,
+      ),
+    ).toEqual(["primary-model", "fallback-model"]);
   });
 
   test("retries categorization calls on rate limit errors", async () => {
@@ -160,7 +181,7 @@ describe("categorization ai helpers", () => {
             }),
           };
         }) as never,
-        getModel: () => model,
+        getModels: () => [model],
       } as never,
     );
 

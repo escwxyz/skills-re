@@ -117,15 +117,15 @@ const compressDescription = (value: string) => {
 
 const resolveCategorizationDeps = (deps?: {
   generateText?: typeof generateText;
-  getModel: AiTaskRuntime["getModel"];
+  getModels: AiTaskRuntime["getModels"];
 }) => {
-  if (!deps?.getModel) {
+  if (!deps?.getModels) {
     throw new Error("AI categorization runtime is unavailable.");
   }
 
   return {
     generateText: deps.generateText ?? generateText,
-    getModel: deps.getModel,
+    getModels: deps.getModels,
   };
 };
 
@@ -136,7 +136,7 @@ export const generateSkillCategoriesBatch = async (
   },
   deps?: {
     generateText?: typeof generateText;
-    getModel: AiTaskRuntime["getModel"];
+    getModels: AiTaskRuntime["getModels"];
   },
 ) => {
   const resolvedDeps = resolveCategorizationDeps(deps);
@@ -173,23 +173,23 @@ export const generateSkillCategoriesBatch = async (
 
   const userPrompt = `Categories:\n${categoriesText}\n\nSkills:\n${skillsText}\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","scores":{"code-frameworks":0,"tools-platforms":0,"analysis-insights":0,"design-creative":0,"process-methodology":0,"communication-strategy":0,"domain-expertise":0,"operations-automation":0,"other":0},"primaryCategory":"code-frameworks","confidence":0.85,"reasoning":"<short reason>"}]}`;
 
-  const model = wrapLanguageModel({
-    middleware: extractJsonMiddleware(),
-    model: resolvedDeps.getModel("skill-categorization"),
-  });
+  const models = resolvedDeps.getModels("skill-categorization");
 
   const expectedKeys = new Set(input.items.map((item) => item.key));
   let lastError: unknown = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (const [attempt, model] of models.entries()) {
     console.info("[ai-categorization] trying model", {
-      attempt,
+      attempt: attempt + 1,
       itemCount: input.items.length,
     });
     try {
       const result = await retryAiTaskCall(() =>
         resolvedDeps.generateText({
           maxOutputTokens: 4096,
-          model,
+          model: wrapLanguageModel({
+            middleware: extractJsonMiddleware(),
+            model,
+          }),
           prompt: userPrompt,
           system: systemPrompt,
         }),
@@ -210,13 +210,13 @@ export const generateSkillCategoriesBatch = async (
             : `Categorization output is missing key: ${missingKey}`,
         );
         console.warn("[ai-categorization] model output invalid, trying next", {
-          attempt,
+          attempt: attempt + 1,
           error: (lastError as Error).message,
         });
         continue;
       }
 
-      console.info("[ai-categorization] model succeeded", { attempt });
+      console.info("[ai-categorization] model succeeded", { attempt: attempt + 1 });
       return {
         items: output.items.map(
           (item): SkillCategorizationOutputItem => ({
@@ -231,7 +231,7 @@ export const generateSkillCategoriesBatch = async (
     } catch (error) {
       lastError = error;
       console.warn("[ai-categorization] model failed, trying next", {
-        attempt,
+        attempt: attempt + 1,
         error: error instanceof Error ? error.message : String(error),
       });
     }

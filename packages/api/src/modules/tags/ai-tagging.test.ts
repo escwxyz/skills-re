@@ -1,6 +1,7 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import { MockLanguageModelV3 } from "ai/test";
 
 import { generateSkillTagsBatch, normalizeSkillTags } from "./ai-tagging";
 
@@ -12,7 +13,13 @@ describe("tagging ai helpers", () => {
     ]);
   });
 
-  test("parses raw tagging JSON and preserves normalized output", async () => {
+  test("advances to the fallback model when primary tagging output is invalid", async () => {
+    const primaryModel = new MockLanguageModelV3({
+      modelId: "primary-model",
+    });
+    const fallbackModel = new MockLanguageModelV3({
+      modelId: "fallback-model",
+    });
     const generateTextCalls: {
       options: { maxOutputTokens?: number; model?: unknown };
     }[] = [];
@@ -37,6 +44,44 @@ describe("tagging ai helpers", () => {
               model: options.model,
             },
           });
+
+          const modelId = (options.model as { modelId?: string } | undefined)?.modelId;
+          if (modelId === "primary-model") {
+            return {
+              text: JSON.stringify({
+                items: [
+                  {
+                    confidence: 0.91,
+                    dimensions: {
+                      domain: [
+                        {
+                          matchScore: 0.92,
+                          source: "new",
+                          tag: "automation",
+                        },
+                      ],
+                      skillType: [
+                        {
+                          matchScore: 0.91,
+                          source: "new",
+                          tag: "best-practices",
+                        },
+                      ],
+                      techStack: [
+                        {
+                          matchScore: 0.91,
+                          source: "new",
+                          tag: "AI Tools",
+                        },
+                      ],
+                    },
+                    key: "wrong-key",
+                    reason: "bad key should trigger fallback",
+                  },
+                ],
+              }),
+            };
+          }
 
           return {
             text: JSON.stringify({
@@ -78,7 +123,7 @@ describe("tagging ai helpers", () => {
             }),
           };
         }) as never,
-        getModel: (() => ({ id: "gateway-model" })) as never,
+        getModels: () => [primaryModel, fallbackModel],
       } as never,
     );
 
@@ -102,10 +147,17 @@ describe("tagging ai helpers", () => {
         tags: ["ai-tools", "ai", "automation"],
       },
     ]);
-    expect(generateTextCalls).toHaveLength(1);
+    expect(generateTextCalls).toHaveLength(2);
     expect(generateTextCalls[0]?.options.maxOutputTokens).toBe(4096);
     expect(generateTextCalls[0]?.options.model).toEqual(
       expect.objectContaining({
+        modelId: "primary-model",
+        specificationVersion: "v3",
+      }),
+    );
+    expect(generateTextCalls[1]?.options.model).toEqual(
+      expect.objectContaining({
+        modelId: "fallback-model",
         specificationVersion: "v3",
       }),
     );

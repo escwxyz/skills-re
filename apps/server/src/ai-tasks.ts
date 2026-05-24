@@ -99,10 +99,10 @@ export const createAiTasksRuntime = (
   };
 
   return {
-    getModel(task: AiTaskType) {
+    getModels(task: AiTaskType) {
       const clients = getAiClients();
       const taskModels = getTaskModels(clients);
-      return clients.aiGateway([...taskModels[task]]);
+      return taskModels[task].map((model) => clients.aiGateway([model]));
     },
   };
 };
