@@ -1,4 +1,4 @@
-import { chat } from "@tanstack/ai";
+import { extractJsonMiddleware, generateText, wrapLanguageModel } from "ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
@@ -116,16 +116,16 @@ const compressDescription = (value: string) => {
 };
 
 const resolveCategorizationDeps = (deps?: {
-  chat?: typeof chat;
-  getAdapters: AiTaskRuntime["getAdapters"];
+  generateText?: typeof generateText;
+  getModels: AiTaskRuntime["getModels"];
 }) => {
-  if (!deps?.getAdapters) {
+  if (!deps?.getModels) {
     throw new Error("AI categorization runtime is unavailable.");
   }
 
   return {
-    chat: deps.chat ?? chat,
-    getAdapters: deps.getAdapters,
+    generateText: deps.generateText ?? generateText,
+    getModels: deps.getModels,
   };
 };
 
@@ -135,8 +135,8 @@ export const generateSkillCategoriesBatch = async (
     items: SkillCategorizationInputItem[];
   },
   deps?: {
-    chat?: typeof chat;
-    getAdapters: AiTaskRuntime["getAdapters"];
+    generateText?: typeof generateText;
+    getModels: AiTaskRuntime["getModels"];
   },
 ) => {
   const resolvedDeps = resolveCategorizationDeps(deps);
@@ -173,30 +173,29 @@ export const generateSkillCategoriesBatch = async (
 
   const userPrompt = `Categories:\n${categoriesText}\n\nSkills:\n${skillsText}\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","scores":{"code-frameworks":0,"tools-platforms":0,"analysis-insights":0,"design-creative":0,"process-methodology":0,"communication-strategy":0,"domain-expertise":0,"operations-automation":0,"other":0},"primaryCategory":"code-frameworks","confidence":0.85,"reasoning":"<short reason>"}]}`;
 
-  console.info("[ai-categorization] resolving adapters", { itemCount: input.items.length });
-  const adapters = resolvedDeps.getAdapters("skill-categorization");
-  console.info("[ai-categorization] starting adapter loop", { adapterCount: adapters.length });
+  const models = resolvedDeps.getModels("skill-categorization");
 
   const expectedKeys = new Set(input.items.map((item) => item.key));
   let lastError: unknown = null;
-  for (const [adapterIndex, adapter] of adapters.entries()) {
-    console.info("[ai-categorization] trying adapter", {
-      adapterIndex,
+  for (const [attempt, model] of models.entries()) {
+    console.info("[ai-categorization] trying model", {
+      attempt: attempt + 1,
       itemCount: input.items.length,
     });
     try {
-      const text = await retryAiTaskCall(
-        async () =>
-          await resolvedDeps.chat({
-            adapter,
-            maxTokens: 4096,
-            messages: [{ content: userPrompt, role: "user" }],
-            stream: false,
-            systemPrompts: [systemPrompt],
+      const result = await retryAiTaskCall(() =>
+        resolvedDeps.generateText({
+          maxOutputTokens: 4096,
+          model: wrapLanguageModel({
+            middleware: extractJsonMiddleware(),
+            model,
           }),
+          prompt: userPrompt,
+          system: systemPrompt,
+        }),
       );
 
-      const output = parseCategorizationOutput(text);
+      const output = parseCategorizationOutput(result.text);
 
       const returnedKeys = new Set(output.items.map((item) => item.key));
       const missingKey = [...expectedKeys].find((key) => !returnedKeys.has(key));
@@ -210,14 +209,14 @@ export const generateSkillCategoriesBatch = async (
             ? "Categorization output must contain exactly one result per input item."
             : `Categorization output is missing key: ${missingKey}`,
         );
-        console.warn("[ai-categorization] adapter output invalid, trying next", {
-          adapterIndex,
+        console.warn("[ai-categorization] model output invalid, trying next", {
+          attempt: attempt + 1,
           error: (lastError as Error).message,
         });
         continue;
       }
 
-      console.info("[ai-categorization] adapter succeeded", { adapterIndex });
+      console.info("[ai-categorization] model succeeded", { attempt: attempt + 1 });
       return {
         items: output.items.map(
           (item): SkillCategorizationOutputItem => ({
@@ -231,8 +230,8 @@ export const generateSkillCategoriesBatch = async (
       };
     } catch (error) {
       lastError = error;
-      console.warn("[ai-categorization] adapter failed, trying next", {
-        adapterIndex,
+      console.warn("[ai-categorization] model failed, trying next", {
+        attempt: attempt + 1,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -240,6 +239,6 @@ export const generateSkillCategoriesBatch = async (
 
   const finalError =
     lastError instanceof Error ? lastError : new Error("Categorization model call failed.");
-  console.error("[ai-categorization] all adapters exhausted", { error: finalError.message });
+  console.error("[ai-categorization] all model attempts exhausted", { error: finalError.message });
   throw finalError;
 };
