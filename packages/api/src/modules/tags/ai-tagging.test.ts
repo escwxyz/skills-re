@@ -13,8 +13,8 @@ describe("tagging ai helpers", () => {
   });
 
   test("parses raw tagging JSON and preserves normalized output", async () => {
-    const chatCalls: {
-      options: { outputSchema?: unknown; stream?: boolean };
+    const generateTextCalls: {
+      options: { maxOutputTokens?: number; model?: unknown };
     }[] = [];
     const result = await generateSkillTagsBatch(
       {
@@ -30,53 +30,55 @@ describe("tagging ai helpers", () => {
       },
       {
         // oxlint-disable-next-line require-await
-        chat: (async (options: { outputSchema?: unknown; stream?: boolean }) => {
-          chatCalls.push({
+        generateText: (async (options: { maxOutputTokens?: number; model?: unknown }) => {
+          generateTextCalls.push({
             options: {
-              outputSchema: options.outputSchema,
-              stream: options.stream,
+              maxOutputTokens: options.maxOutputTokens,
+              model: options.model,
             },
           });
 
-          return JSON.stringify({
-            items: [
-              {
-                confidence: 0.91,
-                dimensions: {
-                  domain: [
-                    {
-                      matchScore: 0.92,
-                      source: "new",
-                      tag: "automation",
-                    },
-                  ],
-                  skillType: [
-                    {
-                      matchScore: 0.91,
-                      source: "new",
-                      tag: "best-practices",
-                    },
-                  ],
-                  techStack: [
-                    {
-                      matchScore: 0.91,
-                      source: "new",
-                      tag: "AI Tools",
-                    },
-                    {
-                      matchScore: 0.88,
-                      source: "existing",
-                      tag: "ai",
-                    },
-                  ],
+          return {
+            text: JSON.stringify({
+              items: [
+                {
+                  confidence: 0.91,
+                  dimensions: {
+                    domain: [
+                      {
+                        matchScore: 0.92,
+                        source: "new",
+                        tag: "automation",
+                      },
+                    ],
+                    skillType: [
+                      {
+                        matchScore: 0.91,
+                        source: "new",
+                        tag: "best-practices",
+                      },
+                    ],
+                    techStack: [
+                      {
+                        matchScore: 0.91,
+                        source: "new",
+                        tag: "AI Tools",
+                      },
+                      {
+                        matchScore: 0.88,
+                        source: "existing",
+                        tag: "ai",
+                      },
+                    ],
+                  },
+                  key: "skill-1",
+                  reason: "clear match",
                 },
-                key: "skill-1",
-                reason: "clear match",
-              },
-            ],
-          });
+              ],
+            }),
+          };
         }) as never,
-        getAdapters: (() => [{ id: "adapter-1" }]) as never,
+        getModel: (() => ({ id: "gateway-model" })) as never,
       } as never,
     );
 
@@ -100,8 +102,12 @@ describe("tagging ai helpers", () => {
         tags: ["ai-tools", "ai", "automation"],
       },
     ]);
-    expect(chatCalls).toHaveLength(1);
-    expect(chatCalls[0]?.options.stream).toBe(false);
-    expect(chatCalls[0]?.options.outputSchema).toBeUndefined();
+    expect(generateTextCalls).toHaveLength(1);
+    expect(generateTextCalls[0]?.options.maxOutputTokens).toBe(4096);
+    expect(generateTextCalls[0]?.options.model).toEqual(
+      expect.objectContaining({
+        specificationVersion: "v3",
+      }),
+    );
   });
 });

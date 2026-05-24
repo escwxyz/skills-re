@@ -90,7 +90,7 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
       await generateSkillTagsBatchImpl(
         input,
         aiTasks ?? {
-          getAdapters: () => {
+          getModel: () => {
             throw new Error("AI tagging runtime is unavailable.");
           },
         },

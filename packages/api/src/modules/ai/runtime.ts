@@ -1,9 +1,7 @@
-import type { chat } from "@tanstack/ai";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
 
 export type AiTaskType = "skill-categorization" | "skill-tagging";
 
-export type AiTaskAdapter = Parameters<typeof chat>[0]["adapter"];
-
 export interface AiTaskRuntime {
-  getAdapters(task: AiTaskType): AiTaskAdapter[];
+  getModel(task: AiTaskType): LanguageModelV3;
 }
