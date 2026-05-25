@@ -1,4 +1,5 @@
 import type { GithubSnapshotTreeEntry, GithubSubmitRuntime } from "@skills-re/api/types";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { buildGithubRepoOverview, createGithubHeaders } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
@@ -87,6 +88,7 @@ const buildSubmitSkill = async (
   const fingerprint = await buildSkillDuplicateFingerprint(frontmatter, skillMd.content);
 
   const normalizedRoot = normalizeSkillRootPath(root.skillRootPath);
+  const normalizedSlug = normalizeSkillSlug(frontmatter.name);
   return {
     description: frontmatter.description,
     directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : "",
@@ -107,7 +109,7 @@ const buildSubmitSkill = async (
       overview.repo.licenseName ??
       undefined,
     preferredVersion: frontmatter.metadata?.["version"],
-    slug: frontmatter.name,
+    slug: normalizedSlug,
     sourceLocator: `github:${input.owner}/${input.repo}/${root.skillMdPath}`,
     sourceType: "github" as const,
     skillContentHash: fingerprint.skillContentHash,

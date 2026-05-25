@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { reposTable } from "@skills-re/db/schema/repos";
 import { skillsTable } from "@skills-re/db/schema/skills";
@@ -32,7 +33,7 @@ const isDefined = <T>(value: T | null | undefined): value is T =>
 
 export const normalizeSkillCanonicalSlug = (value: string | null | undefined) => {
   const normalized = value?.trim();
-  return normalized || null;
+  return normalized ? normalizeSkillSlug(normalized) : null;
 };
 
 interface AuthorListCursor {
@@ -158,6 +159,7 @@ export async function createSkill(input: {
   userId?: string | null;
   visibility?: "public" | "private";
 }) {
+  const slug = normalizeSkillSlug(input.slug);
   const canonicalSlug = normalizeSkillCanonicalSlug(input.canonicalSlug);
   const rows = await db
     .insert(skillsTable)
@@ -173,7 +175,7 @@ export async function createSkill(input: {
       latestSnapshotId: null,
       primaryCategory: null,
       repoId: asRepoId(input.repoId),
-      slug: input.slug,
+      slug,
       syncTime: input.syncTime,
       title: input.title,
       userId: input.userId ? asUserId(input.userId) : null,
@@ -193,7 +195,7 @@ export async function createSkill(input: {
   const [existing] = await db
     .select({ id: skillsTable.id })
     .from(skillsTable)
-    .where(and(eq(skillsTable.repoId, asRepoId(input.repoId)), eq(skillsTable.slug, input.slug)))
+    .where(and(eq(skillsTable.repoId, asRepoId(input.repoId)), eq(skillsTable.slug, slug)))
     .limit(1);
 
   if (!existing) {

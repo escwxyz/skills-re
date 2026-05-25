@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { normalizeSkillCanonicalSlug } from "./repo";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 describe("skills repo helpers", () => {
   test("normalizes empty canonical slugs to null", () => {
@@ -14,5 +15,14 @@ describe("skills repo helpers", () => {
 
   test("trims non-empty canonical slugs", () => {
     expect(normalizeSkillCanonicalSlug(" widget ")).toBe("widget");
+  });
+
+  test("normalizes path-like skill names into storage-safe slugs", () => {
+    expect(normalizeSkillSlug("orchestrate-side-effects/handle-side-effects")).toBe(
+      "orchestrate-side-effects-handle-side-effects",
+    );
+    expect(normalizeSkillCanonicalSlug("orchestrate-side-effects/handle-side-effects")).toBe(
+      "orchestrate-side-effects-handle-side-effects",
+    );
   });
 });

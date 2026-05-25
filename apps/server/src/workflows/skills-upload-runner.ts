@@ -4,6 +4,7 @@ import type {
   SnapshotUploadScheduler,
   SkillsTaggingScheduler,
 } from "@skills-re/api/types";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 import {
   createSnapshot,
   deprecateSnapshotsBeyondLimit,
@@ -166,7 +167,7 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
       })
     : skill.initialSnapshot.files.find((file) => file.path.split("/").at(-1) === SKILL_FILENAME);
 
-const normalizeCanonicalSlug = (value: string) => value.trim().toLowerCase();
+const normalizeCanonicalSlug = (value: string) => normalizeSkillSlug(value);
 
 const buildUniqueSkillIdByCanonicalSlug = (
   existingRepoSkills: Awaited<ReturnType<typeof listRepoSkillSnapshotHeadsByRepoId>>,
