@@ -14,6 +14,7 @@ describe("feedback service", () => {
         calls.push(input);
         return asFeedbackId("feedback-1");
       },
+      findSkillById: () => null,
       getFeedbackById: (_id, _database?) => null,
     });
 
@@ -45,6 +46,29 @@ describe("feedback service", () => {
         calls.push(input);
         return asFeedbackId("feedback-1");
       },
+      findSkillById: () => ({
+        authorHandle: "owner",
+        createdAt: 0,
+        description: "desc",
+        downloadsAllTime: 0,
+        downloadsTrending: 0,
+        forkCount: 0,
+        id: asSkillId("skill-1"),
+        isVerified: false,
+        latestVersion: null,
+        license: null,
+        ownerAvatarUrl: null,
+        primaryCategory: null,
+        repoName: "repo",
+        repoUrl: "https://github.com/owner/repo",
+        slug: "canonical-slug",
+        stargazerCount: 0,
+        syncTime: 0,
+        tags: [],
+        title: "Canonical Title",
+        updatedAt: 0,
+        viewsAllTime: 0,
+      }),
       getFeedbackById: (_id, _database?) => null,
     });
 
@@ -63,8 +87,8 @@ describe("feedback service", () => {
       {
         content: "The Skill page has broken metadata",
         skillId: asSkillId("skill-1"),
-        skillSlug: "agent-helper",
-        skillTitle: "Agent Helper",
+        skillSlug: "canonical-slug",
+        skillTitle: "Canonical Title",
         title: "Display issue",
         type: "skill_display",
         userId: null,
@@ -79,6 +103,29 @@ describe("feedback service", () => {
         calls.push(input);
         return asFeedbackId("feedback-1");
       },
+      findSkillById: () => ({
+        authorHandle: "owner",
+        createdAt: 0,
+        description: "desc",
+        downloadsAllTime: 0,
+        downloadsTrending: 0,
+        forkCount: 0,
+        id: asSkillId("skill-1"),
+        isVerified: false,
+        latestVersion: null,
+        license: null,
+        ownerAvatarUrl: null,
+        primaryCategory: null,
+        repoName: "repo",
+        repoUrl: "https://github.com/owner/repo",
+        slug: "canonical-slug",
+        stargazerCount: 0,
+        syncTime: 0,
+        tags: [],
+        title: "Canonical Title",
+        updatedAt: 0,
+        viewsAllTime: 0,
+      }),
       findSkillClaimContextById: () => ({
         claimedUserId: "user-2",
         repoOwnerHandle: "owner",
@@ -108,6 +155,29 @@ describe("feedback service", () => {
         calls.push(input);
         return asFeedbackId("feedback-1");
       },
+      findSkillById: () => ({
+        authorHandle: "owner",
+        createdAt: 0,
+        description: "desc",
+        downloadsAllTime: 0,
+        downloadsTrending: 0,
+        forkCount: 0,
+        id: asSkillId("skill-1"),
+        isVerified: false,
+        latestVersion: null,
+        license: null,
+        ownerAvatarUrl: null,
+        primaryCategory: null,
+        repoName: "repo",
+        repoUrl: "https://github.com/owner/repo",
+        slug: "canonical-slug",
+        stargazerCount: 0,
+        syncTime: 0,
+        tags: [],
+        title: "Canonical Title",
+        updatedAt: 0,
+        viewsAllTime: 0,
+      }),
       findSkillClaimContextById: () => ({
         claimedUserId: "user-1",
         repoOwnerHandle: "owner",
@@ -128,6 +198,23 @@ describe("feedback service", () => {
       }),
     ).resolves.toEqual({ id: asFeedbackId("feedback-1") });
     expect(calls).toHaveLength(1);
+  });
+
+  test("rejects skill reports without a skill id", async () => {
+    const service = createFeedbackService({
+      createFeedback: () => asFeedbackId("feedback-1"),
+      findSkillById: () => null,
+      getFeedbackById: (_id, _database?) => null,
+    });
+
+    await expect(
+      service.create({
+        content: "Missing skill id",
+        title: "Display issue",
+        type: "skill_issue",
+        userId: null,
+      }),
+    ).rejects.toThrow("Skill report requires a skill id.");
   });
 
   test("maps feedback rows into the public item shape", async () => {

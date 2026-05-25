@@ -34,6 +34,7 @@ interface FeedbackServiceDeps {
   countFeedbackByUser: typeof countFeedbackByUser;
   createFeedback: typeof createFeedback;
   findSkillClaimContextById: typeof findSkillClaimContextById;
+  findSkillById: (id: string) => Promise<{ slug: string; title: string } | null>;
   getFeedbackById: typeof getFeedbackById;
   getFeedbackByIdAndUser: typeof getFeedbackByIdAndUser;
   listFeedback: typeof listFeedback;
@@ -44,10 +45,12 @@ interface FeedbackServiceDeps {
 
 const createDefaultFeedbackDeps = async (): Promise<FeedbackServiceDeps> => {
   const repo = await import("./repo");
+  const skillsRepo = await import("../skills/repo");
   return {
     countFeedbackByUser: repo.countFeedbackByUser,
     createFeedback: repo.createFeedback,
     findSkillClaimContextById: repo.findSkillClaimContextById,
+    findSkillById: skillsRepo.findSkillById,
     getFeedbackById: repo.getFeedbackById,
     getFeedbackByIdAndUser: repo.getFeedbackByIdAndUser,
     listFeedback: repo.listFeedback,
@@ -78,7 +81,26 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
       userId?: string | null;
     }) {
       const createFeedbackFn = await getDep("createFeedback");
+      const isSkillReport = input.type?.startsWith("skill_") ?? false;
       const skillId = input.skillId ? asSkillId(input.skillId) : null;
+      let skillSlug = input.skillSlug ?? null;
+      let skillTitle = input.skillTitle ?? null;
+
+      if (isSkillReport) {
+        if (!skillId) {
+          throw new Error("Skill report requires a skill id.");
+        }
+
+        const findSkillByIdFn = await getDep("findSkillById");
+        const skill = await findSkillByIdFn(skillId);
+        if (!skill) {
+          throw new Error("Skill not found.");
+        }
+
+        skillSlug = skill.slug;
+        skillTitle = skill.title;
+      }
+
       if (input.type === "skill_takedown") {
         if (!(skillId && input.userId)) {
           throw new Error("Only the claimed author can request Skill removal.");
@@ -94,8 +116,8 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
       const id = await createFeedbackFn({
         content: input.content,
         skillId,
-        skillSlug: input.skillSlug ?? null,
-        skillTitle: input.skillTitle ?? null,
+        skillSlug,
+        skillTitle,
         title: input.title,
         type: input.type ?? "general",
         userId: input.userId ? asUserId(input.userId) : null,
