@@ -37,7 +37,10 @@ const getTaskModels = (clients: Pick<AiClients, "groq" | "unified">) =>
   }) as const;
 
 export const createAiTasksRuntime = (
-  env: Pick<Env, "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CLOUDFLARE_GATEWAY">,
+  env: Pick<
+    Env,
+    "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_AI_GATEWAY_API_TOKEN" | "CLOUDFLARE_GATEWAY"
+  >,
   options: CreateAiTasksRuntimeOptions = {},
 ): AiTaskRuntime => {
   const createAiGatewayClient = options.createAiGateway ?? createAiGateway;
@@ -60,9 +63,9 @@ export const createAiTasksRuntime = (
       throw new Error("CLOUDFLARE_GATEWAY is required for AI Gateway routing.");
     }
 
-    const apiKey = env.CLOUDFLARE_API_TOKEN?.trim();
+    const apiKey = env.CLOUDFLARE_AI_GATEWAY_API_TOKEN?.trim();
     if (!apiKey) {
-      throw new Error("CLOUDFLARE_API_TOKEN is required for AI Gateway routing.");
+      throw new Error("CLOUDFLARE_AI_GATEWAY_API_TOKEN is required for AI Gateway routing.");
     }
 
     const key = `${accountId}|${gateway}|${apiKey}`;

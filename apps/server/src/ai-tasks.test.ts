@@ -37,7 +37,7 @@ describe("createAiTasksRuntime", () => {
     const runtime = createAiTasksRuntime(
       {
         CLOUDFLARE_ACCOUNT_ID: "account-a",
-        CLOUDFLARE_API_TOKEN: "token-a",
+        CLOUDFLARE_AI_GATEWAY_API_TOKEN: "token-a",
         CLOUDFLARE_GATEWAY: "skills-re",
       } as never,
       {
