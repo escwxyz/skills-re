@@ -81,6 +81,10 @@ import {
 import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
+const SKILL_REPORT_TYPES = ["skill_issue", "skill_display", "skill_takedown"] as const;
+
+export const canCreateFeedbackAnonymously = (type?: string | null): boolean =>
+  type ? (SKILL_REPORT_TYPES as readonly string[]).includes(type) : false;
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -297,6 +301,11 @@ export const appRouter = {
       countMineFeedback({ userId: context.session.user.id }),
     ),
     create: publicProcedure.feedback.create.handler(async ({ input, context }) => {
+      const userId = context.session?.user.id ?? null;
+      if (!userId && !canCreateFeedbackAnonymously(input.type)) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+
       try {
         return await createFeedbackRecord({
           content: input.content,
@@ -305,7 +314,7 @@ export const appRouter = {
           skillTitle: input.skillTitle,
           title: input.title,
           type: input.type,
-          userId: context.session?.user.id ?? null,
+          userId,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Create feedback failed.";
