@@ -167,7 +167,7 @@ export const GithubSubmitPreviewPanel = (props: {
       )}
     </div>
 
-    <div>
+    <div className="space-y-3">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <div className="font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
           {m.preview_select_skills_to_publish()}
@@ -190,75 +190,83 @@ export const GithubSubmitPreviewPanel = (props: {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {props.repoPreview.skills.map((skill) => {
-          const isSelected = props.selectedSkillRootPaths.includes(skill.skillRootPath);
-          const checkboxId = `skill-${skill.skillRootPath || "repo-root"}`;
-          const skillRootPathLabel = formatSkillRootPathLabel(skill.skillRootPath);
+      <div className="max-h-168 overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {props.repoPreview.skills.map((skill) => {
+            const isSelected = props.selectedSkillRootPaths.includes(skill.skillRootPath);
+            const checkboxId = `skill-${skill.skillRootPath || "repo-root"}`;
+            const skillRootPathLabel = formatSkillRootPathLabel(skill.skillRootPath);
 
-          return (
-            <CardLabel key={skill.skillMdPath} htmlFor={checkboxId}>
-              <CardField orientation="horizontal">
-                <FieldContent>
-                  <FieldTitle className="font-mono text-[13px] font-normal text-foreground">
-                    {skill.skillTitle || m.preview_untitled_skill({})}
-                  </FieldTitle>
-                  <p className="truncate font-mono text-[10px] tracking-widest text-muted-foreground">
+            return (
+              <CardLabel
+                key={skill.skillMdPath}
+                htmlFor={checkboxId}
+                className="h-50 overflow-hidden"
+              >
+                <CardField orientation="horizontal" className="h-full gap-3 overflow-hidden">
+                  <FieldContent className="min-w-0 flex-1 gap-0.5 overflow-hidden">
+                    <FieldTitle className="line-clamp-2 font-mono text-[13px] font-normal text-foreground">
+                      {skill.skillTitle || m.preview_untitled_skill({})}
+                    </FieldTitle>
+                    <p className="truncate font-mono text-[10px] tracking-widest text-muted-foreground">
+                      {skill.skillMdPath}
+                    </p>
+                    <p className="truncate font-mono text-[10px] tracking-widest text-muted-foreground">
+                      Root: {skillRootPathLabel}
+                    </p>
+                    {skill.skillDescription && (
+                      <p className="mt-1 overflow-hidden text-[12px] leading-relaxed text-muted-foreground [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4]">
+                        {skill.skillDescription}
+                      </p>
+                    )}
+                  </FieldContent>
+                  <input
+                    type="checkbox"
+                    id={checkboxId}
+                    checked={isSelected}
+                    data-checked={isSelected || undefined}
+                    onChange={() =>
+                      props.onSelectedSkillRootPathsChange(
+                        isSelected
+                          ? props.selectedSkillRootPaths.filter((p) => p !== skill.skillRootPath)
+                          : [...props.selectedSkillRootPaths, skill.skillRootPath],
+                      )
+                    }
+                    className="mt-0.5 size-4 shrink-0 self-start accent-current"
+                  />
+                </CardField>
+              </CardLabel>
+            );
+          })}
+        </div>
+
+        {props.repoPreview.invalidSkills.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+              {m.preview_invalid_skills_title()}
+            </p>
+            <div className="space-y-2">
+              {props.repoPreview.invalidSkills.map((skill) => (
+                <div
+                  key={skill.skillMdPath}
+                  className="rounded-none border border-editorial-red/30 bg-muted p-3"
+                >
+                  <p className="truncate font-mono text-[11px] text-foreground">
                     {skill.skillMdPath}
                   </p>
-                  <p className="font-mono text-[10px] tracking-widest text-muted-foreground">
-                    Root: {skillRootPathLabel}
+                  <p className="truncate font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
+                    {formatSkillRootPathLabel(skill.skillRootPath)}
                   </p>
-                  {skill.skillDescription && (
-                    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                      {skill.skillDescription}
-                    </p>
-                  )}
-                </FieldContent>
-                <input
-                  type="checkbox"
-                  id={checkboxId}
-                  checked={isSelected}
-                  data-checked={isSelected || undefined}
-                  onChange={() =>
-                    props.onSelectedSkillRootPathsChange(
-                      isSelected
-                        ? props.selectedSkillRootPaths.filter((p) => p !== skill.skillRootPath)
-                        : [...props.selectedSkillRootPaths, skill.skillRootPath],
-                    )
-                  }
-                  className="mt-0.5 size-4 shrink-0 accent-current"
-                />
-              </CardField>
-            </CardLabel>
-          );
-        })}
+                  <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                    {skill.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-
-    {props.repoPreview.invalidSkills.length > 0 && (
-      <div>
-        <p className="mb-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
-          {m.preview_invalid_skills_title()}
-        </p>
-        <div className="space-y-2">
-          {props.repoPreview.invalidSkills.map((skill) => (
-            <div
-              key={skill.skillMdPath}
-              className="rounded-none border border-editorial-red/30 bg-muted p-3"
-            >
-              <p className="font-mono text-[11px] text-foreground">{skill.skillMdPath}</p>
-              <p className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
-                {formatSkillRootPathLabel(skill.skillRootPath)}
-              </p>
-              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                {skill.message}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
   </div>
 );
 
