@@ -50,6 +50,7 @@ export {
 export type { SkillDownloadMetrics, SkillViewMetrics } from "./metrics";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
 export {
+  FeedbackCreateError,
   countMineFeedback,
   createFeedbackRecord,
   getFeedbackByIdPublic as getFeedbackById,

@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { asFeedbackId, asUserId } from "@skills-re/db/utils";
+import { asFeedbackId, asSkillId, asUserId } from "@skills-re/db/utils";
 
 import {
   createFeedback,
@@ -58,6 +58,43 @@ describe("feedback repo", () => {
     });
   });
 
+  test("creates a skill report with skill context", async () => {
+    const inserted: unknown[] = [];
+    const database = {
+      insert: () => ({
+        values: (value: unknown) => {
+          inserted.push(value);
+          return {
+            returning: () => [{ id: asFeedbackId("feedback-1") }],
+          };
+        },
+      }),
+    };
+
+    await createFeedback(
+      {
+        content: "This Skill renders with broken metadata.",
+        skillId: asSkillId("skill-1"),
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
+        title: "Broken Skill display",
+        type: "skill_display",
+        userId: null,
+      },
+      database as never,
+    );
+
+    expect(inserted[0]).toMatchObject({
+      content: "This Skill renders with broken metadata.",
+      skillId: "skill-1",
+      skillSlug: "agent-helper",
+      skillTitle: "Agent Helper",
+      title: "Broken Skill display",
+      type: "skill_display",
+      userId: null,
+    });
+  });
+
   test("lists feedback with a status filter", async () => {
     const calls: unknown[] = [];
     const database = {
@@ -74,6 +111,9 @@ describe("feedback repo", () => {
                       createdAt: 1,
                       id: asFeedbackId("feedback-1"),
                       response: null,
+                      skillId: null,
+                      skillSlug: null,
+                      skillTitle: null,
                       status: "resolved" as const,
                       title: "Bug report",
                       type: "bug" as const,
@@ -102,6 +142,9 @@ describe("feedback repo", () => {
         createdAt: 1,
         id: asFeedbackId("feedback-1"),
         response: null,
+        skillId: null,
+        skillSlug: null,
+        skillTitle: null,
         status: "resolved",
         title: "Bug report",
         type: "bug",
@@ -118,6 +161,9 @@ describe("feedback repo", () => {
       createdAt: 1,
       id: asFeedbackId("feedback-1"),
       response: null,
+      skillId: null,
+      skillSlug: null,
+      skillTitle: null,
       status: "pending" as const,
       title: "Bug report",
       type: "bug" as const,

@@ -1,19 +1,30 @@
 import { and, count, desc, eq } from "drizzle-orm";
 
 import { feedbackTable } from "@skills-re/db/schema/feedback";
-import { asFeedbackId, asUserId } from "@skills-re/db/utils";
-import type { FeedbackId, UserId } from "@skills-re/db/utils";
+import { reposTable } from "@skills-re/db/schema/repos";
+import { skillsTable } from "@skills-re/db/schema/skills";
+import { asFeedbackId, asSkillId, asUserId } from "@skills-re/db/utils";
+import type { FeedbackId, SkillId, UserId } from "@skills-re/db/utils";
 
 import { db } from "../shared/db";
 
 export type FeedbackStatus = "pending" | "resolved" | "in_review";
-export type FeedbackType = "bug" | "request" | "general";
+export type FeedbackType =
+  | "bug"
+  | "request"
+  | "general"
+  | "skill_issue"
+  | "skill_display"
+  | "skill_takedown";
 
 export interface FeedbackRow {
   content: string;
   createdAt: number;
   id: string;
   response: string | null;
+  skillId: string | null;
+  skillSlug: string | null;
+  skillTitle: string | null;
   status: FeedbackStatus;
   title: string;
   type: FeedbackType;
@@ -39,6 +50,9 @@ export async function countFeedbackByUser(
 export async function createFeedback(
   input: {
     content: string;
+    skillId?: SkillId | null;
+    skillSlug?: string | null;
+    skillTitle?: string | null;
     title: string;
     type: FeedbackType;
     userId?: UserId | null;
@@ -52,6 +66,9 @@ export async function createFeedback(
       content: input.content,
       createdAt: now,
       response: null,
+      skillId: input.skillId ?? null,
+      skillSlug: input.skillSlug ?? null,
+      skillTitle: input.skillTitle ?? null,
       status: "pending",
       title: input.title,
       type: input.type,
@@ -68,6 +85,21 @@ export async function createFeedback(
   }
 
   return created.id;
+}
+
+export async function findSkillClaimContextById(skillId: SkillId, database = db) {
+  const rows = await database
+    .select({
+      claimedUserId: skillsTable.userId,
+      repoOwnerHandle: reposTable.ownerHandle,
+      skillId: skillsTable.id,
+    })
+    .from(skillsTable)
+    .leftJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .where(eq(skillsTable.id, asSkillId(skillId)))
+    .limit(1);
+
+  return rows[0] ?? null;
 }
 
 export async function listFeedback(

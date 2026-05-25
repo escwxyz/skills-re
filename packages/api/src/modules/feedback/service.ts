@@ -1,4 +1,4 @@
-import { asFeedbackId, asUserId } from "@skills-re/db/utils";
+import { asFeedbackId, asSkillId, asUserId } from "@skills-re/db/utils";
 import { createDepGetter } from "../shared/deps";
 
 import type {
@@ -7,6 +7,7 @@ import type {
   FeedbackRow,
   FeedbackStatus,
   FeedbackType,
+  findSkillClaimContextById,
   getFeedbackById,
   getFeedbackByIdAndUser,
   listFeedback,
@@ -15,11 +16,26 @@ import type {
   updateFeedbackStatus,
 } from "./repo";
 
+export type FeedbackCreateErrorCode = "BAD_REQUEST" | "FORBIDDEN" | "UNAUTHORIZED";
+
+export class FeedbackCreateError extends Error {
+  readonly code: FeedbackCreateErrorCode;
+
+  constructor(code: FeedbackCreateErrorCode, message: string) {
+    super(message);
+    this.code = code;
+    this.name = "FeedbackCreateError";
+  }
+}
+
 const toOutputItem = (row: FeedbackRow) => ({
   _creationTime: row.createdAt,
   _id: row.id,
   content: row.content,
   response: row.response,
+  skillId: row.skillId,
+  skillSlug: row.skillSlug,
+  skillTitle: row.skillTitle,
   status: row.status,
   title: row.title,
   type: row.type,
@@ -29,6 +45,8 @@ const toOutputItem = (row: FeedbackRow) => ({
 interface FeedbackServiceDeps {
   countFeedbackByUser: typeof countFeedbackByUser;
   createFeedback: typeof createFeedback;
+  findSkillClaimContextById: typeof findSkillClaimContextById;
+  findSkillById: (id: string) => Promise<{ slug: string; title: string } | null>;
   getFeedbackById: typeof getFeedbackById;
   getFeedbackByIdAndUser: typeof getFeedbackByIdAndUser;
   listFeedback: typeof listFeedback;
@@ -39,9 +57,12 @@ interface FeedbackServiceDeps {
 
 const createDefaultFeedbackDeps = async (): Promise<FeedbackServiceDeps> => {
   const repo = await import("./repo");
+  const skillsRepo = await import("../skills/repo");
   return {
     countFeedbackByUser: repo.countFeedbackByUser,
     createFeedback: repo.createFeedback,
+    findSkillClaimContextById: repo.findSkillClaimContextById,
+    findSkillById: skillsRepo.findSkillById,
     getFeedbackById: repo.getFeedbackById,
     getFeedbackByIdAndUser: repo.getFeedbackByIdAndUser,
     listFeedback: repo.listFeedback,
@@ -65,12 +86,56 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     async create(input: {
       title: string;
       content: string;
+      skillId?: string | null;
+      skillSlug?: string | null;
+      skillTitle?: string | null;
       type?: FeedbackType;
       userId?: string | null;
     }) {
       const createFeedbackFn = await getDep("createFeedback");
+      const isSkillReport = input.type?.startsWith("skill_") ?? false;
+      const skillId = input.skillId ? asSkillId(input.skillId) : null;
+      let skillSlug = input.skillSlug ?? null;
+      let skillTitle = input.skillTitle ?? null;
+
+      if (isSkillReport) {
+        if (!skillId) {
+          throw new FeedbackCreateError("BAD_REQUEST", "Skill report requires a skill id.");
+        }
+
+        const findSkillByIdFn = await getDep("findSkillById");
+        const skill = await findSkillByIdFn(skillId);
+        if (!skill) {
+          throw new FeedbackCreateError("BAD_REQUEST", "Skill not found.");
+        }
+
+        skillSlug = skill.slug;
+        skillTitle = skill.title;
+      }
+
+      if (input.type === "skill_takedown") {
+        if (!(skillId && input.userId)) {
+          throw new FeedbackCreateError(
+            "UNAUTHORIZED",
+            "Only the claimed author can request Skill removal.",
+          );
+        }
+
+        const findSkillClaimContextByIdFn = await getDep("findSkillClaimContextById");
+        const claimContext = await findSkillClaimContextByIdFn(skillId);
+        if (claimContext?.claimedUserId !== input.userId) {
+          throw new FeedbackCreateError(
+            "FORBIDDEN",
+            "Only the claimed author can request Skill removal.",
+          );
+        }
+      }
+
       const id = await createFeedbackFn({
         content: input.content,
+        skillId,
+        skillSlug,
+        skillTitle,
         title: input.title,
         type: input.type ?? "general",
         userId: input.userId ? asUserId(input.userId) : null,
@@ -143,6 +208,9 @@ export const feedbackService = createFeedbackService();
 export async function createFeedbackRecord(input: {
   title: string;
   content: string;
+  skillId?: string | null;
+  skillSlug?: string | null;
+  skillTitle?: string | null;
   type?: FeedbackType;
   userId?: string | null;
 }) {

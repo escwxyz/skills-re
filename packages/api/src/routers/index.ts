@@ -17,6 +17,7 @@ import {
   countMineReviews,
   createCollection,
   createFeedbackRecord,
+  FeedbackCreateError,
   createReviewRecord,
   newsletterService,
   deleteCollection,
@@ -81,6 +82,18 @@ import {
 import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
+const SKILL_REPORT_TYPES = ["skill_issue", "skill_display", "skill_takedown"] as const;
+
+export const canCreateFeedbackAnonymously = (type?: string | null): boolean =>
+  type ? (SKILL_REPORT_TYPES as readonly string[]).includes(type) : false;
+
+export const mapCreateFeedbackError = (error: unknown) => {
+  if (!(error instanceof FeedbackCreateError)) {
+    return null;
+  }
+
+  return new ORPCError(error.code, { message: error.message });
+};
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -296,14 +309,32 @@ export const appRouter = {
     countMine: protectedProcedure.feedback.countMine.handler(({ context }) =>
       countMineFeedback({ userId: context.session.user.id }),
     ),
-    create: protectedProcedure.feedback.create.handler(({ input, context }) =>
-      createFeedbackRecord({
-        content: input.content,
-        title: input.title,
-        type: input.type,
-        userId: context.session.user.id,
-      }),
-    ),
+    create: publicProcedure.feedback.create.handler(async ({ input, context }) => {
+      const userId = context.session?.user.id ?? null;
+      if (!userId && !canCreateFeedbackAnonymously(input.type)) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+
+      try {
+        return await createFeedbackRecord({
+          content: input.content,
+          skillId: input.skillId,
+          skillSlug: input.skillSlug,
+          skillTitle: input.skillTitle,
+          title: input.title,
+          type: input.type,
+          userId,
+        });
+      } catch (error) {
+        const mappedError = mapCreateFeedbackError(error);
+        if (mappedError) {
+          throw mappedError;
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Create feedback failed.",
+        });
+      }
+    }),
     getById: adminProcedure.feedback.getById.handler(({ input }) => getFeedbackById(input.id)),
     getMineById: protectedProcedure.feedback.getMineById.handler(({ input, context }) =>
       getMineFeedbackById({
