@@ -132,13 +132,13 @@ function getFeedbackTypeLabel(type: FeedbackType) {
     return m.dashboard_feedbacks_type_request();
   }
   if (type === "skill_issue") {
-    return "Skill problem";
+    return m.dashboard_feedbacks_type_skill_issue();
   }
   if (type === "skill_display") {
-    return "Display issue";
+    return m.dashboard_feedbacks_type_skill_display();
   }
   if (type === "skill_takedown") {
-    return "Removal request";
+    return m.dashboard_feedbacks_type_skill_takedown();
   }
   return m.dashboard_feedbacks_type_general();
 }
