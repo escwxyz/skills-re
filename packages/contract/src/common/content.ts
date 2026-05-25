@@ -150,6 +150,7 @@ export const collectionListItemSchema = z.object({
   skillCount: z.number().int().nonnegative(),
   slug: tagSlugSchema,
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const collectionDetailSchema = z.object({
@@ -158,6 +159,7 @@ export const collectionDetailSchema = z.object({
   skills: z.array(searchSkillListItemSchema),
   slug: tagSlugSchema,
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const repoListItemSchema = z.object({

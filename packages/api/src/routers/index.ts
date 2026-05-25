@@ -202,8 +202,11 @@ export const appRouter = {
   },
   collections: {
     count: publicProcedure.collections.count.handler(() => countCollections()),
-    getBySlug: publicProcedure.collections.getBySlug.handler(({ input }) =>
-      getCollectionBySlug(input),
+    getBySlug: publicProcedure.collections.getBySlug.handler(({ input, context }) =>
+      getCollectionBySlug(input, {
+        isAdmin: context.session?.user.role === "admin",
+        userId: context.session?.user.id,
+      }),
     ),
     list: publicProcedure.collections.list.handler(({ input }) => listCollections(input)),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {

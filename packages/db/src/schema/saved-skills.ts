@@ -5,6 +5,8 @@ import { baseTableColumns } from "../utils";
 import { usersTable } from "./auth";
 import { skillsTable } from "./skills";
 
+// Legacy table retained for migration/backfill compatibility. New saved-skill
+// writes use the user's default collection in collections_skills.
 export const savedSkillsTable = sqliteTable(
   "saved_skills",
   {

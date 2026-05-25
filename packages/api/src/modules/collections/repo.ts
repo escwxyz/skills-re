@@ -14,6 +14,11 @@ import { defaultLimit } from "../shared/pagination";
 import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
 
 const COLLECTIONS_LIST_LIMIT_MAX = 100;
+export const DEFAULT_COLLECTION_DESCRIPTION = "Skills saved to your personal collection.";
+export const DEFAULT_COLLECTION_TITLE = "Saved Skills";
+
+type DefaultCollectionLookupDatabase = Pick<typeof db, "select">;
+type DefaultCollectionWriteDatabase = Pick<typeof db, "insert" | "select">;
 
 const toSkillRows = () => ({
   authorHandle: reposTable.ownerHandle,
@@ -43,7 +48,7 @@ export async function countCollections() {
   const rows = await db
     .select({ value: sql<number>`count(*)` })
     .from(collectionsTable)
-    .where(eq(collectionsTable.status, "active"));
+    .where(and(eq(collectionsTable.status, "active"), eq(collectionsTable.visibility, "public")));
 
   return rows[0]?.value ?? 0;
 }
@@ -68,6 +73,7 @@ export async function listCollections(input?: { cursor?: string; limit?: number 
       skillCount: sql<number>`coalesce(${skillCounts.skillCount}, 0)`,
       slug: collectionsTable.slug,
       title: collectionsTable.title,
+      visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
     .leftJoin(skillCounts, eq(skillCounts.collectionId, collectionsTable.id))
@@ -75,9 +81,10 @@ export async function listCollections(input?: { cursor?: string; limit?: number 
       cursor
         ? and(
             eq(collectionsTable.status, "active"),
+            eq(collectionsTable.visibility, "public"),
             sql`(${collectionsTable.title}, ${collectionsTable.id}) > (${cursor.title}, ${cursor.id})`,
           )
-        : eq(collectionsTable.status, "active"),
+        : and(eq(collectionsTable.status, "active"), eq(collectionsTable.visibility, "public")),
     )
     .orderBy(asc(collectionsTable.title))
     .limit(limit + 1);
@@ -108,6 +115,7 @@ export async function findCollectionBySlug(slug: string) {
       status: collectionsTable.status,
       title: collectionsTable.title,
       userId: collectionsTable.userId,
+      visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
     .where(eq(collectionsTable.slug, slug))
@@ -125,6 +133,7 @@ export async function findCollectionById(id: CollectionId) {
       status: collectionsTable.status,
       title: collectionsTable.title,
       userId: collectionsTable.userId,
+      visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
     .where(eq(collectionsTable.id, id))
@@ -158,6 +167,7 @@ export async function insertCollection(input: {
   slug: string;
   title: string;
   userId: UserId;
+  visibility?: "public" | "private";
 }) {
   const id = createId() as CollectionId;
   await db.insert(collectionsTable).values({
@@ -167,6 +177,7 @@ export async function insertCollection(input: {
     title: input.title,
     status: "active",
     userId: input.userId,
+    visibility: input.visibility ?? "private",
   });
   return { id };
 }
@@ -177,6 +188,7 @@ export async function patchCollection(input: {
   slug?: string;
   status?: "active" | "archived";
   title?: string;
+  visibility?: "public" | "private";
 }) {
   const { id, ...fields } = input;
   if (Object.keys(fields).length === 0) {
@@ -184,6 +196,50 @@ export async function patchCollection(input: {
   }
 
   await db.update(collectionsTable).set(fields).where(eq(collectionsTable.id, id));
+}
+
+export async function findDefaultCollectionByUserId(
+  input: { userId: UserId },
+  database: DefaultCollectionLookupDatabase = db,
+) {
+  const rows = await database
+    .select({ id: collectionsTable.id })
+    .from(collectionsTable)
+    .where(and(eq(collectionsTable.userId, input.userId), eq(collectionsTable.kind, "default")))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function getOrCreateDefaultCollection(
+  input: { userId: UserId },
+  database: DefaultCollectionWriteDatabase = db,
+) {
+  const existing = await findDefaultCollectionByUserId(input, database);
+  if (existing) {
+    return existing;
+  }
+
+  await database
+    .insert(collectionsTable)
+    .values({
+      id: asCollectionId(createId()),
+      description: DEFAULT_COLLECTION_DESCRIPTION,
+      kind: "default",
+      slug: `default-${createId()}`,
+      status: "active",
+      title: DEFAULT_COLLECTION_TITLE,
+      userId: input.userId,
+      visibility: "private",
+    })
+    .onConflictDoNothing();
+
+  const created = await findDefaultCollectionByUserId(input, database);
+  if (!created) {
+    throw new Error("Default collection not found.");
+  }
+
+  return created;
 }
 
 export async function deleteCollection(id: CollectionId) {

@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import {
   collectionsContract,
   collectionsListInputSchema,
+  collectionVisibilitySchema,
   setCollectionSkillsInputSchema,
 } from "./collections";
 
@@ -25,6 +26,12 @@ describe("collections contract", () => {
       limit: 100,
     });
     expect(() => collectionsListInputSchema.parse({ limit: 101 })).toThrow();
+  });
+
+  test("accepts public and private collection visibility values", () => {
+    expect(collectionVisibilitySchema.parse("public")).toBe("public");
+    expect(collectionVisibilitySchema.parse("private")).toBe("private");
+    expect(() => collectionVisibilitySchema.parse("archived")).toThrow();
   });
 
   test("exposes the collection routes used by the API layer", () => {

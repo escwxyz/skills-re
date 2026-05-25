@@ -4,7 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import { asCollectionId, asSkillId } from "@skills-re/db/utils";
 
-import { replaceCollectionSkills } from "./repo";
+import { getOrCreateDefaultCollection, replaceCollectionSkills } from "./repo";
 import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
 
 describe("collections repo", () => {
@@ -143,6 +143,48 @@ describe("collections repo", () => {
       collectionId: "collection-1",
       position: 33,
       skillId: "skill-34",
+    });
+  });
+
+  test("creates a private default collection when one does not exist", async () => {
+    const operations: Array<{ op: string; value?: unknown }> = [];
+    const database = {
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: () => {
+              operations.push({ op: "select" });
+              return operations.filter((operation) => operation.op === "select").length === 1
+                ? Promise.resolve([])
+                : Promise.resolve([{ id: "collection-1" }]);
+            },
+          }),
+        }),
+      }),
+      insert: () => ({
+        values: (value: unknown) => {
+          operations.push({ op: "insert", value });
+          return {
+            onConflictDoNothing: () => Promise.resolve(),
+          };
+        },
+      }),
+    };
+
+    await expect(
+      getOrCreateDefaultCollection({ userId: "user-1" }, database as never),
+    ).resolves.toEqual({ id: "collection-1" });
+
+    expect(operations[1]).toMatchObject({
+      op: "insert",
+      value: {
+        description: "Skills saved to your personal collection.",
+        kind: "default",
+        status: "active",
+        title: "Saved Skills",
+        userId: "user-1",
+        visibility: "private",
+      },
     });
   });
 });

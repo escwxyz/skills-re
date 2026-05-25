@@ -12,6 +12,7 @@ interface CollectionRow {
   status: "active" | "archived";
   title: string;
   userId: string;
+  visibility: "public" | "private";
 }
 
 interface CollectionListRow {
@@ -20,6 +21,7 @@ interface CollectionListRow {
   skillCount: number;
   slug: string;
   title: string;
+  visibility?: "public" | "private";
 }
 
 interface CollectionSkillRow extends SearchSkillRow {
@@ -85,6 +87,7 @@ interface CollectionsServiceDeps {
     slug: string;
     title: string;
     userId: UserId;
+    visibility?: "public" | "private";
   }) => Promise<{ id: string }>;
   patchCollection: (input: {
     id: CollectionId;
@@ -92,6 +95,7 @@ interface CollectionsServiceDeps {
     slug?: string;
     status?: "active" | "archived";
     title?: string;
+    visibility?: "public" | "private";
   }) => Promise<void>;
   deleteCollection: (id: CollectionId) => Promise<void>;
   insertCollectionSkill: (input: {
@@ -207,10 +211,16 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       return await fn(input);
     },
 
-    async getCollectionBySlug(input: { slug: string }) {
+    async getCollectionBySlug(input: { slug: string }, caller?: Partial<CallerContext>) {
       const findCollectionBySlug = await getDep("findCollectionBySlug");
       const row = await findCollectionBySlug(input.slug);
       if (!(row && row.status === "active")) {
+        return null;
+      }
+      if (
+        row.visibility === "private" &&
+        !(caller?.isAdmin || (caller?.userId && caller.userId === row.userId))
+      ) {
         return null;
       }
 
@@ -232,11 +242,17 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
         skills: skillsWithCollectionStats,
         slug: row.slug,
         title: row.title,
+        visibility: row.visibility,
       };
     },
 
     async createCollection(
-      input: { description: string; slug: string; title: string },
+      input: {
+        description: string;
+        slug: string;
+        title: string;
+        visibility?: "public" | "private";
+      },
       caller: CallerContext,
     ) {
       const fn = await getDep("insertCollection");
@@ -250,6 +266,7 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
         slug?: string;
         status?: "active" | "archived";
         title?: string;
+        visibility?: "public" | "private";
       },
       caller: CallerContext,
     ) {
@@ -316,12 +333,20 @@ export async function listCollectionsPublic(input?: { cursor?: string; limit?: n
   return await createCollectionsService().listCollections(input);
 }
 
-export async function getCollectionBySlug(input: { slug: string }) {
-  return await createCollectionsService().getCollectionBySlug(input);
+export async function getCollectionBySlug(
+  input: { slug: string },
+  caller?: Partial<CallerContext>,
+) {
+  return await createCollectionsService().getCollectionBySlug(input, caller);
 }
 
 export async function createCollection(
-  input: { description: string; slug: string; title: string },
+  input: {
+    description: string;
+    slug: string;
+    title: string;
+    visibility?: "public" | "private";
+  },
   caller: CallerContext,
 ) {
   return await createCollectionsService().createCollection(input, caller);
@@ -334,6 +359,7 @@ export async function updateCollection(
     slug?: string;
     status?: "active" | "archived";
     title?: string;
+    visibility?: "public" | "private";
   },
   caller: CallerContext,
 ) {

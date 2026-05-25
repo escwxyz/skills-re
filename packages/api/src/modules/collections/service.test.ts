@@ -7,6 +7,105 @@ import { asSnapshotId } from "@skills-re/db/utils";
 import { createCollectionsService } from "./service";
 
 describe("collections service", () => {
+  test("hides private collections from non-owners and returns them to owners", async () => {
+    const service = createCollectionsService({
+      findCollectionBySlug: () =>
+        Promise.resolve({
+          description: "Personal saves.",
+          id: "collection-1",
+          slug: "saved-skills",
+          status: "active",
+          title: "Saved Skills",
+          userId: "user-1",
+          visibility: "private",
+        }),
+      getSkillsByCollectionId: () => Promise.resolve([]),
+    });
+
+    await expect(service.getCollectionBySlug({ slug: "saved-skills" })).resolves.toBeNull();
+    await expect(
+      service.getCollectionBySlug(
+        { slug: "saved-skills" },
+        {
+          isAdmin: false,
+          userId: "user-1",
+        },
+      ),
+    ).resolves.toEqual({
+      description: "Personal saves.",
+      id: "collection-1",
+      skills: [],
+      slug: "saved-skills",
+      title: "Saved Skills",
+      visibility: "private",
+    });
+  });
+
+  test("passes requested visibility through collection create and update", async () => {
+    const calls: unknown[] = [];
+    const service = createCollectionsService({
+      findCollectionById: () =>
+        Promise.resolve({
+          description: "Curated.",
+          id: "collection-1",
+          slug: "curated",
+          status: "active",
+          title: "Curated",
+          userId: "user-1",
+          visibility: "private",
+        }),
+      insertCollection: (input) => {
+        calls.push({ insert: input });
+        return Promise.resolve({ id: "collection-1" });
+      },
+      patchCollection: (input) => {
+        calls.push({ patch: input });
+        return Promise.resolve();
+      },
+    });
+
+    await service.createCollection(
+      {
+        description: "Curated.",
+        slug: "curated",
+        title: "Curated",
+        visibility: "public",
+      },
+      {
+        isAdmin: false,
+        userId: "user-1",
+      },
+    );
+    await service.updateCollection(
+      {
+        id: "collection-1",
+        visibility: "private",
+      },
+      {
+        isAdmin: false,
+        userId: "user-1",
+      },
+    );
+
+    expect(calls).toEqual([
+      {
+        insert: {
+          description: "Curated.",
+          slug: "curated",
+          title: "Curated",
+          userId: "user-1",
+          visibility: "public",
+        },
+      },
+      {
+        patch: {
+          id: "collection-1",
+          visibility: "private",
+        },
+      },
+    ]);
+  });
+
   test("enriches collection skills with the latest static audit data", async () => {
     const auditCalls: string[] = [];
     const fileCalls: string[] = [];

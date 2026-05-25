@@ -13,6 +13,8 @@ const collectionIdInputSchema = z.object({
   id: idSchema,
 });
 
+export const collectionVisibilitySchema = z.enum(["public", "private"]);
+
 const COLLECTIONS_LIST_LIMIT_MAX = 100;
 
 export const collectionsListInputSchema = z
@@ -88,6 +90,7 @@ const createCollectionContract = baseContract
       description: z.string().min(1),
       slug: tagSlugSchema,
       title: z.string().min(1),
+      visibility: collectionVisibilitySchema.optional(),
     }),
   )
   .output(z.object({ id: idSchema }));
@@ -108,6 +111,7 @@ const updateCollectionContract = baseContract
       slug: tagSlugSchema.optional(),
       status: z.enum(["active", "archived"]).optional(),
       title: z.string().min(1).optional(),
+      visibility: collectionVisibilitySchema.optional(),
     }),
   )
   .output(z.null());
