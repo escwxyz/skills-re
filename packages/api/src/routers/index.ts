@@ -17,6 +17,7 @@ import {
   countMineReviews,
   createCollection,
   createFeedbackRecord,
+  FeedbackCreateError,
   createReviewRecord,
   newsletterService,
   deleteCollection,
@@ -85,6 +86,14 @@ const SKILL_REPORT_TYPES = ["skill_issue", "skill_display", "skill_takedown"] as
 
 export const canCreateFeedbackAnonymously = (type?: string | null): boolean =>
   type ? (SKILL_REPORT_TYPES as readonly string[]).includes(type) : false;
+
+export const mapCreateFeedbackError = (error: unknown) => {
+  if (!(error instanceof FeedbackCreateError)) {
+    return null;
+  }
+
+  return new ORPCError(error.code, { message: error.message });
+};
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -317,9 +326,9 @@ export const appRouter = {
           userId,
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Create feedback failed.";
-        if (message.includes("claimed author")) {
-          throw new ORPCError("BAD_REQUEST", { message });
+        const mappedError = mapCreateFeedbackError(error);
+        if (mappedError) {
+          throw mappedError;
         }
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message: "Create feedback failed.",

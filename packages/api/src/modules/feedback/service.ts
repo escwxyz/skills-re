@@ -16,6 +16,18 @@ import type {
   updateFeedbackStatus,
 } from "./repo";
 
+export type FeedbackCreateErrorCode = "BAD_REQUEST" | "FORBIDDEN" | "UNAUTHORIZED";
+
+export class FeedbackCreateError extends Error {
+  readonly code: FeedbackCreateErrorCode;
+
+  constructor(code: FeedbackCreateErrorCode, message: string) {
+    super(message);
+    this.code = code;
+    this.name = "FeedbackCreateError";
+  }
+}
+
 const toOutputItem = (row: FeedbackRow) => ({
   _creationTime: row.createdAt,
   _id: row.id,
@@ -88,13 +100,13 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
 
       if (isSkillReport) {
         if (!skillId) {
-          throw new Error("Skill report requires a skill id.");
+          throw new FeedbackCreateError("BAD_REQUEST", "Skill report requires a skill id.");
         }
 
         const findSkillByIdFn = await getDep("findSkillById");
         const skill = await findSkillByIdFn(skillId);
         if (!skill) {
-          throw new Error("Skill not found.");
+          throw new FeedbackCreateError("BAD_REQUEST", "Skill not found.");
         }
 
         skillSlug = skill.slug;
@@ -103,13 +115,19 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
 
       if (input.type === "skill_takedown") {
         if (!(skillId && input.userId)) {
-          throw new Error("Only the claimed author can request Skill removal.");
+          throw new FeedbackCreateError(
+            "UNAUTHORIZED",
+            "Only the claimed author can request Skill removal.",
+          );
         }
 
         const findSkillClaimContextByIdFn = await getDep("findSkillClaimContextById");
         const claimContext = await findSkillClaimContextByIdFn(skillId);
         if (claimContext?.claimedUserId !== input.userId) {
-          throw new Error("Only the claimed author can request Skill removal.");
+          throw new FeedbackCreateError(
+            "FORBIDDEN",
+            "Only the claimed author can request Skill removal.",
+          );
         }
       }
 

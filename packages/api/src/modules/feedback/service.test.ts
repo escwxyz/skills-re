@@ -4,7 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import { asFeedbackId, asSkillId } from "@skills-re/db/utils";
 
-import { createFeedbackService } from "./service";
+import { FeedbackCreateError, createFeedbackService } from "./service";
 
 describe("feedback service", () => {
   test("creates feedback for the authenticated user", async () => {
@@ -207,14 +207,18 @@ describe("feedback service", () => {
       getFeedbackById: (_id, _database?) => null,
     });
 
-    await expect(
-      service.create({
-        content: "Missing skill id",
-        title: "Display issue",
-        type: "skill_issue",
-        userId: null,
-      }),
-    ).rejects.toThrow("Skill report requires a skill id.");
+    const input = {
+      content: "Missing skill id",
+      title: "Display issue",
+      type: "skill_issue" as const,
+      userId: null,
+    };
+
+    await expect(service.create(input)).rejects.toBeInstanceOf(FeedbackCreateError);
+    await expect(service.create(input)).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Skill report requires a skill id.",
+    });
   });
 
   test("maps feedback rows into the public item shape", async () => {

@@ -1,8 +1,10 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import { ORPCError } from "@orpc/server";
 
-import { canCreateFeedbackAnonymously } from "./index";
+import { FeedbackCreateError } from "../modules";
+import { canCreateFeedbackAnonymously, mapCreateFeedbackError } from "./index";
 
 describe("feedback create auth gate", () => {
   test("allows anonymous Skill reports only", () => {
@@ -14,5 +16,16 @@ describe("feedback create auth gate", () => {
     expect(canCreateFeedbackAnonymously("general")).toBe(false);
     expect(canCreateFeedbackAnonymously(undefined)).toBe(false);
     expect(canCreateFeedbackAnonymously(null)).toBe(false);
+  });
+
+  test("maps structured feedback errors to ORPC errors", () => {
+    const mapped = mapCreateFeedbackError(
+      new FeedbackCreateError("BAD_REQUEST", "Skill not found."),
+    );
+
+    expect(mapped).toBeInstanceOf(ORPCError);
+    expect(mapped?.code).toBe("BAD_REQUEST");
+    expect(mapped?.message).toBe("Skill not found.");
+    expect(mapCreateFeedbackError(new Error("unexpected"))).toBeNull();
   });
 });
