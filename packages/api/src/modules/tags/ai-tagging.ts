@@ -328,6 +328,12 @@ export const generateSkillTagsBatch = async (
   const models = resolvedDeps.getModels("skill-tagging");
   let lastError: unknown = null;
   for (const [attempt, model] of models.entries()) {
+    console.info("[ai-tagging] trying model", {
+      attempt: attempt + 1,
+      itemCount: input.items.length,
+      modelId: model.modelId,
+      provider: model.provider,
+    });
     try {
       const result = await retryAiTaskCall(() =>
         resolvedDeps.generateText({
@@ -358,7 +364,7 @@ export const generateSkillTagsBatch = async (
         continue;
       }
 
-      return {
+      const resolved = {
         items: output.items.map((item): SkillTaggingOutputItem => {
           const selectedByDimension: Record<
             z.infer<typeof dimensionSchema>,
@@ -448,10 +454,18 @@ export const generateSkillTagsBatch = async (
           };
         }),
       };
+      console.info("[ai-tagging] model succeeded", {
+        attempt: attempt + 1,
+        modelId: model.modelId,
+        provider: model.provider,
+      });
+      return resolved;
     } catch (error) {
       lastError = error;
       console.warn("[ai-tagging] model failed, trying next", {
         attempt: attempt + 1,
+        modelId: model.modelId,
+        provider: model.provider,
         error: error instanceof Error ? error.message : String(error),
       });
     }

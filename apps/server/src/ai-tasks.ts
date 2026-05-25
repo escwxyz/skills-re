@@ -1,5 +1,5 @@
-import { createGroq } from "@ai-sdk/groq";
 import { createAiGateway } from "ai-gateway-provider";
+import { createGroq } from "ai-gateway-provider/providers/groq";
 import { createUnified } from "ai-gateway-provider/providers/unified";
 
 import type { AiTaskRuntime, AiTaskType } from "@skills-re/api/types";
