@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { asFeedbackId } from "@skills-re/db/utils";
+import { asFeedbackId, asSkillId } from "@skills-re/db/utils";
 
 import { createFeedbackService } from "./service";
 
@@ -28,11 +28,106 @@ describe("feedback service", () => {
     expect(calls).toEqual([
       {
         content: "Something is broken",
+        skillId: null,
+        skillSlug: null,
+        skillTitle: null,
         title: "Bug report",
         type: "bug",
         userId: "user-1",
       },
     ]);
+  });
+
+  test("creates anonymous non-takedown skill reports with skill context", async () => {
+    const calls: unknown[] = [];
+    const service = createFeedbackService({
+      createFeedback: (input, _database?) => {
+        calls.push(input);
+        return asFeedbackId("feedback-1");
+      },
+      getFeedbackById: (_id, _database?) => null,
+    });
+
+    await expect(
+      service.create({
+        content: "The Skill page has broken metadata",
+        skillId: "skill-1",
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
+        title: "Display issue",
+        type: "skill_display",
+        userId: null,
+      }),
+    ).resolves.toEqual({ id: asFeedbackId("feedback-1") });
+    expect(calls).toEqual([
+      {
+        content: "The Skill page has broken metadata",
+        skillId: asSkillId("skill-1"),
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
+        title: "Display issue",
+        type: "skill_display",
+        userId: null,
+      },
+    ]);
+  });
+
+  test("rejects takedown reports unless submitted by the claimed author", async () => {
+    const calls: unknown[] = [];
+    const service = createFeedbackService({
+      createFeedback: (input, _database?) => {
+        calls.push(input);
+        return asFeedbackId("feedback-1");
+      },
+      findSkillClaimContextById: () => ({
+        claimedUserId: "user-2",
+        repoOwnerHandle: "owner",
+        skillId: "skill-1",
+      }),
+      getFeedbackById: (_id, _database?) => null,
+    });
+
+    await expect(
+      service.create({
+        content: "I own this repo and want the Skill removed.",
+        skillId: "skill-1",
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
+        title: "Remove this Skill",
+        type: "skill_takedown",
+        userId: "user-1",
+      }),
+    ).rejects.toThrow("Only the claimed author can request Skill removal.");
+    expect(calls).toEqual([]);
+  });
+
+  test("creates takedown reports for the claimed author", async () => {
+    const calls: unknown[] = [];
+    const service = createFeedbackService({
+      createFeedback: (input, _database?) => {
+        calls.push(input);
+        return asFeedbackId("feedback-1");
+      },
+      findSkillClaimContextById: () => ({
+        claimedUserId: "user-1",
+        repoOwnerHandle: "owner",
+        skillId: "skill-1",
+      }),
+      getFeedbackById: (_id, _database?) => null,
+    });
+
+    await expect(
+      service.create({
+        content: "I own this repo and want the Skill removed.",
+        skillId: "skill-1",
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
+        title: "Remove this Skill",
+        type: "skill_takedown",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({ id: asFeedbackId("feedback-1") });
+    expect(calls).toHaveLength(1);
   });
 
   test("maps feedback rows into the public item shape", async () => {
@@ -43,9 +138,12 @@ describe("feedback service", () => {
           createdAt: 123,
           id: asFeedbackId("feedback-1"),
           response: null,
+          skillId: asSkillId("skill-1"),
+          skillSlug: "agent-helper",
+          skillTitle: "Agent Helper",
           status: "pending",
           title: "Bug report",
-          type: "bug",
+          type: "skill_issue",
           updatedAt: 123,
           userId: null,
         },
@@ -64,9 +162,12 @@ describe("feedback service", () => {
         _id: asFeedbackId("feedback-1"),
         content: "Something is broken",
         response: null,
+        skillId: asSkillId("skill-1"),
+        skillSlug: "agent-helper",
+        skillTitle: "Agent Helper",
         status: "pending",
         title: "Bug report",
-        type: "bug",
+        type: "skill_issue",
         userId: "",
       },
     ]);

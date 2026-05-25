@@ -229,6 +229,8 @@ function RouteComponent() {
             <SkillDetailActions
               snapshotId={selectedSnapshotId}
               slug={skill.slug}
+              skillId={skill.id}
+              title={skill.title}
               version={latestVersion}
             />
           </div>

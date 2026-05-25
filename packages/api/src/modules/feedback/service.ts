@@ -1,4 +1,4 @@
-import { asFeedbackId, asUserId } from "@skills-re/db/utils";
+import { asFeedbackId, asSkillId, asUserId } from "@skills-re/db/utils";
 import { createDepGetter } from "../shared/deps";
 
 import type {
@@ -7,6 +7,7 @@ import type {
   FeedbackRow,
   FeedbackStatus,
   FeedbackType,
+  findSkillClaimContextById,
   getFeedbackById,
   getFeedbackByIdAndUser,
   listFeedback,
@@ -20,6 +21,9 @@ const toOutputItem = (row: FeedbackRow) => ({
   _id: row.id,
   content: row.content,
   response: row.response,
+  skillId: row.skillId,
+  skillSlug: row.skillSlug,
+  skillTitle: row.skillTitle,
   status: row.status,
   title: row.title,
   type: row.type,
@@ -29,6 +33,7 @@ const toOutputItem = (row: FeedbackRow) => ({
 interface FeedbackServiceDeps {
   countFeedbackByUser: typeof countFeedbackByUser;
   createFeedback: typeof createFeedback;
+  findSkillClaimContextById: typeof findSkillClaimContextById;
   getFeedbackById: typeof getFeedbackById;
   getFeedbackByIdAndUser: typeof getFeedbackByIdAndUser;
   listFeedback: typeof listFeedback;
@@ -42,6 +47,7 @@ const createDefaultFeedbackDeps = async (): Promise<FeedbackServiceDeps> => {
   return {
     countFeedbackByUser: repo.countFeedbackByUser,
     createFeedback: repo.createFeedback,
+    findSkillClaimContextById: repo.findSkillClaimContextById,
     getFeedbackById: repo.getFeedbackById,
     getFeedbackByIdAndUser: repo.getFeedbackByIdAndUser,
     listFeedback: repo.listFeedback,
@@ -65,12 +71,31 @@ export const createFeedbackService = (overrides: Partial<FeedbackServiceDeps> = 
     async create(input: {
       title: string;
       content: string;
+      skillId?: string | null;
+      skillSlug?: string | null;
+      skillTitle?: string | null;
       type?: FeedbackType;
       userId?: string | null;
     }) {
       const createFeedbackFn = await getDep("createFeedback");
+      const skillId = input.skillId ? asSkillId(input.skillId) : null;
+      if (input.type === "skill_takedown") {
+        if (!(skillId && input.userId)) {
+          throw new Error("Only the claimed author can request Skill removal.");
+        }
+
+        const findSkillClaimContextByIdFn = await getDep("findSkillClaimContextById");
+        const claimContext = await findSkillClaimContextByIdFn(skillId);
+        if (claimContext?.claimedUserId !== input.userId) {
+          throw new Error("Only the claimed author can request Skill removal.");
+        }
+      }
+
       const id = await createFeedbackFn({
         content: input.content,
+        skillId,
+        skillSlug: input.skillSlug ?? null,
+        skillTitle: input.skillTitle ?? null,
         title: input.title,
         type: input.type ?? "general",
         userId: input.userId ? asUserId(input.userId) : null,
@@ -143,6 +168,9 @@ export const feedbackService = createFeedbackService();
 export async function createFeedbackRecord(input: {
   title: string;
   content: string;
+  skillId?: string | null;
+  skillSlug?: string | null;
+  skillTitle?: string | null;
   type?: FeedbackType;
   userId?: string | null;
 }) {

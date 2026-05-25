@@ -62,6 +62,9 @@ const typeBadgeClass: Record<FeedbackType, string> = {
   bug: "border-destructive/40 bg-destructive/10 text-destructive",
   general: "border-border bg-muted text-muted-foreground",
   request: "border-chart-4/40 bg-chart-4/10 text-chart-4",
+  skill_display: "border-chart-5/40 bg-chart-5/10 text-chart-5",
+  skill_issue: "border-chart-1/40 bg-chart-1/10 text-chart-1",
+  skill_takedown: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
 const statusBadgeClass: Record<FeedbackStatus, string> = {
@@ -109,12 +112,7 @@ function FeedbackStatusPill({ status }: { status: FeedbackStatus }) {
 }
 
 function FeedbackTypePill({ type }: { type: FeedbackType }) {
-  const label =
-    type === "bug"
-      ? m.dashboard_feedbacks_type_bug()
-      : type === "request"
-        ? m.dashboard_feedbacks_type_request()
-        : m.dashboard_feedbacks_type_general();
+  const label = getFeedbackTypeLabel(type);
 
   return (
     <span
@@ -124,6 +122,25 @@ function FeedbackTypePill({ type }: { type: FeedbackType }) {
       {label}
     </span>
   );
+}
+
+function getFeedbackTypeLabel(type: FeedbackType) {
+  if (type === "bug") {
+    return m.dashboard_feedbacks_type_bug();
+  }
+  if (type === "request") {
+    return m.dashboard_feedbacks_type_request();
+  }
+  if (type === "skill_issue") {
+    return "Skill problem";
+  }
+  if (type === "skill_display") {
+    return "Display issue";
+  }
+  if (type === "skill_takedown") {
+    return "Removal request";
+  }
+  return m.dashboard_feedbacks_type_general();
 }
 
 function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
@@ -148,6 +165,15 @@ function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
       </CardHeader>
 
       <CardContent className="space-y-4 py-4">
+        {feedback.skillTitle || feedback.skillSlug ? (
+          <div className="border border-border bg-muted/30 px-3 py-2 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+            Skill: {feedback.skillTitle ?? feedback.skillSlug}
+            {feedback.skillSlug ? (
+              <span className="ml-2 normal-case">/{feedback.skillSlug}</span>
+            ) : null}
+          </div>
+        ) : null}
+
         <p className="text-[13px] leading-[1.65] text-foreground/80">{feedback.content}</p>
 
         {feedback.response ? (

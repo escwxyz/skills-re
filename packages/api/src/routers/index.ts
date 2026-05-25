@@ -296,14 +296,27 @@ export const appRouter = {
     countMine: protectedProcedure.feedback.countMine.handler(({ context }) =>
       countMineFeedback({ userId: context.session.user.id }),
     ),
-    create: protectedProcedure.feedback.create.handler(({ input, context }) =>
-      createFeedbackRecord({
-        content: input.content,
-        title: input.title,
-        type: input.type,
-        userId: context.session.user.id,
-      }),
-    ),
+    create: publicProcedure.feedback.create.handler(async ({ input, context }) => {
+      try {
+        return await createFeedbackRecord({
+          content: input.content,
+          skillId: input.skillId,
+          skillSlug: input.skillSlug,
+          skillTitle: input.skillTitle,
+          title: input.title,
+          type: input.type,
+          userId: context.session?.user.id ?? null,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Create feedback failed.";
+        if (message.includes("claimed author")) {
+          throw new ORPCError("BAD_REQUEST", { message });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Create feedback failed.",
+        });
+      }
+    }),
     getById: adminProcedure.feedback.getById.handler(({ input }) => getFeedbackById(input.id)),
     getMineById: protectedProcedure.feedback.getMineById.handler(({ input, context }) =>
       getMineFeedbackById({

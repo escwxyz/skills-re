@@ -134,6 +134,13 @@
       "when": 1779391521805,
       "tag": "0018_add_skill_canonical_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1779697300000,
+      "tag": "0019_unify_feedback_skill_reports",
+      "breakpoints": true
     }
   ]
 }

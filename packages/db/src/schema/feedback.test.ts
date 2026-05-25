@@ -23,6 +23,9 @@ const getExtraConfigNames = (table: object) => {
 describe("feedback schema", () => {
   test("exposes the expected core columns", () => {
     expect(feedbackTable.id.name).toBe("id");
+    expect(feedbackTable.skillId.name).toBe("skill_id");
+    expect(feedbackTable.skillSlug.name).toBe("skill_slug");
+    expect(feedbackTable.skillTitle.name).toBe("skill_title");
     expect(feedbackTable.status.name).toBe("status");
     expect(feedbackTable.type.name).toBe("type");
     expect(feedbackTable.userId.name).toBe("user_id");
@@ -30,6 +33,8 @@ describe("feedback schema", () => {
 
   test("retains the expected indexes", () => {
     expect(getExtraConfigNames(feedbackTable)).toEqual([
+      "feedback_skill_id_idx",
+      "feedback_skill_slug_idx",
       "feedback_status_idx",
       "feedback_type_idx",
       "feedback_user_id_idx",
