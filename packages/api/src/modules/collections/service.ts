@@ -99,8 +99,8 @@ interface CollectionsServiceDeps {
     page: CollectionListRow[];
   }>;
   listCollectionsByUserId: (input: { userId: UserId }) => Promise<CollectionListRow[]>;
-  findCollectionBySlug: (slug: string) => Promise<CollectionRow | null>;
   findPublicCollectionByPath: (publicPath: string) => Promise<CollectionRow | null>;
+  findUniquePublicCollectionBySlug: (slug: string) => Promise<CollectionRow | null>;
   findCollectionById: (id: CollectionId) => Promise<CollectionRow | null>;
   findSkillBySlug: typeof findSkillBySlug;
   getOrCreateDefaultCollection: (input: { userId: UserId }) => Promise<{ id: string }>;
@@ -142,8 +142,8 @@ const createDefaultCollectionsDeps = async (): Promise<CollectionsServiceDeps> =
     countCollections: repo.countCollections,
     listCollections: repo.listCollections,
     listCollectionsByUserId: repo.listCollectionsByUserId,
-    findCollectionBySlug: repo.findCollectionBySlug,
     findPublicCollectionByPath: repo.findPublicCollectionByPath,
+    findUniquePublicCollectionBySlug: repo.findUniquePublicCollectionBySlug,
     findCollectionById: repo.findCollectionById,
     findSkillBySlug,
     getOrCreateDefaultCollection: repo.getOrCreateDefaultCollection,
@@ -279,9 +279,10 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
 
     async getCollectionBySlug(input: { slug: string }, caller?: Partial<CallerContext>) {
       const findPublicCollectionByPath = await getDep("findPublicCollectionByPath");
-      const findCollectionBySlug = await getDep("findCollectionBySlug");
+      const findUniquePublicCollectionBySlug = await getDep("findUniquePublicCollectionBySlug");
       const row =
-        (await findPublicCollectionByPath(input.slug)) ?? (await findCollectionBySlug(input.slug));
+        (await findPublicCollectionByPath(input.slug)) ??
+        (await findUniquePublicCollectionBySlug(input.slug));
       if (!(row && row.status === "active")) {
         return null;
       }

@@ -7,46 +7,14 @@ import { asSnapshotId } from "@skills-re/db/utils";
 import { createCollectionsService } from "./service";
 
 describe("collections service", () => {
-  test("hides private collections from non-owners and returns them to owners", async () => {
+  test("does not expose private collections through public slug resolution", async () => {
     const service = createCollectionsService({
       findPublicCollectionByPath: () => Promise.resolve(null),
-      findCollectionBySlug: () =>
-        Promise.resolve({
-          description: "Personal saves.",
-          id: "collection-1",
-          kind: "default",
-          ownerHandle: "octo",
-          publicPath: "octo-saved-skills",
-          slug: "saved-skills",
-          status: "active",
-          title: "Saved Skills",
-          userId: "user-1",
-          visibility: "private",
-        }),
+      findUniquePublicCollectionBySlug: () => Promise.resolve(null),
       getSkillsByCollectionId: () => Promise.resolve([]),
     });
 
     await expect(service.getCollectionBySlug({ slug: "saved-skills" })).resolves.toBeNull();
-    await expect(
-      service.getCollectionBySlug(
-        { slug: "saved-skills" },
-        {
-          isAdmin: false,
-          userId: "user-1",
-        },
-      ),
-    ).resolves.toEqual({
-      description: "Personal saves.",
-      id: "collection-1",
-      kind: "default",
-      ownerHandle: "octo",
-      publicPath: "octo-saved-skills",
-      skills: [],
-      slug: "saved-skills",
-      status: "active",
-      title: "Saved Skills",
-      visibility: "private",
-    });
   });
 
   test("passes requested visibility through collection create and update", async () => {
@@ -114,14 +82,60 @@ describe("collections service", () => {
     ]);
   });
 
+  test("falls back to a unique public legacy slug when no author-qualified path matches", async () => {
+    const service = createCollectionsService({
+      findPublicCollectionByPath: () => Promise.resolve(null),
+      findUniquePublicCollectionBySlug: (slug) =>
+        Promise.resolve(
+          slug === "editorial"
+            ? {
+                description: "Public editorial picks.",
+                id: "collection-legacy-1",
+                kind: "custom",
+                ownerHandle: "desk",
+                publicPath: "desk-editorial",
+                slug: "editorial",
+                status: "active",
+                title: "Editorial",
+                userId: "user-1",
+                visibility: "public",
+              }
+            : null,
+        ),
+      getSkillsByCollectionId: () => Promise.resolve([]),
+    });
+
+    await expect(service.getCollectionBySlug({ slug: "editorial" })).resolves.toEqual({
+      description: "Public editorial picks.",
+      id: "collection-legacy-1",
+      kind: "custom",
+      ownerHandle: "desk",
+      publicPath: "desk-editorial",
+      skills: [],
+      slug: "editorial",
+      status: "active",
+      title: "Editorial",
+      visibility: "public",
+    });
+  });
+
+  test("does not resolve ambiguous legacy slugs through public fallback", async () => {
+    const service = createCollectionsService({
+      findPublicCollectionByPath: () => Promise.resolve(null),
+      findUniquePublicCollectionBySlug: () => Promise.resolve(null),
+      getSkillsByCollectionId: () => Promise.resolve([]),
+    });
+
+    await expect(service.getCollectionBySlug({ slug: "shared-slug" })).resolves.toBeNull();
+  });
+
   test("enriches collection skills with the latest static audit data", async () => {
     const auditCalls: string[] = [];
     const fileCalls: string[] = [];
     const service = createCollectionsService({
-      findPublicCollectionByPath: () => Promise.resolve(null),
-      findCollectionBySlug: (slug) =>
+      findPublicCollectionByPath: (slug) =>
         Promise.resolve(
-          slug === "editorial"
+          slug === "desk-editorial"
             ? {
                 description: "Curated tools for review workflows.",
                 id: "collection-1",
@@ -136,6 +150,7 @@ describe("collections service", () => {
               }
             : null,
         ),
+      findUniquePublicCollectionBySlug: () => Promise.resolve(null),
       getLatestStaticAuditBySnapshot: (snapshotId) => {
         auditCalls.push(snapshotId);
 
@@ -239,7 +254,7 @@ describe("collections service", () => {
       },
     });
 
-    await expect(service.getCollectionBySlug({ slug: "editorial" })).resolves.toEqual({
+    await expect(service.getCollectionBySlug({ slug: "desk-editorial" })).resolves.toEqual({
       description: "Curated tools for review workflows.",
       id: "collection-1",
       kind: "custom",

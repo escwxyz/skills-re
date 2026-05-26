@@ -177,6 +177,34 @@ export async function findPublicCollectionByPath(publicPath: string) {
   return rows[0] ?? null;
 }
 
+export async function findUniquePublicCollectionBySlug(slug: string) {
+  const rows = await db
+    .select({
+      description: collectionsTable.description,
+      id: collectionsTable.id,
+      kind: collectionsTable.kind,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
+      slug: collectionsTable.slug,
+      status: collectionsTable.status,
+      title: collectionsTable.title,
+      userId: collectionsTable.userId,
+      visibility: collectionsTable.visibility,
+    })
+    .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
+    .where(
+      and(
+        eq(collectionsTable.slug, slug),
+        eq(collectionsTable.status, "active"),
+        eq(collectionsTable.visibility, "public"),
+      ),
+    )
+    .limit(2);
+
+  return rows.length === 1 ? (rows[0] ?? null) : null;
+}
+
 export async function findCollectionById(id: CollectionId) {
   const rows = await db
     .select({
