@@ -21,6 +21,7 @@ const getCollectionGridPosition = (index: number) => {
 
 interface CollectionGridItem {
   description: string;
+  publicPath?: string;
   skillCount: number;
   slug: string;
   title: string;
@@ -37,9 +38,9 @@ export const CollectionsGrid = ({ collections }: Props) => (
 
       return (
         <Link
-          key={col.slug}
+          key={col.publicPath ?? col.slug}
           to="/collections/$slug"
-          params={{ slug: col.slug }}
+          params={{ slug: col.publicPath ?? col.slug }}
           className={cn(
             "border-border flex flex-col justify-between border-r border-b p-[26px_22px] no-underline transition-colors",
             featured

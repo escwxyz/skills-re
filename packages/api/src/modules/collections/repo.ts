@@ -5,6 +5,7 @@ import {
   collectionsTable,
   reposTable,
   skillsTable,
+  usersTable,
 } from "@skills-re/db/schema";
 import type { CollectionId, SkillId, UserId } from "@skills-re/db/utils";
 import { asCollectionId, asSkillId, createId } from "@skills-re/db/utils";
@@ -16,6 +17,9 @@ import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
 const COLLECTIONS_LIST_LIMIT_MAX = 100;
 export const DEFAULT_COLLECTION_DESCRIPTION = "Skills saved to your personal collection.";
 export const DEFAULT_COLLECTION_TITLE = "Saved Skills";
+
+const collectionOwnerHandle = sql<string | null>`coalesce(${usersTable.github}, ${usersTable.id})`;
+const collectionPublicPath = sql<string>`coalesce(${usersTable.github}, ${usersTable.id}) || '-' || ${collectionsTable.slug}`;
 
 type DefaultCollectionLookupDatabase = Pick<typeof db, "select">;
 type DefaultCollectionWriteDatabase = Pick<typeof db, "insert" | "select">;
@@ -70,12 +74,15 @@ export async function listCollections(input?: { cursor?: string; limit?: number 
     .select({
       description: collectionsTable.description,
       id: collectionsTable.id,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
       skillCount: sql<number>`coalesce(${skillCounts.skillCount}, 0)`,
       slug: collectionsTable.slug,
       title: collectionsTable.title,
       visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
     .leftJoin(skillCounts, eq(skillCounts.collectionId, collectionsTable.id))
     .where(
       cursor
@@ -111,6 +118,9 @@ export async function findCollectionBySlug(slug: string) {
     .select({
       description: collectionsTable.description,
       id: collectionsTable.id,
+      kind: collectionsTable.kind,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
       slug: collectionsTable.slug,
       status: collectionsTable.status,
       title: collectionsTable.title,
@@ -118,7 +128,36 @@ export async function findCollectionBySlug(slug: string) {
       visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
     .where(eq(collectionsTable.slug, slug))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function findPublicCollectionByPath(publicPath: string) {
+  const rows = await db
+    .select({
+      description: collectionsTable.description,
+      id: collectionsTable.id,
+      kind: collectionsTable.kind,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
+      slug: collectionsTable.slug,
+      status: collectionsTable.status,
+      title: collectionsTable.title,
+      userId: collectionsTable.userId,
+      visibility: collectionsTable.visibility,
+    })
+    .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
+    .where(
+      and(
+        eq(collectionsTable.status, "active"),
+        eq(collectionsTable.visibility, "public"),
+        sql`${collectionPublicPath} = ${publicPath}`,
+      ),
+    )
     .limit(1);
 
   return rows[0] ?? null;
@@ -129,6 +168,9 @@ export async function findCollectionById(id: CollectionId) {
     .select({
       description: collectionsTable.description,
       id: collectionsTable.id,
+      kind: collectionsTable.kind,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
       slug: collectionsTable.slug,
       status: collectionsTable.status,
       title: collectionsTable.title,
@@ -136,10 +178,45 @@ export async function findCollectionById(id: CollectionId) {
       visibility: collectionsTable.visibility,
     })
     .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
     .where(eq(collectionsTable.id, id))
     .limit(1);
 
   return rows[0] ?? null;
+}
+
+export async function listCollectionsByUserId(input: { userId: UserId }) {
+  const skillCounts = db
+    .select({
+      collectionId: collectionsSkillsTable.collectionId,
+      skillCount: count(collectionsSkillsTable.skillId).as("skill_count"),
+    })
+    .from(collectionsSkillsTable)
+    .groupBy(collectionsSkillsTable.collectionId)
+    .as("skill_counts");
+
+  return await db
+    .select({
+      description: collectionsTable.description,
+      id: collectionsTable.id,
+      kind: collectionsTable.kind,
+      ownerHandle: collectionOwnerHandle,
+      publicPath: collectionPublicPath,
+      skillCount: sql<number>`coalesce(${skillCounts.skillCount}, 0)`,
+      slug: collectionsTable.slug,
+      status: collectionsTable.status,
+      title: collectionsTable.title,
+      visibility: collectionsTable.visibility,
+    })
+    .from(collectionsTable)
+    .innerJoin(usersTable, eq(usersTable.id, collectionsTable.userId))
+    .leftJoin(skillCounts, eq(skillCounts.collectionId, collectionsTable.id))
+    .where(and(eq(collectionsTable.userId, input.userId), eq(collectionsTable.status, "active")))
+    .orderBy(
+      sql`case when ${collectionsTable.kind} = 'default' then 0 else 1 end`,
+      asc(collectionsTable.title),
+      asc(collectionsTable.id),
+    );
 }
 
 export async function getSkillsByCollectionId(collectionId: CollectionId) {
@@ -251,11 +328,19 @@ export async function insertCollectionSkill(input: {
   skillId: SkillId;
   position?: number;
 }) {
-  await db.insert(collectionsSkillsTable).values({
-    collectionId: input.collectionId,
-    skillId: input.skillId,
-    position: input.position ?? 0,
-  });
+  const rows = await db
+    .insert(collectionsSkillsTable)
+    .values({
+      collectionId: input.collectionId,
+      skillId: input.skillId,
+      position: input.position ?? 0,
+    })
+    .onConflictDoNothing({
+      target: [collectionsSkillsTable.collectionId, collectionsSkillsTable.skillId],
+    })
+    .returning({ id: collectionsSkillsTable.id });
+
+  return { created: Boolean(rows[0]) };
 }
 
 export async function deleteCollectionSkill(input: {

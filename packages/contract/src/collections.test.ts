@@ -38,10 +38,13 @@ describe("collections contract", () => {
     expect(collectionsContract.count).toBeDefined();
     expect(collectionsContract.getBySlug).toBeDefined();
     expect(collectionsContract.list).toBeDefined();
+    expect(collectionsContract.listMine).toBeDefined();
+    expect(collectionsContract.getMineById).toBeDefined();
     expect(collectionsContract.create).toBeDefined();
     expect(collectionsContract.update).toBeDefined();
     expect(collectionsContract.delete).toBeDefined();
     expect(collectionsContract.addSkill).toBeDefined();
+    expect(collectionsContract.saveSkill).toBeDefined();
     expect(collectionsContract.removeSkill).toBeDefined();
     expect(collectionsContract.setSkills).toBeDefined();
   });

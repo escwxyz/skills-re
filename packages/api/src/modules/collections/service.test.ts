@@ -9,10 +9,14 @@ import { createCollectionsService } from "./service";
 describe("collections service", () => {
   test("hides private collections from non-owners and returns them to owners", async () => {
     const service = createCollectionsService({
+      findPublicCollectionByPath: () => Promise.resolve(null),
       findCollectionBySlug: () =>
         Promise.resolve({
           description: "Personal saves.",
           id: "collection-1",
+          kind: "default",
+          ownerHandle: "octo",
+          publicPath: "octo-saved-skills",
           slug: "saved-skills",
           status: "active",
           title: "Saved Skills",
@@ -34,8 +38,12 @@ describe("collections service", () => {
     ).resolves.toEqual({
       description: "Personal saves.",
       id: "collection-1",
+      kind: "default",
+      ownerHandle: "octo",
+      publicPath: "octo-saved-skills",
       skills: [],
       slug: "saved-skills",
+      status: "active",
       title: "Saved Skills",
       visibility: "private",
     });
@@ -110,16 +118,21 @@ describe("collections service", () => {
     const auditCalls: string[] = [];
     const fileCalls: string[] = [];
     const service = createCollectionsService({
+      findPublicCollectionByPath: () => Promise.resolve(null),
       findCollectionBySlug: (slug) =>
         Promise.resolve(
           slug === "editorial"
             ? {
                 description: "Curated tools for review workflows.",
                 id: "collection-1",
+                kind: "custom",
+                ownerHandle: "desk",
+                publicPath: "desk-editorial",
                 slug: "editorial",
                 status: "active",
                 title: "Editorial",
                 userId: "user-1",
+                visibility: "public",
               }
             : null,
         ),
@@ -229,6 +242,9 @@ describe("collections service", () => {
     await expect(service.getCollectionBySlug({ slug: "editorial" })).resolves.toEqual({
       description: "Curated tools for review workflows.",
       id: "collection-1",
+      kind: "custom",
+      ownerHandle: "desk",
+      publicPath: "desk-editorial",
       skills: [
         {
           author: {
@@ -298,7 +314,9 @@ describe("collections service", () => {
         },
       ],
       slug: "editorial",
+      status: "active",
       title: "Editorial",
+      visibility: "public",
     });
 
     expect(auditCalls).toEqual(["snapshot-1"]);

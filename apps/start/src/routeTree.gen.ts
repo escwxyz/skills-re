@@ -56,6 +56,7 @@ import { Route as AuthedLayoutDashboardSkillsRouteImport } from './routes/_authe
 import { Route as AuthedLayoutDashboardSettingsRouteImport } from './routes/_authedLayout/dashboard.settings'
 import { Route as AuthedLayoutDashboardReviewsRouteImport } from './routes/_authedLayout/dashboard.reviews'
 import { Route as AuthedLayoutDashboardFeedbacksRouteImport } from './routes/_authedLayout/dashboard.feedbacks'
+import { Route as AuthedLayoutDashboardCollectionsRouteImport } from './routes/_authedLayout/dashboard.collections'
 import { Route as DotwellKnownMcpServerCardDotjsonRouteImport } from './routes/[.]well-known/mcp/server-card[.]json'
 import { Route as ApiSkillsSkillIdViewRouteImport } from './routes/api/skills/$skillId/view'
 import { Route as ApiOgTagsPngRouteImport } from './routes/api/og/tags.png'
@@ -329,6 +330,12 @@ const AuthedLayoutDashboardFeedbacksRoute =
     path: '/feedbacks',
     getParentRoute: () => AuthedLayoutDashboardRouteRoute,
   } as any)
+const AuthedLayoutDashboardCollectionsRoute =
+  AuthedLayoutDashboardCollectionsRouteImport.update({
+    id: '/collections',
+    path: '/collections',
+    getParentRoute: () => AuthedLayoutDashboardRouteRoute,
+  } as any)
 const DotwellKnownMcpServerCardDotjsonRoute =
   DotwellKnownMcpServerCardDotjsonRouteImport.update({
     id: '/.well-known/mcp/server-card.json',
@@ -465,6 +472,7 @@ export interface FileRoutesByFullPath {
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
+  '/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
   '/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
@@ -531,6 +539,7 @@ export interface FileRoutesByTo {
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
+  '/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
   '/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
@@ -600,6 +609,7 @@ export interface FileRoutesById {
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/_publicLayout/': typeof PublicLayoutIndexRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
+  '/_authedLayout/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/_authedLayout/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
   '/_authedLayout/dashboard/reviews': typeof AuthedLayoutDashboardReviewsRoute
   '/_authedLayout/dashboard/settings': typeof AuthedLayoutDashboardSettingsRoute
@@ -669,6 +679,7 @@ export interface FileRouteTypes {
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/.well-known/mcp/server-card.json'
+    | '/dashboard/collections'
     | '/dashboard/feedbacks'
     | '/dashboard/reviews'
     | '/dashboard/settings'
@@ -735,6 +746,7 @@ export interface FileRouteTypes {
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/.well-known/mcp/server-card.json'
+    | '/dashboard/collections'
     | '/dashboard/feedbacks'
     | '/dashboard/reviews'
     | '/dashboard/settings'
@@ -803,6 +815,7 @@ export interface FileRouteTypes {
     | '/sitemap/taxonomy.xml'
     | '/_publicLayout/'
     | '/.well-known/mcp/server-card.json'
+    | '/_authedLayout/dashboard/collections'
     | '/_authedLayout/dashboard/feedbacks'
     | '/_authedLayout/dashboard/reviews'
     | '/_authedLayout/dashboard/settings'
@@ -1208,6 +1221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLayoutDashboardFeedbacksRouteImport
       parentRoute: typeof AuthedLayoutDashboardRouteRoute
     }
+    '/_authedLayout/dashboard/collections': {
+      id: '/_authedLayout/dashboard/collections'
+      path: '/collections'
+      fullPath: '/dashboard/collections'
+      preLoaderRoute: typeof AuthedLayoutDashboardCollectionsRouteImport
+      parentRoute: typeof AuthedLayoutDashboardRouteRoute
+    }
     '/.well-known/mcp/server-card.json': {
       id: '/.well-known/mcp/server-card.json'
       path: '/.well-known/mcp/server-card.json'
@@ -1367,6 +1387,7 @@ const AuthedLayoutDashboardSkillsRouteWithChildren =
   )
 
 interface AuthedLayoutDashboardRouteRouteChildren {
+  AuthedLayoutDashboardCollectionsRoute: typeof AuthedLayoutDashboardCollectionsRoute
   AuthedLayoutDashboardFeedbacksRoute: typeof AuthedLayoutDashboardFeedbacksRoute
   AuthedLayoutDashboardReviewsRoute: typeof AuthedLayoutDashboardReviewsRoute
   AuthedLayoutDashboardSettingsRoute: typeof AuthedLayoutDashboardSettingsRoute
@@ -1376,6 +1397,8 @@ interface AuthedLayoutDashboardRouteRouteChildren {
 
 const AuthedLayoutDashboardRouteRouteChildren: AuthedLayoutDashboardRouteRouteChildren =
   {
+    AuthedLayoutDashboardCollectionsRoute:
+      AuthedLayoutDashboardCollectionsRoute,
     AuthedLayoutDashboardFeedbacksRoute: AuthedLayoutDashboardFeedbacksRoute,
     AuthedLayoutDashboardReviewsRoute: AuthedLayoutDashboardReviewsRoute,
     AuthedLayoutDashboardSettingsRoute: AuthedLayoutDashboardSettingsRoute,

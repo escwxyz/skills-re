@@ -28,7 +28,7 @@ export const collectionsTable = sqliteTable(
       .default("private"),
   },
   (table) => [
-    uniqueIndex("collections_slug_unique").on(table.slug),
+    uniqueIndex("collections_user_slug_unique").on(table.userId, table.slug),
     uniqueIndex("collections_user_default_unique")
       .on(table.userId)
       .where(sql`${table.kind} = 'default'`),

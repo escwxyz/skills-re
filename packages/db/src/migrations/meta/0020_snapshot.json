@@ -1232,9 +1232,10 @@
         }
       },
       "indexes": {
-        "collections_slug_unique": {
-          "name": "collections_slug_unique",
+        "collections_user_slug_unique": {
+          "name": "collections_user_slug_unique",
           "columns": [
+            "user_id",
             "slug"
           ],
           "isUnique": true

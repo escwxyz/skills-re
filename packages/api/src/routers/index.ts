@@ -25,6 +25,7 @@ import {
   getMineFeedbackById,
   getMyReviewBySkill,
   getCollectionBySlug,
+  getMineCollectionById,
   countSkills,
   countTags,
   claimAsAuthor,
@@ -46,6 +47,7 @@ import {
   listCollections,
   listFeedback,
   listMineFeedback,
+  listMineCollections,
   listIndexableTags,
   listReposByOwner,
   listReposPage,
@@ -66,6 +68,7 @@ import {
   removeSkillFromCollection,
   resolvePathBySlug,
   saveSkill,
+  saveSkillToCollection,
   setCollectionSkills,
   syncRepoStats,
   updateCollection,
@@ -209,6 +212,18 @@ export const appRouter = {
       }),
     ),
     list: publicProcedure.collections.list.handler(({ input }) => listCollections(input)),
+    listMine: protectedProcedure.collections.listMine.handler(({ context }) =>
+      listMineCollections({
+        isAdmin: context.session.user.role === "admin",
+        userId: context.session.user.id,
+      }),
+    ),
+    getMineById: protectedProcedure.collections.getMineById.handler(({ input, context }) =>
+      getMineCollectionById(input, {
+        isAdmin: context.session.user.role === "admin",
+        userId: context.session.user.id,
+      }),
+    ),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
       try {
         return await createCollection(input, {
@@ -271,6 +286,26 @@ export const appRouter = {
           throw new ORPCError("FORBIDDEN", { message });
         }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Add skill failed." });
+      }
+    }),
+    saveSkill: protectedProcedure.collections.saveSkill.handler(async ({ input, context }) => {
+      try {
+        return await saveSkillToCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Save skill failed.";
+        if (message === "Skill not found." || message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
+        if (isUniqueConstraintError(error)) {
+          throw new ORPCError("CONFLICT", { message: "Collection slug already exists" });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Save skill failed." });
       }
     }),
     removeSkill: protectedProcedure.collections.removeSkill.handler(async ({ input, context }) => {

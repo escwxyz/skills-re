@@ -1,13 +1,18 @@
 import type { CollectionId, SkillId, SnapshotId, UserId } from "@skills-re/db/utils";
+import { asSkillId, asUserId } from "@skills-re/db/utils";
 
 import { toSearchSkillItem } from "../shared/search-skill";
 import type { SearchSkillRow } from "../shared/search-skill";
 import { createDepGetter } from "../shared/deps";
+import { findSkillBySlug } from "../skills/repo";
 import type { SnapshotFileRow } from "../snapshots/repo";
 
 interface CollectionRow {
   description: string;
   id: string;
+  kind?: "custom" | "default";
+  ownerHandle?: string | null;
+  publicPath?: string;
   slug: string;
   status: "active" | "archived";
   title: string;
@@ -18,8 +23,12 @@ interface CollectionRow {
 interface CollectionListRow {
   description: string;
   id: string;
+  kind?: "custom" | "default";
+  ownerHandle?: string | null;
+  publicPath?: string;
   skillCount: number;
   slug: string;
+  status?: "active" | "archived";
   title: string;
   visibility?: "public" | "private";
 }
@@ -49,6 +58,19 @@ interface CollectionStaticAudit {
   syncTime: number;
 }
 
+const normalizeCollectionSlug = (value: string) => {
+  const slug = value
+    .normalize("NFKD")
+    .toLowerCase()
+    .trim()
+    .replaceAll(/["'’]/g, "")
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/-+/g, "-")
+    .replaceAll(/^-|-$/g, "");
+
+  return slug || "collection";
+};
+
 const toCollectionStaticAudit = (
   row: LatestStaticAuditRow | null,
 ): CollectionStaticAudit | undefined =>
@@ -76,8 +98,12 @@ interface CollectionsServiceDeps {
     isDone: boolean;
     page: CollectionListRow[];
   }>;
+  listCollectionsByUserId: (input: { userId: UserId }) => Promise<CollectionListRow[]>;
   findCollectionBySlug: (slug: string) => Promise<CollectionRow | null>;
+  findPublicCollectionByPath: (publicPath: string) => Promise<CollectionRow | null>;
   findCollectionById: (id: CollectionId) => Promise<CollectionRow | null>;
+  findSkillBySlug: typeof findSkillBySlug;
+  getOrCreateDefaultCollection: (input: { userId: UserId }) => Promise<{ id: string }>;
   getLatestStaticAuditBySnapshot: (snapshotId: SnapshotId) => Promise<LatestStaticAuditRow | null>;
   getSkillsByCollectionId: (collectionId: CollectionId) => Promise<CollectionSkillRow[]>;
   listSnapshotFiles: (snapshotId: SnapshotId) => Promise<SnapshotFileRow[]>;
@@ -102,7 +128,7 @@ interface CollectionsServiceDeps {
     collectionId: CollectionId;
     skillId: SkillId;
     position?: number;
-  }) => Promise<void>;
+  }) => Promise<{ created: boolean }> | Promise<void>;
   deleteCollectionSkill: (input: { collectionId: CollectionId; skillId: SkillId }) => Promise<void>;
   replaceCollectionSkills: (input: {
     collectionId: CollectionId;
@@ -115,8 +141,12 @@ const createDefaultCollectionsDeps = async (): Promise<CollectionsServiceDeps> =
   return {
     countCollections: repo.countCollections,
     listCollections: repo.listCollections,
+    listCollectionsByUserId: repo.listCollectionsByUserId,
     findCollectionBySlug: repo.findCollectionBySlug,
+    findPublicCollectionByPath: repo.findPublicCollectionByPath,
     findCollectionById: repo.findCollectionById,
+    findSkillBySlug,
+    getOrCreateDefaultCollection: repo.getOrCreateDefaultCollection,
     getLatestStaticAuditBySnapshot: async (snapshotId) => {
       const { getLatestStaticAuditBySnapshot } = await import("../static-audits/repo");
       return await getLatestStaticAuditBySnapshot(snapshotId);
@@ -187,17 +217,45 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
   };
 
   const assertOwnership = async (collectionId: string, caller: CallerContext) => {
-    if (caller.isAdmin) {
-      return;
-    }
     const findCollectionById = await getDep("findCollectionById");
     const collection = await findCollectionById(collectionId as CollectionId);
     if (!collection) {
       throw new Error("Collection not found.");
     }
+    if (caller.isAdmin) {
+      return collection;
+    }
     if (collection.userId !== caller.userId) {
       throw new Error("Forbidden: you do not own this collection.");
     }
+    return collection;
+  };
+
+  const toCollectionDetail = async (row: CollectionRow) => {
+    const getSkillsByCollectionId = await getDep("getSkillsByCollectionId");
+    const skills = await getSkillsByCollectionId(row.id as CollectionId);
+    const skillsWithCollectionStats = await Promise.all(
+      skills.map(async (skill) => {
+        const stats = await getCollectionSkillStats(skill);
+        return {
+          ...toSearchSkillItem(skill),
+          ...stats,
+        };
+      }),
+    );
+
+    return {
+      description: row.description,
+      id: row.id,
+      kind: row.kind,
+      ownerHandle: row.ownerHandle,
+      publicPath: row.publicPath,
+      skills: skillsWithCollectionStats,
+      slug: row.slug,
+      status: row.status,
+      title: row.title,
+      visibility: row.visibility,
+    };
   };
 
   return {
@@ -211,9 +269,19 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       return await fn(input);
     },
 
+    async listMineCollections(caller: CallerContext) {
+      const getOrCreateDefaultCollection = await getDep("getOrCreateDefaultCollection");
+      await getOrCreateDefaultCollection({ userId: asUserId(caller.userId) });
+
+      const listCollectionsByUserId = await getDep("listCollectionsByUserId");
+      return await listCollectionsByUserId({ userId: asUserId(caller.userId) });
+    },
+
     async getCollectionBySlug(input: { slug: string }, caller?: Partial<CallerContext>) {
+      const findPublicCollectionByPath = await getDep("findPublicCollectionByPath");
       const findCollectionBySlug = await getDep("findCollectionBySlug");
-      const row = await findCollectionBySlug(input.slug);
+      const row =
+        (await findPublicCollectionByPath(input.slug)) ?? (await findCollectionBySlug(input.slug));
       if (!(row && row.status === "active")) {
         return null;
       }
@@ -224,26 +292,15 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
         return null;
       }
 
-      const getSkillsByCollectionId = await getDep("getSkillsByCollectionId");
-      const skills = await getSkillsByCollectionId(row.id as CollectionId);
-      const skillsWithCollectionStats = await Promise.all(
-        skills.map(async (skill) => {
-          const stats = await getCollectionSkillStats(skill);
-          return {
-            ...toSearchSkillItem(skill),
-            ...stats,
-          };
-        }),
-      );
+      return await toCollectionDetail(row);
+    },
 
-      return {
-        description: row.description,
-        id: row.id,
-        skills: skillsWithCollectionStats,
-        slug: row.slug,
-        title: row.title,
-        visibility: row.visibility,
-      };
+    async getMineCollectionById(input: { id: string }, caller: CallerContext) {
+      const collection = await assertOwnership(input.id, caller);
+      if (collection.status !== "active") {
+        return null;
+      }
+      return await toCollectionDetail(collection);
     },
 
     async createCollection(
@@ -297,6 +354,71 @@ export const createCollectionsService = (overrides: Partial<CollectionsServiceDe
       return null;
     },
 
+    async saveSkillToCollection(
+      input: {
+        collectionId?: string;
+        newCollection?: {
+          description?: string;
+          slug?: string;
+          title: string;
+          visibility?: "public" | "private";
+        };
+        skillSlug: string;
+        visibility?: "public" | "private";
+      },
+      caller: CallerContext,
+    ) {
+      const findSkillBySlugFn = await getDep("findSkillBySlug");
+      const skill = await findSkillBySlugFn(input.skillSlug);
+
+      if (!skill) {
+        throw new Error("Skill not found.");
+      }
+
+      let { collectionId } = input;
+      if (input.newCollection) {
+        const insertCollection = await getDep("insertCollection");
+        const created = await insertCollection({
+          description: input.newCollection.description ?? "",
+          slug: input.newCollection.slug ?? normalizeCollectionSlug(input.newCollection.title),
+          title: input.newCollection.title,
+          userId: asUserId(caller.userId),
+          visibility: input.newCollection.visibility ?? "private",
+        });
+        collectionId = created.id;
+      }
+
+      if (!collectionId) {
+        const getOrCreateDefaultCollection = await getDep("getOrCreateDefaultCollection");
+        const defaultCollection = await getOrCreateDefaultCollection({
+          userId: asUserId(caller.userId),
+        });
+        collectionId = defaultCollection.id;
+      }
+
+      await assertOwnership(collectionId, caller);
+
+      if (input.visibility) {
+        const patchCollection = await getDep("patchCollection");
+        await patchCollection({
+          id: collectionId as CollectionId,
+          visibility: input.visibility,
+        });
+      }
+
+      const insertCollectionSkill = await getDep("insertCollectionSkill");
+      const result = await insertCollectionSkill({
+        collectionId: collectionId as CollectionId,
+        skillId: asSkillId(skill.id),
+      });
+
+      return {
+        alreadySaved: result ? !result.created : false,
+        collectionId,
+        saved: true,
+      };
+    },
+
     async removeSkillFromCollection(
       input: { collectionId: string; skillId: string },
       caller: CallerContext,
@@ -333,11 +455,19 @@ export async function listCollectionsPublic(input?: { cursor?: string; limit?: n
   return await createCollectionsService().listCollections(input);
 }
 
+export async function listMineCollections(caller: CallerContext) {
+  return await createCollectionsService().listMineCollections(caller);
+}
+
 export async function getCollectionBySlug(
   input: { slug: string },
   caller?: Partial<CallerContext>,
 ) {
   return await createCollectionsService().getCollectionBySlug(input, caller);
+}
+
+export async function getMineCollectionById(input: { id: string }, caller: CallerContext) {
+  return await createCollectionsService().getMineCollectionById(input, caller);
 }
 
 export async function createCollection(
@@ -375,6 +505,23 @@ export async function addSkillToCollection(
   caller: CallerContext,
 ) {
   return await createCollectionsService().addSkillToCollection(input, caller);
+}
+
+export async function saveSkillToCollection(
+  input: {
+    collectionId?: string;
+    newCollection?: {
+      description?: string;
+      slug?: string;
+      title: string;
+      visibility?: "public" | "private";
+    };
+    skillSlug: string;
+    visibility?: "public" | "private";
+  },
+  caller: CallerContext,
+) {
+  return await createCollectionsService().saveSkillToCollection(input, caller);
 }
 
 export async function removeSkillFromCollection(

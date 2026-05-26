@@ -120,8 +120,11 @@ export {
   createCollection,
   deleteCollection,
   getCollectionBySlug,
+  getMineCollectionById,
+  listMineCollections,
   listCollectionsPublic as listCollections,
   removeSkillFromCollection,
+  saveSkillToCollection,
   setCollectionSkills,
   updateCollection,
 } from "./collections/service";
