@@ -15,7 +15,6 @@ import { buildAuthorOgImagePath } from "@/lib/og-image-paths";
 import { createProfilePageSchema, createSeo } from "@/lib/seo";
 import { SITE_URL } from "@/lib/constants";
 import {
-  author_page_description,
   author_page_eyebrow,
   author_page_github_profile,
   author_page_verified,
@@ -47,10 +46,7 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
   head: ({ loaderData }) =>
     createSeo({
       canonicalPath: loaderData ? `/authors/${loaderData.author.handle}` : "/authors",
-      description: loaderData
-        ? (loaderData.author.bio ??
-          String(author_page_description({ handle: loaderData.author.handle })))
-        : undefined,
+      description: loaderData ? (loaderData.author.bio ?? undefined) : undefined,
       includePageStructuredData: false,
       image: loaderData ? buildAuthorOgImagePath(loaderData.author.handle) : undefined,
       structuredData: loaderData
@@ -58,9 +54,7 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
             createProfilePageSchema({
               alternateName: loaderData.author.handle,
               canonicalUrl: `${SITE_URL}/authors/${loaderData.author.handle}`,
-              description:
-                loaderData.author.bio ??
-                String(author_page_description({ handle: loaderData.author.handle })),
+              description: loaderData.author.bio ?? undefined,
               identifier: loaderData.author.handle,
               image: loaderData.author.avatarUrl ?? undefined,
               name: loaderData.author.name ?? `@${loaderData.author.handle}`,
@@ -87,7 +81,7 @@ function RouteComponent() {
   const { handle, githubUrl, isVerified, repoCount, skillCount } = author;
   const name = getAuthorDisplayName(author);
   const avatarLabel = getAvatarLabel(author);
-  const authorDescription = author.bio ?? String(author_page_description({ handle }));
+  const authorDescription = author.bio ?? undefined;
 
   useEffect(() => {
     if (selectedRepoName && !activeRepoName) {
