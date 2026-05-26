@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { reposTable } from "@skills-re/db/schema/repos";
+import { usersTable } from "@skills-re/db/schema/auth";
 import { skillsTable } from "@skills-re/db/schema/skills";
 import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
 import { skillsTagsTable, tagsTable, staticAuditsTable } from "@skills-re/db/schema";
@@ -433,39 +434,45 @@ export async function listAuthors(input?: {
   const limit = input?.limit ?? defaultLimit;
   const sort = input?.sort ?? "popular";
   const cursor = decodeAuthorCursor(input?.cursor);
-  // todo: type check
+  const distinctSkillCountExpr = sql<number>`count(distinct ${skillsTable.id})`;
   // oxlint-disable-next-line typescript/no-explicit-any
   let query: any = db
     .select({
-      avatarUrl: sql<string | null>`max(${reposTable.ownerAvatarUrl})`,
+      avatarUrl: sql<
+        string | null
+      >`coalesce(max(${usersTable.image}), max(${reposTable.ownerAvatarUrl}))`,
+      bio: sql<string | null>`coalesce(max(${usersTable.bio}), max(${reposTable.ownerBio}))`,
       githubUrl: sql<string>`'https://github.com/' || ${reposTable.ownerHandle}`,
       handle: reposTable.ownerHandle,
-      displayName: sql<string>`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
+      displayName: sql<string>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
-      name: sql<string | null>`max(${reposTable.ownerName})`,
+      name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: distinctSkillCountExpr,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(eq(skillsTable.visibility, "public"), sql`trim(${reposTable.ownerHandle}) <> ''`))
     .groupBy(reposTable.ownerHandle);
 
   if (sort === "alphabetical") {
     query = query.orderBy(
-      asc(sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`),
+      asc(
+        sql`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
+      ),
       asc(reposTable.ownerHandle),
     );
     if (cursor) {
       query = query.having(
-        sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) > ${cursor.value} OR (coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) = ${cursor.value} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+        sql`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) > ${cursor.value} OR (coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) = ${cursor.value} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
       );
     }
   } else {
-    query = query.orderBy(desc(sql`count(${skillsTable.id})`), asc(reposTable.ownerHandle));
+    query = query.orderBy(desc(distinctSkillCountExpr), asc(reposTable.ownerHandle));
     if (cursor) {
       query = query.having(
-        sql`count(${skillsTable.id}) < ${Number(cursor.value)} OR (count(${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+        sql`count(distinct ${skillsTable.id}) < ${Number(cursor.value)} OR (count(distinct ${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
       );
     }
   }
@@ -517,16 +524,20 @@ export async function countAuthors() {
 export async function findAuthorByHandle(handle: string) {
   const rows = await db
     .select({
-      avatarUrl: sql<string | null>`max(${reposTable.ownerAvatarUrl})`,
+      avatarUrl: sql<
+        string | null
+      >`coalesce(max(${usersTable.image}), max(${reposTable.ownerAvatarUrl}))`,
+      bio: sql<string | null>`coalesce(max(${usersTable.bio}), max(${reposTable.ownerBio}))`,
       githubUrl: sql<string>`'https://github.com/' || ${reposTable.ownerHandle}`,
       handle: reposTable.ownerHandle,
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
-      name: sql<string | null>`max(${reposTable.ownerName})`,
+      name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: sql<number>`count(distinct ${skillsTable.id})`,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(eq(reposTable.ownerHandle, handle), eq(skillsTable.visibility, "public")))
     .groupBy(reposTable.ownerHandle)
     .limit(1);

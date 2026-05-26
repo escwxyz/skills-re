@@ -258,6 +258,7 @@ describe("createGithubSubmitRuntime", () => {
           nameWithOwner: "acme/skills",
           owner: {
             avatarUrl: undefined,
+            bio: null,
             handle: "acme",
             name: "Acme",
           },
@@ -292,6 +293,7 @@ describe("createGithubSubmitRuntime", () => {
               ],
             },
             license: "MIT",
+            preferredVersion: undefined,
             slug: "example-skill",
             sourceLocator: "github:acme/skills/skills/example/SKILL.md",
             sourceType: "github",

@@ -40,6 +40,7 @@ export type AuthSession = {
     userId: string;
   };
   user: {
+    bio?: string | null;
     email?: string;
     github?: string | null;
     id: string;
@@ -352,6 +353,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         clientId: env.GITHUB_CLIENT_ID,
         clientSecret: env.GITHUB_CLIENT_SECRET,
         mapProfileToUser: async (profile: GithubProfile) => ({
+          bio: typeof profile.bio === "string" ? profile.bio : undefined,
           email: profile.email,
           github: profile.login,
           image: profile.avatar_url,
@@ -365,6 +367,11 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     trustedOrigins: [env.PUBLIC_SITE_URL, env.PUBLIC_SERVER_URL],
     user: {
       additionalFields: {
+        bio: {
+          input: false,
+          required: false,
+          type: "string",
+        },
         github: {
           input: false,
           required: false,

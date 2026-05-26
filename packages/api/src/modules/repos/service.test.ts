@@ -146,10 +146,17 @@ describe("repos service", () => {
     ]);
   });
 
-  test("updates repo stats and records changed repos when syncing stats", async () => {
+  test("updates repo stats and owner bio while recording only content-changed repos", async () => {
     const fetched: { name: string; owner: string }[] = [];
-    const updated: { nameWithOwner: string; forks: number; stars: number; updatedAt: number }[] =
-      [];
+    const updated: {
+      nameWithOwner: string;
+      forks: number;
+      ownerAvatarUrl?: string | null;
+      ownerBio?: string | null;
+      ownerName?: string | null;
+      stars: number;
+      updatedAt: number;
+    }[] = [];
 
     const service = createReposService({
       fetchRepoStats: (_query, variables) => {
@@ -158,6 +165,12 @@ describe("repos service", () => {
           repository: {
             forkCount: 4,
             nameWithOwner: "acme/widget",
+            owner: {
+              avatarUrl: "https://avatars.githubusercontent.com/u/1",
+              bio: "Builds useful tools.",
+              login: "acme",
+              name: "Acme Labs",
+            },
             stargazerCount: 12,
             updatedAt: "2026-04-18T12:00:00.000Z",
           },
@@ -203,6 +216,74 @@ describe("repos service", () => {
       {
         forks: 4,
         nameWithOwner: "acme/widget",
+        ownerAvatarUrl: "https://avatars.githubusercontent.com/u/1",
+        ownerBio: "Builds useful tools.",
+        ownerName: "Acme Labs",
+        stars: 12,
+        updatedAt: Date.parse("2026-04-18T12:00:00.000Z"),
+      },
+    ]);
+  });
+
+  test("does not record a changed repo for metadata-only profile refreshes", async () => {
+    const updated: {
+      nameWithOwner: string;
+      ownerBio?: string | null;
+      updatedAt: number;
+    }[] = [];
+
+    const service = createReposService({
+      fetchRepoStats: () => ({
+        repository: {
+          forkCount: 4,
+          nameWithOwner: "acme/widget",
+          owner: {
+            avatarUrl: null,
+            bio: "New public bio.",
+            login: "acme",
+            name: "Acme",
+          },
+          stargazerCount: 12,
+          updatedAt: "2026-04-18T12:00:00.000Z",
+        },
+      }),
+      githubConfigured: () => true,
+      listReposPageBySyncTime: () => ({
+        continueCursor: "",
+        isDone: true,
+        repos: [
+          {
+            nameWithOwner: "acme/widget",
+            repoName: "widget",
+            repoOwner: "acme",
+            skillCount: 1,
+          },
+        ],
+      }),
+      updateRepoStatsByNameWithOwner: (input) => {
+        updated.push(input);
+        return { changed: false, metadataChanged: true };
+      },
+    });
+
+    await expect(service.syncStats()).resolves.toEqual({
+      changed: [],
+      continueCursor: "",
+      isDone: true,
+      metadataChanged: [
+        {
+          repoName: "widget",
+          repoOwner: "acme",
+        },
+      ],
+    });
+    expect(updated).toEqual([
+      {
+        forks: 4,
+        nameWithOwner: "acme/widget",
+        ownerAvatarUrl: null,
+        ownerBio: "New public bio.",
+        ownerName: "Acme",
         stars: 12,
         updatedAt: Date.parse("2026-04-18T12:00:00.000Z"),
       },
@@ -339,6 +420,7 @@ describe("repos service", () => {
               name: "widget",
               nameWithOwner: "acme/widget",
               ownerAvatarUrl: null,
+              ownerBio: "Builds useful tools.",
               ownerHandle: "acme",
               ownerName: "Acme",
               stars: 12,
@@ -353,6 +435,7 @@ describe("repos service", () => {
       name: "widget",
       nameWithOwner: "acme/widget",
       ownerAvatarUrl: null,
+      ownerBio: "Builds useful tools.",
       ownerHandle: "acme",
       ownerName: "Acme",
       stars: 12,
@@ -399,6 +482,7 @@ describe("repos service", () => {
       name: string;
       nameWithOwner: string;
       ownerAvatarUrl?: string | null;
+      ownerBio?: string | null;
       ownerHandle: string;
       ownerName?: string | null;
       stars: number;
@@ -424,6 +508,7 @@ describe("repos service", () => {
         nameWithOwner: "acme/widget",
         owner: {
           handle: "acme",
+          bio: "Builds useful tools.",
           name: null,
           avatarUrl: "https://example.com/avatar.png",
         },
@@ -445,6 +530,7 @@ describe("repos service", () => {
       name: "widget",
       nameWithOwner: "acme/widget",
       ownerAvatarUrl: "https://example.com/avatar.png",
+      ownerBio: "Builds useful tools.",
       ownerHandle: "acme",
       ownerName: null,
       stars: 2,

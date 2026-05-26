@@ -48,7 +48,8 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
     createSeo({
       canonicalPath: loaderData ? `/authors/${loaderData.author.handle}` : "/authors",
       description: loaderData
-        ? String(author_page_description({ handle: loaderData.author.handle }))
+        ? (loaderData.author.bio ??
+          String(author_page_description({ handle: loaderData.author.handle })))
         : undefined,
       includePageStructuredData: false,
       image: loaderData ? buildAuthorOgImagePath(loaderData.author.handle) : undefined,
@@ -57,7 +58,9 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
             createProfilePageSchema({
               alternateName: loaderData.author.handle,
               canonicalUrl: `${SITE_URL}/authors/${loaderData.author.handle}`,
-              description: String(author_page_description({ handle: loaderData.author.handle })),
+              description:
+                loaderData.author.bio ??
+                String(author_page_description({ handle: loaderData.author.handle })),
               identifier: loaderData.author.handle,
               image: loaderData.author.avatarUrl ?? undefined,
               name: loaderData.author.name ?? `@${loaderData.author.handle}`,
@@ -84,6 +87,7 @@ function RouteComponent() {
   const { handle, githubUrl, isVerified, repoCount, skillCount } = author;
   const name = getAuthorDisplayName(author);
   const avatarLabel = getAvatarLabel(author);
+  const authorDescription = author.bio ?? String(author_page_description({ handle }));
 
   useEffect(() => {
     if (selectedRepoName && !activeRepoName) {
@@ -112,7 +116,7 @@ function RouteComponent() {
       <PageHero
         alignItems="center"
         eyebrow={String(author_page_eyebrow())}
-        // description={String(author_page_description({ handle }))}
+        description={authorDescription}
         media={
           <div className="flex flex-col items-center justify-center px-2">
             <Avatar className="size-60 overflow-hidden rounded-none border-4 border-double border-background bg-foreground shadow-none after:rounded-none">

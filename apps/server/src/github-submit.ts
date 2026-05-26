@@ -37,6 +37,7 @@ const buildSubmitRepoPayload = (
   nameWithOwner: overview.repo.nameWithOwner ?? `${input.owner}/${input.repo}`,
   owner: {
     avatarUrl: overview.owner.avatarUrl ?? undefined,
+    bio: overview.owner.bio,
     handle: overview.owner.handle,
     name: overview.owner.name ?? undefined,
   },

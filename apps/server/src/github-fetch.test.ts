@@ -218,6 +218,34 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
+          if (request.url.endsWith("/users/acme")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  avatar_url: "https://avatars.githubusercontent.com/u/1",
+                  bio: "Builds useful tools.",
+                  login: "acme",
+                  name: "Acme Labs",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.endsWith("/users/acme")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  avatar_url: "https://avatars.githubusercontent.com/u/1",
+                  bio: "Builds useful tools.",
+                  login: "acme",
+                  name: "Acme Labs",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
           if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
             return await Promise.resolve(
               Response.json(
@@ -369,6 +397,20 @@ describe("createGithubFetchRuntime", () => {
             );
           }
 
+          if (request.url.endsWith("/users/acme")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  avatar_url: "https://avatars.githubusercontent.com/u/1",
+                  bio: "Builds useful tools.",
+                  login: "acme",
+                  name: "Acme Labs",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
           if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
             return await Promise.resolve(
               Response.json(
@@ -440,9 +482,10 @@ describe("createGithubFetchRuntime", () => {
       },
       nameWithOwner: "acme/skills",
       owner: "acme",
-      ownerAvatarUrl: null,
+      ownerAvatarUrl: "https://avatars.githubusercontent.com/u/1",
+      ownerBio: "Builds useful tools.",
       ownerHandle: "acme",
-      ownerName: "Acme",
+      ownerName: "Acme Labs",
       recentCommits: [
         {
           committedDate: "2024-01-02T00:00:00.000Z",
@@ -480,6 +523,7 @@ describe("createGithubFetchRuntime", () => {
         {
           path: "skills/example/SKILL.md",
           sha: "blob-1",
+          size: undefined,
           type: "blob",
         },
       ],

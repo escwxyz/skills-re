@@ -151,6 +151,7 @@ const buildEnsureRepoInput = (repo: NonNullable<SkillsUploadContentPayload["repo
   nameWithOwner: repo.nameWithOwner,
   owner: {
     avatarUrl: repo.owner.avatarUrl ?? null,
+    bio: repo.owner.bio ?? null,
     handle: repo.owner.handle,
     name: repo.owner.name ?? null,
   },

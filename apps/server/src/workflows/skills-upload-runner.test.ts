@@ -218,6 +218,7 @@ describe("runSkillsUploadWorkflow", () => {
         nameWithOwner: "acme/skills",
         owner: {
           avatarUrl: null,
+          bio: null,
           handle: "acme",
           name: null,
         },

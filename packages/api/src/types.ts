@@ -9,6 +9,7 @@ export type AuthSession = {
     userId: string;
   };
   user: {
+    bio?: string | null;
     email?: string;
     github?: string | null;
     id: string;
@@ -82,6 +83,7 @@ export interface SkillsUploadContentPayload {
     nameWithOwner: string;
     owner: {
       avatarUrl?: string;
+      bio?: string | null;
       handle: string;
       name?: string;
     };
@@ -165,6 +167,7 @@ export interface GithubFetchRuntime {
     nameWithOwner: string | null;
     owner: string;
     ownerAvatarUrl: string | null;
+    ownerBio: string | null;
     ownerHandle: string;
     ownerName: string | null;
     recentCommits: {

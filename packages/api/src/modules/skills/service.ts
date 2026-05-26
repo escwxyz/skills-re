@@ -23,6 +23,7 @@ interface SkillListRow {
 
 interface AuthorRow {
   avatarUrl: string | null;
+  bio: string | null;
   githubUrl: string;
   handle: string;
   isVerified: number;
@@ -330,6 +331,7 @@ const defaultDeps: SkillsServiceDeps = {
 
 const toAuthor = (row: AuthorRow) => ({
   avatarUrl: row.avatarUrl ?? undefined,
+  bio: row.bio ?? undefined,
   githubUrl: row.githubUrl,
   handle: row.handle,
   isVerified: Boolean(row.isVerified),

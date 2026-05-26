@@ -27,6 +27,7 @@ describe("github contract", () => {
         nameWithOwner: "acme/skills",
         owner: "acme",
         ownerAvatarUrl: "https://example.com/avatar.png",
+        ownerBio: "Builds useful tools.",
         ownerHandle: "acme",
         ownerName: "Acme",
         recentCommits: [
