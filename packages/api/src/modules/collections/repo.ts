@@ -107,7 +107,7 @@ export async function listCollections(input?: { cursor?: string; limit?: number 
           )
         : and(eq(collectionsTable.status, "active"), eq(collectionsTable.visibility, "public")),
     )
-    .orderBy(asc(collectionsTable.title))
+    .orderBy(asc(collectionsTable.title), asc(collectionsTable.id))
     .limit(limit + 1);
 
   const page = rows.slice(0, limit);
