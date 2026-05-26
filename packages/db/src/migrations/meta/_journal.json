@@ -148,6 +148,13 @@
       "when": 1779720494861,
       "tag": "0020_narrow_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1779807589471,
+      "tag": "0021_brief_eternals",
+      "breakpoints": true
     }
   ]
 }

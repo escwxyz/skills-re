@@ -30,6 +30,13 @@ export interface GithubRepoResponse {
   updated_at?: string | null;
 }
 
+export interface GithubOwnerProfileResponse {
+  avatar_url?: string | null;
+  bio?: string | null;
+  login?: string | null;
+  name?: string | null;
+}
+
 export interface GithubCommitResponse {
   commit?: {
     author?: { date?: string | null } | null;
@@ -68,6 +75,7 @@ export interface GithubRepoOverview {
   headSha: string | null;
   owner: {
     avatarUrl: string | null;
+    bio: string | null;
     handle: string;
     name: string | null;
   };
@@ -176,6 +184,10 @@ export const fetchGithubJson = async <T>(
 };
 
 const toOwnerName = (value: string | null | undefined) => value ?? null;
+const toOwnerBio = (value: string | null | undefined) => {
+  const trimmed = value?.trim();
+  return trimmed || null;
+};
 
 const mapGithubCommits = (commitsResponse: GithubCommitResponse[]): GithubCommitSummary[] =>
   commitsResponse.map((commit) => ({
@@ -188,10 +200,12 @@ const mapGithubCommits = (commitsResponse: GithubCommitResponse[]): GithubCommit
 const mapGithubOwner = (
   repoResponse: GithubRepoResponse,
   owner: string,
+  ownerProfile: GithubOwnerProfileResponse | null,
 ): GithubRepoOverview["owner"] => ({
-  avatarUrl: repoResponse.owner?.avatar_url ?? null,
-  handle: repoResponse.owner?.login ?? owner,
-  name: toOwnerName(repoResponse.owner?.name),
+  avatarUrl: ownerProfile?.avatar_url ?? repoResponse.owner?.avatar_url ?? null,
+  bio: toOwnerBio(ownerProfile?.bio),
+  handle: ownerProfile?.login ?? repoResponse.owner?.login ?? owner,
+  name: toOwnerName(ownerProfile?.name ?? repoResponse.owner?.name),
 });
 
 const mapGithubRepoOverview = (
@@ -235,6 +249,24 @@ export const buildGithubRepoOverview = async (
       logContext: { operation: "repo-overview", owner, repo },
     },
   );
+  const ownerHandle = repoResponse.owner?.login ?? owner;
+  const ownerProfile = await fetchGithubJson<GithubOwnerProfileResponse>(
+    fetchImpl,
+    `${GITHUB_API_ROOT}/users/${encodeURIComponent(ownerHandle)}`,
+    { headers },
+    {
+      includeResponseMessage: true,
+      logger: options.logger,
+      logContext: { operation: "owner-profile", owner, repo },
+    },
+  ).catch((error: unknown) => {
+    options.logger?.warn("github.owner_profile.failed", {
+      error: error instanceof Error ? error.message : String(error),
+      owner: ownerHandle,
+      repo,
+    });
+    return null;
+  });
   const commitsResponse = await fetchGithubJson<GithubCommitResponse[]>(
     fetchImpl,
     `${GITHUB_API_ROOT}/repos/${owner}/${repo}/commits?per_page=2${
@@ -253,7 +285,7 @@ export const buildGithubRepoOverview = async (
     commits: mapGithubCommits(commitsResponse),
     defaultBranch,
     headSha: commitsResponse[0]?.sha ?? null,
-    owner: mapGithubOwner(repoResponse, owner),
+    owner: mapGithubOwner(repoResponse, owner, ownerProfile),
     repo: mapGithubRepoOverview(repoResponse, owner, repo, options.includeLifecycleFlags ?? false),
   };
 };

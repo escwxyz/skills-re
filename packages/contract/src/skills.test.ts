@@ -49,6 +49,7 @@ describe("skills contract", () => {
     expect(
       authorListItemSchema.parse({
         avatarUrl: "https://example.com/avatar.png",
+        bio: "Builds useful tools.",
         githubUrl: "https://github.com/acme",
         handle: "acme",
         isVerified: true,
@@ -58,6 +59,7 @@ describe("skills contract", () => {
       }),
     ).toEqual({
       avatarUrl: "https://example.com/avatar.png",
+      bio: "Builds useful tools.",
       githubUrl: "https://github.com/acme",
       handle: "acme",
       isVerified: true,
@@ -75,6 +77,7 @@ describe("skills contract", () => {
         page: [
           {
             avatarUrl: "https://example.com/avatar.png",
+            bio: "Builds useful tools.",
             githubUrl: "https://github.com/acme",
             handle: "acme",
             isVerified: true,
@@ -90,6 +93,7 @@ describe("skills contract", () => {
       page: [
         {
           avatarUrl: "https://example.com/avatar.png",
+          bio: "Builds useful tools.",
           githubUrl: "https://github.com/acme",
           handle: "acme",
           isVerified: true,

@@ -9,6 +9,16 @@ const repoStatsQueryResultSchema = z.object({
     .object({
       forkCount: z.number().int().nonnegative(),
       nameWithOwner: z.string(),
+      owner: z
+        .object({
+          avatarUrl: z.string().nullable().optional(),
+          bio: z.string().nullable().optional(),
+          description: z.string().nullable().optional(),
+          login: z.string().optional(),
+          name: z.string().nullable().optional(),
+        })
+        .nullable()
+        .optional(),
       stargazerCount: z.number().int().nonnegative(),
       updatedAt: z.string(),
     })
@@ -22,6 +32,18 @@ query GetRepoStats($owner: String!, $name: String!) {
     nameWithOwner
     stargazerCount
     forkCount
+    owner {
+      login
+      avatarUrl
+      ... on User {
+        name
+        bio
+      }
+      ... on Organization {
+        name
+        description
+      }
+    }
   }
 }
 `;
@@ -75,6 +97,7 @@ export interface ReposServiceDeps {
     name: string;
     nameWithOwner: string;
     ownerAvatarUrl?: string | null;
+    ownerBio?: string | null;
     ownerHandle: string;
     ownerName?: string | null;
     stars: number;
@@ -99,6 +122,7 @@ export interface ReposServiceDeps {
     name: string;
     nameWithOwner: string;
     ownerAvatarUrl: string | null;
+    ownerBio: string | null;
     ownerHandle: string;
     ownerName: string | null;
     stars: number;
@@ -178,9 +202,12 @@ export interface ReposServiceDeps {
   updateRepoStatsByNameWithOwner: (input: {
     forks: number;
     nameWithOwner: string;
+    ownerAvatarUrl?: string | null;
+    ownerBio?: string | null;
+    ownerName?: string | null;
     stars: number;
     updatedAt: number;
-  }) => Promise<{ changed: boolean }>;
+  }) => Promise<{ changed: boolean; metadataChanged?: boolean }>;
   deprecateSnapshotsBeyondLimit: (input: { keepLatest: number; skillId: string }) => Promise<void>;
 }
 
@@ -348,6 +375,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
       updatedAt: number;
       defaultBranch: string;
       owner: {
+        bio?: string | null;
         handle: string;
         name?: string | null;
         avatarUrl?: string | null;
@@ -371,6 +399,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         name,
         nameWithOwner: input.nameWithOwner,
         ownerAvatarUrl: input.owner.avatarUrl ?? null,
+        ownerBio: input.owner.bio ?? null,
         ownerHandle: input.owner.handle,
         ownerName: input.owner.name ?? null,
         stars: input.stars,
@@ -421,6 +450,9 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
     async updateStats(input: {
       forks: number;
       nameWithOwner: string;
+      ownerAvatarUrl?: string | null;
+      ownerBio?: string | null;
+      ownerName?: string | null;
       stars: number;
       updatedAt: number;
     }) {
@@ -455,6 +487,10 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         repoName: string;
         updatedAt: number;
       }[] = [];
+      const metadataChanged: {
+        repoOwner: string;
+        repoName: string;
+      }[] = [];
 
       await Promise.all(
         repos.map(async (repo) => {
@@ -480,6 +516,13 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           const resultUpdate = await service.updateStats({
             forks: repository.forkCount,
             nameWithOwner: repository.nameWithOwner,
+            ...(repository.owner === undefined
+              ? {}
+              : {
+                  ownerAvatarUrl: repository.owner?.avatarUrl ?? null,
+                  ownerBio: repository.owner?.bio ?? repository.owner?.description ?? null,
+                  ownerName: repository.owner?.name ?? null,
+                }),
             stars: repository.stargazerCount,
             updatedAt,
           });
@@ -491,6 +534,12 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
               updatedAt,
             });
           }
+          if (!resultUpdate.changed && resultUpdate.metadataChanged) {
+            metadataChanged.push({
+              repoName: repo.repoName,
+              repoOwner: repo.repoOwner,
+            });
+          }
         }),
       );
 
@@ -498,6 +547,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
         changed,
         continueCursor,
         isDone,
+        ...(metadataChanged.length > 0 ? { metadataChanged } : {}),
       };
     },
 
@@ -700,6 +750,7 @@ export const ensureRepo = (input: {
   updatedAt: number;
   defaultBranch: string;
   owner: {
+    bio?: string | null;
     handle: string;
     name?: string | null;
     avatarUrl?: string | null;

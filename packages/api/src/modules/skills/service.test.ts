@@ -24,6 +24,7 @@ describe("skills service", () => {
           page: [
             {
               avatarUrl: null,
+              bio: "Builds useful tools.",
               displayName: "Acme",
               githubUrl: "https://github.com/acme",
               handle: "acme",
@@ -34,6 +35,7 @@ describe("skills service", () => {
             },
             {
               avatarUrl: null,
+              bio: null,
               displayName: "Beta",
               githubUrl: "https://github.com/beta",
               handle: "beta",
@@ -55,6 +57,7 @@ describe("skills service", () => {
       page: [
         {
           avatarUrl: undefined,
+          bio: "Builds useful tools.",
           githubUrl: "https://github.com/acme",
           handle: "acme",
           isVerified: true,
@@ -64,6 +67,7 @@ describe("skills service", () => {
         },
         {
           avatarUrl: undefined,
+          bio: undefined,
           githubUrl: "https://github.com/beta",
           handle: "beta",
           isVerified: false,
@@ -169,6 +173,7 @@ describe("skills service", () => {
           githubUrl: `https://github.com/${handle}`,
           handle,
           isVerified: 1,
+          bio: "Maintains the widget stack.",
           name: "Widget Author",
           repoCount: 2,
           skillCount: 3,
@@ -177,6 +182,7 @@ describe("skills service", () => {
 
     await expect(service.getAuthorByHandle({ handle: "acme" })).resolves.toEqual({
       avatarUrl: undefined,
+      bio: "Maintains the widget stack.",
       githubUrl: "https://github.com/acme",
       handle: "acme",
       isVerified: true,

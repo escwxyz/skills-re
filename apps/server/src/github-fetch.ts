@@ -39,6 +39,7 @@ interface GithubFetchResult {
   nameWithOwner: string | null;
   owner: string;
   ownerAvatarUrl: string | null;
+  ownerBio: string | null;
   ownerHandle: string;
   ownerName: string | null;
   recentCommits: {
@@ -278,6 +279,7 @@ export function createGithubFetchRuntime(
         nameWithOwner: overview.repo.nameWithOwner,
         owner: parsed.owner,
         ownerAvatarUrl: overview.owner.avatarUrl,
+        ownerBio: overview.owner.bio,
         ownerHandle: overview.owner.handle,
         ownerName: overview.owner.name,
         recentCommits: overview.commits,

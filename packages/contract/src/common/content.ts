@@ -36,6 +36,7 @@ export const skillPathSchema = z.object({
 
 export const authorSchema = z.object({
   avatarUrl: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
   githubUrl: z.string().url().optional(),
   handle: githubOwnerSchema,
   isVerified: z.boolean().optional(),

@@ -2,16 +2,46 @@
 
 import { describe, expect, test } from "bun:test";
 import {
+  fetchAuthorDetail,
   fetchAuthorsPagination,
   fetchAuthorRepos,
   fetchAuthorSkillsPagination,
   fetchAuthorSkillsStats,
 } from "./authors.server";
 
+type AuthorDetailClient = Parameters<typeof fetchAuthorDetail>[0]["client"];
 type AuthorsPaginationClient = Parameters<typeof fetchAuthorsPagination>[0]["client"];
 type AuthorReposClient = Parameters<typeof fetchAuthorRepos>[0]["client"];
 type AuthorSkillsPaginationClient = Parameters<typeof fetchAuthorSkillsPagination>[0]["client"];
 type AuthorSkillsStatsClient = Parameters<typeof fetchAuthorSkillsStats>[0]["client"];
+
+describe("fetchAuthorDetail", () => {
+  test("forwards enriched author profiles from the public author contract", async () => {
+    const client = {
+      skills: {
+        getAuthorByHandle: (input: { handle: string }) =>
+          Promise.resolve({
+            bio: "Builds useful tools.",
+            githubUrl: `https://github.com/${input.handle}`,
+            handle: input.handle,
+            name: "Acme",
+          }),
+      },
+    } satisfies AuthorDetailClient;
+
+    await expect(
+      fetchAuthorDetail({
+        client,
+        handle: "acme",
+      }),
+    ).resolves.toEqual({
+      bio: "Builds useful tools.",
+      githubUrl: "https://github.com/acme",
+      handle: "acme",
+      name: "Acme",
+    });
+  });
+});
 
 describe("fetchAuthorsPagination", () => {
   test("forwards cursor, limit, and sort to the public authors contract", async () => {

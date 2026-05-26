@@ -145,6 +145,7 @@ describe("createServerContextFromBase", () => {
               nameWithOwner: "acme/skills",
               owner: "acme",
               ownerAvatarUrl: null,
+              ownerBio: null,
               ownerHandle: "acme",
               ownerName: null,
               recentCommits: [],
