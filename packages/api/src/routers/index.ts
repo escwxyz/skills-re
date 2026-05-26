@@ -98,6 +98,23 @@ export const mapCreateFeedbackError = (error: unknown) => {
   return new ORPCError(error.code, { message: error.message });
 };
 
+export const mapCollectionReadError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : null;
+  if (!message) {
+    return null;
+  }
+
+  if (message.includes("not found")) {
+    return new ORPCError("NOT_FOUND", { message });
+  }
+
+  if (message.includes("Forbidden")) {
+    return new ORPCError("FORBIDDEN", { message });
+  }
+
+  return null;
+};
+
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
     return false;
@@ -218,12 +235,22 @@ export const appRouter = {
         userId: context.session.user.id,
       }),
     ),
-    getMineById: protectedProcedure.collections.getMineById.handler(({ input, context }) =>
-      getMineCollectionById(input, {
-        isAdmin: context.session.user.role === "admin",
-        userId: context.session.user.id,
-      }),
-    ),
+    getMineById: protectedProcedure.collections.getMineById.handler(async ({ input, context }) => {
+      try {
+        return await getMineCollectionById(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const mapped = mapCollectionReadError(error);
+        if (mapped) {
+          throw mapped;
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Read collection failed.",
+        });
+      }
+    }),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
       try {
         return await createCollection(input, {
