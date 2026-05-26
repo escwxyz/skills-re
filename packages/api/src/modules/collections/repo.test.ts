@@ -186,5 +186,8 @@ describe("collections repo", () => {
         visibility: "private",
       },
     });
+    expect(operations[1]?.value).toMatchObject({
+      slug: expect.stringMatching(/^default-[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    });
   });
 });

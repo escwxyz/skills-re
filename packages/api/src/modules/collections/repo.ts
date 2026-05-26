@@ -17,6 +17,9 @@ import { decodeCollectionCursor, encodeCollectionCursor } from "./cursor";
 const COLLECTIONS_LIST_LIMIT_MAX = 100;
 export const DEFAULT_COLLECTION_DESCRIPTION = "Skills saved to your personal collection.";
 export const DEFAULT_COLLECTION_TITLE = "Saved Skills";
+const INVALID_COLLECTION_SLUG_CHARS = /[^a-z0-9-]+/g;
+const REPEATED_HYPHENS = /-+/g;
+const EDGE_HYPHENS = /^-|-$/g;
 
 const collectionOwnerHandle = sql<string | null>`coalesce(${usersTable.github}, ${usersTable.id})`;
 const collectionPublicPath = sql<string>`coalesce(${usersTable.github}, ${usersTable.id}) || '-' || ${collectionsTable.slug}`;
@@ -47,6 +50,17 @@ const toSkillRows = () => ({
   updatedAt: skillsTable.updatedAt,
   viewsAllTime: skillsTable.viewsAllTime,
 });
+
+const createDefaultCollectionSlug = () => {
+  const normalizedSuffix = createId()
+    .toLowerCase()
+    .replaceAll("_", "-")
+    .replace(INVALID_COLLECTION_SLUG_CHARS, "-")
+    .replace(REPEATED_HYPHENS, "-")
+    .replace(EDGE_HYPHENS, "");
+
+  return `default-${normalizedSuffix || "collection"}`;
+};
 
 export async function countCollections() {
   const rows = await db
@@ -303,7 +317,7 @@ export async function getOrCreateDefaultCollection(
       id: asCollectionId(createId()),
       description: DEFAULT_COLLECTION_DESCRIPTION,
       kind: "default",
-      slug: `default-${createId()}`,
+      slug: createDefaultCollectionSlug(),
       status: "active",
       title: DEFAULT_COLLECTION_TITLE,
       userId: input.userId,
