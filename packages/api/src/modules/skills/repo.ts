@@ -434,6 +434,7 @@ export async function listAuthors(input?: {
   const limit = input?.limit ?? defaultLimit;
   const sort = input?.sort ?? "popular";
   const cursor = decodeAuthorCursor(input?.cursor);
+  const distinctSkillCountExpr = sql<number>`count(distinct ${skillsTable.id})`;
   // oxlint-disable-next-line typescript/no-explicit-any
   let query: any = db
     .select({
@@ -447,7 +448,7 @@ export async function listAuthors(input?: {
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
       name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: distinctSkillCountExpr,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
@@ -468,10 +469,10 @@ export async function listAuthors(input?: {
       );
     }
   } else {
-    query = query.orderBy(desc(sql`count(${skillsTable.id})`), asc(reposTable.ownerHandle));
+    query = query.orderBy(desc(distinctSkillCountExpr), asc(reposTable.ownerHandle));
     if (cursor) {
       query = query.having(
-        sql`count(${skillsTable.id}) < ${Number(cursor.value)} OR (count(${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+        sql`count(distinct ${skillsTable.id}) < ${Number(cursor.value)} OR (count(distinct ${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
       );
     }
   }
@@ -532,7 +533,7 @@ export async function findAuthorByHandle(handle: string) {
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
       name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: sql<number>`count(distinct ${skillsTable.id})`,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
