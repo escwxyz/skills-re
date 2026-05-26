@@ -121,10 +121,11 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
         ...input,
         skillSlug: slug,
       });
-      await queryClient.invalidateQueries({ queryKey: savedQueryKey });
     } catch (error) {
-      setOptimisticSaved(false);
+      setOptimisticSaved(null);
       throw error;
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: savedQueryKey });
     }
   };
 
