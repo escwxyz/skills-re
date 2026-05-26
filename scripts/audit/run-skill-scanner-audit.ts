@@ -15,6 +15,7 @@ import type { StaticAuditReport } from "../../packages/contract/src/static-audit
 import { staticAuditReportSchema } from "../../packages/contract/src/static-audits";
 import type { SarifLog } from "../../packages/api/src/modules/static-audits/skill-scanner";
 import { parseSkillScannerSarif } from "../../packages/api/src/modules/static-audits/skill-scanner";
+import { prepareBoundedScanInput } from "./scan-input-limit";
 
 import { renderAuditMarkdown } from "./render-audit-md";
 import { scoreAuditFindings } from "./score-audit";
@@ -39,6 +40,7 @@ const DEFAULT_PIPELINE = "github-actions";
 const DEFAULT_PIPELINE_RUN_ID = "local";
 const DEFAULT_RULES_VERSION = `skill-scanner:${DEFAULT_POLICY}`;
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
+const DEFAULT_MAX_INPUT_FILE_CHARS = 10_000;
 const DEFAULT_LLM_MODEL_ROTATION = [
   "gemini/gemini-3.1-flash-lite",
   "gemini/gemini-2.5-flash-lite",
@@ -634,6 +636,7 @@ interface ParseState {
   llmConsensusRuns: number;
   llmModel: string | undefined;
   llmProvider: string | undefined;
+  maxInputFileChars: number;
   outputDir: string;
   pipeline: string;
   pipelineRunId: string;
@@ -694,6 +697,10 @@ const applyStringArg = (arg: string, next: string | undefined, state: ParseState
     state.delayMsBetweenTargets = parseIntegerFlag(next, state.delayMsBetweenTargets);
     return true;
   }
+  if (arg === "--max-input-file-chars") {
+    state.maxInputFileChars = parseIntegerFlag(next, state.maxInputFileChars);
+    return true;
+  }
   if (arg === "--fail-on-block") {
     state.failOnBlock = (next ?? "true").toLowerCase() !== "false";
     return true;
@@ -740,6 +747,10 @@ const parseArgs = (argv: string[]): ParseState => {
     llmModel: normalizeOptionalString(process.env.SKILL_SCANNER_LLM_MODEL),
     llmProvider: normalizeOptionalString(process.env.SKILL_SCANNER_LLM_PROVIDER),
     outputDir: DEFAULT_OUTPUT_DIR,
+    maxInputFileChars: parseIntegerFlag(
+      process.env.SKILL_SCANNER_AUDIT_MAX_INPUT_FILE_CHARS,
+      DEFAULT_MAX_INPUT_FILE_CHARS,
+    ),
     pipeline: process.env.GITHUB_ACTIONS ? "github-actions-pr" : DEFAULT_PIPELINE,
     pipelineRunId: process.env.GITHUB_RUN_ID ?? DEFAULT_PIPELINE_RUN_ID,
     policy: DEFAULT_POLICY,
@@ -994,14 +1005,29 @@ const buildAndWriteAuditResult = async (input: {
   const llmModelRotation = buildLlmModelRotation({ configuredModel: args.llmModel });
   const sourceHash = await computeSourceHash(repoDir, scanDir, args.verbose);
   const sarifPath = path.join(workspaceDir, `skill-scanner-${target.id}.sarif`);
+  const boundedInput = await prepareBoundedScanInput({
+    maxFileChars: args.maxInputFileChars,
+    sourceDir: repoDir,
+    workspaceDir,
+  });
+  if (boundedInput.truncatedFiles.length > 0) {
+    logVerbose(
+      args.verbose,
+      `truncated ${boundedInput.truncatedFiles.length} scan input file(s) above ${args.maxInputFileChars} chars`,
+    );
+  }
+  const scannerRepoDir = boundedInput.scanDir;
+  const scannerScanDir = effectiveSkillRootPath
+    ? path.join(scannerRepoDir, effectiveSkillRootPath)
+    : scannerRepoDir;
   const scannerResult = await runSkillScannerWithModelFallback({
     llmConsensusRuns: args.llmConsensusRuns,
     llmModelRotation,
     llmProvider: args.llmProvider,
     outputPath: sarifPath,
     policy: args.policy,
-    repoDir,
-    scanDir,
+    repoDir: scannerRepoDir,
+    scanDir: scannerScanDir,
     useBehavioral: args.useBehavioral,
     useLlm: args.useLlm,
     useMeta: args.useMeta,
@@ -1014,7 +1040,7 @@ const buildAndWriteAuditResult = async (input: {
     categoryBase: `skill-scanner/${target.id}`,
     sarif: scannerResult.parsedSarif,
   });
-  const normalized = parseSkillScannerSarif({ payload: categorizedSarif, repoDir });
+  const normalized = parseSkillScannerSarif({ payload: categorizedSarif, repoDir: scannerRepoDir });
   const scoring = scoreAuditFindings(normalized.findings);
 
   const report: StaticAuditReport = {
