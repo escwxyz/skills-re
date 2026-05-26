@@ -116,11 +116,16 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
 
     ga.event("save_skill_to_collection", { slug });
     setOptimisticSaved(true);
-    await saveToCollectionMutation.mutateAsync({
-      ...input,
-      skillSlug: slug,
-    });
-    await queryClient.invalidateQueries({ queryKey: savedQueryKey });
+    try {
+      await saveToCollectionMutation.mutateAsync({
+        ...input,
+        skillSlug: slug,
+      });
+      await queryClient.invalidateQueries({ queryKey: savedQueryKey });
+    } catch (error) {
+      setOptimisticSaved(false);
+      throw error;
+    }
   };
 
   return {
