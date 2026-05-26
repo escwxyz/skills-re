@@ -147,17 +147,27 @@ export const categoryTopSkillsSchema = z.object({
 export const collectionListItemSchema = z.object({
   description: z.string(),
   id: idSchema,
+  kind: z.enum(["custom", "default"]).optional(),
+  ownerHandle: z.string().nullable().optional(),
+  publicPath: z.string().optional(),
   skillCount: z.number().int().nonnegative(),
   slug: tagSlugSchema,
+  status: z.enum(["active", "archived"]).optional(),
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const collectionDetailSchema = z.object({
   description: z.string(),
   id: idSchema,
+  kind: z.enum(["custom", "default"]).optional(),
+  ownerHandle: z.string().nullable().optional(),
+  publicPath: z.string().optional(),
   skills: z.array(searchSkillListItemSchema),
   slug: tagSlugSchema,
+  status: z.enum(["active", "archived"]).optional(),
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const repoListItemSchema = z.object({

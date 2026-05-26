@@ -25,6 +25,7 @@ import {
   getMineFeedbackById,
   getMyReviewBySkill,
   getCollectionBySlug,
+  getMineCollectionById,
   countSkills,
   countTags,
   claimAsAuthor,
@@ -46,6 +47,7 @@ import {
   listCollections,
   listFeedback,
   listMineFeedback,
+  listMineCollections,
   listIndexableTags,
   listReposByOwner,
   listReposPage,
@@ -66,6 +68,7 @@ import {
   removeSkillFromCollection,
   resolvePathBySlug,
   saveSkill,
+  saveSkillToCollection,
   setCollectionSkills,
   syncRepoStats,
   updateCollection,
@@ -93,6 +96,23 @@ export const mapCreateFeedbackError = (error: unknown) => {
   }
 
   return new ORPCError(error.code, { message: error.message });
+};
+
+export const mapCollectionReadError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : null;
+  if (!message) {
+    return null;
+  }
+
+  if (message.includes("not found")) {
+    return new ORPCError("NOT_FOUND", { message });
+  }
+
+  if (message.includes("Forbidden")) {
+    return new ORPCError("FORBIDDEN", { message });
+  }
+
+  return null;
 };
 
 const isUniqueConstraintError = (error: unknown): boolean => {
@@ -202,10 +222,35 @@ export const appRouter = {
   },
   collections: {
     count: publicProcedure.collections.count.handler(() => countCollections()),
-    getBySlug: publicProcedure.collections.getBySlug.handler(({ input }) =>
-      getCollectionBySlug(input),
+    getBySlug: publicProcedure.collections.getBySlug.handler(({ input, context }) =>
+      getCollectionBySlug(input, {
+        isAdmin: context.session?.user.role === "admin",
+        userId: context.session?.user.id,
+      }),
     ),
     list: publicProcedure.collections.list.handler(({ input }) => listCollections(input)),
+    listMine: protectedProcedure.collections.listMine.handler(({ context }) =>
+      listMineCollections({
+        isAdmin: context.session.user.role === "admin",
+        userId: context.session.user.id,
+      }),
+    ),
+    getMineById: protectedProcedure.collections.getMineById.handler(async ({ input, context }) => {
+      try {
+        return await getMineCollectionById(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const mapped = mapCollectionReadError(error);
+        if (mapped) {
+          throw mapped;
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Read collection failed.",
+        });
+      }
+    }),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
       try {
         return await createCollection(input, {
@@ -268,6 +313,26 @@ export const appRouter = {
           throw new ORPCError("FORBIDDEN", { message });
         }
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Add skill failed." });
+      }
+    }),
+    saveSkill: protectedProcedure.collections.saveSkill.handler(async ({ input, context }) => {
+      try {
+        return await saveSkillToCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Save skill failed.";
+        if (message === "Skill not found." || message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
+        if (isUniqueConstraintError(error)) {
+          throw new ORPCError("CONFLICT", { message: "Collection slug already exists" });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Save skill failed." });
       }
     }),
     removeSkill: protectedProcedure.collections.removeSkill.handler(async ({ input, context }) => {

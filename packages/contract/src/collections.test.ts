@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import {
   collectionsContract,
   collectionsListInputSchema,
+  collectionVisibilitySchema,
   setCollectionSkillsInputSchema,
 } from "./collections";
 
@@ -27,14 +28,23 @@ describe("collections contract", () => {
     expect(() => collectionsListInputSchema.parse({ limit: 101 })).toThrow();
   });
 
+  test("accepts public and private collection visibility values", () => {
+    expect(collectionVisibilitySchema.parse("public")).toBe("public");
+    expect(collectionVisibilitySchema.parse("private")).toBe("private");
+    expect(() => collectionVisibilitySchema.parse("archived")).toThrow();
+  });
+
   test("exposes the collection routes used by the API layer", () => {
     expect(collectionsContract.count).toBeDefined();
     expect(collectionsContract.getBySlug).toBeDefined();
     expect(collectionsContract.list).toBeDefined();
+    expect(collectionsContract.listMine).toBeDefined();
+    expect(collectionsContract.getMineById).toBeDefined();
     expect(collectionsContract.create).toBeDefined();
     expect(collectionsContract.update).toBeDefined();
     expect(collectionsContract.delete).toBeDefined();
     expect(collectionsContract.addSkill).toBeDefined();
+    expect(collectionsContract.saveSkill).toBeDefined();
     expect(collectionsContract.removeSkill).toBeDefined();
     expect(collectionsContract.setSkills).toBeDefined();
   });

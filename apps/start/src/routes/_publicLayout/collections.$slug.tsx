@@ -37,9 +37,13 @@ export const Route = createFileRoute("/_publicLayout/collections/$slug")({
   loader: ({ params }) => getCollectionDetail({ data: { slug: params.slug } }),
   head: ({ loaderData }) =>
     createSeo({
-      canonicalPath: loaderData ? `/collections/${loaderData.slug}` : "/collections",
+      canonicalPath: loaderData
+        ? `/collections/${loaderData.publicPath ?? loaderData.slug}`
+        : "/collections",
       description: loaderData?.description,
-      image: loaderData ? buildCollectionOgImagePath(loaderData.slug) : undefined,
+      image: loaderData
+        ? buildCollectionOgImagePath(loaderData.publicPath ?? loaderData.slug)
+        : undefined,
       title: loaderData?.title,
     }),
   component: RouteComponent,

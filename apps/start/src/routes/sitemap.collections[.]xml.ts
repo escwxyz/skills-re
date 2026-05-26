@@ -30,7 +30,9 @@ export const Route = createFileRoute("/sitemap/collections.xml")({
 
         const xml = wrapUrlSet(
           entries.flatMap((collection) =>
-            getAllMultilingualUrls([`/collections/${collection.slug}`]).map((path) =>
+            getAllMultilingualUrls([
+              `/collections/${collection.publicPath ?? collection.slug}`,
+            ]).map((path) =>
               renderUrlEntry({
                 changefreq: "weekly",
                 loc: `${SITE_URL}${path}`,

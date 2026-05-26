@@ -2,6 +2,7 @@ import { loginDialogAtom, pendingActionAtom } from "@/atoms/app";
 import { getSkillCheckSaved } from "@/functions/skills/get-skill-check-saved";
 import { saveSkill } from "@/functions/skills/save-skill";
 import { unsaveSkill } from "@/functions/skills/unsave-skill";
+import { orpc } from "@/lib/orpc";
 import { openLoginDialog } from "@/utils/login-dialog";
 import { useAsyncDebouncer } from "@tanstack/react-pacer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,6 +47,13 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
       queryClient.setQueryData(savedQueryKey, { saved: false });
     },
   });
+  const saveToCollectionMutation = useMutation(
+    orpc.collections.saveSkill.mutationOptions({
+      onSuccess: () => {
+        queryClient.setQueryData(savedQueryKey, { saved: true });
+      },
+    }),
+  );
 
   const toggleDebouncer = useAsyncDebouncer(
     async (target: boolean) => {
@@ -87,8 +95,44 @@ export const useSaveSkill = ({ slug }: { slug: string }) => {
     toggleDebouncer.maybeExecute(newState);
   };
 
+  const saveToCollection = async (input: {
+    collectionId?: string;
+    newCollection?: {
+      description?: string;
+      slug?: string;
+      title: string;
+      visibility?: "public" | "private";
+    };
+    visibility?: "public" | "private";
+  }) => {
+    if (!currentUser) {
+      setPendingAction({
+        slug,
+        type: "save-skill",
+      });
+      openLoginDialog(setLoginDialog);
+      return;
+    }
+
+    ga.event("save_skill_to_collection", { slug });
+    setOptimisticSaved(true);
+    try {
+      await saveToCollectionMutation.mutateAsync({
+        ...input,
+        skillSlug: slug,
+      });
+    } catch (error) {
+      setOptimisticSaved(null);
+      throw error;
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: savedQueryKey });
+    }
+  };
+
   return {
     handleClick,
     isSaved,
+    isSavingToCollection: saveToCollectionMutation.isPending,
+    saveToCollection,
   };
 };
