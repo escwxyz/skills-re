@@ -4,12 +4,13 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 
-import { prepareBoundedScanInput } from "./scan-input-limit";
+import * as actualFsPromises from "node:fs/promises";
 
 describe("prepareBoundedScanInput", () => {
   test("copies scan input while keeping oversized files within the per-file limit", async () => {
+    const { prepareBoundedScanInput } = await import("./scan-input-limit");
     const workspaceDir = await mkdtemp(path.join(os.tmpdir(), "scan-input-limit-"));
     const sourceDir = path.join(workspaceDir, "source");
     await mkdir(path.join(sourceDir, "references"), { recursive: true });
@@ -29,10 +30,43 @@ describe("prepareBoundedScanInput", () => {
     expect(large.length).toBeLessThanOrEqual(10);
     expect(result.truncatedFiles).toEqual([
       {
-        originalChars: 12,
         relativePath: "references/large.md",
         writtenChars: 10,
       },
     ]);
+  });
+
+  test("does not depend on readFile when copying bounded input", async () => {
+    mock.module("node:fs/promises", () => ({
+      ...actualFsPromises,
+      readFile: () => {
+        throw new Error("readFile should not be called");
+      },
+    }));
+
+    try {
+      const { prepareBoundedScanInput } = await import("./scan-input-limit");
+
+      const workspaceDir = await mkdtemp(path.join(os.tmpdir(), "scan-input-limit-"));
+      const sourceDir = path.join(workspaceDir, "source");
+      await mkdir(path.join(sourceDir, "references"), { recursive: true });
+      await writeFile(path.join(sourceDir, "SKILL.md"), "small", "utf-8");
+      await writeFile(path.join(sourceDir, "references", "large.md"), "a".repeat(12), "utf-8");
+
+      const result = await prepareBoundedScanInput({
+        maxFileChars: 10,
+        sourceDir,
+        workspaceDir,
+      });
+
+      expect(result.truncatedFiles).toEqual([
+        {
+          relativePath: "references/large.md",
+          writtenChars: 10,
+        },
+      ]);
+    } finally {
+      mock.restore();
+    }
   });
 });

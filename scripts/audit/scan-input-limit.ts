@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { createReadStream } from "node:fs";
 import path from "node:path";
 
 const DEFAULT_IGNORED_DIRECTORIES = new Set([
@@ -11,7 +12,6 @@ const DEFAULT_IGNORED_DIRECTORIES = new Set([
 const TRUNCATION_NOTICE = "\n\n[truncated by skills.re audit input limiter]\n";
 
 export interface TruncatedScanInputFile {
-  originalChars: number;
   relativePath: string;
   writtenChars: number;
 }
@@ -23,16 +23,50 @@ export interface PrepareBoundedScanInputResult {
 
 const normalizePath = (value: string) => value.replaceAll("\\", "/");
 
-const truncateContent = (content: string, maxFileChars: number) => {
-  if (content.length <= maxFileChars) {
-    return content;
+const readBoundedText = async (filePath: string, maxFileChars: number) => {
+  const contentLimit =
+    maxFileChars > TRUNCATION_NOTICE.length
+      ? maxFileChars - TRUNCATION_NOTICE.length
+      : maxFileChars;
+  const stream = createReadStream(filePath, {
+    encoding: "utf-8",
+    highWaterMark: Math.max(1, Math.min(maxFileChars, 64 * 1024)),
+  });
+
+  let content = "";
+  let truncated = false;
+
+  try {
+    for await (const chunk of stream) {
+      const chunkText = typeof chunk === "string" ? chunk : String(chunk);
+      if (content.length >= contentLimit) {
+        truncated = true;
+        break;
+      }
+
+      const remaining = contentLimit - content.length;
+      if (chunkText.length <= remaining) {
+        content += chunkText;
+        continue;
+      }
+
+      content += chunkText.slice(0, remaining);
+      truncated = true;
+      break;
+    }
+  } finally {
+    stream.destroy();
+  }
+
+  if (!truncated) {
+    return { content, truncated };
   }
 
   if (maxFileChars <= TRUNCATION_NOTICE.length) {
-    return content.slice(0, maxFileChars);
+    return { content: content.slice(0, maxFileChars), truncated };
   }
 
-  return `${content.slice(0, maxFileChars - TRUNCATION_NOTICE.length)}${TRUNCATION_NOTICE}`;
+  return { content: `${content}${TRUNCATION_NOTICE}`, truncated };
 };
 
 const copyBoundedEntry = async (input: {
@@ -67,15 +101,16 @@ const copyBoundedEntry = async (input: {
     const entryRelativePath = path.join(input.relativePath, entry.name);
     const sourceFilePath = path.join(input.sourceDir, entryRelativePath);
     const destinationFilePath = path.join(input.destinationDir, entryRelativePath);
-    const content = await fs.readFile(sourceFilePath, "utf-8");
-    const boundedContent = truncateContent(content, input.maxFileChars);
+    const { content: boundedContent, truncated } = await readBoundedText(
+      sourceFilePath,
+      input.maxFileChars,
+    );
 
     await fs.mkdir(path.dirname(destinationFilePath), { recursive: true });
     await fs.writeFile(destinationFilePath, boundedContent, "utf-8");
 
-    if (boundedContent.length < content.length) {
+    if (truncated) {
       input.truncatedFiles.push({
-        originalChars: content.length,
         relativePath: normalizePath(entryRelativePath),
         writtenChars: boundedContent.length,
       });
