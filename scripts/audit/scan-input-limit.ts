@@ -23,12 +23,23 @@ export interface PrepareBoundedScanInputResult {
 
 const normalizePath = (value: string) => value.replaceAll("\\", "/");
 
-const readBoundedText = async (filePath: string, maxFileChars: number) => {
+type BoundedReadStream = AsyncIterable<string | Buffer> & {
+  destroy: () => void;
+};
+
+export const readBoundedText = async (
+  filePath: string,
+  maxFileChars: number,
+  openReadStream: (
+    filePath: string,
+    options: { encoding: "utf-8"; highWaterMark: number },
+  ) => BoundedReadStream = createReadStream,
+) => {
   const contentLimit =
     maxFileChars > TRUNCATION_NOTICE.length
       ? maxFileChars - TRUNCATION_NOTICE.length
       : maxFileChars;
-  const stream = createReadStream(filePath, {
+  const stream = openReadStream(filePath, {
     encoding: "utf-8",
     highWaterMark: Math.max(1, Math.min(maxFileChars, 64 * 1024)),
   });
