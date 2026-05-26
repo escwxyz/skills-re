@@ -218,6 +218,7 @@ function RouteComponent() {
         <PageHero
           eyebrow={m.skills_browse_eyebrow()}
           description={m.skills_browse_description()}
+          descriptionClassName="font-sans"
           descriptionItalic
           stats={[
             {

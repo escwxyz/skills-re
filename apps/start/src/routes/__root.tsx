@@ -54,7 +54,6 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
   head: () => {
     const defaultSeo = createSeo({
-      canonicalPath: "/",
       description: m.home_meta_description(),
       includePageStructuredData: false,
       includeSiteStructuredData: true,
