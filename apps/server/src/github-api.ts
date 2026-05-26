@@ -183,7 +183,15 @@ export const fetchGithubJson = async <T>(
   return (await response.json()) as T;
 };
 
-const toOwnerName = (value: string | null | undefined) => value ?? null;
+const toOwnerName = (...values: (string | null | undefined)[]) => {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+  return null;
+};
 const toOwnerBio = (value: string | null | undefined) => {
   const trimmed = value?.trim();
   return trimmed || null;
@@ -205,7 +213,7 @@ const mapGithubOwner = (
   avatarUrl: ownerProfile?.avatar_url ?? repoResponse.owner?.avatar_url ?? null,
   bio: toOwnerBio(ownerProfile?.bio),
   handle: ownerProfile?.login ?? repoResponse.owner?.login ?? owner,
-  name: toOwnerName(ownerProfile?.name ?? repoResponse.owner?.name),
+  name: toOwnerName(ownerProfile?.name, repoResponse.owner?.name),
 });
 
 const mapGithubRepoOverview = (
