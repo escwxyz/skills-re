@@ -114,6 +114,24 @@ export const mapCollectionReadError = (error: unknown) => {
   return null;
 };
 
+export const normalizeErrorForLog = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+    };
+  }
+
+  return {
+    message: typeof error === "string" ? error : "Unknown error",
+    name: "NonError",
+  };
+};
+
+export const anonymizeIdForLog = (value: string) =>
+  value.length <= 8 ? "[redacted]" : `${value.slice(0, 4)}...${value.slice(-4)}`;
+
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
     return false;
@@ -608,10 +626,10 @@ export const appRouter = {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Save failed.";
         console.error("[skills.save] failed", {
-          error,
+          error: normalizeErrorForLog(error),
           message,
           skillSlug: input.slug,
-          userId: context.session.user.id,
+          userId: anonymizeIdForLog(context.session.user.id),
         });
         if (message === "Skill not found.") {
           throw new ORPCError("NOT_FOUND", { message });
