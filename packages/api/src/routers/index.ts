@@ -67,7 +67,6 @@ import {
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
-  saveSkill,
   saveSkillToCollection,
   setCollectionSkills,
   syncRepoStats,
@@ -592,12 +591,28 @@ export const appRouter = {
     count: publicProcedure.skills.count.handler(() => countSkills()),
     save: protectedProcedure.skills.save.handler(async ({ input, context }) => {
       try {
-        return await saveSkill({
-          slug: input.slug,
-          userId: context.session.user.id,
-        });
+        const result = await saveSkillToCollection(
+          {
+            skillSlug: input.slug,
+          },
+          {
+            isAdmin: context.session.user.role === "admin",
+            userId: context.session.user.id,
+          },
+        );
+
+        return {
+          alreadySaved: result.alreadySaved,
+          saved: result.saved,
+        };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Save failed.";
+        console.error("[skills.save] failed", {
+          error,
+          message,
+          skillSlug: input.slug,
+          userId: context.session.user.id,
+        });
         if (message === "Skill not found.") {
           throw new ORPCError("NOT_FOUND", { message });
         }
