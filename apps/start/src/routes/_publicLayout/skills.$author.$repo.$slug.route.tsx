@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import {
+  getRouteApi,
   createFileRoute,
   Outlet,
   redirect,
@@ -21,10 +22,8 @@ import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
 import { ReviewRatingTrigger } from "@/components/review-rating-trigger";
-import { SkillRelated } from "@/components/skill-related";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { WriteReviewDialog } from "@/components/write-review-cta";
 import { SkillDetailStats } from "@/components/skill-detail-stats";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { skill_detail_read_full_description, skill_detail_verified } from "@/paraglide/messages";
@@ -33,8 +32,18 @@ const searchSchema = z.object({
   snapshotId: z.string().optional(),
 });
 
+const LazySkillRelated = lazy(async () => {
+  const module = await import("@/components/skill-related");
+  return { default: module.SkillRelated };
+});
+
+const LazyWriteReviewDialog = lazy(async () => {
+  const module = await import("@/components/write-review-cta");
+  return { default: module.WriteReviewDialog };
+});
+
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug")({
-  loader: async ({ location, params }) => {
+  beforeLoad: async ({ location, params }) => {
     const data = await getSkillBase({ data: { skillSlug: params.slug } });
     if (!data) {
       throw redirect({ to: "/skills" });
@@ -56,11 +65,16 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug"
       });
     }
 
-    return data;
+    return {
+      skillDetail: data,
+    };
   },
+  loader: ({ context }) => context.skillDetail,
   validateSearch: searchSchema,
   component: RouteComponent,
 });
+
+export const skillDetailRouteApi = getRouteApi("/_publicLayout/skills/$author/$repo/$slug");
 
 function RouteComponent() {
   const data = Route.useLoaderData();
@@ -231,8 +245,36 @@ function RouteComponent() {
       <div>
         <Outlet />
       </div>
-      <SkillRelated primaryCategory={skill.primaryCategory} skillId={skill.id} tags={skill.tags} />
-      <WriteReviewDialog />
+      <Suspense fallback={<SkillRelatedPending />}>
+        <LazySkillRelated
+          primaryCategory={skill.primaryCategory}
+          skillId={skill.id}
+          tags={skill.tags}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LazyWriteReviewDialog />
+      </Suspense>
     </>
   );
 }
+
+const SkillRelatedPending = () => (
+  <section className="border-b border-border px-4 py-10 md:px-6">
+    <div className="mb-3 flex items-end justify-between">
+      <div className="h-10 w-48 animate-pulse bg-muted" />
+      <div className="hidden h-3 w-32 animate-pulse bg-muted md:block" />
+    </div>
+    <div className="mb-6 border-t border-border" />
+    <div className="grid grid-cols-1 border-l border-border sm:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="border-r border-b border-border p-5">
+          <div className="mb-3 h-3 w-20 animate-pulse bg-muted" />
+          <div className="mb-3 h-6 w-3/4 animate-pulse bg-muted" />
+          <div className="mb-2 h-3 w-full animate-pulse bg-muted" />
+          <div className="h-3 w-2/3 animate-pulse bg-muted" />
+        </div>
+      ))}
+    </div>
+  </section>
+);

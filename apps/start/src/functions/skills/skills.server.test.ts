@@ -4,6 +4,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   fetchSkillChangelog,
+  fetchSkillDocument,
+  fetchSkillDocumentByResolvedSkill,
   fetchSkillFileContent,
   fetchSkillCheckSaved,
   fetchSkillVersionHistory,
@@ -20,6 +22,7 @@ import {
 
 type ResolveSkillBaseClient = Parameters<typeof resolveSkillBase>[0]["client"];
 type FetchSkillChangelogClient = Parameters<typeof fetchSkillChangelog>[0]["client"];
+type FetchSkillDocumentClient = Parameters<typeof fetchSkillDocument>[0]["client"];
 type FetchSkillVersionHistoryClient = Parameters<typeof fetchSkillVersionHistory>[0]["client"];
 type FetchSkillFileContentClient = Parameters<typeof fetchSkillFileContent>[0]["client"];
 type FetchSkillCheckSavedClient = Parameters<typeof fetchSkillCheckSaved>[0]["client"];
@@ -303,6 +306,84 @@ describe("fetchSkillFileContent", () => {
     ]);
     expect(result.html).not.toContain("name: Example");
     expect(result.html).toContain('<h2 id="getting-started" tabindex="-1">Getting Started</h2>');
+  });
+});
+
+describe("fetchSkillDocumentByResolvedSkill", () => {
+  test("builds document content without repeating slug resolution", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      snapshots: {
+        listBySkill: (input?: { limit?: number; skillId?: string }) => {
+          calls.push({ listBySkill: input ?? {} });
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [
+              {
+                description: "current snapshot",
+                entryPath: "skills/example/SKILL.md",
+                hash: "abcdef123456",
+                id: "snapshot-1",
+                syncTime: 1710000001000,
+                version: "v1",
+              },
+            ],
+          });
+        },
+        readSnapshotFileContent: (input?: {
+          path?: string;
+          snapshotId?: string;
+          maxBytes?: number;
+        }) => {
+          calls.push({ readSnapshotFileContent: input ?? {} });
+          return Promise.resolve({
+            bytesRead: 96,
+            content:
+              "---\nname: Example Skill\ndescription: Example description\n---\n\n# Title\n\n## Usage\n",
+            isTruncated: false,
+            offset: 0,
+            totalBytes: 96,
+          });
+        },
+      },
+    } as unknown as FetchSkillDocumentClient;
+
+    const result = await fetchSkillDocumentByResolvedSkill({
+      client,
+      locale: "en",
+      resolvedSkill: {
+        authorHandle: "acme",
+        description: "Example description",
+        id: "skill-1",
+        latestVersion: "1.0.0",
+        repoName: "skills",
+        skillSlug: "example-skill",
+        title: "Example Skill",
+      },
+      selectedSnapshotId: undefined,
+    });
+
+    expect(result).toEqual({
+      contentHtml: expect.stringContaining('<h2 id="usage"'),
+      entryMetaLabel: "skills/example/SKILL.md · 96 B",
+      frontmatter: {
+        description: "Example description",
+        name: "Example Skill",
+      },
+      tocItems: [{ depth: 2, slug: "usage", title: "Usage" }],
+    });
+
+    expect(calls).toEqual([
+      { listBySkill: { limit: 3, skillId: "skill-1" } },
+      {
+        readSnapshotFileContent: {
+          maxBytes: 200_000,
+          path: "skills/example/SKILL.md",
+          snapshotId: "snapshot-1",
+        },
+      },
+    ]);
   });
 });
 
