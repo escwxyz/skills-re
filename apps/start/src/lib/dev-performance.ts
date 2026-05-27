@@ -16,10 +16,10 @@ const nextCallCount = (name: string) => {
 export const measureAsync = async <T>(
   name: string,
   details: Record<string, unknown>,
-  operation: () => Promise<T>,
+  operation: () => T | Promise<T>,
 ): Promise<T> => {
   if (!isDevelopment) {
-    return operation();
+    return await operation();
   }
 
   const call = nextCallCount(name);

@@ -14,7 +14,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { measureAsync } from "@/lib/dev-performance";
 import { getUser } from "@/functions/get-user";
 import { orpc } from "@/lib/orpc";
-import { readCachedRootAuth, writeCachedRootAuth } from "@/lib/root-auth-cache";
+import {
+  getCurrentAuthCookieSignature,
+  readCachedRootAuth,
+  writeCachedRootAuth,
+} from "@/lib/root-auth-cache";
 import { createSeo } from "@/lib/seo";
 import { getTheme } from "@/functions/get-theme";
 import { pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
@@ -35,12 +39,13 @@ export interface RouterAppContext {
 }
 
 const loadRootAuthContext = async () => {
+  const authCookieSignature = getCurrentAuthCookieSignature();
   const cachedAuth = readCachedRootAuth<{
     currentUser: Awaited<ReturnType<typeof getUser>>["data"] extends { user: infer T }
       ? T | null
       : null;
     isAdmin: boolean;
-  }>();
+  }>(authCookieSignature);
 
   if (cachedAuth) {
     return cachedAuth;
@@ -59,7 +64,7 @@ const loadRootAuthContext = async () => {
             isAdmin: data.user.role === "admin",
           };
 
-    return writeCachedRootAuth(nextAuthState);
+    return writeCachedRootAuth(authCookieSignature, nextAuthState);
   });
 };
 
