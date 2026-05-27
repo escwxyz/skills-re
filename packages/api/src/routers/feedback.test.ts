@@ -5,9 +5,11 @@ import { ORPCError } from "@orpc/server";
 
 import { FeedbackCreateError } from "../modules";
 import {
+  anonymizeIdForLog,
   canCreateFeedbackAnonymously,
   mapCollectionReadError,
   mapCreateFeedbackError,
+  normalizeErrorForLog,
 } from "./index";
 
 describe("feedback create auth gate", () => {
@@ -46,5 +48,18 @@ describe("feedback create auth gate", () => {
     expect(forbidden?.code).toBe("FORBIDDEN");
     expect(forbidden?.message).toBe("Forbidden: you do not own this collection.");
     expect(mapCollectionReadError(new Error("unexpected"))).toBeNull();
+  });
+
+  test("normalizes logged error metadata and anonymizes ids", () => {
+    const error = new Error("Save failed.");
+    error.stack = "Error: Save failed.\n    at save\n    at handler\n    at next\n    at extra";
+
+    expect(normalizeErrorForLog(error)).toEqual({
+      message: "Save failed.",
+      name: "Error",
+      stack: "Error: Save failed.\n    at save\n    at handler",
+    });
+    expect(anonymizeIdForLog("user_1234567890")).toBe("user...7890");
+    expect(anonymizeIdForLog("short")).toBe("[redacted]");
   });
 });

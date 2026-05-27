@@ -343,14 +343,17 @@ describe("saveSkillToDashboard", () => {
   test("forwards the slug to the injected client", async () => {
     const calls: Array<Record<string, unknown>> = [];
     const client = {
-      skills: {
-        save: (input?: { slug: string }) => {
-          calls.push({ save: input ?? {} });
+      collections: {
+        saveSkill: (input?: { skillSlug: string }) => {
+          calls.push({ saveSkill: input ?? {} });
           return Promise.resolve({
             alreadySaved: false,
+            collectionId: "collection-1",
             saved: true,
           });
         },
+      },
+      skills: {
         unsave: () => Promise.resolve({ unsaved: true }),
       },
     } satisfies SaveSkillClient;
@@ -367,8 +370,8 @@ describe("saveSkillToDashboard", () => {
 
     expect(calls).toEqual([
       {
-        save: {
-          slug: "workflow-builder",
+        saveSkill: {
+          skillSlug: "workflow-builder",
         },
       },
     ]);
@@ -379,8 +382,11 @@ describe("unsaveSkillFromDashboard", () => {
   test("forwards the slug to the injected client", async () => {
     const calls: Array<Record<string, unknown>> = [];
     const client = {
+      collections: {
+        saveSkill: () =>
+          Promise.resolve({ alreadySaved: false, collectionId: "collection-1", saved: true }),
+      },
       skills: {
-        save: () => Promise.resolve({ alreadySaved: false, saved: true }),
         unsave: (input?: { slug: string }) => {
           calls.push({ unsave: input ?? {} });
           return Promise.resolve({

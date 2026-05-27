@@ -1,9 +1,8 @@
-import { ArrowBendUpLeftIcon, CaretRightIcon, HouseIcon, InfoIcon } from "@phosphor-icons/react";
+import { ArrowBendUpLeftIcon, FolderSimpleIcon, HouseIcon, InfoIcon } from "@phosphor-icons/react";
 import { ChatCircleTextIcon } from "@phosphor-icons/react/dist/icons/ChatCircleText";
 import { ChatsIcon } from "@phosphor-icons/react/dist/icons/Chats";
 import { GearIcon } from "@phosphor-icons/react/dist/icons/Gear";
 import { RowsIcon } from "@phosphor-icons/react/dist/icons/Rows";
-import { useState, useEffect } from "react";
 import { Link, Outlet, createFileRoute, useMatchRoute } from "@tanstack/react-router";
 import {
   Sidebar,
@@ -16,14 +15,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getUser } from "@/functions/get-user";
 import { NavUser } from "@/components/nav-user";
 
@@ -50,18 +45,10 @@ function RouteComponent() {
   const { currentUser } = Route.useLoaderData();
   const matchRoute = useMatchRoute();
 
-  const isSkillsActive = Boolean(matchRoute({ to: "/dashboard/skills", fuzzy: true }));
-  const [skillsOpen, setSkillsOpen] = useState(isSkillsActive);
-
-  useEffect(() => {
-    if (isSkillsActive) {
-      setSkillsOpen(true);
-    }
-  }, [isSkillsActive]);
-
   const routeTitles = [
     { title: "Account overview", to: "/dashboard" as const, fuzzy: false },
     { title: "Skills", to: "/dashboard/skills" as const, fuzzy: true },
+    { title: "Collections", to: "/dashboard/collections" as const, fuzzy: true },
     { title: "Review history", to: "/dashboard/reviews" as const, fuzzy: false },
     { title: "Feedback inbox", to: "/dashboard/feedbacks" as const, fuzzy: false },
     { title: "Access controls", to: "/dashboard/settings" as const, fuzzy: false },
@@ -124,61 +111,58 @@ function RouteComponent() {
                 />
               </SidebarMenuItem>
 
-              {/* Skills — collapsible with Published / Saved sub-items */}
-              <Collapsible
-                defaultOpen={true}
-                open={skillsOpen}
-                onOpenChange={setSkillsOpen}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger
-                    render={
-                      <SidebarMenuButton
-                        className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
-                        isActive={isSkillsActive}
-                      >
-                        <span className="flex w-full flex-col">
-                          <span className="flex w-full items-center justify-between gap-3">
-                            <span className="flex items-center gap-2">
-                              <RowsIcon className="size-3" />
-                              <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                                Skills
-                              </span>
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                                02
-                              </span>
-                              <CaretRightIcon className="size-3 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                            </span>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link to="/dashboard/skills" className="flex flex-col w-full rounded-none px-0">
+                      <span className="flex w-full items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <RowsIcon className="size-3" />
+                          <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
+                            Skills
                           </span>
-                          <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                            Published skills linked to your account
-                          </p>
                         </span>
-                      </SidebarMenuButton>
-                    }
-                  />
+                        <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
+                          02
+                        </span>
+                      </span>
+                      <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
+                        Published skills linked to your account
+                      </p>
+                    </Link>
+                  }
+                  className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
+                  isActive={Boolean(matchRoute({ to: "/dashboard/skills", fuzzy: true }))}
+                />
+              </SidebarMenuItem>
 
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          isActive={!matchRoute({ to: "/dashboard/skills/saved" })}
-                          render={<Link to="/dashboard/skills">Published</Link>}
-                        />
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          isActive={Boolean(matchRoute({ to: "/dashboard/skills/saved" }))}
-                          render={<Link to="/dashboard/skills/saved">Saved</Link>}
-                        />
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/dashboard/collections"
+                      className="flex flex-col w-full rounded-none px-0"
+                    >
+                      <span className="flex w-full items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <FolderSimpleIcon className="size-3" />
+                          <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
+                            Collections
+                          </span>
+                        </span>
+                        <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
+                          03
+                        </span>
+                      </span>
+                      <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
+                        Saved skills, default library, and custom collections
+                      </p>
+                    </Link>
+                  }
+                  className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
+                  isActive={Boolean(matchRoute({ to: "/dashboard/collections", fuzzy: true }))}
+                />
+              </SidebarMenuItem>
 
               {/* Reviews */}
               <SidebarMenuItem>
@@ -196,7 +180,7 @@ function RouteComponent() {
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                          03
+                          04
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
@@ -225,7 +209,7 @@ function RouteComponent() {
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                          04
+                          05
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
@@ -254,7 +238,7 @@ function RouteComponent() {
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                          05
+                          06
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">

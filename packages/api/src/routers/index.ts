@@ -67,7 +67,6 @@ import {
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
-  saveSkill,
   saveSkillToCollection,
   setCollectionSkills,
   syncRepoStats,
@@ -114,6 +113,24 @@ export const mapCollectionReadError = (error: unknown) => {
 
   return null;
 };
+
+export const normalizeErrorForLog = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+    };
+  }
+
+  return {
+    message: typeof error === "string" ? error : "Unknown error",
+    name: "NonError",
+  };
+};
+
+export const anonymizeIdForLog = (value: string) =>
+  value.length <= 8 ? "[redacted]" : `${value.slice(0, 4)}...${value.slice(-4)}`;
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -592,12 +609,28 @@ export const appRouter = {
     count: publicProcedure.skills.count.handler(() => countSkills()),
     save: protectedProcedure.skills.save.handler(async ({ input, context }) => {
       try {
-        return await saveSkill({
-          slug: input.slug,
-          userId: context.session.user.id,
-        });
+        const result = await saveSkillToCollection(
+          {
+            skillSlug: input.slug,
+          },
+          {
+            isAdmin: context.session.user.role === "admin",
+            userId: context.session.user.id,
+          },
+        );
+
+        return {
+          alreadySaved: result.alreadySaved,
+          saved: result.saved,
+        };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Save failed.";
+        console.error("[skills.save] failed", {
+          error: normalizeErrorForLog(error),
+          message,
+          skillSlug: input.slug,
+          userId: anonymizeIdForLog(context.session.user.id),
+        });
         if (message === "Skill not found.") {
           throw new ORPCError("NOT_FOUND", { message });
         }

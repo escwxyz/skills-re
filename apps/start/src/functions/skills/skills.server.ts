@@ -134,11 +134,18 @@ export const fetchSkillCheckSaved = async (input: {
 }) => await input.client.skills.checkSaved({ slug: input.slug });
 
 interface SkillSaveClient {
-  skills: Pick<AppRouterClient["skills"], "save" | "unsave">;
+  collections: Pick<AppRouterClient["collections"], "saveSkill">;
+  skills: Pick<AppRouterClient["skills"], "unsave">;
 }
 
-export const saveSkillToDashboard = async (input: { client: SkillSaveClient; slug: string }) =>
-  await input.client.skills.save({ slug: input.slug });
+export const saveSkillToDashboard = async (input: { client: SkillSaveClient; slug: string }) => {
+  const result = await input.client.collections.saveSkill({ skillSlug: input.slug });
+
+  return {
+    alreadySaved: result.alreadySaved,
+    saved: result.saved,
+  };
+};
 
 export const unsaveSkillFromDashboard = async (input: { client: SkillSaveClient; slug: string }) =>
   await input.client.skills.unsave({ slug: input.slug });
