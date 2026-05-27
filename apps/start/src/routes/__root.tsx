@@ -11,8 +11,10 @@ import appCss from "../styles.css?url";
 import { ClarityConsent } from "@/components/clarity-consent";
 import { GoogleAnalyticsConsent } from "@/components/google-analytics-consent";
 import { Toaster } from "@/components/ui/sonner";
+import { measureAsync } from "@/lib/dev-performance";
 import { getUser } from "@/functions/get-user";
 import { orpc } from "@/lib/orpc";
+import { readCachedRootAuth, writeCachedRootAuth } from "@/lib/root-auth-cache";
 import { createSeo } from "@/lib/seo";
 import { getTheme } from "@/functions/get-theme";
 import { pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
@@ -32,21 +34,37 @@ export interface RouterAppContext {
   queryClient: QueryClient;
 }
 
-export const Route = createRootRouteWithContext<RouterAppContext>()({
-  beforeLoad: async () => {
-    const { data, error } = await getUser();
+const loadRootAuthContext = async () => {
+  const cachedAuth = readCachedRootAuth<{
+    currentUser: Awaited<ReturnType<typeof getUser>>["data"] extends { user: infer T }
+      ? T | null
+      : null;
+    isAdmin: boolean;
+  }>();
 
-    if (error || !data) {
-      return {
-        currentUser: null,
-        isAdmin: false,
-      };
-    }
-    return {
-      currentUser: data.user || null,
-      isAdmin: data.user.role === "admin",
-    };
-  },
+  if (cachedAuth) {
+    return cachedAuth;
+  }
+
+  return await measureAsync("route.root.beforeLoad", {}, async () => {
+    const { data, error } = await getUser();
+    const nextAuthState =
+      error || !data
+        ? {
+            currentUser: null,
+            isAdmin: false,
+          }
+        : {
+            currentUser: data.user || null,
+            isAdmin: data.user.role === "admin",
+          };
+
+    return writeCachedRootAuth(nextAuthState);
+  });
+};
+
+export const Route = createRootRouteWithContext<RouterAppContext>()({
+  beforeLoad: async () => await loadRootAuthContext(),
 
   loader: async () => ({
     themeState: await getTheme(),
