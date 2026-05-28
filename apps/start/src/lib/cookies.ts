@@ -20,17 +20,58 @@ export const DEFAULT_COOKIE_PREFERENCES: CookiePreferences = {
   analytics: true,
 };
 
+const documentCookiePrefix = "; ";
+
+export function readCookieSync(name: string): string | undefined {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+
+  const value = `${documentCookiePrefix}${document.cookie}`;
+  const parts = value.split(`${documentCookiePrefix}${name}=`);
+
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift();
+  }
+}
+
+export function writeCookieSync(
+  name: string,
+  value: string,
+  maxAge: number = DEFAULT_MAX_AGE,
+): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  // oxlint-disable-next-line unicorn/no-document-cookie fallback
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}`;
+}
+
+export function clearCookieSync(name: string): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  // oxlint-disable-next-line unicorn/no-document-cookie fallback
+  document.cookie = `${name}=; path=/; max-age=0`;
+}
+
 export function parseCookiePreferences(rawValue: string): CookiePreferences | null {
   try {
     const parsed = JSON.parse(rawValue);
+    const functional =
+      typeof parsed.functional === "boolean"
+        ? parsed.functional
+        : DEFAULT_COOKIE_PREFERENCES.functional;
     const analytics =
       typeof parsed.analytics === "boolean"
         ? parsed.analytics
         : DEFAULT_COOKIE_PREFERENCES.analytics;
 
     return {
+      functional,
       analytics,
-      functional: true,
     };
   } catch {
     return null;
@@ -44,6 +85,19 @@ export async function getCookiePreferences(): Promise<CookiePreferences | null> 
   }
 
   return parseCookiePreferences(storedPreferences);
+}
+
+export function getCookiePreferencesSync(): CookiePreferences | null {
+  const storedPreferences = readCookieSync(COOKIE_PREFERENCES_COOKIE_NAME);
+  if (!storedPreferences) {
+    return null;
+  }
+
+  return parseCookiePreferences(storedPreferences);
+}
+
+export function hasFunctionalCookieConsentSync(): boolean {
+  return getCookiePreferencesSync()?.functional === true;
 }
 
 const dispatchCookiePreferencesUpdated = (preferences: CookiePreferences): void => {
@@ -64,13 +118,10 @@ export function persistCookiePreferences(
 ): void {
   const normalizedPreferences: CookiePreferences = {
     analytics: preferences.analytics,
-    functional: true,
+    functional: preferences.functional,
   };
 
-  writeCookie(COOKIE_PREFERENCES_COOKIE_NAME, JSON.stringify(normalizedPreferences), { maxAge });
-  writeCookie(COOKIE_CONSENT_COOKIE_NAME, "preferences-set", {
-    maxAge,
-  });
+  writeCookieSync(COOKIE_PREFERENCES_COOKIE_NAME, JSON.stringify(normalizedPreferences), maxAge);
   dispatchCookiePreferencesUpdated(normalizedPreferences);
 }
 
@@ -130,7 +181,7 @@ export async function writeCookie(
 export async function clearCookiePreferences(): Promise<void> {
   await clearCookie(COOKIE_PREFERENCES_COOKIE_NAME);
   await clearCookie(COOKIE_CONSENT_COOKIE_NAME);
-  dispatchCookiePreferencesUpdated({ analytics: false, functional: true });
+  dispatchCookiePreferencesUpdated({ analytics: false, functional: false });
 }
 
 export async function clearCookie(name: string): Promise<void> {

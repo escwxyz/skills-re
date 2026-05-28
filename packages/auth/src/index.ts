@@ -6,7 +6,14 @@ import { oauthProvider } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import type { GithubProfile } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, bearer, deviceAuthorization, emailOTP, jwt } from "better-auth/plugins";
+import {
+  admin,
+  bearer,
+  deviceAuthorization,
+  emailOTP,
+  jwt,
+  lastLoginMethod,
+} from "better-auth/plugins";
 
 import { nanoid } from "nanoid";
 
@@ -67,6 +74,72 @@ export interface AuthInstance {
   handler: (request: Request) => Response | Promise<Response>;
 }
 
+const LAST_USED_LOGIN_METHOD_COOKIE_NAME = "skills-re.last_used_login_method";
+
+const parseCookieHeader = (cookieHeader: string | null): Record<string, string> => {
+  if (!cookieHeader) {
+    return {};
+  }
+
+  const parsed: Record<string, string> = {};
+
+  for (const part of cookieHeader.split(";")) {
+    const trimmedPart = part.trim();
+    if (!trimmedPart) {
+      continue;
+    }
+
+    const separatorIndex = trimmedPart.indexOf("=");
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const name = trimmedPart.slice(0, separatorIndex).trim();
+    const value = trimmedPart.slice(separatorIndex + 1).trim();
+    parsed[name] = value;
+  }
+
+  return parsed;
+};
+
+const hasFunctionalCookieConsent = (cookieHeader: string | null): boolean => {
+  const cookies = parseCookieHeader(cookieHeader);
+  if (!cookies.cookiePreferences) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(cookies.cookiePreferences);
+    return parsed.functional === true;
+  } catch {
+    return false;
+  }
+};
+
+const stripCookieFromResponse = (response: Response, cookieName: string): Response => {
+  const setCookies = response.headers.getSetCookie?.() ?? [];
+  if (setCookies.length === 0) {
+    return response;
+  }
+
+  const filteredSetCookies = setCookies.filter((cookie) => !cookie.startsWith(`${cookieName}=`));
+  if (filteredSetCookies.length === setCookies.length) {
+    return response;
+  }
+
+  const headers = new Headers(response.headers);
+  headers.delete("set-cookie");
+  for (const cookie of filteredSetCookies) {
+    headers.append("set-cookie", cookie);
+  }
+
+  return new Response(response.body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  });
+};
+
 // replace with https://alchemy.run/providers/cloudflare/email-sender/
 const resendApiUrl = "https://api.resend.com/emails";
 
@@ -96,7 +169,7 @@ const fetchPublicContent = async (path: string, baseURL: string) => {
 };
 
 export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
-  return betterAuth({
+  const auth = betterAuth({
     account: {
       accountLinking: {
         enabled: true,
@@ -333,6 +406,10 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
           }
         },
       }),
+      lastLoginMethod({
+        cookieName: "skills-re.last_used_login_method",
+        maxAge: 60 * 60 * 24 * 30,
+      }),
     ],
     secret: env.BETTER_AUTH_SECRET,
     session: {
@@ -379,5 +456,17 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         },
       },
     },
-  }) as AuthInstance;
+  });
+
+  return {
+    ...auth,
+    handler: async (request: Request) => {
+      const response = await auth.handler(request);
+      if (hasFunctionalCookieConsent(request.headers.get("cookie"))) {
+        return response;
+      }
+
+      return stripCookieFromResponse(response, LAST_USED_LOGIN_METHOD_COOKIE_NAME);
+    },
+  } as AuthInstance;
 }
