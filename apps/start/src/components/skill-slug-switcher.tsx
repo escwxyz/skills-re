@@ -24,6 +24,7 @@ import { m } from "@/paraglide/messages";
 import { cn } from "@/lib/utils";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "./ui/button";
 
 interface Props {
   authorHandle: string;
@@ -92,16 +93,20 @@ const SkillSlugSwitcherDropdown = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={cn(
-          "flex max-w-full min-w-0 items-center justify-between gap-2 overflow-hidden border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none",
-          className,
+        render={(props) => (
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("font-mono text-[10.5px] uppercase outline-none", className)}
+            {...props}
+          >
+            <b className="text-foreground min-w-0 flex-1 truncate font-medium">
+              {current?.title ?? currentSlug}
+            </b>
+            <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
+          </Button>
         )}
-      >
-        <b className="text-foreground min-w-0 flex-1 truncate font-medium">
-          {current?.title ?? currentSlug}
-        </b>
-        <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
-      </DropdownMenuTrigger>
+      />
       <DropdownMenuContent side="bottom" align="start" className="min-w-48">
         {skills.map((s) => (
           <DropdownMenuItem
@@ -149,16 +154,20 @@ const SkillSlugSwitcherDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className={cn(
-          "border-border hover:bg-muted data-popup-open:bg-muted flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none",
-          className,
+        render={(props) => (
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("font-mono text-[10.5px] uppercase outline-none", className)}
+            {...props}
+          >
+            <b className="text-foreground min-w-0 flex-1 truncate font-medium">
+              {current?.title ?? currentSlug}
+            </b>
+            <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
+          </Button>
         )}
-      >
-        <b className="text-foreground min-w-0 flex-1 truncate font-medium">
-          {current?.title ?? currentSlug}
-        </b>
-        <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
-      </DialogTrigger>
+      />
 
       <DialogContent showCloseButton={false} className="max-w-xs p-0">
         <DialogHeader className="border-border border-b px-5 py-4">

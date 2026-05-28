@@ -32,7 +32,7 @@ export const SkillBreadcrumb = ({ skill }: Props) => (
     <SkillSlugSwitcher
       authorHandle={skill.authorHandle}
       repo={skill.repoName}
-      className="w-full max-w-full"
+      className="max-w-full"
       currentSlug={skill.slug}
     />
   </div>
