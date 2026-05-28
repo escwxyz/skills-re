@@ -54,9 +54,9 @@ const SkillSlugOptions = ({
             slug: s.slug,
           }}
           data-current={s.slug === currentSlug}
-          className="hover:bg-muted data-[current=true]:bg-accent data-[current=true]:text-accent-foreground flex w-full items-center justify-between gap-3 px-5 py-4 text-left font-mono text-[11px] tracking-normal normal-case transition-colors"
+          className="hover:bg-muted data-[current=true]:bg-accent data-[current=true]:text-accent-foreground flex w-full items-center justify-between gap-3 overflow-hidden px-5 py-4 text-left font-mono text-[11px] tracking-normal normal-case transition-colors"
         >
-          <span className="min-w-0 truncate">{s.title}</span>
+          <span className="min-w-0 flex-1 truncate">{s.title}</span>
           {s.slug === currentSlug ? (
             <span className="shrink-0 text-[10px] uppercase tracking-[.12em]">
               {m.skill_version_current_badge()}
@@ -93,11 +93,11 @@ const SkillSlugSwitcherDropdown = ({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          "flex min-w-0 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none w-fit!",
+          "flex max-w-full min-w-0 items-center justify-between gap-2 overflow-hidden border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none",
           className,
         )}
       >
-        <b className="text-foreground min-w-0 truncate font-medium">
+        <b className="text-foreground min-w-0 flex-1 truncate font-medium">
           {current?.title ?? currentSlug}
         </b>
         <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />
@@ -150,11 +150,11 @@ const SkillSlugSwitcherDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         className={cn(
-          "border-border hover:bg-muted data-popup-open:bg-muted flex min-w-0 items-center justify-between gap-2 border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none w-fit!",
+          "border-border hover:bg-muted data-popup-open:bg-muted flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden border px-2 py-0.5 font-mono text-[10.5px] tracking-[.14em] uppercase outline-none",
           className,
         )}
       >
-        <b className="text-foreground min-w-0 truncate font-medium">
+        <b className="text-foreground min-w-0 flex-1 truncate font-medium">
           {current?.title ?? currentSlug}
         </b>
         <CaretUpDownIcon className="text-muted-foreground size-3 shrink-0" />

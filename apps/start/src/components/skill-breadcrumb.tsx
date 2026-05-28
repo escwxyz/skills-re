@@ -38,31 +38,5 @@ export const SkillBreadcrumb = ({ skill }: Props) => (
         currentSlug={skill.slug}
       />
     </div>
-
-    {/* <div className="ml-auto flex items-center gap-3">
-      {skill.tags.length > 0 && (
-        <span className="text-muted-foreground hidden items-center gap-1 sm:flex">
-          {skill.tags.map((tag, i) => (
-            <span key={tag} className="flex items-center gap-1">
-              {i > 0 && <span>·</span>}
-              <Link
-                to="/tags/$slug"
-                params={{ slug: tag }}
-                className="transition-colors hover:text-primary"
-              >
-                {tag}
-              </Link>
-            </span>
-          ))}
-        </span>
-      )}
-      <Link
-        to="/categories/$slug"
-        params={{ slug: skill.categorySlug }}
-        className="transition-colors hover:text-primary"
-      >
-        <span className="text-muted-foreground">{skill.categoryLabel}</span>
-      </Link>
-    </div> */}
   </div>
 );
