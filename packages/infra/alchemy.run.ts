@@ -1,5 +1,5 @@
 // oxlint-disable typescript/no-non-null-assertion
-import alchemy from "alchemy";
+import alchemy, { Scope } from "alchemy";
 import {
   AiSearch,
   AnalyticsEngineDataset,
@@ -11,6 +11,9 @@ import {
   Workflow,
   Worker,
   TanStackStart,
+  createCloudflareApi,
+  exportD1Database,
+  importD1Database,
 } from "alchemy/cloudflare";
 
 import { CloudflareStateStore } from "alchemy/state";
@@ -32,18 +35,27 @@ const legacyDb = await D1Database("database", {
   adopt: true,
 });
 
+const prodDatabaseSourceId = "ef91dfb6-256f-4c95-adbf-6cc6b40c7582";
+const databaseSourceId =
+  process.env.NODE_ENV === "production" ? prodDatabaseSourceId : legacyDb.dev.id;
+const databaseCloneStateKey = `d1-clone:database-eu:from:${databaseSourceId}`;
+const databaseAlreadyExisted = await Scope.current.has("database-eu", "cloudflare::D1Database");
+
 const database = await D1Database("database-eu", {
   name: "skills-re-database-eu-prod",
   migrationsDir: "../../packages/db/src/migrations",
   adopt: true,
-  clone:
-    process.env.NODE_ENV === "production"
-      ? { id: "ef91dfb6-256f-4c95-adbf-6cc6b40c7582" }
-      : legacyDb,
   jurisdiction: "eu",
   readReplication: {
     mode: "auto",
   },
+});
+
+await cloneDatabaseData({
+  alreadyExisted: databaseAlreadyExisted,
+  sourceDatabaseId: databaseSourceId,
+  stateKey: databaseCloneStateKey,
+  targetDatabaseId: database.id,
 });
 
 const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
@@ -73,6 +85,53 @@ const archiveFilesBucket = await R2Bucket("skills-re-archives", {
     remote: true,
   },
 });
+
+async function cloneDatabaseData({
+  alreadyExisted,
+  sourceDatabaseId,
+  stateKey,
+  targetDatabaseId,
+}: {
+  alreadyExisted: boolean;
+  sourceDatabaseId: string;
+  stateKey: string;
+  targetDatabaseId: string;
+}): Promise<void> {
+  const scope = Scope.current;
+
+  const cloneState = await scope.get<"pending" | "complete" | undefined>(stateKey);
+  if (cloneState === "complete") {
+    return;
+  }
+  if (alreadyExisted && cloneState !== "pending") {
+    return;
+  }
+  if (cloneState !== "pending") {
+    await scope.set(stateKey, "pending");
+  }
+
+  const api = await createCloudflareApi();
+  const exportResult = await exportD1Database(api, {
+    databaseId: sourceDatabaseId,
+    dumpOptions: {
+      no_schema: true,
+    },
+  });
+
+  const sqlResponse = await fetch(exportResult.signed_url);
+  if (!sqlResponse.ok) {
+    throw new Error(`Failed to fetch D1 export: ${sqlResponse.status} ${sqlResponse.statusText}`);
+  }
+
+  const sqlData = `PRAGMA defer_foreign_keys = on;\n${await sqlResponse.text()}`;
+  await importD1Database(api, {
+    databaseId: targetDatabaseId,
+    filename: exportResult.filename,
+    sqlData,
+  });
+
+  await scope.set(stateKey, "complete");
+}
 
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills-re-download-events",
