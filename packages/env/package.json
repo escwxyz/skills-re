@@ -9,7 +9,7 @@
     "./start-worker": "./src/start-worker.ts"
   },
   "scripts": {
-    "check-types": "tsc -p tsconfig.json --noEmit"
+    "check-types": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.start-worker.json --noEmit"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.1",
