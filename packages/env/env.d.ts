@@ -5,14 +5,13 @@ import type { server, start } from "@skills-re/infra/alchemy.run";
 
 export type CloudflareServerEnv = NonNullable<typeof server.Env>;
 export type CloudflareStartEnv = NonNullable<typeof start.Env>;
-export type CloudflareEnv = CloudflareServerEnv & CloudflareStartEnv;
 
 declare global {
-  type Env = CloudflareEnv;
+  type Env = CloudflareServerEnv;
 }
 
 declare module "cloudflare:workers" {
   namespace Cloudflare {
-    export interface Env extends CloudflareEnv {}
+    export interface Env extends CloudflareServerEnv {}
   }
 }
