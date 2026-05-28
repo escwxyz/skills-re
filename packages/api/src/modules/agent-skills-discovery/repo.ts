@@ -1,4 +1,4 @@
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
 import { skillsTable } from "@skills-re/db/schema/skills";
@@ -43,51 +43,60 @@ const findEntryFile = <
 };
 
 export const listPublicAgentSkillArtifacts = async (): Promise<AgentSkillDiscoverySourceRow[]> => {
-  const rows = await db
+  const snapshots = await db
     .select({
       description: skillsTable.description,
       directoryPath: snapshotsTable.directoryPath,
-      fileHash: snapshotFilesTable.fileHash,
+      entryPath: snapshotsTable.entryPath,
       latestSnapshotId: skillsTable.latestSnapshotId,
       name: snapshotsTable.name,
-      path: snapshotFilesTable.path,
-      r2Key: snapshotFilesTable.r2Key,
       slug: skillsTable.slug,
     })
     .from(skillsTable)
     .innerJoin(snapshotsTable, eq(snapshotsTable.id, skillsTable.latestSnapshotId))
-    .leftJoin(
-      snapshotFilesTable,
-      and(
-        eq(snapshotFilesTable.snapshotId, snapshotsTable.id),
-        or(
-          eq(snapshotFilesTable.path, snapshotsTable.entryPath),
-          eq(snapshotFilesTable.path, "SKILL.md"),
-          eq(snapshotFilesTable.path, "skill.md"),
-          sql`${snapshotsTable.entryPath} like '%' || ${snapshotFilesTable.path}`,
-        ),
-      ),
-    )
     .where(eq(skillsTable.visibility, "public"))
-    .orderBy(skillsTable.slug, skillsTable.id, snapshotFilesTable.path);
+    .orderBy(skillsTable.slug, skillsTable.id);
 
-  const latestBySnapshotId = new Map<string, AgentSkillDiscoverySourceRow>();
-  for (const row of rows) {
-    if (!row.latestSnapshotId || latestBySnapshotId.has(row.latestSnapshotId)) {
-      continue;
-    }
-
-    latestBySnapshotId.set(row.latestSnapshotId, {
-      description: row.description,
-      fileHash: row.fileHash ?? null,
-      latestSnapshotId: row.latestSnapshotId,
-      name: row.name,
-      r2Key: row.r2Key ?? null,
-      slug: row.slug,
-    });
+  const snapshotIds = snapshots
+    .map((snapshot) => snapshot.latestSnapshotId)
+    .filter((snapshotId): snapshotId is SnapshotId => snapshotId !== null);
+  if (snapshotIds.length === 0) {
+    return [];
   }
 
-  return [...latestBySnapshotId.values()];
+  const files = await db
+    .select({
+      fileHash: snapshotFilesTable.fileHash,
+      path: snapshotFilesTable.path,
+      r2Key: snapshotFilesTable.r2Key,
+      snapshotId: snapshotFilesTable.snapshotId,
+    })
+    .from(snapshotFilesTable)
+    .where(inArray(snapshotFilesTable.snapshotId, snapshotIds))
+    .orderBy(snapshotFilesTable.snapshotId, snapshotFilesTable.path);
+
+  const filesBySnapshotId = new Map<SnapshotId, typeof files>();
+  for (const file of files) {
+    const snapshotFiles = filesBySnapshotId.get(file.snapshotId) ?? [];
+    snapshotFiles.push(file);
+    filesBySnapshotId.set(file.snapshotId, snapshotFiles);
+  }
+
+  return snapshots.map((snapshot) => {
+    const snapshotFiles = snapshot.latestSnapshotId
+      ? (filesBySnapshotId.get(snapshot.latestSnapshotId) ?? [])
+      : [];
+    const entryFile = findEntryFile(snapshotFiles, snapshot.entryPath, snapshot.directoryPath);
+
+    return {
+      description: snapshot.description,
+      fileHash: entryFile?.fileHash ?? null,
+      latestSnapshotId: snapshot.latestSnapshotId,
+      name: snapshot.name,
+      r2Key: entryFile?.r2Key ?? null,
+      slug: snapshot.slug,
+    };
+  });
 };
 
 export const getAgentSkillArtifactBySnapshotId = async (
