@@ -9,12 +9,18 @@ import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { mcpRouter } from "./routes/mcp";
 import { mcpRateLimiter } from "./middlewares/mcp-rate-limiter";
+import {
+  createAgentSkillMdResponse,
+  createAgentSkillsDiscoveryIndexResponse,
+  setAgentSkillsDiscoveryHeaders,
+} from "./routes/agent-skills-discovery";
 import { createMcpServerCard, setMcpServerCardHeaders } from "./routes/mcp-server-card";
 import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
+import { agentSkillsDiscoveryService } from "@skills-re/api/modules/agent-skills-discovery/service";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
 import {
   oauthProviderAuthServerMetadata,
@@ -134,6 +140,30 @@ app.get("/.well-known/mcp/server-card.json", (c) => {
 });
 app.options("/.well-known/mcp/server-card.json", (c) => {
   setMcpServerCardHeaders(c.res.headers);
+  return c.body(null, 204);
+});
+app.on(
+  ["GET", "HEAD"],
+  "/.well-known/agent-skills/index.json",
+  async (c) => await createAgentSkillsDiscoveryIndexResponse(undefined, c.req.method),
+);
+app.on(
+  ["GET", "HEAD"],
+  "/.well-known/agent-skills/:snapshotId/SKILL.md",
+  async (c) =>
+    await createAgentSkillMdResponse(
+      {
+        method: c.req.method as "GET" | "HEAD",
+        snapshotId: c.req.param("snapshotId"),
+      },
+      {
+        getArtifactMetadata: (input) => agentSkillsDiscoveryService.getArtifactMetadata(input),
+        snapshotStorage: createSnapshotArchiveStorageRuntime(c.env),
+      },
+    ),
+);
+app.options("/.well-known/agent-skills/*", (c) => {
+  setAgentSkillsDiscoveryHeaders(c.res.headers);
   return c.body(null, 204);
 });
 app.use("/*", (c, next) =>
