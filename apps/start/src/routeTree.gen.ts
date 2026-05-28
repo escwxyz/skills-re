@@ -58,6 +58,7 @@ import { Route as AuthedLayoutDashboardReviewsRouteImport } from './routes/_auth
 import { Route as AuthedLayoutDashboardFeedbacksRouteImport } from './routes/_authedLayout/dashboard.feedbacks'
 import { Route as AuthedLayoutDashboardCollectionsRouteImport } from './routes/_authedLayout/dashboard.collections'
 import { Route as DotwellKnownMcpServerCardDotjsonRouteImport } from './routes/[.]well-known/mcp/server-card[.]json'
+import { Route as DotwellKnownAgentSkillsIndexDotjsonRouteImport } from './routes/[.]well-known/agent-skills/index[.]json'
 import { Route as ApiSkillsSkillIdViewRouteImport } from './routes/api/skills/$skillId/view'
 import { Route as ApiOgTagsPngRouteImport } from './routes/api/og/tags.png'
 import { Route as ApiOgSkillsPngRouteImport } from './routes/api/og/skills.png'
@@ -65,6 +66,7 @@ import { Route as ApiOgCollectionsPngRouteImport } from './routes/api/og/collect
 import { Route as ApiOgCategoriesPngRouteImport } from './routes/api/og/categories.png'
 import { Route as ApiOgAuthorsPngRouteImport } from './routes/api/og/authors.png'
 import { Route as AuthedLayoutDashboardSkillsSavedRouteImport } from './routes/_authedLayout/dashboard.skills.saved'
+import { Route as DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRouteImport } from './routes/[.]well-known/agent-skills/$snapshotId/SKILL[.]md'
 import { Route as ApiOgTagsSlugPngRouteImport } from './routes/api/og/tags.$slug.png'
 import { Route as ApiOgCollectionsSlugPngRouteImport } from './routes/api/og/collections.$slug.png'
 import { Route as ApiOgCategoriesSlugPngRouteImport } from './routes/api/og/categories.$slug.png'
@@ -342,6 +344,12 @@ const DotwellKnownMcpServerCardDotjsonRoute =
     path: '/.well-known/mcp/server-card.json',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotwellKnownAgentSkillsIndexDotjsonRoute =
+  DotwellKnownAgentSkillsIndexDotjsonRouteImport.update({
+    id: '/.well-known/agent-skills/index.json',
+    path: '/.well-known/agent-skills/index.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiSkillsSkillIdViewRoute = ApiSkillsSkillIdViewRouteImport.update({
   id: '/api/skills/$skillId/view',
   path: '/api/skills/$skillId/view',
@@ -377,6 +385,12 @@ const AuthedLayoutDashboardSkillsSavedRoute =
     id: '/saved',
     path: '/saved',
     getParentRoute: () => AuthedLayoutDashboardSkillsRoute,
+  } as any)
+const DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute =
+  DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRouteImport.update({
+    id: '/.well-known/agent-skills/$snapshotId/SKILL.md',
+    path: '/.well-known/agent-skills/$snapshotId/SKILL.md',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiOgTagsSlugPngRoute = ApiOgTagsSlugPngRouteImport.update({
   id: '/api/og/tags/$slug/png',
@@ -471,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
+  '/.well-known/agent-skills/index.json': typeof DotwellKnownAgentSkillsIndexDotjsonRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
   '/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
@@ -495,6 +510,7 @@ export interface FileRoutesByFullPath {
   '/docs/': typeof PublicLayoutDocsIndexRoute
   '/skills/': typeof PublicLayoutSkillsIndexRoute
   '/tags/': typeof PublicLayoutTagsIndexRoute
+  '/.well-known/agent-skills/$snapshotId/SKILL.md': typeof DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute
   '/dashboard/skills/saved': typeof AuthedLayoutDashboardSkillsSavedRoute
   '/api/og/authors/png': typeof ApiOgAuthorsPngRoute
   '/api/og/categories/png': typeof ApiOgCategoriesPngRoute
@@ -538,6 +554,7 @@ export interface FileRoutesByTo {
   '/sitemap/docs.xml': typeof SitemapDocsDotxmlRoute
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
+  '/.well-known/agent-skills/index.json': typeof DotwellKnownAgentSkillsIndexDotjsonRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
   '/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
@@ -562,6 +579,7 @@ export interface FileRoutesByTo {
   '/docs': typeof PublicLayoutDocsIndexRoute
   '/skills': typeof PublicLayoutSkillsIndexRoute
   '/tags': typeof PublicLayoutTagsIndexRoute
+  '/.well-known/agent-skills/$snapshotId/SKILL.md': typeof DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute
   '/dashboard/skills/saved': typeof AuthedLayoutDashboardSkillsSavedRoute
   '/api/og/authors/png': typeof ApiOgAuthorsPngRoute
   '/api/og/categories/png': typeof ApiOgCategoriesPngRoute
@@ -608,6 +626,7 @@ export interface FileRoutesById {
   '/sitemap/static.xml': typeof SitemapStaticDotxmlRoute
   '/sitemap/taxonomy.xml': typeof SitemapTaxonomyDotxmlRoute
   '/_publicLayout/': typeof PublicLayoutIndexRoute
+  '/.well-known/agent-skills/index.json': typeof DotwellKnownAgentSkillsIndexDotjsonRoute
   '/.well-known/mcp/server-card.json': typeof DotwellKnownMcpServerCardDotjsonRoute
   '/_authedLayout/dashboard/collections': typeof AuthedLayoutDashboardCollectionsRoute
   '/_authedLayout/dashboard/feedbacks': typeof AuthedLayoutDashboardFeedbacksRoute
@@ -632,6 +651,7 @@ export interface FileRoutesById {
   '/_publicLayout/docs/': typeof PublicLayoutDocsIndexRoute
   '/_publicLayout/skills/': typeof PublicLayoutSkillsIndexRoute
   '/_publicLayout/tags/': typeof PublicLayoutTagsIndexRoute
+  '/.well-known/agent-skills/$snapshotId/SKILL.md': typeof DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute
   '/_authedLayout/dashboard/skills/saved': typeof AuthedLayoutDashboardSkillsSavedRoute
   '/api/og/authors/png': typeof ApiOgAuthorsPngRoute
   '/api/og/categories/png': typeof ApiOgCategoriesPngRoute
@@ -678,6 +698,7 @@ export interface FileRouteTypes {
     | '/sitemap/docs.xml'
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
+    | '/.well-known/agent-skills/index.json'
     | '/.well-known/mcp/server-card.json'
     | '/dashboard/collections'
     | '/dashboard/feedbacks'
@@ -702,6 +723,7 @@ export interface FileRouteTypes {
     | '/docs/'
     | '/skills/'
     | '/tags/'
+    | '/.well-known/agent-skills/$snapshotId/SKILL.md'
     | '/dashboard/skills/saved'
     | '/api/og/authors/png'
     | '/api/og/categories/png'
@@ -745,6 +767,7 @@ export interface FileRouteTypes {
     | '/sitemap/docs.xml'
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
+    | '/.well-known/agent-skills/index.json'
     | '/.well-known/mcp/server-card.json'
     | '/dashboard/collections'
     | '/dashboard/feedbacks'
@@ -769,6 +792,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/skills'
     | '/tags'
+    | '/.well-known/agent-skills/$snapshotId/SKILL.md'
     | '/dashboard/skills/saved'
     | '/api/og/authors/png'
     | '/api/og/categories/png'
@@ -814,6 +838,7 @@ export interface FileRouteTypes {
     | '/sitemap/static.xml'
     | '/sitemap/taxonomy.xml'
     | '/_publicLayout/'
+    | '/.well-known/agent-skills/index.json'
     | '/.well-known/mcp/server-card.json'
     | '/_authedLayout/dashboard/collections'
     | '/_authedLayout/dashboard/feedbacks'
@@ -838,6 +863,7 @@ export interface FileRouteTypes {
     | '/_publicLayout/docs/'
     | '/_publicLayout/skills/'
     | '/_publicLayout/tags/'
+    | '/.well-known/agent-skills/$snapshotId/SKILL.md'
     | '/_authedLayout/dashboard/skills/saved'
     | '/api/og/authors/png'
     | '/api/og/categories/png'
@@ -875,8 +901,10 @@ export interface RootRouteChildren {
   SitemapDocsDotxmlRoute: typeof SitemapDocsDotxmlRoute
   SitemapStaticDotxmlRoute: typeof SitemapStaticDotxmlRoute
   SitemapTaxonomyDotxmlRoute: typeof SitemapTaxonomyDotxmlRoute
+  DotwellKnownAgentSkillsIndexDotjsonRoute: typeof DotwellKnownAgentSkillsIndexDotjsonRoute
   DotwellKnownMcpServerCardDotjsonRoute: typeof DotwellKnownMcpServerCardDotjsonRoute
   SitemapSkillsPageRoute: typeof SitemapSkillsPageRoute
+  DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute: typeof DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute
   ApiOgAuthorsPngRoute: typeof ApiOgAuthorsPngRoute
   ApiOgCategoriesPngRoute: typeof ApiOgCategoriesPngRoute
   ApiOgCollectionsPngRoute: typeof ApiOgCollectionsPngRoute
@@ -1235,6 +1263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotwellKnownMcpServerCardDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/agent-skills/index.json': {
+      id: '/.well-known/agent-skills/index.json'
+      path: '/.well-known/agent-skills/index.json'
+      fullPath: '/.well-known/agent-skills/index.json'
+      preLoaderRoute: typeof DotwellKnownAgentSkillsIndexDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/skills/$skillId/view': {
       id: '/api/skills/$skillId/view'
       path: '/api/skills/$skillId/view'
@@ -1283,6 +1318,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/skills/saved'
       preLoaderRoute: typeof AuthedLayoutDashboardSkillsSavedRouteImport
       parentRoute: typeof AuthedLayoutDashboardSkillsRoute
+    }
+    '/.well-known/agent-skills/$snapshotId/SKILL.md': {
+      id: '/.well-known/agent-skills/$snapshotId/SKILL.md'
+      path: '/.well-known/agent-skills/$snapshotId/SKILL.md'
+      fullPath: '/.well-known/agent-skills/$snapshotId/SKILL.md'
+      preLoaderRoute: typeof DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/og/tags/$slug/png': {
       id: '/api/og/tags/$slug/png'
@@ -1533,8 +1575,12 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDocsDotxmlRoute: SitemapDocsDotxmlRoute,
   SitemapStaticDotxmlRoute: SitemapStaticDotxmlRoute,
   SitemapTaxonomyDotxmlRoute: SitemapTaxonomyDotxmlRoute,
+  DotwellKnownAgentSkillsIndexDotjsonRoute:
+    DotwellKnownAgentSkillsIndexDotjsonRoute,
   DotwellKnownMcpServerCardDotjsonRoute: DotwellKnownMcpServerCardDotjsonRoute,
   SitemapSkillsPageRoute: SitemapSkillsPageRoute,
+  DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute:
+    DotwellKnownAgentSkillsSnapshotIdSKILLDotmdRoute,
   ApiOgAuthorsPngRoute: ApiOgAuthorsPngRoute,
   ApiOgCategoriesPngRoute: ApiOgCategoriesPngRoute,
   ApiOgCollectionsPngRoute: ApiOgCollectionsPngRoute,

@@ -1,5 +1,10 @@
 export { resolveCliInstall, createCliService, cliService } from "./cli/service";
 export {
+  AGENT_SKILLS_DISCOVERY_SCHEMA_URL,
+  agentSkillsDiscoveryService,
+  createAgentSkillsDiscoveryService,
+} from "./agent-skills-discovery/service";
+export {
   checkExistingSkill,
   claimAsAuthor,
   countAuthorsPublic as countAuthors,
