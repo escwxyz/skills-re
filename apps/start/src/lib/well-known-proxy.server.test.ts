@@ -71,6 +71,26 @@ describe("forwardWellKnownRequest", () => {
     await expect(response.text()).resolves.toBe("Not found");
   });
 
+  test("preserves HEAD semantics even when an upstream error message is configured", async () => {
+    const response = await forwardWellKnownRequest({
+      fetchFn: () =>
+        Promise.resolve(
+          new Response("Internal upstream details", {
+            headers: { "Content-Type": "text/plain" },
+            status: 503,
+          }),
+        ),
+      method: "HEAD",
+      path: "/.well-known/agent-configuration",
+      serverUrl: "https://api.skills.re",
+      upstreamErrorMessage: "Failed to load agent configuration.",
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.body).toBeNull();
+    expect(response.headers.get("content-type")).toContain("text/plain");
+  });
+
   test("can replace upstream error bodies with route-specific text", async () => {
     const response = await forwardWellKnownRequest({
       fetchFn: () => Promise.resolve(new Response("Internal upstream details", { status: 503 })),
@@ -119,5 +139,18 @@ describe("forwardWellKnownRequest", () => {
 
     expect(response.status).toBe(504);
     await expect(response.text()).resolves.toBe("Upstream request timed out.");
+  });
+
+  test("returns a fixed fallback message for thrown upstream errors", async () => {
+    const response = await forwardWellKnownRequest({
+      fetchFn: () => Promise.reject(new Error("Sensitive upstream detail")),
+      method: "GET",
+      path: "/.well-known/openid-configuration",
+      serverUrl: "https://api.skills.re",
+    });
+
+    expect(response.status).toBe(502);
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    await expect(response.text()).resolves.toBe("Failed to reach upstream.");
   });
 });

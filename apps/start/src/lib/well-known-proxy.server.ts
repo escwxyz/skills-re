@@ -32,16 +32,16 @@ export const forwardWellKnownRequest = async ({
       headers.set("Content-Type", defaultContentType);
     }
 
-    if (!response.ok && upstreamErrorMessage) {
-      return new Response(upstreamErrorMessage, {
-        headers: { "Content-Type": "text/plain" },
+    if (method === "HEAD") {
+      return new Response(null, {
+        headers,
         status: response.status,
       });
     }
 
-    if (method === "HEAD") {
-      return new Response(null, {
-        headers,
+    if (!response.ok && upstreamErrorMessage) {
+      return new Response(upstreamErrorMessage, {
+        headers: { "Content-Type": "text/plain" },
         status: response.status,
       });
     }
@@ -59,7 +59,7 @@ export const forwardWellKnownRequest = async ({
       });
     }
 
-    return new Response(error instanceof Error ? error.message : "Failed to reach upstream.", {
+    return new Response(upstreamErrorMessage ?? "Failed to reach upstream.", {
       headers: { "Content-Type": "text/plain" },
       status: 502,
     });

@@ -4,7 +4,7 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { agentSkillsDiscoveryService, createDownloadMetricsRecorder } from "@skills-re/api/modules";
+import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { mcpRouter } from "./routes/mcp";
@@ -20,6 +20,7 @@ import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
+import { agentSkillsDiscoveryService } from "@skills-re/api/modules/agent-skills-discovery/service";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
 import {
   oauthProviderAuthServerMetadata,

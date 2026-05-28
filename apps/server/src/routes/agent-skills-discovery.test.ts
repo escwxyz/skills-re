@@ -140,7 +140,11 @@ describe("agent skills discovery routes", () => {
     );
 
     expect(missingMetadata.status).toBe(404);
+    expect(missingMetadata.headers.get("access-control-allow-origin")).toBe("*");
+    expect(missingMetadata.headers.get("cache-control")).toBe("public, max-age=3600");
     expect(missingObject.status).toBe(404);
+    expect(missingObject.headers.get("access-control-allow-origin")).toBe("*");
+    expect(missingObject.headers.get("cache-control")).toBe("public, max-age=3600");
   });
 
   test("sets public discovery headers", () => {

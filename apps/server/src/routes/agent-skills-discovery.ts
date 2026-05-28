@@ -1,5 +1,5 @@
 import type { SnapshotStorageRuntime } from "@skills-re/api/types";
-import { agentSkillsDiscoveryService } from "@skills-re/api/modules";
+import { agentSkillsDiscoveryService } from "@skills-re/api/modules/agent-skills-discovery/service";
 
 export interface AgentSkillsDiscoveryIndexRuntime {
   getDiscoveryIndex: typeof agentSkillsDiscoveryService.getDiscoveryIndex;
@@ -38,12 +38,17 @@ const getArtifactContentType = (contentType: string | null | undefined) => {
 };
 
 const toNotFoundResponse = () =>
-  new Response("Skill artifact not found.", {
-    status: 404,
-    headers: {
+  (() => {
+    const headers = new Headers({
       "Content-Type": "text/plain",
-    },
-  });
+    });
+    setAgentSkillsDiscoveryHeaders(headers);
+
+    return new Response("Skill artifact not found.", {
+      headers,
+      status: 404,
+    });
+  })();
 
 export const createAgentSkillsDiscoveryIndexResponse = async (
   runtime: AgentSkillsDiscoveryIndexRuntime = defaultIndexRuntime,
@@ -90,8 +95,9 @@ export const createAgentSkillMdResponse = async (
     return toNotFoundResponse();
   }
 
+  const body = new Uint8Array(await object.arrayBuffer());
   const headers = new Headers({
-    "Content-Length": String(artifact.size),
+    "Content-Length": String(body.byteLength),
     "Content-Type": getArtifactContentType(artifact.contentType),
     ETag: `"sha256-${artifact.fileHash}"`,
   });
@@ -104,7 +110,7 @@ export const createAgentSkillMdResponse = async (
     });
   }
 
-  return new Response(await object.arrayBuffer(), {
+  return new Response(body, {
     headers,
     status: 200,
   });
