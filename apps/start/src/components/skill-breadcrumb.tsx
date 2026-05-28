@@ -2,7 +2,6 @@ import { m } from "@/paraglide/messages";
 import { Link } from "@tanstack/react-router";
 
 import { SkillSlugSwitcher } from "@/components/skill-slug-switcher";
-import { cn } from "@/lib/utils";
 
 interface Props {
   skill: {
@@ -30,13 +29,11 @@ export const SkillBreadcrumb = ({ skill }: Props) => (
       {skill.authorHandle}
     </Link>
     <span className="shrink-0">/</span>
-    <div className={cn("min-w-0 flex-1", "max-w-full")}>
-      <SkillSlugSwitcher
-        authorHandle={skill.authorHandle}
-        repo={skill.repoName}
-        className="w-full max-w-full"
-        currentSlug={skill.slug}
-      />
-    </div>
+    <SkillSlugSwitcher
+      authorHandle={skill.authorHandle}
+      repo={skill.repoName}
+      className="w-full max-w-full"
+      currentSlug={skill.slug}
+    />
   </div>
 );
