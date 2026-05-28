@@ -11,6 +11,11 @@ const config = defineConfig({
   server: {
     port: 4321,
   },
+  build: {
+    rollupOptions: {
+      external: ["cloudflare:workers"],
+    },
+  },
   plugins: [
     contentCollections(),
     paraglideVitePlugin({

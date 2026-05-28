@@ -1,6 +1,8 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+export type { CloudflareStartEnv } from "../env.d.ts";
+
 export const env = createEnv({
   clientPrefix: "VITE_",
   client: {

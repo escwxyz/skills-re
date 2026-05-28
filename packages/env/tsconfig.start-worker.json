@@ -3,5 +3,5 @@
   "compilerOptions": {
     "strictNullChecks": true
   },
-  "include": ["env.d.ts", "env.server.d.ts", "src/server.ts", "src/start.ts"]
+  "include": ["env.d.ts", "env.start.d.ts", "src/start-worker.ts"]
 }

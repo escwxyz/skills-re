@@ -27,9 +27,23 @@ const app = await alchemy("skills-re", {
     process.env.NODE_ENV === "production" ? (scope) => new CloudflareStateStore(scope) : undefined,
 });
 
-const db = await D1Database("database", {
+const legacyDb = await D1Database("database", {
   migrationsDir: "../../packages/db/src/migrations",
   adopt: true,
+});
+
+const database = await D1Database("database-eu", {
+  name: "skills-re-database-eu-prod",
+  migrationsDir: "../../packages/db/src/migrations",
+  adopt: true,
+  clone:
+    process.env.NODE_ENV === "production"
+      ? { id: "ef91dfb6-256f-4c95-adbf-6cc6b40c7582" }
+      : legacyDb,
+  jurisdiction: "eu",
+  readReplication: {
+    mode: "auto",
+  },
 });
 
 const snapshotFilesBucket = await R2Bucket("skills-re-snapshots", {
@@ -337,6 +351,9 @@ export const server = await Worker("server", {
   entrypoint: "src/index.ts",
   compatibility: "node",
   compatibilityDate: "2026-03-10",
+  placement: {
+    mode: "smart",
+  },
   crons: [
     // Repo metadata sync only: stars, forks, and GitHub updatedAt.
     "0 */6 * * *",
@@ -347,7 +364,7 @@ export const server = await Worker("server", {
   ],
   bindings: {
     ADMIN: alchemy.env.ADMIN!,
-    DB: db,
+    DB: database,
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
     PUBLIC_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
     PUBLIC_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
@@ -402,9 +419,10 @@ export const server = await Worker("server", {
 export const start = await TanStackStart("start", {
   cwd: "../../apps/start",
   compatibility: "node",
-  compatibilityFlags: ["global_fetch_strictly_public"],
   compatibilityDate: "2026-03-10",
+  // Keep default request-proximate placement for the user-facing Start worker.
   bindings: {
+    API: server,
     VITE_SERVER_URL: alchemy.env.PUBLIC_SERVER_URL!,
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,
