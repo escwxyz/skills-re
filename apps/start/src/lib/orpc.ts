@@ -4,6 +4,7 @@ import { createORPCClient } from "@orpc/client";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { env } from "@skills-re/env/start";
+import { fetchBrowserORPCRequest } from "./orpc-transport";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -25,11 +26,8 @@ const rpcUrl = new URL("/rpc", env.VITE_SERVER_URL).toString();
 const createClientORPCClient = () => {
   const link = new RPCLink({
     url: rpcUrl,
-    fetch(url, options) {
-      return fetch(url, {
-        ...options,
-        credentials: "include",
-      });
+    fetch(input, init) {
+      return fetchBrowserORPCRequest(input, init);
     },
   });
 
