@@ -8,7 +8,13 @@ import type {
   WithContext,
 } from "schema-dts";
 
-import { OG_IMAGE_DEFAULT, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/constants";
+import {
+  OG_IMAGE_DEFAULT,
+  SITE_KEYWORDS,
+  SITE_NAME,
+  SITE_TWITTER_SITE,
+  SITE_URL,
+} from "@/lib/constants";
 import { m } from "@/paraglide/messages";
 import {
   baseLocale as defaultLocale,
@@ -300,6 +306,7 @@ export function createSeo({
     { property: "og:description", content: description },
     { property: "og:url", content: canonicalUrl },
     { name: "twitter:card", content: resolvedImage ? "summary_large_image" : "summary" },
+    { name: "twitter:site", content: SITE_TWITTER_SITE },
     { name: "twitter:title", content: resolvedTitle },
     { name: "twitter:description", content: description },
     { name: "twitter:url", content: canonicalUrl },

@@ -12,5 +12,6 @@ export const SITE_KEYWORDS = [
 ];
 
 export const SITE_URL = env.VITE_SITE_URL;
+export const SITE_TWITTER_SITE = "@skills_re";
 
 export const OG_IMAGE_DEFAULT = "/og_image.png";
