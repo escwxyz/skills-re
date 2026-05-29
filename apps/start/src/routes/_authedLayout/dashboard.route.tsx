@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getUser } from "@/functions/get-user";
 import { NavUser } from "@/components/nav-user";
+import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/_authedLayout/dashboard")({
   ssr: "data-only",
@@ -41,22 +42,30 @@ export const Route = createFileRoute("/_authedLayout/dashboard")({
   component: RouteComponent,
 });
 
+const routeTitles = [
+  { title: m.dashboard_nav_overview_label(), to: "/dashboard" as const, fuzzy: false },
+  { title: m.dashboard_nav_skills_label(), to: "/dashboard/skills" as const, fuzzy: true },
+  {
+    title: m.dashboard_nav_collections_label(),
+    to: "/dashboard/collections" as const,
+    fuzzy: true,
+  },
+  { title: m.dashboard_nav_reviews_label(), to: "/dashboard/reviews" as const, fuzzy: false },
+  {
+    title: m.dashboard_nav_feedbacks_label(),
+    to: "/dashboard/feedbacks" as const,
+    fuzzy: false,
+  },
+  { title: m.dashboard_nav_settings_label(), to: "/dashboard/settings" as const, fuzzy: false },
+];
+
 function RouteComponent() {
   const { currentUser } = Route.useLoaderData();
   const matchRoute = useMatchRoute();
 
-  const routeTitles = [
-    { title: "Account overview", to: "/dashboard" as const, fuzzy: false },
-    { title: "Skills", to: "/dashboard/skills" as const, fuzzy: true },
-    { title: "Collections", to: "/dashboard/collections" as const, fuzzy: true },
-    { title: "Review history", to: "/dashboard/reviews" as const, fuzzy: false },
-    { title: "Feedback inbox", to: "/dashboard/feedbacks" as const, fuzzy: false },
-    { title: "Access controls", to: "/dashboard/settings" as const, fuzzy: false },
-  ];
-
   const activeTitle =
     routeTitles.find((item) => matchRoute({ to: item.to, fuzzy: item.fuzzy }))?.title ??
-    "Account overview";
+    m.dashboard_nav_overview_label();
 
   return (
     <SidebarProvider defaultOpen>
@@ -69,7 +78,7 @@ function RouteComponent() {
                   <Link to="/" className="flex items-center gap-2">
                     <ArrowBendUpLeftIcon className="size-4 shrink-0" />
                     <span className="font-mono text-[11px] uppercase tracking-[0.08em]">
-                      Back to home
+                      {m.dashboard_nav_back_to_home()}
                     </span>
                   </Link>
                 }
@@ -77,24 +86,22 @@ function RouteComponent() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
-
-        <SidebarContent>
+        <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
             <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Navigation
+              {m.dashboard_nav_section_label()}
             </SidebarGroupLabel>
 
-            <SidebarMenu className="gap-1">
-              {/* Overview */}
+            <SidebarMenu className="gap-1 px-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
-                    <Link to="/dashboard" className="flex flex-col w-full rounded-none px-0">
+                    <Link to="/dashboard" className="flex flex-col w-full rounded-none px-2">
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <HouseIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Overview
+                            {m.dashboard_nav_overview_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -102,7 +109,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        High-level status and account summary
+                        {m.dashboard_nav_overview_description()}
                       </p>
                     </Link>
                   }
@@ -114,12 +121,12 @@ function RouteComponent() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
-                    <Link to="/dashboard/skills" className="flex flex-col w-full rounded-none px-0">
+                    <Link to="/dashboard/skills" className="flex flex-col w-full rounded-none px-2">
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <RowsIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Skills
+                            {m.dashboard_nav_skills_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -127,7 +134,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Published skills linked to your account
+                        {m.dashboard_nav_skills_description()}
                       </p>
                     </Link>
                   }
@@ -141,13 +148,13 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/collections"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <FolderSimpleIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Collections
+                            {m.dashboard_nav_collections_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -155,7 +162,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Saved skills, default library, and custom collections
+                        {m.dashboard_nav_collections_description()}
                       </p>
                     </Link>
                   }
@@ -170,13 +177,13 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/reviews"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <ChatsIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Reviews
+                            {m.dashboard_nav_reviews_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -184,7 +191,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Read-only archive of the reviews you have written
+                        {m.dashboard_nav_reviews_description()}
                       </p>
                     </Link>
                   }
@@ -199,13 +206,13 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/feedbacks"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <ChatCircleTextIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Feedback
+                            {m.dashboard_nav_feedbacks_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -213,7 +220,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Feedback you have submitted
+                        {m.dashboard_nav_feedbacks_description()}
                       </p>
                     </Link>
                   }
@@ -228,13 +235,13 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/settings"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <GearIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Settings
+                            {m.dashboard_nav_settings_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -242,7 +249,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Account actions and quick shortcuts
+                        {m.dashboard_nav_settings_description()}
                       </p>
                     </Link>
                   }

@@ -5,15 +5,9 @@ import { createAuthClient } from "better-auth/client";
 
 export const authClient = createAuthClient({
   basePath: "/auth",
-  // baseURL: "http://localhost:3000",
   baseURL: env.VITE_SERVER_URL,
   plugins: [adminClient(), apiKeyClient(), deviceAuthorizationClient(), emailOTPClient()],
   sessionOptions: {
     refetchOnWindowFocus: false,
-  },
-  fetchOptions: {
-    onError: (ctx) => {
-      console.error("Auth error:", ctx.error);
-    },
   },
 });

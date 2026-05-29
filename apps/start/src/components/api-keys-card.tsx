@@ -8,7 +8,7 @@ import { useAppForm } from "@/hooks/form-hook";
 import { authClient } from "@/lib/auth-client";
 import { m } from "@/paraglide/messages";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FieldLabel, Form } from "@/components/ui/form";
+import { Field, FieldLabel, Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
@@ -114,7 +114,7 @@ export function ApiKeysCard() {
           >
             <form.AppField name="name">
               {(field) => (
-                <div className="space-y-1">
+                <Field className="space-y-1">
                   <FieldLabel className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                     {m.dashboard_settings_api_key_label()}
                   </FieldLabel>
@@ -126,7 +126,7 @@ export function ApiKeysCard() {
                     placeholder={m.dashboard_settings_api_key_placeholder()}
                     value={field.state.value}
                   />
-                </div>
+                </Field>
               )}
             </form.AppField>
 
