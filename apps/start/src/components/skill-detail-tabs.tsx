@@ -87,7 +87,6 @@ export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
           aria-label={tab.label}
           title={tab.label}
           resetScroll={false}
-          viewTransition
         >
           <Icon aria-hidden className="size-4 shrink-0" />
           <span className="hidden sm:inline">{tab.label}</span>

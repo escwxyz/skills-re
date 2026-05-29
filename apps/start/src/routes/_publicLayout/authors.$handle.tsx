@@ -2,13 +2,12 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 import { z } from "zod/v4";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { AuthorSkillList } from "@/components/author-skill-list";
 import { AuthorStats } from "@/components/author-stats";
 import { AuthorRepoList } from "@/components/author-repo-list";
 import { PageHero } from "@/components/page-hero";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuthorDetail } from "@/functions/authors/get-author-detail";
 import { getAuthorRepos } from "@/functions/authors/get-author-repos";
 import { buildAuthorOgImagePath } from "@/lib/og-image-paths";
@@ -43,8 +42,8 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
       reposPage,
     };
   },
-  head: ({ loaderData }) =>
-    createSeo({
+  head: ({ loaderData }) => {
+    const seo = createSeo({
       canonicalPath: loaderData ? `/authors/${loaderData.author.handle}` : "/authors",
       description: loaderData ? (loaderData.author.bio ?? undefined) : undefined,
       includePageStructuredData: false,
@@ -64,7 +63,33 @@ export const Route = createFileRoute("/_publicLayout/authors/$handle")({
         : [],
       title: loaderData?.author.name ?? `@${loaderData?.author.handle}`,
       locale: getLocale(),
-    }),
+    });
+
+    return {
+      ...seo,
+      links: [
+        ...(loaderData?.author.githubUrl
+          ? [
+              {
+                rel: "preconnect",
+                href: new URL(loaderData.author.githubUrl).origin,
+                crossOrigin: "anonymous" as const,
+              },
+            ]
+          : []),
+        ...(loaderData?.author.avatarUrl
+          ? [
+              {
+                rel: "preload",
+                as: "image",
+                href: loaderData.author.avatarUrl,
+              },
+            ]
+          : []),
+        ...seo.links,
+      ],
+    };
+  },
   component: RouteComponent,
 });
 
@@ -82,6 +107,8 @@ function RouteComponent() {
   const name = getAuthorDisplayName(author);
   const avatarLabel = getAvatarLabel(author);
   const authorDescription = author.bio ?? undefined;
+  const [avatarError, setAvatarError] = useState(false);
+  const hasAvatarImage = Boolean(author.avatarUrl) && !avatarError;
 
   useEffect(() => {
     if (selectedRepoName && !activeRepoName) {
@@ -113,18 +140,26 @@ function RouteComponent() {
         description={authorDescription}
         media={
           <div className="flex flex-col items-center justify-center px-2">
-            <Avatar className="size-60 overflow-hidden rounded-none border-4 border-double border-background bg-foreground shadow-none after:rounded-none">
-              {author.avatarUrl ? (
-                <AvatarImage
-                  className="rounded-none object-cover"
+            <div className="size-60 overflow-hidden rounded-none border-4 border-double border-background bg-foreground shadow-none">
+              {hasAvatarImage ? (
+                <img
                   alt={name}
-                  src={author.avatarUrl}
+                  className="aspect-square size-full rounded-none object-cover"
+                  fetchPriority="high"
+                  height={240}
+                  loading="eager"
+                  onError={() => {
+                    setAvatarError(true);
+                  }}
+                  src={author.avatarUrl ?? undefined}
+                  width={240}
                 />
-              ) : null}
-              <AvatarFallback className="rounded-none bg-foreground font-display text-8xl italic text-background">
-                {avatarLabel}
-              </AvatarFallback>
-            </Avatar>
+              ) : (
+                <div className="flex size-full items-center justify-center rounded-none bg-foreground font-display text-8xl italic text-background">
+                  {avatarLabel}
+                </div>
+              )}
+            </div>
             <div className="text-muted-foreground mt-6 font-mono text-xs uppercase">
               @{handle}
               {isVerified && (
@@ -136,7 +171,7 @@ function RouteComponent() {
                 href={githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 flex flex-wrap justify-center items-center gap-2.5 border-border hover:bg-muted rounded-none border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors"
+                className="mt-6 flex flex-wrap items-center justify-center gap-2.5 rounded-none border border-border px-4 py-2 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors hover:bg-muted"
               >
                 {author_page_github_profile()} <ArrowRightIcon />
               </a>

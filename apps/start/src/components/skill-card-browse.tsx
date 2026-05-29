@@ -1,5 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { memo } from "react";
+
 import { Link } from "@tanstack/react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { TimeValue } from "@/components/time-value";
 import { getLocale } from "@/paraglide/runtime";
@@ -55,7 +57,7 @@ export const getBrowseSkillAuthorHandle = (skill: BrowseSkillItem) => {
   return "unknown-author";
 };
 
-export const SkillCardBrowse = ({ skill }: Props) => {
+const SkillCardBrowseComponent = ({ skill }: Props) => {
   const locale = getLocale();
   const authorLabel = getBrowseSkillAuthorLabel(skill);
   const authorHandle = getBrowseSkillAuthorHandle(skill);
@@ -94,6 +96,7 @@ export const SkillCardBrowse = ({ skill }: Props) => {
           repo: skill.repoName ?? "unknown-repo",
           slug: skill.slug,
         }}
+        preload="viewport"
         to="/skills/$author/$repo/$slug"
         className="block no-underline hover:no-underline"
       >
@@ -155,3 +158,5 @@ export const SkillCardBrowse = ({ skill }: Props) => {
     </div>
   );
 };
+
+export const SkillCardBrowse = memo(SkillCardBrowseComponent);

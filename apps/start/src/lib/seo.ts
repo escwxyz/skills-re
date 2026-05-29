@@ -47,6 +47,8 @@ interface SeoMetaDescriptor {
 interface SeoLinkDescriptor {
   href: string;
   hrefLang?: string;
+  as?: string;
+  crossOrigin?: "anonymous" | "use-credentials";
   rel: string;
   sizes?: string;
   type?: string;
