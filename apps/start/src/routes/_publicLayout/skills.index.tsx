@@ -57,6 +57,7 @@ export const Route = createFileRoute("/_publicLayout/skills/")({
     tag: search.tag,
     tags: search.tags,
   }),
+  staleTime: 1000 * 60 * 60 * 5,
   loader: ({ deps }) => getSkillsBrowseMeta({ data: deps }),
   head: () =>
     createSeo({

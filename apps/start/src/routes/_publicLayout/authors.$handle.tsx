@@ -27,6 +27,7 @@ const authorSearchSchema = z.object({
 
 export const Route = createFileRoute("/_publicLayout/authors/$handle")({
   validateSearch: authorSearchSchema,
+  staleTime: 1000 * 60 * 30,
   loader: async ({ params }) => {
     const [author, reposPage] = await Promise.all([
       getAuthorDetail({ data: { handle: params.handle } }),

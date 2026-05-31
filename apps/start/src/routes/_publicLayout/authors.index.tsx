@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_publicLayout/authors/")({
   loader: () => getAuthorsInitial(),
+  staleTime: 1000 * 60 * 60 * 5,
   head: () =>
     createSeo({
       canonicalPath: "/authors",

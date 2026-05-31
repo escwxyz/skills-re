@@ -25,6 +25,7 @@ import {
 } from "@/utils/category-data";
 
 export const Route = createFileRoute("/_publicLayout/categories/$slug")({
+  staleTime: 1000 * 60 * 60 * 5,
   loader: async ({ params }) => {
     const data = await getCategoryDetail({ data: { slug: params.slug } });
 

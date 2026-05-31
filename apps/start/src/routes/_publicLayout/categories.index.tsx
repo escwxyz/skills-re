@@ -18,6 +18,7 @@ import {
 import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_publicLayout/categories/")({
+  staleTime: 1000 * 60 * 60 * 5,
   loader: () => getCategories(),
   head: () =>
     createSeo({
