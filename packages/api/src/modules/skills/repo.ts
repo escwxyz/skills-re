@@ -659,9 +659,20 @@ interface SearchSkillsPageInput {
   minScore?: number;
   repoName?: string;
   query?: string;
+  searchMode?: "keyword" | "semantic";
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
 }
+
+export const keywordSearchMetadataFields = [
+  "skill-title",
+  "skill-description",
+  "skill-slug",
+  "repo-name",
+  "author-handle",
+  "author-name",
+  "author-github",
+] as const;
 
 interface SearchCursor {
   offset: number;
@@ -740,6 +751,8 @@ function buildSearchWhereClauses(input: SearchSkillsPageInput) {
           or lower(${skillsTable.slug}) like ${queryPattern}
           or lower(${reposTable.name}) like ${queryPattern}
           or lower(${reposTable.ownerHandle}) like ${queryPattern}
+          or lower(${usersTable.name}) like ${queryPattern}
+          or lower(${usersTable.github}) like ${queryPattern}
         )`
       : null,
     tags.length > 0
@@ -785,6 +798,7 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(usersTable, eq(usersTable.id, skillsTable.userId))
     .where(and(...buildSearchWhereClauses(input ?? {})))
     .orderBy(getSearchSortExpression(sort), desc(skillsTable.id))
     .limit(limit + 1)

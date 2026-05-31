@@ -709,12 +709,14 @@ export const fetchSkillsSearch = async (input: {
   limit?: number;
   query: string;
   rewriteQuery?: boolean;
+  searchMode?: "keyword" | "semantic";
 }): Promise<FetchSkillsSearchResult> => {
   try {
     const result = await input.client.skills.search({
       limit: input.limit,
       query: input.query,
       rewriteQuery: input.rewriteQuery,
+      searchMode: input.searchMode,
     });
 
     return {

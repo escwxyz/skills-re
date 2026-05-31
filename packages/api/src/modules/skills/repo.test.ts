@@ -2,10 +2,22 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { normalizeSkillCanonicalSlug } from "./repo";
+import { keywordSearchMetadataFields, normalizeSkillCanonicalSlug } from "./repo";
 import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 describe("skills repo helpers", () => {
+  test("documents the metadata fields used by keyword search", () => {
+    expect(keywordSearchMetadataFields).toEqual([
+      "skill-title",
+      "skill-description",
+      "skill-slug",
+      "repo-name",
+      "author-handle",
+      "author-name",
+      "author-github",
+    ]);
+  });
+
   test("normalizes empty canonical slugs to null", () => {
     expect(normalizeSkillCanonicalSlug(null)).toBeNull();
     expect(normalizeSkillCanonicalSlug(undefined)).toBeNull();

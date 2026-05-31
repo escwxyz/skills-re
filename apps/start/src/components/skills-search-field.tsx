@@ -24,9 +24,13 @@ interface SkillsSearchFieldProps {
   onChange: (value: string) => void;
   onClear: () => void;
   onFocus: () => void;
+  onSearchModeChange: (value: SkillsSearchMode) => void;
   onSubmit: () => void;
+  searchMode: SkillsSearchMode;
   value: string;
 }
+
+export type SkillsSearchMode = "keyword" | "semantic";
 
 export const SkillsSearchField = ({
   active,
@@ -35,7 +39,9 @@ export const SkillsSearchField = ({
   onChange,
   onClear,
   onFocus,
+  onSearchModeChange,
   onSubmit,
+  searchMode,
   value,
 }: SkillsSearchFieldProps) => {
   const hasValue = value.trim().length > 0;
@@ -121,27 +127,45 @@ export const SkillsSearchField = ({
             )}
           </form.AppField>
 
-          {hasValue ? (
-            <InputGroupAddon align="inline-end" className="pr-2">
-              <InputGroupButton aria-label="Clear search" onClick={onClear} size="icon-sm">
-                <XIcon />
-              </InputGroupButton>
-            </InputGroupAddon>
-          ) : (
-            <InputGroupAddon
-              align="inline-end"
-              className={cn("pr-3", active ? "flex" : "hidden lg:flex")}
-            >
-              {active ? (
-                <Kbd className="select-none">⏎</Kbd>
-              ) : (
-                <>
-                  <Kbd className="select-none">{isMac ? "⌘" : "Ctrl"}</Kbd>
-                  <Kbd className="select-none">K</Kbd>
-                </>
-              )}
-            </InputGroupAddon>
-          )}
+          <InputGroupAddon
+            align="inline-end"
+            className={cn("pr-2", active || hasValue ? "flex" : "hidden lg:flex")}
+          >
+            {active || hasValue ? (
+              <>
+                <div className="flex border border-border bg-background font-mono text-[10px] uppercase tracking-[.12em]">
+                  {(["keyword", "semantic"] as const).map((mode) => (
+                    <button
+                      aria-pressed={searchMode === mode}
+                      className={cn(
+                        "px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                        searchMode === mode &&
+                          "bg-foreground text-background hover:bg-foreground hover:text-background",
+                      )}
+                      disabled={disabled}
+                      key={mode}
+                      onClick={() => onSearchModeChange(mode)}
+                      type="button"
+                    >
+                      {mode === "keyword" ? "Keyword" : "Semantic"}
+                    </button>
+                  ))}
+                </div>
+                {hasValue ? (
+                  <InputGroupButton aria-label="Clear search" onClick={onClear} size="icon-sm">
+                    <XIcon />
+                  </InputGroupButton>
+                ) : (
+                  <Kbd className="select-none">⏎</Kbd>
+                )}
+              </>
+            ) : (
+              <>
+                <Kbd className="select-none">{isMac ? "⌘" : "Ctrl"}</Kbd>
+                <Kbd className="select-none">K</Kbd>
+              </>
+            )}
+          </InputGroupAddon>
         </InputGroup>
       </Form>
     </form.AppForm>
