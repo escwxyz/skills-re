@@ -266,6 +266,13 @@ const workflowQueueEventSources = [
     },
   },
   {
+    queue: skillEvalRunWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 1000,
+    },
+  },
+  {
     queue: skillsCategorizationWorkflowQueue,
     settings: {
       batchSize: 2,
