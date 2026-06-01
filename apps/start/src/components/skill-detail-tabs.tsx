@@ -1,11 +1,11 @@
 import type { Icon } from "@phosphor-icons/react";
 import {
-  ChartBarIcon,
+  // ChartBarIcon,
   ChatsIcon,
   ClockCounterClockwiseIcon,
   FileTextIcon,
   ShieldCheckIcon,
-  TerminalWindowIcon,
+  // TerminalWindowIcon,
   TreeViewIcon,
 } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
@@ -57,18 +57,19 @@ export const SKILL_DETAIL_TABS: SkillDetailTabItem[] = [
     to: "/skills/$author/$repo/$slug/audit",
     icon: ShieldCheckIcon,
   },
-  {
-    id: "sandbox",
-    label: String(m.skill_detail_sandbox()),
-    to: "/skills/$author/$repo/$slug/sandbox",
-    icon: TerminalWindowIcon,
-  },
-  {
-    id: "evals",
-    label: String(m.skill_eval_evals()),
-    to: "/skills/$author/$repo/$slug/evals",
-    icon: ChartBarIcon,
-  },
+  // todo: temporarily hide sandbox and evals tabs until we have better content for them
+  // {
+  //   id: "sandbox",
+  //   label: String(m.skill_detail_sandbox()),
+  //   to: "/skills/$author/$repo/$slug/sandbox",
+  //   icon: TerminalWindowIcon,
+  // },
+  // {
+  //   id: "evals",
+  //   label: String(m.skill_eval_evals()),
+  //   to: "/skills/$author/$repo/$slug/evals",
+  //   icon: ChartBarIcon,
+  // },
   {
     id: "reviews",
     label: String(m.skill_detail_review_tab()),
