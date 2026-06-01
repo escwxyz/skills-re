@@ -80,6 +80,7 @@ import {
   readSnapshotFileContent,
   uploadSkills,
   searchSkills,
+  skillEvalSandboxService,
 } from "../modules";
 import { metricsRouter } from "./metrics";
 
@@ -131,6 +132,9 @@ export const normalizeErrorForLog = (error: unknown) => {
 
 export const anonymizeIdForLog = (value: string) =>
   value.length <= 8 ? "[redacted]" : `${value.slice(0, 4)}...${value.slice(-4)}`;
+
+const isSkillEvalSandboxEnabled = (context: { features?: { skillEvalSandboxEnabled?: boolean } }) =>
+  context.features?.skillEvalSandboxEnabled === true;
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -504,6 +508,67 @@ export const appRouter = {
   staticAudits: {
     getReportBySnapshot: publicProcedure.staticAudits.getReportBySnapshot.handler(({ input }) =>
       getStaticAuditReportBySnapshot(input.snapshotId),
+    ),
+  },
+  skillEvalSandbox: {
+    createRun: protectedProcedure.skillEvalSandbox.createRun.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.createRun(
+        input,
+        {
+          userId: context.session.user.id,
+        },
+        {
+          runScheduler: context.workflowSchedulers?.skillEvalRun ?? null,
+        },
+      );
+    }),
+    createStreamToken: protectedProcedure.skillEvalSandbox.createStreamToken.handler(
+      ({ input, context }) =>
+        skillEvalSandboxService.createStreamToken(input, {
+          userId: context.session.user.id,
+        }),
+    ),
+    getRunDetail: publicProcedure.skillEvalSandbox.getRunDetail.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.getRunDetail(input);
+    }),
+    getSuite: publicProcedure.skillEvalSandbox.getSuite.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.getSuite(input);
+    }),
+    listAgents: publicProcedure.skillEvalSandbox.listAgents.handler(({ context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        return [];
+      }
+
+      return skillEvalSandboxService.listAgents();
+    }),
+    listRunsBySkill: publicProcedure.skillEvalSandbox.listRunsBySkill.handler(
+      ({ input, context }) => {
+        if (!isSkillEvalSandboxEnabled(context)) {
+          throw new ORPCError("FORBIDDEN", {
+            message: "Skill eval sandbox is not enabled.",
+          });
+        }
+
+        return skillEvalSandboxService.listRunsBySkill(input);
+      },
     ),
   },
   repos: {

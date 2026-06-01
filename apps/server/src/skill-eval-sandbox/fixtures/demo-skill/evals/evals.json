@@ -1,0 +1,16 @@
+{
+  "skill_name": "demo-skill",
+  "evals": [
+    {
+      "id": "summarize-note",
+      "name": "summarize attached note",
+      "prompt": "Read the attached note and summarize its purpose in one sentence.",
+      "files": ["evals/files/note.txt"],
+      "expected_output": "The response says this is a demo eval fixture for Skills.re.",
+      "assertions": [
+        "The output identifies this as a demo eval fixture.",
+        "The output mentions Skills.re."
+      ]
+    }
+  ]
+}

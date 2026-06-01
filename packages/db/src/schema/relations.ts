@@ -15,10 +15,13 @@ import {
 } from "./auth";
 import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
+import { sandboxAgentsTable } from "./sandbox-agents";
 import { savedSkillsTable } from "./saved-skills";
 import { skillUsageEventsTable } from "./skill-usage-events";
 import { reviewsTable } from "./reviews";
 import { skillsTable, skillsTagsTable } from "./skills";
+import { skillEvalCasesTable, skillEvalSuitesTable } from "./skill-eval-suites";
+import { skillEvalCaseResultsTable, skillEvalRunsTable } from "./skill-eval-runs";
 import { snapshotFilesTable, snapshotsTable } from "./snapshots";
 import { staticAuditsTable } from "./static-audits";
 import { tagsTable } from "./tags";
@@ -41,6 +44,7 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
     relationName: "agentCapabilityGrants_grantedBy",
   }),
   approvalRequests: many(approvalRequestsTable),
+  skillEvalRuns: many(skillEvalRunsTable),
 }));
 
 export const sessionsRelations = relations(sessionsTable, ({ one, many }) => ({
@@ -180,6 +184,9 @@ export const skillsRelations = relations(skillsTable, ({ one, many }) => ({
   }),
   skillsTags: many(skillsTagsTable),
   savedSkills: many(savedSkillsTable),
+  skillEvalSuites: many(skillEvalSuitesTable),
+  skillEvalCases: many(skillEvalCasesTable),
+  skillEvalRuns: many(skillEvalRunsTable),
   usageEvents: many(skillUsageEventsTable),
 }));
 
@@ -200,6 +207,9 @@ export const snapshotsRelations = relations(snapshotsTable, ({ many, one }) => (
     fields: [snapshotsTable.skillId],
     references: [skillsTable.id],
   }),
+  skillEvalSuites: many(skillEvalSuitesTable),
+  skillEvalCases: many(skillEvalCasesTable),
+  skillEvalRuns: many(skillEvalRunsTable),
 }));
 
 export const snapshotFilesRelations = relations(snapshotFilesTable, ({ one }) => ({
@@ -256,6 +266,74 @@ export const savedSkillsRelations = relations(savedSkillsTable, ({ one }) => ({
   user: one(usersTable, {
     fields: [savedSkillsTable.userId],
     references: [usersTable.id],
+  }),
+}));
+
+export const sandboxAgentsRelations = relations(sandboxAgentsTable, ({ many }) => ({
+  skillEvalRuns: many(skillEvalRunsTable),
+}));
+
+export const skillEvalSuitesRelations = relations(skillEvalSuitesTable, ({ many, one }) => ({
+  cases: many(skillEvalCasesTable),
+  runs: many(skillEvalRunsTable),
+  skill: one(skillsTable, {
+    fields: [skillEvalSuitesTable.skillId],
+    references: [skillsTable.id],
+  }),
+  snapshot: one(snapshotsTable, {
+    fields: [skillEvalSuitesTable.snapshotId],
+    references: [snapshotsTable.id],
+  }),
+}));
+
+export const skillEvalCasesRelations = relations(skillEvalCasesTable, ({ many, one }) => ({
+  results: many(skillEvalCaseResultsTable),
+  skill: one(skillsTable, {
+    fields: [skillEvalCasesTable.skillId],
+    references: [skillsTable.id],
+  }),
+  snapshot: one(snapshotsTable, {
+    fields: [skillEvalCasesTable.snapshotId],
+    references: [snapshotsTable.id],
+  }),
+  suite: one(skillEvalSuitesTable, {
+    fields: [skillEvalCasesTable.suiteId],
+    references: [skillEvalSuitesTable.id],
+  }),
+}));
+
+export const skillEvalRunsRelations = relations(skillEvalRunsTable, ({ many, one }) => ({
+  agent: one(sandboxAgentsTable, {
+    fields: [skillEvalRunsTable.agentId],
+    references: [sandboxAgentsTable.id],
+  }),
+  caseResults: many(skillEvalCaseResultsTable),
+  createdByUser: one(usersTable, {
+    fields: [skillEvalRunsTable.createdBy],
+    references: [usersTable.id],
+  }),
+  skill: one(skillsTable, {
+    fields: [skillEvalRunsTable.skillId],
+    references: [skillsTable.id],
+  }),
+  snapshot: one(snapshotsTable, {
+    fields: [skillEvalRunsTable.snapshotId],
+    references: [snapshotsTable.id],
+  }),
+  suite: one(skillEvalSuitesTable, {
+    fields: [skillEvalRunsTable.suiteId],
+    references: [skillEvalSuitesTable.id],
+  }),
+}));
+
+export const skillEvalCaseResultsRelations = relations(skillEvalCaseResultsTable, ({ one }) => ({
+  case: one(skillEvalCasesTable, {
+    fields: [skillEvalCaseResultsTable.caseId],
+    references: [skillEvalCasesTable.id],
+  }),
+  run: one(skillEvalRunsTable, {
+    fields: [skillEvalCaseResultsTable.runId],
+    references: [skillEvalRunsTable.id],
   }),
 }));
 

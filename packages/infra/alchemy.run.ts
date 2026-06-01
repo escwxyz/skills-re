@@ -65,6 +65,14 @@ const archiveFilesBucket = await R2Bucket("skills-re-archives", {
   },
 });
 
+const skillEvalArtifactsBucket = await R2Bucket("skills-re-skill-eval-artifacts", {
+  name: "skills-re-skill-eval-artifacts",
+  adopt: true,
+  dev: {
+    remote: true,
+  },
+});
+
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills-re-download-events",
 });
@@ -89,8 +97,8 @@ const searchRateLimiterDurableObject = DurableObjectNamespace("search-rate-limit
   className: "SearchRateLimiter",
 });
 
-const aiWorkflowRateLimiterDurableObject = DurableObjectNamespace("ai-workflow-rate-limiter", {
-  className: "AiWorkflowRateLimiter",
+const skillEvalSandboxDurableObject = DurableObjectNamespace("skill-eval-sandbox", {
+  className: "Sandbox",
 });
 
 const aiSearchUploadRateLimiterDurableObject = DurableObjectNamespace(
@@ -100,12 +108,57 @@ const aiSearchUploadRateLimiterDurableObject = DurableObjectNamespace(
   },
 );
 
+const aiWorkflowRateLimiterDurableObject = DurableObjectNamespace("ai-workflow-rate-limiter", {
+  className: "AiWorkflowRateLimiter",
+});
+
 const staticAuditDispatchRateLimiterDurableObject = DurableObjectNamespace(
   "static-audit-dispatch-rate-limiter",
   {
     className: "StaticAuditDispatchRateLimiter",
   },
 );
+
+await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE", {
+  name: "skills-re-repo-sync-workflow",
+  adopt: true,
+});
+await Queue("REPO_SNAPSHOT_SYNC_WORKFLOW_QUEUE", {
+  name: "skills-re-repo-snapshot-sync-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-upload-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-tagging-workflow",
+  adopt: true,
+});
+await Queue("SKILLS_CATEGORIZATION_WORKFLOW_QUEUE", {
+  name: "skills-re-skills-categorization-workflow",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0", {
+  name: "skills-re-snapshot-upload-workflow-0",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1", {
+  name: "skills-re-snapshot-upload-workflow-1",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2", {
+  name: "skills-re-snapshot-upload-workflow-2",
+  adopt: true,
+});
+await Queue("SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_3", {
+  name: "skills-re-snapshot-upload-workflow-3",
+  adopt: true,
+});
+await Queue("SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW_QUEUE", {
+  name: "skills-re-snapshot-archive-upload-workflow",
+  adopt: true,
+});
 
 const repoStatsSyncWorkflowQueue = await Queue("REPO_STATS_SYNC_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-repo-sync-workflow",
@@ -165,6 +218,10 @@ const snapshotsArchiveUploadWorkflowQueue = await Queue(
   },
 );
 
+const skillEvalRunWorkflowQueue = await Queue("SKILL_EVAL_RUN_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-skill-eval-run-workflow",
+});
+
 const workflowQueueEventSources = [
   // {
   //   queue: evaluationWorkflowQueue,
@@ -203,6 +260,13 @@ const workflowQueueEventSources = [
   },
   {
     queue: snapshotsArchiveUploadWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 1000,
+    },
+  },
+  {
+    queue: skillEvalRunWorkflowQueue,
     settings: {
       batchSize: 1,
       maxWaitTimeMs: 1000,
@@ -330,6 +394,7 @@ const workflowQueueBindings = {
   SKILLS_CATEGORIZATION_WORKFLOW_QUEUE: skillsCategorizationWorkflowQueue,
   SKILLS_TAGGING_WORKFLOW_QUEUE: skillsTaggingWorkflowQueue,
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
+  SKILL_EVAL_RUN_WORKFLOW_QUEUE: skillEvalRunWorkflowQueue,
   AI_SEARCH_BACKFILL_WORKFLOW_QUEUE: aiSearchBackfillWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
@@ -366,6 +431,7 @@ export const server = await Worker("server", {
     GOOGLE_CLIENT_ID: alchemy.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: alchemy.secret.env.GOOGLE_CLIENT_SECRET!,
     ARCHIVE_FILES: archiveFilesBucket,
+    SKILL_EVAL_ARTIFACTS: skillEvalArtifactsBucket,
     DOWNLOAD_EVENTS: downloadEventsDataset,
     AI_SEARCH: aiSearch,
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
@@ -378,6 +444,12 @@ export const server = await Worker("server", {
     SKILL_AUDIT_GITHUB_WORKFLOW_FILE: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_FILE ?? "",
     SKILL_AUDIT_GITHUB_WORKFLOW_REF: alchemy.env.SKILL_AUDIT_GITHUB_WORKFLOW_REF ?? "",
     AUTOMATION_API_TOKEN: alchemy.secret.env.AUTOMATION_API_TOKEN!,
+    SKILL_EVAL_SANDBOX_ENABLED: alchemy.env.SKILL_EVAL_SANDBOX_ENABLED ?? "false",
+    SKILL_EVAL_OPENCODE_API_KEY: alchemy.secret.env.SKILL_EVAL_OPENCODE_API_KEY ?? "",
+    SKILL_EVAL_OPENCODE_MODEL:
+      alchemy.env.SKILL_EVAL_OPENCODE_MODEL ?? "anthropic/claude-sonnet-4-5",
+    SKILL_EVAL_SANDBOX_IMAGE:
+      alchemy.env.SKILL_EVAL_SANDBOX_IMAGE ?? "docker.io/cloudflare/sandbox:latest",
     AUTH_COOKIE_DOMAIN: alchemy.env.AUTH_COOKIE_DOMAIN ?? "",
     R2_PUBLIC_BASE_URL: alchemy.env.R2_PUBLIC_BASE_URL!,
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
@@ -398,6 +470,7 @@ export const server = await Worker("server", {
     MCP_RATE_LIMITER: mcpRateLimiterDurableObject,
     SUBMIT_RATE_LIMITER: submitRateLimiterDurableObject,
     SEARCH_RATE_LIMITER: searchRateLimiterDurableObject,
+    SKILL_EVAL_SANDBOX: skillEvalSandboxDurableObject,
     ...workflowBindings,
     ...workflowQueueBindings,
   },

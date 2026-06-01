@@ -14,11 +14,13 @@ import { getRepoSkillsDiscoveryWorkflowScheduler } from "./workflows/repo-skills
 import { getRepoSnapshotSyncWorkflowScheduler } from "./workflows/repo-snapshot-sync";
 import { getSnapshotUploadWorkflowScheduler } from "./workflows/snapshot-upload";
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./workflows/snapshots-archive-upload";
+import { getSkillEvalRunWorkflowScheduler } from "./workflows/skill-eval-run-scheduler";
 import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-scheduler";
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
 import type { WorkerLogger } from "./worker-logger";
 import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
 import { getSnapshotBySkillAndCommit } from "@skills-re/api/modules/skills/repo";
+import { isSkillEvalSandboxEnabled } from "./skill-eval-sandbox/runtime";
 
 type ServerHonoContext = HonoContext<{
   Bindings: Env;
@@ -39,6 +41,7 @@ export interface CreateServerRuntimeDeps {
   githubFetch?: ApiContext["githubFetch"];
   githubStats?: ApiContext["githubStats"];
   githubSubmit?: ApiContext["githubSubmit"];
+  features?: ApiContext["features"];
   metrics?: ApiContext["metrics"];
   snapshotHistory?: ApiContext["snapshotHistory"];
   snapshotStorage?: ApiContext["snapshotStorage"];
@@ -66,6 +69,7 @@ export function createServerContextFromBase(
     githubFetch: runtimeDeps.githubFetch,
     githubStats: runtimeDeps.githubStats,
     githubSubmit: runtimeDeps.githubSubmit,
+    features: runtimeDeps.features,
     metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
     snapshotStorage: runtimeDeps.snapshotStorage,
@@ -118,6 +122,9 @@ async function createServerRuntime(
     githubFetch,
     githubStats,
     githubSubmit,
+    features: {
+      skillEvalSandboxEnabled: isSkillEvalSandboxEnabled(env),
+    },
     metrics: {
       DOWNLOAD_EVENTS: env.DOWNLOAD_EVENTS,
       METRICS_CACHE: env.METRICS_CACHE,
@@ -133,6 +140,7 @@ async function createServerRuntime(
       repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
       repoSkillsDiscovery: getRepoSkillsDiscoveryWorkflowScheduler(env) ?? undefined,
       repoSnapshotSync: getRepoSnapshotSyncWorkflowScheduler(env) ?? undefined,
+      skillEvalRun: getSkillEvalRunWorkflowScheduler(env) ?? undefined,
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,
       snapshotUpload: snapshotUploadScheduler ?? undefined,
       skillsTagging: getSkillsTaggingWorkflowScheduler(env) ?? undefined,

@@ -11,6 +11,7 @@ describe("contract composition", () => {
     expect(contract.github).toBeDefined();
     expect(contract.metrics).toBeDefined();
     expect(contract.staticAudits).toBeDefined();
+    expect(contract.skillEvalSandbox).toBeDefined();
     expect(contract.newsletter).toBeDefined();
     expect(contract.reviews).toBeDefined();
     expect("privateData" in contract).toBe(false);

@@ -26,6 +26,7 @@ function TabButton({
 }) {
   return (
     <button
+      aria-label={title as string}
       type="button"
       disabled={disabled}
       onClick={onClick}

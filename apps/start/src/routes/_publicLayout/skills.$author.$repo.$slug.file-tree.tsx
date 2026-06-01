@@ -17,6 +17,8 @@ import { getLocale } from "@/paraglide/runtime";
 import { getFileIconForPath } from "@/utils/file-icon";
 import { formatFileSize } from "@/utils/format";
 
+const getFileIcon = (path: string) => getFileIconForPath(path);
+
 const searchSchema = z.object({
   path: z.string().optional(),
   snapshotId: z.string().optional(),
@@ -130,8 +132,6 @@ function RouteComponent() {
       return next;
     });
   };
-
-  const getFileIcon = (path: string) => getFileIconForPath(path);
 
   return (
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">

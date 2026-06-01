@@ -108,6 +108,26 @@ describe("createServerContextFromBase", () => {
     expect(context.workflowSchedulers?.skillsUpload).toBeDefined();
   });
 
+  test("preserves injected skill eval workflow scheduler", () => {
+    const context = createServerContextFromBase(
+      {
+        auth: null,
+        session: null,
+      },
+      {
+        workflowSchedulers: {
+          skillEvalRun: {
+            enqueue() {
+              return Promise.resolve({ workId: "skill-eval-run-1" });
+            },
+          },
+        },
+      },
+    );
+
+    expect(context.workflowSchedulers?.skillEvalRun).toBeDefined();
+  });
+
   test("preserves injected github history helpers and snapshot runtime", () => {
     const context = createServerContextFromBase(
       {

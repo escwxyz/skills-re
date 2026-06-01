@@ -4,7 +4,7 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { createDownloadMetricsRecorder } from "@skills-re/api/modules";
+import { createDownloadMetricsRecorder, skillEvalSandboxService } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
 import { mcpRouter } from "./routes/mcp";
@@ -18,6 +18,7 @@ import { createMcpServerCard, setMcpServerCardHeaders } from "./routes/mcp-serve
 import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
+import { createSkillEvalSandboxSmokeResponse } from "./skill-eval-sandbox/smoke";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
 import { agentSkillsDiscoveryService } from "@skills-re/api/modules/agent-skills-discovery/service";
@@ -34,6 +35,12 @@ import { runScheduledJobs } from "./crons";
 import type { WorkerLogger } from "./worker-logger";
 import { submitPublicRateLimiter } from "./middlewares/submit-public-rate-limiter";
 import { searchRateLimiter } from "./middlewares/search-rate-limiter";
+import { createSkillEvalArtifactPrefix } from "./skill-eval-sandbox/event-writer";
+import {
+  createSkillEvalRunEventsReplayResponse,
+  createSkillEvalRunStreamResponse,
+} from "./skill-eval-sandbox/stream";
+import type { SkillEvalStreamDeps } from "./skill-eval-sandbox/stream";
 
 export { AiSearchBackfillWorkflow } from "./workflows/ai-search-backfill-workflow";
 export { RepoSkillImportWorkflow } from "./workflows/repo-skill-import-workflow";
@@ -51,6 +58,7 @@ export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-w
 export { McpRateLimiter } from "./dos/mcp-rate-limiter";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
+export { Sandbox } from "@cloudflare/sandbox";
 export { AiWorkflowRateLimiter } from "./dos/ai-workflow-rate-limiter";
 export { AiSearchUploadRateLimiter } from "./dos/ai-search-upload-rate-limiter";
 export { StaticAuditDispatchRateLimiter } from "./dos/static-audit-dispatch-rate-limiter";
@@ -170,7 +178,7 @@ app.use("/*", (c, next) =>
   cors({
     origin: (requestOrigin) => getAllowedCorsOrigin(requestOrigin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-api-key"],
+    allowHeaders: ["Content-Type", "Authorization", "x-api-key", "x-skills-automation-token"],
     credentials: true,
   })(c, next),
 );
@@ -210,6 +218,56 @@ app.post(
   "/skills/audits/ingest",
   async (c) => await createStaticAuditIngestResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
 );
+app.post(
+  "/skill-eval-sandbox/smoke",
+  async (c) => await createSkillEvalSandboxSmokeResponse(c.req.raw, c.env),
+);
+const createSkillEvalStreamDeps = (): SkillEvalStreamDeps => ({
+  authorizeRun: async ({ runId, userId }) => {
+    try {
+      const detail = await skillEvalSandboxService.getRunDetail({ runId });
+      if (!detail) {
+        return "not_found";
+      }
+      return detail.createdBy === userId ? "authorized" : "forbidden";
+    } catch {
+      return "forbidden";
+    }
+  },
+  getSession: async (request) =>
+    await createRuntimeAuth().api.getSession({ headers: request.headers }),
+});
+
+app.get(
+  "/skill-eval-sandbox/runs/:runId/stream",
+  async (c) =>
+    await createSkillEvalRunStreamResponse({
+      deps: createSkillEvalStreamDeps(),
+      env: c.env,
+      request: c.req.raw,
+      runId: c.req.param("runId"),
+    }),
+);
+app.get("/skill-eval-sandbox/runs/:runId/events", async (c) => {
+  const runId = c.req.param("runId");
+  const url = new URL(c.req.url);
+  const parsedAfterSequence = Number(url.searchParams.get("afterSequence") ?? "-1");
+  const parsedLimit = Number(url.searchParams.get("limit") ?? "100");
+  const afterSequence = Number.isFinite(parsedAfterSequence)
+    ? Math.max(Math.floor(parsedAfterSequence), -1)
+    : -1;
+  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 1000) : 100;
+  return await createSkillEvalRunEventsReplayResponse({
+    afterSequence,
+    artifactPrefix: createSkillEvalArtifactPrefix(runId),
+    bucket: c.env.SKILL_EVAL_ARTIFACTS,
+    deps: createSkillEvalStreamDeps(),
+    env: c.env,
+    limit,
+    request: c.req.raw,
+    runId,
+  });
+});
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [

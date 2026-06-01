@@ -134,6 +134,10 @@ export interface SkillsTaggingScheduler {
   }): Promise<{ workId: string }>;
 }
 
+export interface SkillEvalRunScheduler {
+  enqueue(input: { includeBaseline: boolean; runId: string }): Promise<{ workId: string }>;
+}
+
 export interface WorkerLogger {
   child(fields: Record<string, unknown>): WorkerLogger;
   debug(event: string, fields?: Record<string, unknown>): void;
@@ -291,6 +295,9 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  features?: {
+    skillEvalSandboxEnabled?: boolean;
+  };
   revokeSession?: () => Promise<void>;
   aiTasks?: AiTaskRuntime;
   aiSearchItems?: AiSearchItemsRuntime;
@@ -310,6 +317,7 @@ export interface Context {
     repoStatsSync?: RepoStatsSyncScheduler;
     repoSnapshotSync?: RepoSnapshotSyncScheduler;
     repoSkillsDiscovery?: RepoSkillsDiscoveryScheduler;
+    skillEvalRun?: SkillEvalRunScheduler;
     skillsUpload?: SkillsUploadScheduler;
     skillsTagging?: SkillsTaggingScheduler;
   };

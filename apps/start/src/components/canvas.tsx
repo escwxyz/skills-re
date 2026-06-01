@@ -805,7 +805,11 @@ export function DotMapP5(props: DotMapProps) {
       }}
     >
       {webglSupported ? (
-        <canvas ref={canvasRef} style={{ display: "block", height: "100%", width: "100%" }} />
+        <canvas
+          aria-label="Dot map canvas"
+          ref={canvasRef}
+          style={{ display: "block", height: "100%", width: "100%" }}
+        />
       ) : null}
     </div>
   );

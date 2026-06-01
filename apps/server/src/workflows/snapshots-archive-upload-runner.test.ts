@@ -42,6 +42,7 @@ describe("runSnapshotArchiveUploadWorkflow", () => {
           snapshotId: "snapshot-1",
         },
         instanceId: "workflow-archive-1",
+        workflowName: "skills-re-v1-snapshots-archive-upload",
         timestamp: new Date(),
       },
       createWorkflowStepStub({
@@ -77,6 +78,7 @@ describe("runSnapshotArchiveUploadWorkflow", () => {
             snapshotId: "snapshot-1",
           },
           instanceId: "workflow-archive-1",
+          workflowName: "skills-re-v1-snapshots-archive-upload",
           timestamp: new Date(),
         },
         createWorkflowStepStub({

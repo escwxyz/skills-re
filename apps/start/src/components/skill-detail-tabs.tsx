@@ -1,9 +1,11 @@
 import type { Icon } from "@phosphor-icons/react";
 import {
+  ChartBarIcon,
   ChatsIcon,
   ClockCounterClockwiseIcon,
   FileTextIcon,
   ShieldCheckIcon,
+  TerminalWindowIcon,
   TreeViewIcon,
 } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
@@ -35,7 +37,7 @@ interface SkillDetailTabItem {
 
 const BASE_CLASS = "flex items-center gap-2 border-r border-border px-5 py-3.5 no-underline";
 
-const TABS: SkillDetailTabItem[] = [
+export const SKILL_DETAIL_TABS: SkillDetailTabItem[] = [
   {
     id: "skill.md",
     label: String(m.skill_detail_overview()),
@@ -56,6 +58,18 @@ const TABS: SkillDetailTabItem[] = [
     icon: ShieldCheckIcon,
   },
   {
+    id: "sandbox",
+    label: String(m.skill_detail_sandbox()),
+    to: "/skills/$author/$repo/$slug/sandbox",
+    icon: TerminalWindowIcon,
+  },
+  {
+    id: "evals",
+    label: String(m.skill_eval_evals()),
+    to: "/skills/$author/$repo/$slug/evals",
+    icon: ChartBarIcon,
+  },
+  {
     id: "reviews",
     label: String(m.skill_detail_review_tab()),
     to: "/skills/$author/$repo/$slug/reviews",
@@ -71,7 +85,7 @@ const TABS: SkillDetailTabItem[] = [
 
 export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
   <div className="flex min-w-0 flex-1 overflow-x-auto">
-    {TABS.map((tab) => {
+    {SKILL_DETAIL_TABS.map((tab) => {
       const Icon = tab.icon;
 
       return (
