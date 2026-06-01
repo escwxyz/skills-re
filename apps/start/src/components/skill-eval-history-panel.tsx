@@ -74,7 +74,7 @@ export function SkillEvalHistoryPanel({ detailHrefForRun, initialData }: Props) 
         <div className="grid border border-border md:grid-cols-4">
           {[
             [m.skill_eval_runs(), stats.totalRuns],
-            ["Passed", stats.passedCases],
+            [m.skill_eval_passed(), stats.passedCases],
             [m.skill_eval_failed_cases(), stats.failedCases],
             [m.skill_eval_blocked_cases(), stats.blockedCases],
           ].map(([label, value]) => (
@@ -91,9 +91,9 @@ export function SkillEvalHistoryPanel({ detailHrefForRun, initialData }: Props) 
           <div className="border border-border">
             <div className="grid grid-cols-[1fr_120px_120px_120px] border-border border-b px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
               <span>{m.skill_eval_run_label()}</span>
-              <span>Status</span>
-              <span>Cases</span>
-              <span>Duration</span>
+              <span>{m.skill_eval_run_status()}</span>
+              <span>{m.skill_eval_cases()}</span>
+              <span>{m.skill_eval_duration()}</span>
             </div>
             {initialData.runs.page.map((run) => (
               <article
@@ -129,14 +129,15 @@ export function SkillEvalHistoryPanel({ detailHrefForRun, initialData }: Props) 
           <div className="border border-border p-8">
             <h2 className="font-display m-0 text-3xl font-normal">{m.skill_eval_no_runs()}</h2>
             <p className="text-muted-foreground m-0 mt-2">
-              Suite status: {initialData.suite.status} · {initialData.suite.caseCount} cases
+              {m.skill_eval_suite_status_prefix()} {initialData.suite.status} ·{" "}
+              {initialData.suite.caseCount} {m.skill_eval_cases()}
             </p>
           </div>
         )}
 
         {initialData.runs.isDone ? null : (
           <div className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            More runs available after {initialData.runs.continueCursor}
+            {m.skill_eval_more_runs_available_after()} {initialData.runs.continueCursor}
           </div>
         )}
       </div>
