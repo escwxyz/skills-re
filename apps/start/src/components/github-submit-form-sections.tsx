@@ -220,7 +220,7 @@ export const GithubSubmitPreviewPanel = (props: {
                       </p>
                     )}
                   </FieldContent>
-                  <input
+                  <Input
                     type="checkbox"
                     id={checkboxId}
                     checked={isSelected}

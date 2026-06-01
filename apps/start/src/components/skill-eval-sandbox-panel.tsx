@@ -1,7 +1,9 @@
 // oxlint-disable unicorn/prefer-add-event-listener
 // oxlint-disable no-nested-ternary
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { m } from "@/paraglide/messages";
+import { FieldLabel, Form } from "./ui/form";
+import { useAppForm } from "@/hooks/form-hook";
 
 interface InitialData {
   agents: {
@@ -38,6 +40,13 @@ interface TerminalLine {
   id: string;
   text: string;
   tone?: "error" | "muted";
+}
+
+interface SkillEvalSandboxFormValues {
+  agentId: string;
+  includeBaseline: boolean;
+  scope: "all" | "selected";
+  selectedCaseIds: string[];
 }
 
 const getFallbackServerOrigin = () => globalThis.location?.origin ?? "http://localhost";
@@ -82,19 +91,23 @@ export const getDefaultSelectedCaseIds = (initialData: InitialData) =>
   initialData.suite.cases.map((caseItem) => caseItem.id);
 
 export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverOrigin }: Props) {
-  const [agentId, setAgentId] = useState(initialData.agents[0]?.id ?? "");
-  const [includeBaseline, setIncludeBaseline] = useState(false);
-  const [selectedCaseIds, setSelectedCaseIds] = useState(() =>
-    getDefaultSelectedCaseIds(initialData),
-  );
-  const [scope, setScope] = useState<"all" | "selected">("all");
   const [runId, setRunId] = useState(initialData.latestRun?.id ?? "");
   const [status, setStatus] = useState(initialData.latestRun?.status ?? "idle");
   const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([]);
-  const canRun = initialData.suite.status === "valid" && agentId && selectedCaseIds.length > 0;
   const suiteBlocked = initialData.suite.status !== "valid";
   const hasAgents = initialData.agents.length > 0;
-  const selectedCaseIdSet = useMemo(() => new Set(selectedCaseIds), [selectedCaseIds]);
+  const defaultValues: SkillEvalSandboxFormValues = {
+    agentId: initialData.agents[0]?.id ?? "",
+    includeBaseline: false,
+    scope: "all",
+    selectedCaseIds: getDefaultSelectedCaseIds(initialData),
+  };
+  const form = useAppForm({
+    defaultValues,
+    onSubmit: async ({ value }) => {
+      await startRun(value);
+    },
+  });
 
   const appendLine = (text: string, tone?: TerminalLine["tone"]) => {
     setTerminalLines((lines) => [
@@ -108,14 +121,21 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
   };
 
   const toggleCase = (caseId: string) => {
-    setSelectedCaseIds((current) =>
-      current.includes(caseId) ? current.filter((id) => id !== caseId) : [...current, caseId],
-    );
-    setScope("selected");
+    const current = form.getFieldValue("selectedCaseIds");
+    const nextSelectedCaseIds = current.includes(caseId)
+      ? current.filter((id) => id !== caseId)
+      : [...current, caseId];
+
+    form.setFieldValue("selectedCaseIds", nextSelectedCaseIds);
+    form.setFieldValue("scope", "selected");
   };
 
-  const startRun = async () => {
-    if (!canRun) {
+  const startRun = async (values: SkillEvalSandboxFormValues) => {
+    if (
+      initialData.suite.status !== "valid" ||
+      !values.agentId ||
+      (values.scope === "selected" && values.selectedCaseIds.length === 0)
+    ) {
       return;
     }
 
@@ -124,9 +144,9 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
     try {
       const { orpcClient } = await import("@/lib/orpc");
       const created = await orpcClient.skillEvalSandbox.createRun({
-        agentId,
-        caseIds: scope === "selected" ? selectedCaseIds : undefined,
-        includeBaseline,
+        agentId: values.agentId,
+        caseIds: values.scope === "selected" ? values.selectedCaseIds : undefined,
+        includeBaseline: values.includeBaseline,
         skillId: initialData.skill.id,
         snapshotId: selectedSnapshotId,
       });
@@ -161,133 +181,176 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
 
   return (
     <section className="px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mx-auto grid max-w-350 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <div className="border-border grid gap-5 border p-5">
-          <div>
-            <h2 className="font-display m-0 text-3xl font-normal">Sandbox</h2>
-            <p className="text-muted-foreground m-0 mt-2 font-mono text-xs uppercase tracking-[0.24em]">
-              {initialData.suite.status} · {initialData.suite.caseCount} cases
-            </p>
-          </div>
-
-          {suiteBlocked ? (
-            <div className="border-editorial-red/40 bg-editorial-red/5 text-editorial-red border p-3 text-sm">
-              {initialData.suite.status === "missing"
-                ? m.skill_eval_missing_suite()
-                : initialData.suite.validationErrors.join(" ") || m.skill_eval_validation_failed()}
+      <form.AppForm>
+        <Form className="mx-auto grid max-w-350 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div className="border-border grid gap-5 border p-5">
+            <div>
+              <h2 className="font-display m-0 text-3xl font-normal">Sandbox</h2>
+              <p className="text-muted-foreground m-0 mt-2 font-mono text-xs uppercase tracking-[0.24em]">
+                {initialData.suite.status} · {initialData.suite.caseCount} cases
+              </p>
             </div>
-          ) : null}
 
-          {hasAgents ? null : (
-            <div className="border-border bg-muted/30 border p-3 text-sm">
-              {m.skill_eval_disabled_agents()}
-            </div>
-          )}
+            {suiteBlocked ? (
+              <div className="border-editorial-red/40 bg-editorial-red/5 text-editorial-red border p-3 text-sm">
+                {initialData.suite.status === "missing"
+                  ? m.skill_eval_missing_suite()
+                  : initialData.suite.validationErrors.join(" ") ||
+                    m.skill_eval_validation_failed()}
+              </div>
+            ) : null}
 
-          <label className="grid gap-2 text-sm">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              {m.skill_eval_agent_label()}
-            </span>
-            <select
-              className="border-border bg-background h-10 border px-3"
-              disabled={!hasAgents}
-              value={agentId}
-              onChange={(event) => setAgentId(event.target.value)}
-            >
-              {initialData.agents.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
+            {hasAgents ? null : (
+              <div className="border-border bg-muted/30 border p-3 text-sm">
+                {m.skill_eval_disabled_agents()}
+              </div>
+            )}
 
-          <div className="grid gap-2">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              {m.skill_eval_scope_label()}
-            </span>
-            <div className="grid grid-cols-2 border border-border">
-              <button
-                className={`h-10 border-r border-border ${scope === "all" ? "bg-primary text-primary-foreground" : ""}`}
-                type="button"
-                onClick={() => setScope("all")}
-              >
-                {m.skill_eval_all_cases()}
-              </button>
-              <button
-                className={`h-10 ${scope === "selected" ? "bg-primary text-primary-foreground" : ""}`}
-                type="button"
-                onClick={() => setScope("selected")}
-              >
-                {m.skill_eval_selected_cases()}
-              </button>
-            </div>
-          </div>
-
-          <label className="flex items-center gap-3 text-sm">
-            <input
-              checked={includeBaseline}
-              type="checkbox"
-              onChange={(event) => setIncludeBaseline(event.target.checked)}
-            />
-            {m.skill_eval_run_baseline()}
-          </label>
-
-          <div className="grid max-h-64 gap-2 overflow-auto border border-border p-3">
-            {/** todo: Form */}
-            {initialData.suite.cases.map((caseItem) => (
-              <label key={caseItem.id} className="flex items-start gap-3 text-sm">
-                <input
-                  checked={selectedCaseIdSet.has(caseItem.id)}
-                  type="checkbox"
-                  onChange={() => toggleCase(caseItem.id)}
-                />
-                <span>
-                  <span className="block font-medium">{caseItem.title ?? caseItem.id}</span>
-                  <span className="text-muted-foreground line-clamp-2">
-                    {caseItem.promptPreview}
+            <form.AppField name="agentId">
+              {(field) => (
+                <label className="grid gap-2 text-sm">
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    {m.skill_eval_agent_label()}
                   </span>
-                </span>
-              </label>
-            ))}
-          </div>
-
-          <button
-            className="bg-primary text-primary-foreground h-11 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canRun || status === "creating"}
-            type="button"
-            onClick={startRun}
-          >
-            {getRunButtonLabel(status)}
-          </button>
-        </div>
-
-        <div className="border-border grid min-h-120 grid-rows-[auto_1fr] border bg-black text-white">
-          <div className="flex items-center justify-between border-white/15 border-b px-4 py-3 font-mono text-xs uppercase tracking-[0.2em] text-white/60">
-            <span>{status}</span>
-            <span>{runId || m.skill_eval_no_run()}</span>
-          </div>
-          <pre className="m-0 overflow-auto p-4 font-mono text-sm leading-6">
-            {terminalLines.length > 0
-              ? terminalLines.map((line) => (
-                  <span
-                    key={line.id}
-                    className={
-                      line.tone === "error"
-                        ? "text-red-300"
-                        : line.tone === "muted"
-                          ? "text-white/50"
-                          : ""
-                    }
+                  <select
+                    className="border-border bg-background h-10 border px-3"
+                    disabled={!hasAgents}
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
                   >
-                    {line.text}
-                    {"\n"}
+                    {initialData.agents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </form.AppField>
+
+            <form.AppField name="scope">
+              {(field) => (
+                <div className="grid gap-2">
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    {m.skill_eval_scope_label()}
                   </span>
-                ))
-              : `${m.skill_eval_waiting()}\n`}
-          </pre>
-        </div>
-      </div>
+                  <div className="grid grid-cols-2 border border-border">
+                    <button
+                      className={`h-10 border-r border-border ${field.state.value === "all" ? "bg-primary text-primary-foreground" : ""}`}
+                      type="button"
+                      onClick={() => field.handleChange("all")}
+                    >
+                      {m.skill_eval_all_cases()}
+                    </button>
+                    <button
+                      className={`h-10 ${field.state.value === "selected" ? "bg-primary text-primary-foreground" : ""}`}
+                      type="button"
+                      onClick={() => field.handleChange("selected")}
+                    >
+                      {m.skill_eval_selected_cases()}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </form.AppField>
+
+            <form.AppField name="includeBaseline">
+              {(field) => (
+                <label className="flex items-center gap-3 text-sm">
+                  <input
+                    aria-label={m.skill_eval_run_baseline()}
+                    checked={field.state.value}
+                    type="checkbox"
+                    onChange={(event) => field.handleChange(event.target.checked)}
+                  />
+                  {m.skill_eval_run_baseline()}
+                </label>
+              )}
+            </form.AppField>
+
+            <form.AppField name="selectedCaseIds">
+              {(field) => {
+                const selectedIds = field.state.value;
+                const selectedIdSet = new Set(selectedIds);
+
+                return (
+                  <div className="grid max-h-64 gap-2 overflow-auto border border-border p-3">
+                    {initialData.suite.cases.map((caseItem) => (
+                      <FieldLabel key={caseItem.id} className="flex items-start gap-3 text-sm">
+                        <input
+                          aria-label={caseItem.title ?? caseItem.id}
+                          checked={selectedIdSet.has(caseItem.id)}
+                          type="checkbox"
+                          onChange={() => toggleCase(caseItem.id)}
+                        />
+                        <span>
+                          <span className="block font-medium">{caseItem.title ?? caseItem.id}</span>
+                          <span className="text-muted-foreground line-clamp-2">
+                            {caseItem.promptPreview}
+                          </span>
+                        </span>
+                      </FieldLabel>
+                    ))}
+                  </div>
+                );
+              }}
+            </form.AppField>
+
+            <form.Subscribe
+              selector={(state) => ({
+                agentId: state.values.agentId,
+                scope: state.values.scope,
+                selectedCaseIds: state.values.selectedCaseIds,
+              })}
+            >
+              {({
+                agentId: currentAgentId,
+                scope: currentScope,
+                selectedCaseIds: currentCaseIds,
+              }) => (
+                <button
+                  className="bg-primary text-primary-foreground h-11 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={
+                    status === "creating" ||
+                    initialData.suite.status !== "valid" ||
+                    !currentAgentId ||
+                    (currentScope === "selected" && currentCaseIds.length === 0)
+                  }
+                  type="submit"
+                >
+                  {getRunButtonLabel(status)}
+                </button>
+              )}
+            </form.Subscribe>
+          </div>
+
+          <div className="border-border grid min-h-120 grid-rows-[auto_1fr] border bg-black text-white">
+            <div className="flex items-center justify-between border-white/15 border-b px-4 py-3 font-mono text-xs uppercase tracking-[0.2em] text-white/60">
+              <span>{status}</span>
+              <span>{runId || m.skill_eval_no_run()}</span>
+            </div>
+            <pre className="m-0 overflow-auto p-4 font-mono text-sm leading-6">
+              {terminalLines.length > 0
+                ? terminalLines.map((line) => (
+                    <span
+                      key={line.id}
+                      className={
+                        line.tone === "error"
+                          ? "text-red-300"
+                          : line.tone === "muted"
+                            ? "text-white/50"
+                            : ""
+                      }
+                    >
+                      {line.text}
+                      {"\n"}
+                    </span>
+                  ))
+                : `${m.skill_eval_waiting()}\n`}
+            </pre>
+          </div>
+        </Form>
+      </form.AppForm>
     </section>
   );
 }
