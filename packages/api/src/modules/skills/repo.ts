@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { reposTable } from "@skills-re/db/schema/repos";
@@ -745,14 +745,28 @@ function buildSearchWhereClauses(input: SearchSkillsPageInput) {
     trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
     categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
     queryPattern
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(usersTable)
+            .where(
+              and(
+                sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`,
+                or(
+                  sql`lower(${usersTable.name}) like ${queryPattern}`,
+                  sql`lower(${usersTable.github}) like ${queryPattern}`,
+                ),
+              ),
+            ),
+        )
+      : null,
+    queryPattern
       ? sql`(
           lower(${skillsTable.title}) like ${queryPattern}
           or lower(${skillsTable.description}) like ${queryPattern}
           or lower(${skillsTable.slug}) like ${queryPattern}
           or lower(${reposTable.name}) like ${queryPattern}
           or lower(${reposTable.ownerHandle}) like ${queryPattern}
-          or lower(${usersTable.name}) like ${queryPattern}
-          or lower(${usersTable.github}) like ${queryPattern}
         )`
       : null,
     tags.length > 0
@@ -798,7 +812,6 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
-    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(...buildSearchWhereClauses(input ?? {})))
     .orderBy(getSearchSortExpression(sort), desc(skillsTable.id))
     .limit(limit + 1)
