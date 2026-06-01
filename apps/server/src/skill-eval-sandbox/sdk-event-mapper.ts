@@ -103,8 +103,19 @@ export const mapAgentSkillsEvalSdkEventToRunEvents = (input: {
 
 export const parseAgentSkillsEvalSdkEventsFromStdout = (stdout: string): SkillsEvent[] => {
   const prefix = "__SKILLS_RE_SDK_EVENT__";
-  return stdout
-    .split("\n")
-    .filter((line) => line.startsWith(prefix))
-    .map((line) => JSON.parse(line.slice(prefix.length)) as SkillsEvent);
+  const events: SkillsEvent[] = [];
+
+  for (const line of stdout.split("\n")) {
+    if (!line.startsWith(prefix)) {
+      continue;
+    }
+
+    try {
+      events.push(JSON.parse(line.slice(prefix.length)) as SkillsEvent);
+    } catch (error) {
+      console.warn("Skipping malformed SDK event line.", error);
+    }
+  }
+
+  return events;
 };
