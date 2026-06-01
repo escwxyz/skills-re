@@ -253,13 +253,17 @@ app.get("/skill-eval-sandbox/runs/:runId/events", async (c) => {
   const url = new URL(c.req.url);
   const parsedAfterSequence = Number(url.searchParams.get("afterSequence") ?? "-1");
   const parsedLimit = Number(url.searchParams.get("limit") ?? "100");
+  const afterSequence = Number.isFinite(parsedAfterSequence)
+    ? Math.max(Math.floor(parsedAfterSequence), -1)
+    : -1;
+  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 1000) : 100;
   return await createSkillEvalRunEventsReplayResponse({
-    afterSequence: Number.isFinite(parsedAfterSequence) ? parsedAfterSequence : -1,
+    afterSequence,
     artifactPrefix: createSkillEvalArtifactPrefix(runId),
     bucket: c.env.SKILL_EVAL_ARTIFACTS,
     deps: createSkillEvalStreamDeps(),
     env: c.env,
-    limit: Number.isFinite(parsedLimit) ? parsedLimit : 100,
+    limit,
     request: c.req.raw,
     runId,
   });
