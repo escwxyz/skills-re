@@ -167,6 +167,7 @@ interface SearchSkillsPageInput {
   repoName?: string;
   query?: string;
   rewriteQuery?: boolean;
+  searchMode?: "keyword" | "semantic";
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
 }
@@ -498,6 +499,10 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
       };
 
       if (!input.query) {
+        return await browseSearch();
+      }
+
+      if (input.searchMode === "keyword") {
         return await browseSearch();
       }
 

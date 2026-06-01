@@ -106,6 +106,7 @@ export const searchSkillsInputSchema = z.object({
   repoName: z.string().min(1).optional(),
   query: z.string().trim().min(1).optional(),
   rewriteQuery: z.boolean().optional(),
+  searchMode: z.enum(["keyword", "semantic"]).optional(),
   sort: z
     .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
     .optional(),

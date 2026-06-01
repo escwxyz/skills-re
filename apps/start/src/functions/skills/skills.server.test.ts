@@ -257,6 +257,53 @@ describe("fetchSkillsBrowsePagination", () => {
 });
 
 describe("fetchSkillsSearch", () => {
+  test("forwards search mode to the public search contract", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      skills: {
+        search: (input?: {
+          limit?: number;
+          query?: string;
+          rewriteQuery?: boolean;
+          searchMode?: "keyword" | "semantic";
+        }) => {
+          calls.push(input ?? {});
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [],
+          });
+        },
+      },
+    } satisfies SkillsSearchClient;
+
+    await expect(
+      fetchSkillsSearch({
+        client,
+        limit: 24,
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "keyword",
+      }),
+    ).resolves.toEqual({
+      data: {
+        continueCursor: "",
+        isDone: true,
+        page: [],
+      },
+      status: "ok",
+    });
+
+    expect(calls).toEqual([
+      {
+        limit: 24,
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "keyword",
+      },
+    ]);
+  });
+
   test("maps rate-limited search failures into a recoverable result", async () => {
     const client = {
       skills: {

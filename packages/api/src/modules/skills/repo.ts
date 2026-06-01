@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { reposTable } from "@skills-re/db/schema/repos";
@@ -659,9 +659,20 @@ interface SearchSkillsPageInput {
   minScore?: number;
   repoName?: string;
   query?: string;
+  searchMode?: "keyword" | "semantic";
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
 }
+
+export const keywordSearchMetadataFields = [
+  "skill-title",
+  "skill-description",
+  "skill-slug",
+  "repo-name",
+  "author-handle",
+  "author-name",
+  "author-github",
+] as const;
 
 interface SearchCursor {
   offset: number;
@@ -733,6 +744,22 @@ function buildSearchWhereClauses(input: SearchSkillsPageInput) {
     trimmedAuthorHandle ? eq(reposTable.ownerHandle, trimmedAuthorHandle) : null,
     trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
     categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
+    queryPattern
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(usersTable)
+            .where(
+              and(
+                sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`,
+                or(
+                  sql`lower(${usersTable.name}) like ${queryPattern}`,
+                  sql`lower(${usersTable.github}) like ${queryPattern}`,
+                ),
+              ),
+            ),
+        )
+      : null,
     queryPattern
       ? sql`(
           lower(${skillsTable.title}) like ${queryPattern}

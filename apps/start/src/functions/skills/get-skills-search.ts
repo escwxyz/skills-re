@@ -11,6 +11,7 @@ export const getSkillsSearch = createServerFn({ method: "GET" })
       limit: z.number().int().positive().max(100).optional(),
       query: z.string().trim().min(1),
       rewriteQuery: z.boolean().optional(),
+      searchMode: z.enum(["keyword", "semantic"]).optional(),
     }),
   )
   .handler(({ data }) =>
@@ -19,5 +20,6 @@ export const getSkillsSearch = createServerFn({ method: "GET" })
       limit: data.limit,
       query: data.query,
       rewriteQuery: data.rewriteQuery,
+      searchMode: data.searchMode,
     }),
   );

@@ -20,6 +20,7 @@ interface SemanticSearchResultsProps {
   isLoading: boolean;
   items: BrowseSkillItem[];
   meta?: SemanticSearchMeta;
+  mode?: "keyword" | "semantic";
   query: string;
 }
 
@@ -82,26 +83,64 @@ const SemanticSearchSkeleton = () => (
   </div>
 );
 
-const SemanticSearchEmpty = ({ query }: { query: string }) => (
+const SemanticSearchEmpty = ({
+  mode = "semantic",
+  query,
+}: {
+  mode?: "keyword" | "semantic";
+  query: string;
+}) => (
   <div className="border-border border-t px-6 py-16 text-center">
     <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
-      {query ? m.semantic_search_no_matches() : m.semantic_search_start_typing()}
+      {getSearchEmptyTitle({ mode, query })}
     </div>
     <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
-      {query ? m.semantic_search_try_broader_phrase() : m.semantic_search_use_natural_language()}
+      {getSearchEmptyDescription({ mode, query })}
     </p>
   </div>
 );
 
+const getSearchEmptyTitle = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (!input.query) {
+    return m.semantic_search_start_typing();
+  }
+
+  return input.mode === "keyword" ? m.keyword_search_no_matches() : m.semantic_search_no_matches();
+};
+
+const getSearchEmptyDescription = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (!input.query) {
+    return m.semantic_search_use_natural_language();
+  }
+
+  if (input.mode === "keyword") {
+    return m.keyword_search_instructions();
+  }
+
+  return m.semantic_search_try_broader_phrase();
+};
+
+const getSearchHeaderTitle = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (input.mode === "keyword") {
+    return input.query ? m.keyword_results_for({ query: input.query }) : m.keyword_search_title();
+  }
+
+  return input.query
+    ? m.semantic_search_results_for({ query: input.query })
+    : m.semantic_search_title();
+};
+
 const SemanticSearchHeader = ({
   isLoading,
   meta,
+  mode = "semantic",
   query,
-}: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "query">) => {
-  let statusLabel = m.semantic_search_status_ai();
+}: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "mode" | "query">) => {
+  let statusLabel =
+    mode === "keyword" ? m.keyword_search_metadata_label() : m.semantic_search_status_ai();
   if (isLoading) {
     statusLabel = m.semantic_search_status_searching();
-  } else if (meta) {
+  } else if (mode === "semantic" && meta) {
     statusLabel = m.semantic_search_status_matches({
       resolvedSkillsCount: formatInteger(meta.resolvedSkillsCount),
       resultCount: formatInteger(meta.resultCount),
@@ -110,7 +149,7 @@ const SemanticSearchHeader = ({
 
   return (
     <div className="flex items-center justify-between border-border border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
-      <span>{query ? m.semantic_search_results_for({ query }) : m.semantic_search_title()}</span>
+      <span>{getSearchHeaderTitle({ mode, query })}</span>
       <span>{statusLabel}</span>
     </div>
   );
@@ -205,10 +244,12 @@ const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem
 
 const SemanticResultRow = ({
   index,
+  mode = "semantic",
   query,
   skill,
 }: {
   index: number;
+  mode?: "keyword" | "semantic";
   query?: string;
   skill: BrowseSkillItem;
 }) => {
@@ -233,7 +274,7 @@ const SemanticResultRow = ({
         <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-muted-foreground">
           {skill.description}
         </p>
-        <MatchSnippet query={query} skill={skill} />
+        {mode === "semantic" ? <MatchSnippet query={query} skill={skill} /> : null}
         {skill.tags?.length ? (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {skill.tags.slice(0, 5).map((tag) => (
@@ -248,10 +289,10 @@ const SemanticResultRow = ({
         ) : null}
       </div>
       <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-foreground md:text-right">
-        {score ? (
+        {mode === "semantic" && score ? (
           <div className="font-display text-3xl italic tracking-normal text-accent">{score}</div>
         ) : null}
-        {score ? <div>{m.semantic_search_match_score()}</div> : null}
+        {mode === "semantic" && score ? <div>{m.semantic_search_match_score()}</div> : null}
         <div className="mt-4">
           Inst
           <b className="block font-display text-base font-normal tracking-normal text-foreground">
@@ -266,9 +307,9 @@ const SemanticResultRow = ({
 const SemanticSearchRail = ({
   items,
   meta,
-  // todo: this should be a rewritten query
+  mode = "semantic",
   query,
-}: Pick<SemanticSearchResultsProps, "items" | "meta" | "query">) => {
+}: Pick<SemanticSearchResultsProps, "items" | "meta" | "mode" | "query">) => {
   const tags = getRelatedTags(items);
 
   return (
@@ -281,9 +322,7 @@ const SemanticSearchRail = ({
           {query || m.semantic_search_describe_task()}
         </div>
         <div className="mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase text-muted-foreground">
-          {meta
-            ? m.semantic_search_matches_count({ count: formatInteger(meta.resultCount) })
-            : m.semantic_search_index_label()}
+          {getRailStatusLabel({ meta, mode })}
         </div>
       </div>
 
@@ -310,11 +349,28 @@ const SemanticSearchRail = ({
   );
 };
 
+const getRailStatusLabel = ({
+  meta,
+  mode,
+}: {
+  meta?: SemanticSearchMeta;
+  mode: "keyword" | "semantic";
+}) => {
+  if (mode === "keyword") {
+    return "Metadata";
+  }
+
+  return meta
+    ? m.semantic_search_matches_count({ count: formatInteger(meta.resultCount) })
+    : m.semantic_search_index_label();
+};
+
 export const SemanticSearchResults = ({
   error,
   isLoading,
   items,
   meta,
+  mode = "semantic",
   query,
 }: SemanticSearchResultsProps) => {
   if (error) {
@@ -347,12 +403,12 @@ export const SemanticSearchResults = ({
   if (isLoading && items.length === 0 && query.trim().length > 0) {
     resultsContent = <SemanticSearchSkeleton />;
   } else if (items.length === 0) {
-    resultsContent = <SemanticSearchEmpty query={query} />;
+    resultsContent = <SemanticSearchEmpty mode={mode} query={query} />;
   } else {
     resultsContent = (
       <div>
         {items.map((skill, index) => (
-          <SemanticResultRow index={index} key={skill.id} query={query} skill={skill} />
+          <SemanticResultRow index={index} key={skill.id} mode={mode} query={query} skill={skill} />
         ))}
       </div>
     );
@@ -361,10 +417,10 @@ export const SemanticSearchResults = ({
   return (
     <div className="grid min-h-[50svh] xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0">
-        <SemanticSearchHeader isLoading={isLoading} meta={meta} query={query} />
+        <SemanticSearchHeader isLoading={isLoading} meta={meta} mode={mode} query={query} />
         {resultsContent}
       </div>
-      <SemanticSearchRail items={items} meta={meta} query={query} />
+      <SemanticSearchRail items={items} meta={meta} mode={mode} query={query} />
     </div>
   );
 };

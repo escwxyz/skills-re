@@ -5,6 +5,7 @@ import { FadersHorizontalIcon } from "@phosphor-icons/react";
 
 import { BrowseSortDropdown } from "@/components/browse-sort-dropdown";
 import { SkillsSearchField } from "@/components/skills-search-field";
+import type { SkillsSearchMode } from "@/components/skills-search-field";
 import { SkillsViewModeToggle } from "@/components/skills-view-mode-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,8 +22,10 @@ interface Props {
   onClearSearch: () => void;
   onSearchChange: (value: string) => void;
   onSearchFocus: () => void;
+  onSearchModeChange: (value: SkillsSearchMode) => void;
   onSearchSubmit: () => void;
   onToggleFilters: () => void;
+  searchMode: SkillsSearchMode;
   searchValue: string;
 }
 
@@ -36,8 +39,10 @@ export const BrowseToolbar = ({
   onClearSearch,
   onSearchChange,
   onSearchFocus,
+  onSearchModeChange,
   onSearchSubmit,
   onToggleFilters,
+  searchMode,
   searchValue,
 }: Props) => (
   <div
@@ -55,7 +60,9 @@ export const BrowseToolbar = ({
       onChange={onSearchChange}
       onClear={onClearSearch}
       onFocus={onSearchFocus}
+      onSearchModeChange={onSearchModeChange}
       onSubmit={onSearchSubmit}
+      searchMode={searchMode}
       value={searchValue}
     />
     {!isSearchMode && (

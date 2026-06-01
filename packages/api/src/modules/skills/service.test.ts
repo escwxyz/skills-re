@@ -259,6 +259,131 @@ describe("skills service", () => {
     ]);
   });
 
+  test("routes explicit keyword queries through the database search path", async () => {
+    const filterCalls: Array<Record<string, unknown>> = [];
+    const aiCalls: unknown[] = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "Workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-1",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: null,
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "Workflow",
+              updatedAt: 123,
+              viewsAllTime: 42,
+            } as any,
+          ],
+        } as any);
+      },
+    });
+
+    const result = await service.search(
+      {
+        limit: 24,
+        query: "workflow",
+        searchMode: "keyword",
+      },
+      {
+        search(input) {
+          aiCalls.push(input);
+          return Promise.resolve({ data: [] });
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          repoName: "skills",
+          slug: "workflow",
+          title: "Workflow",
+        },
+      ],
+    });
+    expect(filterCalls).toEqual([
+      {
+        limit: 24,
+        query: "workflow",
+        searchMode: "keyword",
+      },
+    ]);
+    expect(aiCalls).toEqual([]);
+  });
+
+  test("routes explicit semantic queries through AI Search", async () => {
+    const filterCalls: unknown[] = [];
+    const aiCalls: unknown[] = [];
+    const service = createSkillsService({
+      findSkillByPath: () => Promise.resolve(null),
+      findSkillBySlug: () => Promise.resolve(null),
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input);
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
+    });
+
+    const result = await service.search(
+      {
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "semantic",
+      },
+      {
+        search(input) {
+          aiCalls.push(input);
+          return Promise.resolve({
+            data: [],
+            has_more: false,
+            search_query: "workflow",
+          });
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      ai: {
+        resolvedSkillsCount: 0,
+        resultCount: 0,
+      },
+      continueCursor: "",
+      isDone: true,
+      page: [],
+    });
+    expect(aiCalls).toEqual([
+      {
+        query: "workflow",
+        rewriteQuery: false,
+      },
+    ]);
+    expect(filterCalls).toEqual([]);
+  });
+
   test("claims a skill when the authenticated github handle matches the repo owner", async () => {
     const claimed: { skillId: string; userId: string }[] = [];
     const service = createSkillsService({

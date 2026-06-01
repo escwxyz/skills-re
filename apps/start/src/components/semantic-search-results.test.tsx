@@ -6,6 +6,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { SemanticSearchResults } from "./semantic-search-results";
 
 describe("SemanticSearchResults", () => {
+  test("shows keyword labels without semantic AI metadata", () => {
+    const markup = renderToStaticMarkup(
+      <SemanticSearchResults isLoading={false} items={[]} mode="keyword" query="workflow" />,
+    );
+
+    expect(markup).toContain("Keyword results for");
+    expect(markup).toContain("workflow");
+    expect(markup).toContain("No keyword matches");
+    expect(markup).toContain("Metadata");
+    expect(markup).not.toContain("Semantic index");
+    expect(markup).not.toContain("Match score");
+  });
+
   test("shows a dedicated rate limit message when search is blocked", () => {
     const markup = renderToStaticMarkup(
       <SemanticSearchResults
