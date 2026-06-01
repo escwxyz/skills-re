@@ -395,6 +395,99 @@ describe("skill eval sandbox service", () => {
     ]);
   });
 
+  test("uses an injected runtime run scheduler when provided", async () => {
+    const enqueued: unknown[] = [];
+    const service = createSkillEvalSandboxService({
+      getRunnableSkillById: () =>
+        Promise.resolve({
+          id: asSkillId("skill-1"),
+          latestSnapshotId: asSnapshotId("snapshot-1"),
+          visibility: "public",
+        }),
+      getSnapshotById: () =>
+        Promise.resolve({
+          directoryPath: "",
+          id: asSnapshotId("snapshot-1"),
+          skillId: "skill-1",
+          syncTime: 123,
+          version: "1.0.0",
+        }),
+      insertRun: (input) => Promise.resolve({ id: asSkillEvalRunId(input.id), status: "pending" }),
+      listActiveAgents: () =>
+        Promise.resolve([
+          {
+            capabilitiesJson: JSON.stringify({
+              supportsBaseline: true,
+              supportsFilesystem: true,
+              supportsStreaming: true,
+            }),
+            defaultLimitsJson: JSON.stringify({
+              maxOutputBytes: 65_536,
+              maxSteps: 64,
+              timeoutMs: 120_000,
+            }),
+            description: null,
+            displayName: "Codex",
+            id: asSandboxAgentId("agent-codex"),
+            provider: "openai",
+            runtimeFamily: "codex",
+            sortOrder: 0,
+            status: "active",
+          },
+        ]),
+      listSnapshotFiles: () => Promise.resolve([]),
+      readSnapshotFileContent: () =>
+        Promise.resolve({
+          bytesRead: 100,
+          content: JSON.stringify({
+            evals: [{ id: "c1", prompt: "Do X.", expected_output: "Done." }],
+            skill_name: "s",
+          }),
+          isTruncated: false,
+          offset: 0,
+          totalBytes: 100,
+        }),
+      upsertSuiteWithCases: (input) =>
+        Promise.resolve({
+          caseCount: input.caseCount,
+          cases: input.cases.map((caseItem) => ({
+            ...caseItem,
+            id: "case-db-1",
+            syncTime: 1,
+          })),
+          evalPath: input.evalPath,
+          fingerprint: input.fingerprint,
+          id: asSkillEvalSuiteId("suite-1"),
+          skillId: input.skillId,
+          snapshotId: input.snapshotId,
+          status: input.status,
+          syncTime: 1,
+          validationErrors: input.validationErrors,
+        }),
+    });
+
+    const result = await service.createRun(
+      { agentId: "agent-codex", skillId: "skill-1" },
+      { userId: "user-1" },
+      {
+        runScheduler: {
+          enqueue: (input) => {
+            enqueued.push(input);
+            return Promise.resolve({ workId: "workflow-1" });
+          },
+        },
+      },
+    );
+
+    expect(result.status).toBe("pending");
+    expect(enqueued).toEqual([
+      {
+        includeBaseline: false,
+        runId: expect.any(String),
+      },
+    ]);
+  });
+
   test("returns an existing idempotent run without enqueueing duplicate work", async () => {
     const enqueued: unknown[] = [];
     const service = createSkillEvalSandboxService({

@@ -21,6 +21,7 @@ import type { SnapshotId } from "@skills-re/db/utils";
 import { asSkillEvalRunId, asSkillId, asSnapshotId, createId } from "@skills-re/db/utils";
 import { createDepGetter } from "../shared/deps";
 import { decodeCursor, encodeCursor } from "../shared/pagination";
+import type { SkillEvalRunScheduler } from "@skills-re/api/types";
 
 import {
   createSkillEvalCaseFingerprint,
@@ -78,10 +79,6 @@ interface SnapshotFileContent {
   totalBytes: number;
 }
 
-interface SkillEvalRunScheduler {
-  enqueue(input: { includeBaseline: boolean; runId: string }): Promise<{ workId: string }>;
-}
-
 interface SkillEvalSandboxServiceDeps {
   findRunByIdempotencyKey: typeof findRunByIdempotencyKey;
   getRunDetailById: typeof getRunDetailById;
@@ -104,6 +101,10 @@ interface SkillEvalSandboxServiceDeps {
   }) => Promise<SnapshotFileContent>;
   runScheduler: SkillEvalRunScheduler | null;
   upsertSuiteWithCases: typeof upsertSuiteWithCases;
+}
+
+interface CreateRunRuntimeDeps {
+  runScheduler?: SkillEvalRunScheduler | null;
 }
 
 const createDefaultSkillEvalSandboxDeps = async (): Promise<SkillEvalSandboxServiceDeps> => {
@@ -397,7 +398,11 @@ export const createSkillEvalSandboxService = (
   const getDep = createDepGetter(overrides, getDefaultDeps);
 
   const service = {
-    async createRun(input: CreateRunInput, auth: { userId: string }): Promise<CreateRunOutput> {
+    async createRun(
+      input: CreateRunInput,
+      auth: { userId: string },
+      runtimeDeps: CreateRunRuntimeDeps = {},
+    ): Promise<CreateRunOutput> {
       if (!auth.userId) {
         throw new Error("Authentication required.");
       }
@@ -418,7 +423,7 @@ export const createSkillEvalSandboxService = (
         getDep("listActiveAgents"),
         getDep("runScheduler"),
       ]);
-      const scheduler = runScheduler;
+      const scheduler = runtimeDeps.runScheduler ?? runScheduler;
       if (!scheduler) {
         throw new Error("Skill eval run scheduler is not configured.");
       }

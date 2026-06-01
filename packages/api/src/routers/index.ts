@@ -518,9 +518,15 @@ export const appRouter = {
         });
       }
 
-      return skillEvalSandboxService.createRun(input, {
-        userId: context.session.user.id,
-      });
+      return skillEvalSandboxService.createRun(
+        input,
+        {
+          userId: context.session.user.id,
+        },
+        {
+          runScheduler: context.workflowSchedulers?.skillEvalRun ?? null,
+        },
+      );
     }),
     createStreamToken: protectedProcedure.skillEvalSandbox.createStreamToken.handler(
       ({ input, context }) =>

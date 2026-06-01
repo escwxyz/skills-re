@@ -14,6 +14,7 @@ import { getRepoSkillsDiscoveryWorkflowScheduler } from "./workflows/repo-skills
 import { getRepoSnapshotSyncWorkflowScheduler } from "./workflows/repo-snapshot-sync";
 import { getSnapshotUploadWorkflowScheduler } from "./workflows/snapshot-upload";
 import { getSnapshotsArchiveUploadWorkflowScheduler } from "./workflows/snapshots-archive-upload";
+import { getSkillEvalRunWorkflowScheduler } from "./workflows/skill-eval-run-scheduler";
 import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-scheduler";
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
 import type { WorkerLogger } from "./worker-logger";
@@ -139,6 +140,7 @@ async function createServerRuntime(
       repoStatsSync: getRepoStatsSyncWorkflowScheduler(env, { logger: options.logger }),
       repoSkillsDiscovery: getRepoSkillsDiscoveryWorkflowScheduler(env) ?? undefined,
       repoSnapshotSync: getRepoSnapshotSyncWorkflowScheduler(env) ?? undefined,
+      skillEvalRun: getSkillEvalRunWorkflowScheduler(env) ?? undefined,
       snapshotArchiveUpload: getSnapshotsArchiveUploadWorkflowScheduler(env) ?? undefined,
       snapshotUpload: snapshotUploadScheduler ?? undefined,
       skillsTagging: getSkillsTaggingWorkflowScheduler(env) ?? undefined,
