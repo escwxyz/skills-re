@@ -2,7 +2,8 @@
 // oxlint-disable no-nested-ternary
 import { useState } from "react";
 import { m } from "@/paraglide/messages";
-import { FieldLabel, Form } from "./ui/form";
+import { Field, FieldLabel, Form } from "./ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useAppForm } from "@/hooks/form-hook";
 
 interface InitialData {
@@ -208,32 +209,44 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
 
             <form.AppField name="agentId">
               {(field) => (
-                <label className="grid gap-2 text-sm">
-                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                <Field className="grid gap-2 text-sm">
+                  <FieldLabel className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     {m.skill_eval_agent_label()}
-                  </span>
-                  <select
-                    className="border-border bg-background h-10 border px-3"
-                    disabled={!hasAgents}
+                  </FieldLabel>
+                  <Select
                     value={field.state.value}
-                    onChange={(event) => field.handleChange(event.target.value)}
+                    onValueChange={(value) => {
+                      if (value) {
+                        field.handleChange(value);
+                      }
+                    }}
                   >
-                    {initialData.agents.map((agent) => (
-                      <option key={agent.id} value={agent.id}>
-                        {agent.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <SelectTrigger className="h-10 w-full border-border bg-background px-3">
+                      <SelectValue>
+                        {(value: string | null) =>
+                          initialData.agents.find((agent) => agent.id === value)?.displayName ??
+                          m.skill_eval_agent_label()
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {initialData.agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
               )}
             </form.AppField>
 
             <form.AppField name="scope">
               {(field) => (
-                <div className="grid gap-2">
-                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                <Field className="grid gap-2">
+                  <FieldLabel className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     {m.skill_eval_scope_label()}
-                  </span>
+                  </FieldLabel>
                   <div className="grid grid-cols-2 border border-border">
                     <button
                       className={`h-10 border-r border-border ${field.state.value === "all" ? "bg-primary text-primary-foreground" : ""}`}
@@ -250,21 +263,23 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
                       {m.skill_eval_selected_cases()}
                     </button>
                   </div>
-                </div>
+                </Field>
               )}
             </form.AppField>
 
             <form.AppField name="includeBaseline">
               {(field) => (
-                <label className="flex items-center gap-3 text-sm">
-                  <input
-                    aria-label={m.skill_eval_run_baseline()}
-                    checked={field.state.value}
-                    type="checkbox"
-                    onChange={(event) => field.handleChange(event.target.checked)}
-                  />
-                  {m.skill_eval_run_baseline()}
-                </label>
+                <Field>
+                  <label className="flex items-center gap-3 text-sm">
+                    <input
+                      aria-label={m.skill_eval_run_baseline()}
+                      checked={field.state.value}
+                      type="checkbox"
+                      onChange={(event) => field.handleChange(event.target.checked)}
+                    />
+                    {m.skill_eval_run_baseline()}
+                  </label>
+                </Field>
               )}
             </form.AppField>
 
@@ -274,24 +289,28 @@ export function SkillEvalSandboxPanel({ initialData, selectedSnapshotId, serverO
                 const selectedIdSet = new Set(selectedIds);
 
                 return (
-                  <div className="grid max-h-64 gap-2 overflow-auto border border-border p-3">
+                  <Field className="grid max-h-64 gap-2 overflow-auto border border-border p-3">
                     {initialData.suite.cases.map((caseItem) => (
-                      <FieldLabel key={caseItem.id} className="flex items-start gap-3 text-sm">
-                        <input
-                          aria-label={caseItem.title ?? caseItem.id}
-                          checked={selectedIdSet.has(caseItem.id)}
-                          type="checkbox"
-                          onChange={() => toggleCase(caseItem.id)}
-                        />
-                        <span>
-                          <span className="block font-medium">{caseItem.title ?? caseItem.id}</span>
-                          <span className="text-muted-foreground line-clamp-2">
-                            {caseItem.promptPreview}
+                      <Field key={caseItem.id}>
+                        <FieldLabel className="flex items-start gap-3 text-sm">
+                          <input
+                            aria-label={caseItem.title ?? caseItem.id}
+                            checked={selectedIdSet.has(caseItem.id)}
+                            type="checkbox"
+                            onChange={() => toggleCase(caseItem.id)}
+                          />
+                          <span>
+                            <span className="block font-medium">
+                              {caseItem.title ?? caseItem.id}
+                            </span>
+                            <span className="text-muted-foreground line-clamp-2">
+                              {caseItem.promptPreview}
+                            </span>
                           </span>
-                        </span>
-                      </FieldLabel>
+                        </FieldLabel>
+                      </Field>
                     ))}
-                  </div>
+                  </Field>
                 );
               }}
             </form.AppField>
