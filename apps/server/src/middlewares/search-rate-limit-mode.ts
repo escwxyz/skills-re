@@ -8,7 +8,11 @@ const getSearchInput = (body: unknown): SearchRequestInput => {
     return {};
   }
 
-  const candidate = body as { json?: unknown };
+  const candidate = body as SearchRequestInput & { json?: unknown };
+  if (Object.hasOwn(candidate, "query") || Object.hasOwn(candidate, "searchMode")) {
+    return candidate;
+  }
+
   if (candidate.json && typeof candidate.json === "object") {
     return candidate.json as SearchRequestInput;
   }
@@ -19,11 +23,11 @@ const getSearchInput = (body: unknown): SearchRequestInput => {
 export async function shouldApplySearchRateLimit(req: Request): Promise<boolean> {
   try {
     const input = getSearchInput(await req.clone().json());
-    if (!input.query) {
-      return false;
-    }
-
-    return input.searchMode !== "keyword";
+    return !(
+      typeof input.query === "string" &&
+      input.query.trim() !== "" &&
+      input.searchMode === "keyword"
+    );
   } catch {
     // Non-JSON body (e.g. crafted FormData oRPC request) — fail closed to
     // prevent throttle bypass via alternative oRPC encodings.
