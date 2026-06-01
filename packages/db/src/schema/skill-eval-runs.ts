@@ -25,7 +25,7 @@ export const skillEvalRunsTable = sqliteTable(
       .$type<SandboxAgentId>()
       .notNull()
       .references(() => sandboxAgentsTable.id, {
-        onDelete: "restrict",
+        onDelete: "no action",
         onUpdate: "cascade",
       }),
     artifactPrefix: text("artifact_prefix").notNull(),
