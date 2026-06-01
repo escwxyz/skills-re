@@ -23,7 +23,9 @@ export function LegalPage({
         </p>
         <h1 className="font-display text-5xl font-normal">{title}</h1>
         {description && (
-          <p className="text-ink-2 mt-4 font-serif text-lg leading-relaxed">{description}</p>
+          <p className="text-muted-foreground mt-4 font-serif text-lg leading-relaxed">
+            {description}
+          </p>
         )}
         <p className="text-muted-foreground mt-6 font-mono text-[10.5px] tracking-[.12em] uppercase">
           {m.legal_page_last_updated({ date: updatedAtLabel })}

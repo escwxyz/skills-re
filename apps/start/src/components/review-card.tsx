@@ -51,7 +51,7 @@ export const ReviewCard = ({
     <article className={cn("px-4 py-6 md:px-7 md:py-8", !isLast && "border-b border-border")}>
       <div className="mb-3 flex flex-col gap-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:flex-row md:items-baseline md:justify-between md:text-[11px]">
         <div>
-          <b className="font-semibold text-ink">{authorName}</b>
+          <b className="font-semibold text-foreground">{authorName}</b>
         </div>
         <div className="text-muted-foreground md:text-muted-foreground">
           <TimeValue locale={locale} time={createdAt} />
@@ -61,7 +61,7 @@ export const ReviewCard = ({
 
       <div className="mb-2 text-[16px] tracking-widest md:text-[18px]">
         {Array.from({ length: 5 }).map((_, index) => (
-          <span key={index} className={index < stars ? "text-ink" : "text-rule"}>
+          <span key={index} className={index < stars ? "text-foreground" : "text-rule"}>
             <StarIcon weight="fill" />
           </span>
         ))}
@@ -81,7 +81,7 @@ export const ReviewCard = ({
         </div>
       ) : (
         <div
-          className="mb-4 max-w-180 font-serif text-[14px] leading-[1.6] text-ink-2 md:text-[16px]"
+          className="mb-4 max-w-180 font-serif text-[14px] leading-[1.6] text-muted-foreground md:text-[16px]"
           dangerouslySetInnerHTML={{ __html: bodyHtml }}
         />
       )}
@@ -91,7 +91,7 @@ export const ReviewCard = ({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-ink-2"
+              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground"
             >
               {tag}
             </span>

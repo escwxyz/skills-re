@@ -9,25 +9,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authClient } from "@/lib/auth-client";
+import { clearCachedRootAuth } from "@/lib/root-auth-cache";
 import { SignOutIcon, HouseIcon, CodeIcon, ChatsIcon, GearIcon } from "@phosphor-icons/react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { m } from "@/paraglide/messages";
+import { useGoogleAnalytics } from "tanstack-router-ga4";
 
 type User = typeof authClient.$Infer.Session.user;
 
 export const NavUser = ({ currentUser }: { currentUser: User }) => {
-  const router = useRouter();
+  const ga = useGoogleAnalytics();
 
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
+      ga.event("logout", { user: currentUser.id });
     } finally {
+      clearCachedRootAuth();
       if (location.pathname.startsWith("/dashboard")) {
         window.location.assign("/");
       } else {
         window.location.reload();
       }
-      router.invalidate();
     }
   };
 

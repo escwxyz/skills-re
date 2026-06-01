@@ -29,12 +29,18 @@ export async function findRepoByNameWithOwner(nameWithOwner: string) {
 export async function updateRepoStatsByNameWithOwner(input: {
   forks: number;
   nameWithOwner: string;
+  ownerAvatarUrl?: string | null;
+  ownerBio?: string | null;
+  ownerName?: string | null;
   stars: number;
   updatedAt: number;
 }) {
   const rows = await db
     .select({
       id: reposTable.id,
+      ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      ownerBio: reposTable.ownerBio,
+      ownerName: reposTable.ownerName,
       updatedAt: reposTable.updatedAt,
     })
     .from(reposTable)
@@ -46,19 +52,30 @@ export async function updateRepoStatsByNameWithOwner(input: {
     return { changed: false };
   }
 
+  const nextOwnerAvatarUrl =
+    input.ownerAvatarUrl === undefined ? existing.ownerAvatarUrl : input.ownerAvatarUrl;
+  const nextOwnerBio = input.ownerBio === undefined ? existing.ownerBio : input.ownerBio;
+  const nextOwnerName = input.ownerName === undefined ? existing.ownerName : input.ownerName;
   const changed = existing.updatedAt !== input.updatedAt;
+  const metadataChanged =
+    existing.ownerAvatarUrl !== nextOwnerAvatarUrl ||
+    existing.ownerBio !== nextOwnerBio ||
+    existing.ownerName !== nextOwnerName;
 
   await db
     .update(reposTable)
     .set({
       forks: input.forks,
+      ownerAvatarUrl: nextOwnerAvatarUrl,
+      ownerBio: nextOwnerBio,
+      ownerName: nextOwnerName,
       stars: input.stars,
       syncTime: Date.now(),
       updatedAt: input.updatedAt,
     })
     .where(eq(reposTable.id, existing.id));
 
-  return { changed };
+  return { changed, metadataChanged };
 }
 
 export async function findRepoById(id: string) {
@@ -69,6 +86,7 @@ export async function findRepoById(id: string) {
       name: reposTable.name,
       nameWithOwner: reposTable.nameWithOwner,
       ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      ownerBio: reposTable.ownerBio,
       ownerHandle: reposTable.ownerHandle,
       ownerName: reposTable.ownerName,
       stars: reposTable.stars,
@@ -163,6 +181,7 @@ export async function createRepo(input: {
   name: string;
   nameWithOwner: string;
   ownerAvatarUrl?: string | null;
+  ownerBio?: string | null;
   ownerHandle: string;
   ownerName?: string | null;
   stars: number;
@@ -180,6 +199,7 @@ export async function createRepo(input: {
       name: input.name,
       nameWithOwner: input.nameWithOwner,
       ownerAvatarUrl: input.ownerAvatarUrl ?? null,
+      ownerBio: input.ownerBio ?? null,
       ownerHandle: input.ownerHandle,
       ownerName: input.ownerName ?? null,
       stars: input.stars,

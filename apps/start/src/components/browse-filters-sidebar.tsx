@@ -58,7 +58,7 @@ const makeBrowseSearch = (
 
 const BrowseFilterGroup = ({ children, label }: { children: ReactNode; label: string }) => (
   <motion.section layout className="border-border border-b px-5 py-4.5">
-    <div className="mb-3 font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-text">
+    <div className="mb-3 font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-foreground">
       {label}
     </div>
     {children}
@@ -85,11 +85,11 @@ const BrowseFilterLinks = ({
             onClick={closeDrawer}
             className={cn(
               "flex justify-between py-1 font-mono text-[11.5px] tracking-normal normal-case no-underline",
-              isActive ? "text-ink" : "text-ink-2",
+              isActive ? "text-foreground" : "text-muted-foreground",
             )}
           >
             <span>{item.name}</span>
-            <span className="text-muted-text">{formatInteger(item.count, getLocale())}</span>
+            <span className="text-muted-foreground">{formatInteger(item.count, getLocale())}</span>
           </Link>
         );
       })}
@@ -123,7 +123,7 @@ const BrowseFilterTags = ({
             onClick={closeDrawer}
             className={cn(
               "border-border border px-1.75 py-0.75 font-mono text-[10px] tracking-[.08em] uppercase no-underline",
-              isActive ? "bg-ink text-paper" : "bg-transparent text-ink",
+              isActive ? "bg-foreground text-background" : "bg-transparent text-foreground",
             )}
           >
             {tag.slug} · {formatInteger(tag.count, locale)}
@@ -145,7 +145,7 @@ const BrowseFilterTags = ({
         <div className="flex flex-wrap items-center gap-3">
           {canExpand ? (
             <Button
-              className="h-7 px-2 font-mono text-[10px] tracking-[.08em] uppercase text-muted-text"
+              className="h-7 px-2 font-mono text-[10px] tracking-[.08em] uppercase text-muted-foreground"
               onClick={() => setIsExpanded((prev) => !prev)}
               size="sm"
               type="button"
@@ -156,7 +156,7 @@ const BrowseFilterTags = ({
           ) : null}
 
           <Link
-            className="font-mono text-[10px] tracking-[.08em] uppercase text-muted-text transition-colors hover:text-ink"
+            className="font-mono text-[10px] tracking-[.08em] uppercase text-muted-foreground transition-colors hover:text-foreground"
             onClick={closeDrawer}
             to="/tags"
           >
@@ -191,11 +191,11 @@ const BrowseFilterHeader = ({
 }) => (
   <div className="border-border flex h-(--header-height) items-center justify-between border-b px-5">
     {isMobile ? (
-      <DrawerTitle className="font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-text">
+      <DrawerTitle className="font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-foreground">
         {m.skills_browse_controls_filters()}
       </DrawerTitle>
     ) : (
-      <div className="font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-text">
+      <div className="font-mono text-[10.5px] tracking-[.18em] uppercase text-muted-foreground">
         {m.skills_browse_controls_filters()}
       </div>
     )}
@@ -207,7 +207,7 @@ const BrowseFilterHeader = ({
       {isMobile ? null : (
         <Button
           aria-label={m.skills_browse_controls_filters()}
-          className="text-ink"
+          className="text-foreground"
           onClick={() => onOpenChange(false)}
           size="icon-sm"
           type="button"
@@ -230,7 +230,7 @@ export const BrowseFiltersSidebar = ({
 }: Props) =>
   isMobile ? (
     <Drawer direction="bottom" open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="border-border border-t bg-paper p-0 text-ink">
+      <DrawerContent className="border-border border-t bg-background p-0 text-foreground">
         <DrawerHeader className="p-0">
           <BrowseFilterHeader isMobile onOpenChange={onOpenChange} />
           <DrawerDescription className="sr-only">{m.skills_browse_description()}</DrawerDescription>
@@ -247,7 +247,7 @@ export const BrowseFiltersSidebar = ({
     <motion.aside
       animate={{ width: open ? "16rem" : "0rem" }}
       className={cn(
-        "sticky top-(--header-height) self-start shrink-0 overflow-hidden bg-paper",
+        "sticky top-(--header-height) self-start shrink-0 overflow-hidden bg-background",
         open ? "border-r border-border" : "",
       )}
       initial={false}

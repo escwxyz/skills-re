@@ -131,6 +131,7 @@ export interface SnapshotsServiceDeps {
   createSnapshotArchiveBuffer: (entries: SnapshotArchiveTarEntry[]) => Promise<Uint8Array>;
   snapshotUploadScheduler: SnapshotUploadScheduler | null;
   snapshotArchiveUploadScheduler: SnapshotArchiveUploadScheduler | null;
+  deleteSnapshotFilesByPaths: (input: { paths: string[]; snapshotId: SnapshotId }) => Promise<void>;
   upsertSnapshotFiles: (
     snapshotId: SnapshotId,
     files: {
@@ -231,6 +232,10 @@ const defaultDeps: SnapshotsServiceDeps = {
   createSnapshotArchiveBuffer: (entries) => createSnapshotArchiveBuffer(entries),
   snapshotUploadScheduler: null,
   snapshotArchiveUploadScheduler: null,
+  deleteSnapshotFilesByPaths: async (input) => {
+    const { deleteSnapshotFilesByPaths } = await import("./repo");
+    return await deleteSnapshotFilesByPaths(input);
+  },
   upsertSnapshotFiles: () => Promise.reject(new Error("Snapshot file storage is not configured.")),
   putSnapshotFileObject: () =>
     Promise.reject(new Error("Snapshot file storage is not configured.")),
@@ -884,35 +889,66 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       const normalizedPath = normalizeSnapshotPath(input.path);
       const offset = input.offset ?? 0;
       const maxBytes = Math.min(input.maxBytes ?? 20_000, 200_000);
-      const file = await getSnapshotFileByPathWithFallback(deps, {
-        path: normalizedPath,
-        snapshotId: asSnapshotId(input.snapshotId),
-      });
+      let file: SnapshotFileRow | null = null;
 
-      if (!file?.r2Key) {
-        throw new Error("File not found in snapshot.");
+      try {
+        file = await getSnapshotFileByPathWithFallback(deps, {
+          path: normalizedPath,
+          snapshotId: asSnapshotId(input.snapshotId),
+        });
+
+        if (!file?.r2Key) {
+          throw new Error("File not found in snapshot.");
+        }
+
+        const contentBuffer = await readSnapshotFileBytes(deps, {
+          key: file.r2Key,
+          range: {
+            length: maxBytes,
+            offset,
+          },
+        });
+        const bytesRead = contentBuffer.byteLength;
+        const totalBytes = file.size;
+        const isTruncated = offset + bytesRead < totalBytes;
+
+        return {
+          bytesRead,
+          content: new TextDecoder().decode(contentBuffer),
+          isTruncated,
+          offset,
+          totalBytes,
+        };
+      } catch (error) {
+        console.error("[snapshots.service] readSnapshotFileContent failed", {
+          error:
+            error instanceof Error
+              ? {
+                  message: error.message,
+                  name: error.name,
+                  stack: error.stack,
+                }
+              : { message: String(error) },
+          request: {
+            maxBytes,
+            normalizedPath,
+            offset,
+            path: input.path,
+            snapshotId: input.snapshotId,
+          },
+          resolvedFile: file
+            ? {
+                contentType: file.contentType ?? null,
+                fileHash: file.fileHash,
+                path: file.path,
+                r2Key: file.r2Key ?? null,
+                size: file.size,
+                sourceSha: file.sourceSha ?? null,
+              }
+            : null,
+        });
+        throw error;
       }
-
-      const object = await deps.readSnapshotFileObject(file.r2Key, {
-        length: maxBytes,
-        offset,
-      });
-      if (!object?.body) {
-        throw new Error("File content is not available.");
-      }
-
-      const contentBuffer = await object.arrayBuffer();
-      const bytesRead = contentBuffer.byteLength;
-      const totalBytes = file.size;
-      const isTruncated = offset + bytesRead < totalBytes;
-
-      return {
-        bytesRead,
-        content: new TextDecoder().decode(contentBuffer),
-        isTruncated,
-        offset,
-        totalBytes,
-      };
     },
 
     async uploadSnapshotFiles(
@@ -970,10 +1006,13 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         });
       }
 
+      const existingFiles = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
+      const manifestPaths = new Set(manifest.map((entry) => entry.path));
+      const staleFiles = existingFiles.filter((file) => !manifestPaths.has(file.path));
+
       try {
         await deps.upsertSnapshotFiles(asSnapshotId(input.snapshotId), manifest);
       } catch (error) {
-        const existingFiles = await deps.listSnapshotFiles(asSnapshotId(input.snapshotId));
         const existingR2KeyByPath = new Map(
           existingFiles
             .filter((file): file is typeof file & { r2Key: string } => Boolean(file.r2Key))
@@ -988,6 +1027,18 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
         throw error;
       }
 
+      if (staleFiles.length > 0) {
+        await deps.deleteSnapshotFilesByPaths({
+          paths: staleFiles.map((file) => file.path),
+          snapshotId: asSnapshotId(input.snapshotId),
+        });
+        await Promise.allSettled(
+          staleFiles
+            .filter((file): file is typeof file & { r2Key: string } => Boolean(file.r2Key))
+            .map((file) => deps.deleteSnapshotFileObject(file.r2Key)),
+        );
+      }
+
       if (deps.snapshotArchiveUploadScheduler) {
         await deps.snapshotArchiveUploadScheduler.enqueue({ snapshotId: input.snapshotId });
       }
@@ -998,6 +1049,61 @@ export const createSnapshotsService = (overrides: Partial<SnapshotsServiceDeps> 
       };
     },
   };
+};
+
+const getRangeHeaderValue = (range: { length: number; offset: number }) =>
+  `bytes=${range.offset}-${range.offset + range.length - 1}`;
+
+const readSnapshotFileBytes = async (
+  deps: Pick<SnapshotsServiceDeps, "buildSnapshotFilePublicUrl" | "readSnapshotFileObject">,
+  input: {
+    key: string;
+    range?: { length: number; offset: number };
+  },
+) => {
+  const object = await deps.readSnapshotFileObject(input.key, input.range);
+  if (object) {
+    try {
+      return await object.arrayBuffer();
+    } catch (error) {
+      console.error("[snapshots.service] failed to read R2 body directly", {
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+              }
+            : { message: String(error) },
+        hasBody: Boolean(object.body),
+        key: input.key,
+        size: object.size ?? null,
+        range: input.range ?? null,
+      });
+    }
+  } else {
+    console.error("[snapshots.service] snapshot file binding returned no object", {
+      key: input.key,
+      range: input.range ?? null,
+    });
+  }
+
+  const publicUrl = deps.buildSnapshotFilePublicUrl(input.key);
+  const response = await fetch(publicUrl, {
+    headers: input.range ? { Range: getRangeHeaderValue(input.range) } : {},
+  });
+  if (!response.ok) {
+    console.error("[snapshots.service] snapshot file fallback fetch failed", {
+      key: input.key,
+      publicUrl,
+      range: input.range ?? null,
+      status: response.status,
+      statusText: response.statusText,
+    });
+    throw new Error("File content is not available.");
+  }
+
+  return await response.arrayBuffer();
 };
 
 export type HistoricalSnapshotRunnerDeps = Pick<

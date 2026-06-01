@@ -92,6 +92,38 @@ describe("tags service", () => {
           slug: "workflow",
         },
       ],
+    });
+
+    await expect(service.getBySlug({ slug: "automation" })).resolves.toEqual({
+      count: 5,
+      id: "tag-1",
+      indexable: true,
+      relatedCategories: [
+        {
+          count: 2,
+          name: "Tools & Platforms",
+          slug: "tools-platforms",
+        },
+      ],
+      relatedTags: [
+        {
+          count: 1,
+          slug: "workflow",
+        },
+      ],
+      slug: "automation",
+    });
+    await expect(service.getBySlug({ slug: "missing" })).resolves.toBeNull();
+  });
+
+  test("returns top skills for a tag separately from the detail payload", async () => {
+    const service = createTagsService({
+      findTagBySlug: () => ({
+        count: 5,
+        id: "tag-1",
+        slug: "automation",
+        status: "active",
+      }),
       getTopSkillsByTagSlug: () => [
         {
           authorHandle: "acme",
@@ -117,24 +149,8 @@ describe("tags service", () => {
       ],
     });
 
-    await expect(service.getBySlug({ slug: "automation" })).resolves.toEqual({
+    await expect(service.getTopSkillsBySlug({ slug: "automation" })).resolves.toEqual({
       count: 5,
-      id: "tag-1",
-      indexable: true,
-      relatedCategories: [
-        {
-          count: 2,
-          name: "Tools & Platforms",
-          slug: "tools-platforms",
-        },
-      ],
-      relatedTags: [
-        {
-          count: 1,
-          slug: "workflow",
-        },
-      ],
-      slug: "automation",
       topSkills: [
         expect.objectContaining({
           description: "Widget skill",
@@ -144,7 +160,6 @@ describe("tags service", () => {
         }),
       ],
     });
-    await expect(service.getBySlug({ slug: "missing" })).resolves.toBeNull();
   });
 
   test("filters indexable tags by minCount", async () => {

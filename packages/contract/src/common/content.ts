@@ -36,6 +36,7 @@ export const skillPathSchema = z.object({
 
 export const authorSchema = z.object({
   avatarUrl: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
   githubUrl: z.string().url().optional(),
   handle: githubOwnerSchema,
   isVerified: z.boolean().optional(),
@@ -74,6 +75,7 @@ export const searchSkillListItemSchema = z.object({
   forkCount: z.number().optional(),
   id: idSchema,
   isVerified: z.boolean().optional(),
+  latestAuditScore: z.number().int().min(0).max(100).optional(),
   latestSnapshotId: z.string().optional(),
   latestVersion: z.string().optional(),
   latestSnapshotTotalBytes: z.number().int().nonnegative().optional(),
@@ -116,6 +118,10 @@ export const tagDetailSchema = z.object({
   relatedCategories: z.array(relatedCategorySchema),
   relatedTags: z.array(relatedTagSchema),
   slug: tagSlugSchema,
+});
+
+export const tagTopSkillsSchema = z.object({
+  count: z.number().int().nonnegative(),
   topSkills: z.array(searchSkillListItemSchema),
 });
 
@@ -132,23 +138,37 @@ export const categoryDetailSchema = z.object({
   name: z.string(),
   relatedTags: z.array(relatedTagSchema),
   slug: categorySlugSchema,
+});
+
+export const categoryTopSkillsSchema = z.object({
+  count: z.number().int().nonnegative(),
   topSkills: z.array(searchSkillListItemSchema),
 });
 
 export const collectionListItemSchema = z.object({
   description: z.string(),
   id: idSchema,
+  kind: z.enum(["custom", "default"]).optional(),
+  ownerHandle: z.string().nullable().optional(),
+  publicPath: z.string().optional(),
   skillCount: z.number().int().nonnegative(),
   slug: tagSlugSchema,
+  status: z.enum(["active", "archived"]).optional(),
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const collectionDetailSchema = z.object({
   description: z.string(),
   id: idSchema,
+  kind: z.enum(["custom", "default"]).optional(),
+  ownerHandle: z.string().nullable().optional(),
+  publicPath: z.string().optional(),
   skills: z.array(searchSkillListItemSchema),
   slug: tagSlugSchema,
+  status: z.enum(["active", "archived"]).optional(),
   title: z.string(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const repoListItemSchema = z.object({

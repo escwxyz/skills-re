@@ -1,6 +1,6 @@
 import type { AiTaskRuntime } from "./modules/ai/runtime";
 
-export type { AiTaskAdapter, AiTaskRuntime, AiTaskType } from "./modules/ai/runtime";
+export type { AiTaskRuntime, AiTaskType } from "./modules/ai/runtime";
 
 export type AuthSession = {
   session: {
@@ -9,6 +9,7 @@ export type AuthSession = {
     userId: string;
   };
   user: {
+    bio?: string | null;
     email?: string;
     github?: string | null;
     id: string;
@@ -22,6 +23,7 @@ export interface RepoStatsSyncScheduler {
   enqueue(input: {
     cursor?: string;
     limit?: number;
+    maxPages?: number;
     runAfterMs?: number;
   }): Promise<{ workId: string }>;
 }
@@ -81,6 +83,7 @@ export interface SkillsUploadContentPayload {
     nameWithOwner: string;
     owner: {
       avatarUrl?: string;
+      bio?: string | null;
       handle: string;
       name?: string;
     };
@@ -164,6 +167,7 @@ export interface GithubFetchRuntime {
     nameWithOwner: string | null;
     owner: string;
     ownerAvatarUrl: string | null;
+    ownerBio: string | null;
     ownerHandle: string;
     ownerName: string | null;
     recentCommits: {
@@ -290,6 +294,7 @@ export interface Context {
   features?: {
     skillEvalSandboxEnabled?: boolean;
   };
+  revokeSession?: () => Promise<void>;
   aiTasks?: AiTaskRuntime;
   aiSearchItems?: AiSearchItemsRuntime;
   session: AuthSession;

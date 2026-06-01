@@ -8,7 +8,7 @@ import { ReviewCard } from "@/components/review-card";
 import { ReviewRatingSidebar } from "@/components/review-rating-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getSkillReviewsInitial } from "@/functions/skills/get-skill-reviews-initial";
@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   loader: ({ params }) => getSkillReviewsInitial({ data: { skillSlug: params.slug } }),
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/reviews`,
       description: loaderData?.skillDescription,
       image:
@@ -31,10 +32,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_review_tab()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_review_tab()),
     }),
   component: RouteComponent,
 });
@@ -96,16 +96,16 @@ function RouteComponent() {
           </>
         ) : (
           <div className="px-4 py-8 md:px-7 md:py-10">
-            <div className="border-border bg-paper-2 border px-5 py-6">
-              <div className="eyebrow text-editorial-red mb-2">
+            <div className="border-border bg-muted border px-5 py-6">
+              <div className="font-mono text-xs uppercase text-muted-foreground mb-2">
                 {m.reviews_page_section_header()}
               </div>
-              <p className="text-ink-2 m-0 max-w-110">{m.reviews_page_empty()}</p>
+              <p className="text-muted-foreground m-0 max-w-110">{m.reviews_page_empty()}</p>
             </div>
           </div>
         )}
 
-        <div className="border-border eyebrow text-muted-text flex items-center justify-between border-t px-4 py-5 md:px-7 md:py-6">
+        <div className="border-border font-mono text-xs uppercase text-muted-foreground flex items-center justify-between border-t px-4 py-5 md:px-7 md:py-6">
           <span>{m.reviews_page_showing({ count: loaderData.totalReviews })}</span>
           <span>{m.reviews_page_latest_feedback()}</span>
         </div>

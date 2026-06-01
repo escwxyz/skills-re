@@ -7,10 +7,6 @@ export const submitPublicRateLimiter: MiddlewareHandler<{
   Bindings: Env;
   Variables: { workerLogger?: WorkerLogger };
 }> = async (c, next) => {
-  if (c.env.TEST_USER === "true") {
-    return next();
-  }
-
   const auth = createRuntimeAuth();
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
 

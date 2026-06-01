@@ -2,6 +2,7 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import { MockLanguageModelV3 } from "ai/test";
 
 import {
   categorizationOutputSchema,
@@ -10,10 +11,15 @@ import {
 } from "./ai-categorization";
 
 describe("categorization ai helpers", () => {
-  test("parses raw categorization JSON and falls back across adapters", async () => {
-    const chatCalls: {
-      adapter: unknown;
-      options: { outputSchema?: unknown; stream?: boolean };
+  test("advances to the fallback model when primary categorization output is invalid", async () => {
+    const primaryModel = new MockLanguageModelV3({
+      modelId: "primary-model",
+    });
+    const fallbackModel = new MockLanguageModelV3({
+      modelId: "fallback-model",
+    });
+    const generateTextCalls: {
+      options: { maxOutputTokens?: number; model?: unknown };
     }[] = [];
     const result = await generateSkillCategoriesBatch(
       {
@@ -38,41 +44,64 @@ describe("categorization ai helpers", () => {
       },
       {
         // oxlint-disable-next-line require-await
-        chat: (async (options: { adapter: unknown; outputSchema?: unknown; stream?: boolean }) => {
-          chatCalls.push({
-            adapter: options.adapter,
+        generateText: (async (options: { maxOutputTokens?: number; model?: unknown }) => {
+          generateTextCalls.push({
             options: {
-              outputSchema: options.outputSchema,
-              stream: options.stream,
+              maxOutputTokens: options.maxOutputTokens,
+              model: options.model,
             },
           });
-          if (chatCalls.length === 1) {
-            throw new Error("primary adapter failed");
+          const modelId = (options.model as { modelId?: string } | undefined)?.modelId;
+          if (modelId === "primary-model") {
+            return {
+              text: JSON.stringify({
+                items: [
+                  {
+                    confidence: 0.87,
+                    primaryCategory: "code-frameworks",
+                    reasoning: "missing key should trigger fallback",
+                    scores: {
+                      "analysis-insights": 1,
+                      "code-frameworks": 10,
+                      "communication-strategy": 0,
+                      "design-creative": 0,
+                      "domain-expertise": 2,
+                      "operations-automation": 0,
+                      other: 0,
+                      "process-methodology": 1,
+                      "tools-platforms": 2,
+                    },
+                  },
+                ],
+              }),
+            };
           }
 
-          return JSON.stringify({
-            items: [
-              {
-                confidence: 0.87,
-                key: "skill-1",
-                primaryCategory: "code-frameworks",
-                reasoning: "clear primary deliverable",
-                scores: {
-                  "analysis-insights": 1,
-                  "code-frameworks": 10,
-                  "communication-strategy": 0,
-                  "design-creative": 0,
-                  "domain-expertise": 2,
-                  "operations-automation": 0,
-                  other: 0,
-                  "process-methodology": 1,
-                  "tools-platforms": 2,
+          return {
+            text: JSON.stringify({
+              items: [
+                {
+                  confidence: 0.87,
+                  key: "skill-1",
+                  primaryCategory: "code-frameworks",
+                  reasoning: "clear primary deliverable",
+                  scores: {
+                    "analysis-insights": 1,
+                    "code-frameworks": 10,
+                    "communication-strategy": 0,
+                    "design-creative": 0,
+                    "domain-expertise": 2,
+                    "operations-automation": 0,
+                    other: 0,
+                    "process-methodology": 1,
+                    "tools-platforms": 2,
+                  },
                 },
-              },
-            ],
-          });
+              ],
+            }),
+          };
         }) as never,
-        getAdapters: (() => [{ id: "adapter-1" }, { id: "adapter-2" }]) as never,
+        getModels: () => [primaryModel, fallbackModel],
       } as never,
     );
 
@@ -83,13 +112,20 @@ describe("categorization ai helpers", () => {
         primaryCategory: "code-frameworks",
       }),
     ]);
-    expect(chatCalls).toHaveLength(2);
-    expect(chatCalls.every((call) => call.options.stream === false)).toBe(true);
-    expect(chatCalls.every((call) => call.options.outputSchema === undefined)).toBe(true);
+    expect(generateTextCalls).toHaveLength(2);
+    expect(generateTextCalls.every((call) => call.options.maxOutputTokens === 4096)).toBe(true);
+    expect(
+      generateTextCalls.map(
+        (call) => (call.options.model as { modelId?: string } | undefined)?.modelId,
+      ),
+    ).toEqual(["primary-model", "fallback-model"]);
   });
 
   test("retries categorization calls on rate limit errors", async () => {
-    const chatCalls: { adapter: unknown }[] = [];
+    const model = new MockLanguageModelV3({
+      modelId: "gateway-model",
+    });
+    const generateTextCalls: { model: unknown }[] = [];
     const result = await generateSkillCategoriesBatch(
       {
         categories: [
@@ -113,37 +149,39 @@ describe("categorization ai helpers", () => {
       },
       {
         // oxlint-disable-next-line require-await
-        chat: (async ({ adapter }: { adapter: unknown }) => {
-          chatCalls.push({ adapter });
-          if (chatCalls.length === 1) {
+        generateText: (async ({ model }: { model: unknown }) => {
+          generateTextCalls.push({ model });
+          if (generateTextCalls.length === 1) {
             const error = new Error("rate limited");
             (error as { statusCode?: number }).statusCode = 429;
             throw error;
           }
 
-          return JSON.stringify({
-            items: [
-              {
-                confidence: 0.87,
-                key: "skill-1",
-                primaryCategory: "code-frameworks",
-                reasoning: "clear primary deliverable",
-                scores: {
-                  "analysis-insights": 1,
-                  "code-frameworks": 10,
-                  "communication-strategy": 0,
-                  "design-creative": 0,
-                  "domain-expertise": 2,
-                  "operations-automation": 0,
-                  other: 0,
-                  "process-methodology": 1,
-                  "tools-platforms": 2,
+          return {
+            text: JSON.stringify({
+              items: [
+                {
+                  confidence: 0.87,
+                  key: "skill-1",
+                  primaryCategory: "code-frameworks",
+                  reasoning: "clear primary deliverable",
+                  scores: {
+                    "analysis-insights": 1,
+                    "code-frameworks": 10,
+                    "communication-strategy": 0,
+                    "design-creative": 0,
+                    "domain-expertise": 2,
+                    "operations-automation": 0,
+                    other: 0,
+                    "process-methodology": 1,
+                    "tools-platforms": 2,
+                  },
                 },
-              },
-            ],
-          });
+              ],
+            }),
+          };
         }) as never,
-        getAdapters: (() => [{ id: "adapter-1" }]) as never,
+        getModels: () => [model],
       } as never,
     );
 
@@ -154,7 +192,7 @@ describe("categorization ai helpers", () => {
         primaryCategory: "code-frameworks",
       }),
     ]);
-    expect(chatCalls).toHaveLength(2);
+    expect(generateTextCalls).toHaveLength(2);
   });
 
   test("rejects categorization payloads missing a category score", () => {

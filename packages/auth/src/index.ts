@@ -2,10 +2,11 @@
 import { authTables } from "@skills-re/db/schema";
 import { agentAuth } from "@better-auth/agent-auth";
 import { apiKey } from "@better-auth/api-key";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import type { GithubProfile } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, emailOTP } from "better-auth/plugins";
+import { admin, bearer, deviceAuthorization, emailOTP, jwt } from "better-auth/plugins";
 
 import { nanoid } from "nanoid";
 
@@ -15,6 +16,7 @@ import type { createDb } from "@skills-re/db/runtime";
 export interface AuthEnv {
   ADMIN: string;
   BETTER_AUTH_SECRET: string;
+  AUTH_COOKIE_DOMAIN?: string;
   PUBLIC_SERVER_URL: string;
   PUBLIC_SITE_URL: string;
   GITHUB_CLIENT_ID: string;
@@ -38,6 +40,7 @@ export type AuthSession = {
     userId: string;
   };
   user: {
+    bio?: string | null;
     email?: string;
     github?: string | null;
     id: string;
@@ -49,8 +52,17 @@ export type AuthSession = {
 
 export interface AuthInstance {
   api: {
+    createApiKey: (input: {
+      body: { expiresIn?: number; name?: string; prefix?: string; userId?: string };
+    }) => Promise<{ expiresAt: Date | null; key: string } | null>;
+    verifyApiKey: (input: {
+      body: { key: string };
+    }) => Promise<{ valid: boolean; key: { expiresAt: Date | null; referenceId: string } | null }>;
     getAgentConfiguration: () => Promise<unknown>;
+    getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
+    getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getSession: (input: { headers: Headers }) => Promise<AuthSession>;
+    signOut: (input: { asResponse: true; headers: Headers }) => Promise<Response>;
   };
   handler: (request: Request) => Response | Promise<Response>;
 }
@@ -94,6 +106,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
       },
     },
     advanced: {
+      cookiePrefix: "skills-re",
       defaultCookieAttributes: {
         httpOnly: true,
         sameSite: "none",
@@ -105,6 +118,14 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
       ipAddress: {
         ipAddressHeaders: ["x-client-ip", "x-forwarded-for", "cf-connecting-ip"],
       },
+      crossSubDomainCookies: env.AUTH_COOKIE_DOMAIN
+        ? {
+            enabled: true,
+            domain: env.AUTH_COOKIE_DOMAIN,
+          }
+        : {
+            enabled: false,
+          },
     },
     basePath: "/auth",
     baseURL: env.PUBLIC_SERVER_URL,
@@ -147,67 +168,140 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     plugins: [
       admin(),
       apiKey(),
-      agentAuth({
-        capabilities: [
-          {
-            description: "Fetch a public page from skills.re by path.",
-            input: {
-              additionalProperties: false,
-              properties: {
-                path: {
-                  type: "string",
-                },
-              },
-              required: ["path"],
-              type: "object",
-            },
-            name: "read_public_page",
-          },
-          {
-            description: "Fetch the public search page for a query string.",
-            input: {
-              additionalProperties: false,
-              properties: {
-                query: {
-                  type: "string",
-                },
-              },
-              required: ["query"],
-              type: "object",
-            },
-            name: "search_site",
-          },
-        ],
-        approvalMethods: ["device_authorization", "ciba"],
-        deviceAuthorizationPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
-        modes: ["delegated"],
-        providerDescription: "Public website content and content discovery for AI agents.",
-        providerName: "skills.re",
-        onExecute: async ({ capability, arguments: args }) => {
-          if (capability === "read_public_page") {
-            if (!args || typeof args !== "object" || typeof args.path !== "string") {
-              throw new Error("read_public_page requires a string path.");
-            }
-
-            return await fetchPublicContent(args.path, env.PUBLIC_SITE_URL);
-          }
-
-          if (capability === "search_site") {
-            if (!args || typeof args !== "object" || typeof args.query !== "string") {
-              throw new Error("search_site requires a string query.");
-            }
-
-            const searchUrl = new URL("/skills", env.PUBLIC_SITE_URL);
-            searchUrl.searchParams.set("mode", "search");
-            searchUrl.searchParams.set("q", args.query);
-            return await fetchPublicContent(
-              searchUrl.pathname + searchUrl.search,
-              env.PUBLIC_SITE_URL,
-            );
-          }
-
-          throw new Error(`Unsupported agent capability: ${capability}`);
+      bearer(),
+      jwt({
+        jwt: {
+          issuer: env.PUBLIC_SERVER_URL,
         },
+      }),
+      oauthProvider({
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        consentPage: `${env.PUBLIC_SITE_URL}/device/capabilities`,
+        grantTypes: ["authorization_code", "refresh_token"],
+        loginPage: `${env.PUBLIC_SITE_URL}/auth`,
+        scopes: [
+          "openid",
+          "profile",
+          "email",
+          "offline_access",
+          "skills:read",
+          "skills:library",
+          "skills:usage",
+        ],
+        silenceWarnings: {
+          oauthAuthServerConfig: true,
+          openidConfig: true,
+        },
+        validAudiences: [env.PUBLIC_SERVER_URL, `${env.PUBLIC_SERVER_URL}/mcp`],
+      }),
+      // Keep agentAuth's /device/code endpoint out of the public auth surface.
+      // Strip the /device/code endpoint from agentAuth to avoid conflict with
+      // the deviceAuthorization plugin. We only use CIBA for agent approval
+      // (approvalMethods: ["ciba"]), so this endpoint is unused.
+      (() => {
+        const plugin = agentAuth({
+          capabilities: [
+            {
+              description: "Fetch a public page from skills.re by path.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  path: {
+                    type: "string",
+                  },
+                },
+                required: ["path"],
+                type: "object",
+              },
+              name: "read_public_page",
+            },
+            {
+              description: "Fetch the public search page for a query string.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  query: {
+                    type: "string",
+                  },
+                },
+                required: ["query"],
+                type: "object",
+              },
+              name: "search_site",
+            },
+            {
+              description: "Resolve public skill install metadata for CLI or MCP clients.",
+              input: {
+                additionalProperties: false,
+                properties: {
+                  skill: {
+                    type: "string",
+                  },
+                  version: {
+                    type: "string",
+                  },
+                },
+                required: ["skill"],
+                type: "object",
+              },
+              name: "resolve_skill_install",
+            },
+          ],
+          approvalMethods: ["ciba"],
+          modes: ["delegated"],
+          providerDescription: "Public website content and content discovery for AI agents.",
+          providerName: "skills.re",
+          onExecute: async ({ capability, arguments: args }) => {
+            if (capability === "read_public_page") {
+              if (!args || typeof args !== "object" || typeof args.path !== "string") {
+                throw new Error("read_public_page requires a string path.");
+              }
+
+              return await fetchPublicContent(args.path, env.PUBLIC_SITE_URL);
+            }
+
+            if (capability === "search_site") {
+              if (!args || typeof args !== "object" || typeof args.query !== "string") {
+                throw new Error("search_site requires a string query.");
+              }
+
+              const searchUrl = new URL("/skills", env.PUBLIC_SITE_URL);
+              searchUrl.searchParams.set("mode", "search");
+              searchUrl.searchParams.set("q", args.query);
+              return await fetchPublicContent(
+                searchUrl.pathname + searchUrl.search,
+                env.PUBLIC_SITE_URL,
+              );
+            }
+
+            if (capability === "resolve_skill_install") {
+              if (!args || typeof args !== "object" || typeof args.skill !== "string") {
+                throw new Error("resolve_skill_install requires a string skill.");
+              }
+
+              const installUrl = new URL("/cli/skills/resolve-install", env.PUBLIC_SERVER_URL);
+              installUrl.searchParams.set("skill", args.skill);
+              if (typeof args.version === "string") {
+                installUrl.searchParams.set("version", args.version);
+              }
+              const response = await fetch(installUrl);
+              if (!response.ok) {
+                throw new Error(`Install metadata request failed: ${response.status}`);
+              }
+              return await response.json();
+            }
+
+            throw new Error(`Unsupported agent capability: ${capability}`);
+          },
+        });
+        const { deviceCode: _deviceCode, ...agentEndpoints } = plugin.endpoints;
+        return { ...plugin, endpoints: agentEndpoints as typeof plugin.endpoints };
+      })(),
+      deviceAuthorization({
+        schema: {},
+        validateClient: (clientId) => clientId === "cli",
+        verificationUri: `${env.PUBLIC_SITE_URL}/device`,
       }),
       emailOTP({
         allowedAttempts: 3,
@@ -259,6 +353,7 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
         clientId: env.GITHUB_CLIENT_ID,
         clientSecret: env.GITHUB_CLIENT_SECRET,
         mapProfileToUser: async (profile: GithubProfile) => ({
+          bio: typeof profile.bio === "string" ? profile.bio : undefined,
           email: profile.email,
           github: profile.login,
           image: profile.avatar_url,
@@ -272,6 +367,11 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     trustedOrigins: [env.PUBLIC_SITE_URL, env.PUBLIC_SERVER_URL],
     user: {
       additionalFields: {
+        bio: {
+          input: false,
+          required: false,
+          type: "string",
+        },
         github: {
           input: false,
           required: false,

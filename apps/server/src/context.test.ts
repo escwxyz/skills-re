@@ -66,8 +66,8 @@ describe("createServerContextFromBase", () => {
       },
       {
         aiTasks: {
-          getAdapters() {
-            return {} as never;
+          getModels() {
+            return [] as never;
           },
         },
       },
@@ -145,6 +145,7 @@ describe("createServerContextFromBase", () => {
               nameWithOwner: "acme/skills",
               owner: "acme",
               ownerAvatarUrl: null,
+              ownerBio: null,
               ownerHandle: "acme",
               ownerName: null,
               recentCommits: [],

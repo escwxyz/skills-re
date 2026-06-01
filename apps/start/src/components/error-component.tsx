@@ -26,7 +26,7 @@ export const ErrorComponent = ({ error, reset }: ErrorComponentProps) => {
           <h1 className="mt-6 font-serif text-[clamp(28px,4vw,42px)] font-bold italic text-foreground">
             {m.error_500_title()}
           </h1>
-          <p className="text-ink-2 mt-3 max-w-2xl font-serif text-[18px] leading-[1.6]">
+          <p className="text-muted-foreground mt-3 max-w-2xl font-serif text-[18px] leading-[1.6]">
             {m.error_500_description()}
           </p>
           {errorMessage ? (

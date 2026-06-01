@@ -1,4 +1,4 @@
-import { chat } from "@tanstack/ai";
+import { extractJsonMiddleware, generateText, wrapLanguageModel } from "ai";
 import { z } from "zod/v4";
 
 import type { AiTaskRuntime } from "../ai/runtime";
@@ -118,16 +118,16 @@ const preferExistingTag = (
 };
 
 const resolveTaggingDeps = (deps?: {
-  chat?: typeof chat;
-  getAdapters: AiTaskRuntime["getAdapters"];
+  generateText?: typeof generateText;
+  getModels: AiTaskRuntime["getModels"];
 }) => {
-  if (!deps?.getAdapters) {
+  if (!deps?.getModels) {
     throw new Error("AI tagging runtime is unavailable.");
   }
 
   return {
-    chat: deps.chat ?? chat,
-    getAdapters: deps.getAdapters,
+    generateText: deps.generateText ?? generateText,
+    getModels: deps.getModels,
   };
 };
 
@@ -279,8 +279,8 @@ export const generateSkillTagsBatch = async (
     existingTagCandidates?: string[];
   },
   deps?: {
-    chat?: typeof chat;
-    getAdapters: AiTaskRuntime["getAdapters"];
+    generateText?: typeof generateText;
+    getModels: AiTaskRuntime["getModels"];
   },
 ) => {
   const resolvedDeps = resolveTaggingDeps(deps);
@@ -325,20 +325,28 @@ export const generateSkillTagsBatch = async (
       "\n\n",
     )}\n\nExisting tags (prefer reusing these): ${existingTagsText}\n\nRules:\n- tags must be lowercase kebab-case\n- each tag entry must include: { tag, source, matchScore }\n- source must be existing or new\n- matchScore is 0..1 semantic fit confidence\n- each dimension (techStack/domain/skillType) must have 1-2 entries\n- avoid synonyms/duplicates across dimensions\n- do not invent or rewrite key; copy input key exactly\n- output items length must equal input skills length\n- forbidden tags: best-practice, best-practices\n- response must be pure JSON object only\n\nOutput shape exactly:\n{"items":[{"key":"<input key>","confidence":0.0,"reason":"<short reason>","dimensions":{"techStack":[{"tag":"<slug>","source":"existing","matchScore":0.99}],"domain":[{"tag":"<slug>","source":"existing","matchScore":0.99}],"skillType":[{"tag":"<slug>","source":"existing","matchScore":0.99}]}}]}`;
 
-  const adapters = resolvedDeps.getAdapters("skill-tagging");
+  const models = resolvedDeps.getModels("skill-tagging");
   let lastError: unknown = null;
-  for (const adapter of adapters) {
+  for (const [attempt, model] of models.entries()) {
+    console.info("[ai-tagging] trying model", {
+      attempt: attempt + 1,
+      itemCount: input.items.length,
+      modelId: model.modelId,
+      provider: model.provider,
+    });
     try {
-      const text = await retryAiTaskCall(
-        async () =>
-          await resolvedDeps.chat({
-            adapter,
-            maxTokens: 4096,
-            messages: [{ content: userPrompt, role: "user" }],
-            stream: false,
-            systemPrompts: [systemPrompt],
+      const result = await retryAiTaskCall(() =>
+        resolvedDeps.generateText({
+          maxOutputTokens: 4096,
+          model: wrapLanguageModel({
+            middleware: extractJsonMiddleware(),
+            model,
           }),
+          prompt: userPrompt,
+          system: systemPrompt,
+        }),
       );
+      const { text } = result;
       const output = parseTaggingOutput(text);
 
       const expectedKeys = new Set(input.items.map((item) => item.key));
@@ -349,10 +357,14 @@ export const generateSkillTagsBatch = async (
         returnedKeys.some((key) => !expectedKeys.has(key))
       ) {
         lastError = new Error("Tagging response keys did not match the input batch.");
+        console.warn("[ai-tagging] model output invalid, trying next", {
+          attempt: attempt + 1,
+          error: (lastError as Error).message,
+        });
         continue;
       }
 
-      return {
+      const resolved = {
         items: output.items.map((item): SkillTaggingOutputItem => {
           const selectedByDimension: Record<
             z.infer<typeof dimensionSchema>,
@@ -442,8 +454,20 @@ export const generateSkillTagsBatch = async (
           };
         }),
       };
+      console.info("[ai-tagging] model succeeded", {
+        attempt: attempt + 1,
+        modelId: model.modelId,
+        provider: model.provider,
+      });
+      return resolved;
     } catch (error) {
       lastError = error;
+      console.warn("[ai-tagging] model failed, trying next", {
+        attempt: attempt + 1,
+        modelId: model.modelId,
+        provider: model.provider,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

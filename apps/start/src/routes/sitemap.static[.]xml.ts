@@ -2,7 +2,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SITE_URL } from "@/lib/constants";
-import { wrapUrlSet, renderUrlEntry } from "@/lib/sitemap";
+import { getAllMultilingualUrls, renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
+import { locales } from "@/paraglide/runtime";
 
 const STATIC_PATHS = [
   "/",
@@ -21,27 +22,43 @@ const STATIC_PATHS = [
   "/cookies",
 ];
 
+const stripLocalePrefix = (path: string) => {
+  for (const locale of locales) {
+    if (path === `/${locale}` || path === `/${locale}/`) {
+      return "/";
+    }
+
+    if (path.startsWith(`/${locale}/`)) {
+      return path.slice(locale.length + 1);
+    }
+  }
+
+  return path;
+};
+
 export const Route = createFileRoute("/sitemap/static.xml")({
   server: {
     handlers: {
       GET: async () => {
         const xml = wrapUrlSet(
-          STATIC_PATHS.map((path) =>
-            renderUrlEntry({
-              changefreq: path === "/" ? "daily" : path === "/skills" ? "daily" : "weekly",
+          getAllMultilingualUrls(STATIC_PATHS).map((path) => {
+            const basePath = stripLocalePrefix(path);
+
+            return renderUrlEntry({
+              changefreq: basePath === "/" || basePath === "/skills" ? "daily" : "weekly",
               loc: `${SITE_URL}${path}`,
               priority:
-                path === "/"
+                basePath === "/"
                   ? "1.0"
-                  : path === "/skills"
+                  : basePath === "/skills"
                     ? "0.9"
-                    : path === "/submit"
+                    : basePath === "/submit"
                       ? "0.7"
-                      : path === "/privacy" || path === "/terms" || path === "/cookies"
+                      : basePath === "/privacy" || basePath === "/terms" || basePath === "/cookies"
                         ? "0.5"
                         : "0.8",
-            }),
-          ),
+            });
+          }),
         );
 
         return await new Response(xml, {

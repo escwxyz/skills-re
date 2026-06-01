@@ -51,11 +51,11 @@ export const fetchTagDetail = async (input: { client: TagDetailClient; slug: str
 };
 
 interface TagTopSkillsClient {
-  tags: Pick<AppRouterClient["tags"], "getBySlug">;
+  tags: Pick<AppRouterClient["tags"], "getTopSkillsBySlug">;
 }
 
 export const fetchTagTopSkills = async (input: { client: TagTopSkillsClient; slug: string }) => {
-  const tag = await input.client.tags.getBySlug({ slug: input.slug });
+  const tag = await input.client.tags.getTopSkillsBySlug({ slug: input.slug });
 
   if (!tag) {
     return null;

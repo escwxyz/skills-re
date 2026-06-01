@@ -4,12 +4,7 @@ import { cloneElement, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEventHandler, ReactElement } from "react";
 import { z } from "zod/v4";
 
-import {
-  isLoginDialogOpenAtom,
-  isWriteReviewDialogOpenAtom,
-  writeReviewInitialStarsAtom,
-  writeReviewSkillIdAtom,
-} from "@/atoms/app";
+import { loginDialogAtom, pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +37,8 @@ import {
 } from "@/paraglide/messages";
 import { ArrowRightIcon, XIcon } from "@phosphor-icons/react";
 import { useRouteContext } from "@tanstack/react-router";
+
+import { openLoginDialog } from "@/utils/login-dialog";
 
 const reviewFormSchema = z.object({
   body: z.string().trim().min(1),
@@ -117,7 +114,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <div className="font-display mb-2 text-[32px] font-normal">
           {write_review_form_thank_you()}
         </div>
-        <p className="font-serif mb-6 text-[14px] text-ink-2">
+        <p className="font-serif mb-6 text-[14px] text-muted-foreground">
           {write_review_form_success_message()}
         </p>
       </div>
@@ -130,7 +127,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="stars">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-text block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_rating_label()}
               </FieldLabel>
               <Rating
@@ -150,7 +147,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="title">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-text block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_headline_label()}
               </FieldLabel>
               <Input
@@ -168,7 +165,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         <form.AppField name="body">
           {(field) => (
             <Field className="space-y-2">
-              <FieldLabel className="eyebrow text-muted-text block">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground block">
                 {write_review_form_body_label()}
               </FieldLabel>
               <Textarea
@@ -183,7 +180,7 @@ function WriteReviewForm({ initialStars, isOpen, skillId }: WriteReviewFormProps
         </form.AppField>
 
         {submitError && (
-          <p className="font-mono text-[11px] tracking-[.12em] text-editorial-red">{submitError}</p>
+          <p className="font-mono text-xs uppercase text-destructive">{submitError}</p>
         )}
 
         <div className="flex gap-3 pt-1">
@@ -221,12 +218,10 @@ interface WriteReviewDialogProps {
 
 export function WriteReviewDialog({ onOpenChange }: WriteReviewDialogProps) {
   const { currentUser } = useRouteContext({ from: "__root__" });
-  const [open, setOpen] = useAtom(isWriteReviewDialogOpenAtom);
-  const [initialStars] = useAtom(writeReviewInitialStarsAtom);
-  const [skillId] = useAtom(writeReviewSkillIdAtom);
+  const [{ open, initialStars, skillId }, setWriteReviewDialog] = useAtom(writeReviewDialogAtom);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
+    setWriteReviewDialog((prev) => ({ ...prev, open: nextOpen }));
     onOpenChange?.(nextOpen);
   };
 
@@ -254,7 +249,7 @@ export function WriteReviewDialog({ onOpenChange }: WriteReviewDialogProps) {
               }
             />
           </div>
-          <p className="font-mono mt-1 text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+          <p className="font-mono mt-1 text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
             {write_review_form_description()}
           </p>
         </DialogHeader>
@@ -271,21 +266,21 @@ interface WriteReviewCtaProps {
 
 export function WriteReviewCta({ skillId, trigger }: WriteReviewCtaProps) {
   const { currentUser } = useRouteContext({ from: "__root__" });
-  const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
-  const setOpen = useSetAtom(isWriteReviewDialogOpenAtom);
-  const setInitialStars = useSetAtom(writeReviewInitialStarsAtom);
-  const setSkillId = useSetAtom(writeReviewSkillIdAtom);
+  const setWriteReviewDialog = useSetAtom(writeReviewDialogAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
+  const setPendingAction = useSetAtom(pendingActionAtom);
 
   const handleClick = () => {
-    setSkillId(skillId);
-    setInitialStars(0);
-
     if (currentUser) {
-      setOpen(true);
+      setWriteReviewDialog({ open: true, initialStars: 0, skillId });
       return;
     }
 
-    setLoginDialogOpen(true);
+    setPendingAction({
+      skillId,
+      type: "write-review",
+    });
+    openLoginDialog(setLoginDialog);
   };
 
   if (trigger) {

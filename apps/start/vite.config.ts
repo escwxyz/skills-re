@@ -11,6 +11,11 @@ const config = defineConfig({
   server: {
     port: 4321,
   },
+  build: {
+    rollupOptions: {
+      external: ["cloudflare:workers"],
+    },
+  },
   plugins: [
     contentCollections(),
     paraglideVitePlugin({
@@ -52,7 +57,9 @@ const config = defineConfig({
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
-    tailwindcss(),
+    tailwindcss({
+      optimize: true,
+    }),
     tanstackStart(),
     viteReact(),
   ],

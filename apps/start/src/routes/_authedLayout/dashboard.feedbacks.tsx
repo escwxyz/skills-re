@@ -62,6 +62,9 @@ const typeBadgeClass: Record<FeedbackType, string> = {
   bug: "border-destructive/40 bg-destructive/10 text-destructive",
   general: "border-border bg-muted text-muted-foreground",
   request: "border-chart-4/40 bg-chart-4/10 text-chart-4",
+  skill_display: "border-chart-5/40 bg-chart-5/10 text-chart-5",
+  skill_issue: "border-chart-1/40 bg-chart-1/10 text-chart-1",
+  skill_takedown: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
 const statusBadgeClass: Record<FeedbackStatus, string> = {
@@ -109,12 +112,7 @@ function FeedbackStatusPill({ status }: { status: FeedbackStatus }) {
 }
 
 function FeedbackTypePill({ type }: { type: FeedbackType }) {
-  const label =
-    type === "bug"
-      ? m.dashboard_feedbacks_type_bug()
-      : type === "request"
-        ? m.dashboard_feedbacks_type_request()
-        : m.dashboard_feedbacks_type_general();
+  const label = getFeedbackTypeLabel(type);
 
   return (
     <span
@@ -126,6 +124,25 @@ function FeedbackTypePill({ type }: { type: FeedbackType }) {
   );
 }
 
+function getFeedbackTypeLabel(type: FeedbackType) {
+  if (type === "bug") {
+    return m.dashboard_feedbacks_type_bug();
+  }
+  if (type === "request") {
+    return m.dashboard_feedbacks_type_request();
+  }
+  if (type === "skill_issue") {
+    return m.dashboard_feedbacks_type_skill_issue();
+  }
+  if (type === "skill_display") {
+    return m.dashboard_feedbacks_type_skill_display();
+  }
+  if (type === "skill_takedown") {
+    return m.dashboard_feedbacks_type_skill_takedown();
+  }
+  return m.dashboard_feedbacks_type_general();
+}
+
 function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
   const locale = getLocale();
   return (
@@ -135,7 +152,7 @@ function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <FeedbackTypePill type={feedback.type} />
-              <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-text">
+              <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted-foreground">
                 <TimeValue locale={locale} time={feedback._creationTime} />
               </span>
             </div>
@@ -148,6 +165,15 @@ function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
       </CardHeader>
 
       <CardContent className="space-y-4 py-4">
+        {feedback.skillTitle || feedback.skillSlug ? (
+          <div className="border border-border bg-muted/30 px-3 py-2 font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+            Skill: {feedback.skillTitle ?? feedback.skillSlug}
+            {feedback.skillSlug ? (
+              <span className="ml-2 normal-case">/{feedback.skillSlug}</span>
+            ) : null}
+          </div>
+        ) : null}
+
         <p className="text-[13px] leading-[1.65] text-foreground/80">{feedback.content}</p>
 
         {feedback.response ? (
@@ -159,7 +185,7 @@ function FeedbackCard({ feedback }: { feedback: FeedbackItem }) {
             <p className="text-[13px] leading-[1.65] text-foreground/80">{feedback.response}</p>
           </div>
         ) : (
-          <div className="border border-dashed border-rule bg-paper/70 px-3 py-2 text-[12px] leading-[1.6] text-muted-text">
+          <div className="border border-dashed border-border bg-background/70 px-3 py-2 text-[12px] leading-[1.6] text-muted-foreground">
             {getAdminResponseLabel(feedback.status)}
           </div>
         )}
@@ -211,7 +237,7 @@ function FeedbackComposer({ onSubmitted }: { onSubmitted: () => void }) {
     <form.AppForm>
       <Form className="mx-auto w-full space-y-6 p-6 md:p-8">
         <div>
-          <p className="font-mono text-xs uppercase text-muted-text">
+          <p className="font-mono text-xs uppercase text-muted-foreground">
             {m.dashboard_feedbacks_composer_eyebrow()}
           </p>
           <h3 className="mt-4 font-display text-2xl tracking-[-0.03em] text-foreground">
@@ -223,7 +249,7 @@ function FeedbackComposer({ onSubmitted }: { onSubmitted: () => void }) {
           {(field) => (
             <FormField className="space-y-2">
               <fieldset className="m-0 min-w-0 space-y-2 p-0">
-                <legend className="font-mono text-xs uppercase text-muted-text">
+                <legend className="font-mono text-xs uppercase text-muted-foreground">
                   {m.dashboard_feedbacks_composer_type_label()}
                 </legend>
                 <RadioGroup
@@ -264,7 +290,7 @@ function FeedbackComposer({ onSubmitted }: { onSubmitted: () => void }) {
         <form.AppField name="title">
           {(field) => (
             <FormField className="space-y-2">
-              <FieldLabel className="font-mono text-xs uppercase text-muted-text">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground">
                 {m.dashboard_feedbacks_composer_subject_label()}
               </FieldLabel>
               <Input
@@ -281,7 +307,7 @@ function FeedbackComposer({ onSubmitted }: { onSubmitted: () => void }) {
         <form.AppField name="content">
           {(field) => (
             <FormField className="space-y-2">
-              <FieldLabel className="font-mono text-xs uppercase text-muted-text">
+              <FieldLabel className="font-mono text-xs uppercase text-muted-foreground">
                 {m.dashboard_feedbacks_composer_content_label()}
               </FieldLabel>
               <Textarea
@@ -330,14 +356,14 @@ function FeedbacksRoute() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <section className="border bg-paper p-6 shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
-        <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted-text">
+      <section className="border bg-background p-6 shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
+        <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted-foreground">
           {m.dashboard_feedbacks_eyebrow()}
         </div>
         <h1 className="mt-3 font-display text-[clamp(2.2rem,4vw,4rem)] leading-[0.92] tracking-[-0.04em]">
           {m.dashboard_feedbacks_title()}
         </h1>
-        <p className="mt-4 max-w-2xl text-[13px] leading-[1.65] text-muted-text">
+        <p className="mt-4 max-w-2xl text-[13px] leading-[1.65] text-muted-foreground">
           {m.dashboard_feedbacks_description()}
         </p>
         <div className="mt-6">
@@ -345,7 +371,7 @@ function FeedbacksRoute() {
             <DialogTrigger
               render={
                 <button
-                  className="inline-flex h-8 items-center gap-1.5 border border-rule bg-foreground px-3 font-mono text-[10px] tracking-[0.16em] uppercase text-background transition-opacity hover:opacity-85"
+                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-foreground px-3 font-mono text-[10px] tracking-[0.16em] uppercase text-background transition-opacity hover:opacity-85"
                   type="button"
                 >
                   <PlusIcon className="size-3.5" />
@@ -373,12 +399,12 @@ function FeedbacksRoute() {
         {data.feedbacks.length > 0 ? (
           data.feedbacks.map((feedback) => <FeedbackCard feedback={feedback} key={feedback._id} />)
         ) : (
-          <div className="border border-dashed border-rule bg-background px-5 py-12 text-center">
-            <ChatCircleTextIcon className="mx-auto size-8 text-muted-text/60" />
+          <div className="border border-dashed border-border bg-background px-5 py-12 text-center">
+            <ChatCircleTextIcon className="mx-auto size-8 text-muted-foreground/60" />
             <p className="mt-4 font-display text-[1.35rem] leading-none tracking-[-0.03em] text-foreground">
               {m.dashboard_feedbacks_empty_title()}
             </p>
-            <p className="mx-auto mt-3 max-w-lg text-[13px] leading-[1.6] text-muted-text">
+            <p className="mx-auto mt-3 max-w-lg text-[13px] leading-[1.6] text-muted-foreground">
               {m.dashboard_feedbacks_empty_description()}
             </p>
           </div>

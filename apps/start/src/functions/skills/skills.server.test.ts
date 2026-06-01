@@ -6,6 +6,8 @@ import {
   fetchSkillChangelog,
   fetchSkillEvalSandboxInitial,
   fetchSkillEvalRunDetail,
+  fetchSkillDocument,
+  fetchSkillDocumentByResolvedSkill,
   fetchSkillFileContent,
   fetchSkillCheckSaved,
   fetchSkillVersionHistory,
@@ -26,6 +28,7 @@ type FetchSkillEvalSandboxInitialClient = Parameters<
   typeof fetchSkillEvalSandboxInitial
 >[0]["client"];
 type FetchSkillEvalRunDetailClient = Parameters<typeof fetchSkillEvalRunDetail>[0]["client"];
+type FetchSkillDocumentClient = Parameters<typeof fetchSkillDocument>[0]["client"];
 type FetchSkillVersionHistoryClient = Parameters<typeof fetchSkillVersionHistory>[0]["client"];
 type FetchSkillFileContentClient = Parameters<typeof fetchSkillFileContent>[0]["client"];
 type FetchSkillCheckSavedClient = Parameters<typeof fetchSkillCheckSaved>[0]["client"];
@@ -260,6 +263,53 @@ describe("fetchSkillsBrowsePagination", () => {
 });
 
 describe("fetchSkillsSearch", () => {
+  test("forwards search mode to the public search contract", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      skills: {
+        search: (input?: {
+          limit?: number;
+          query?: string;
+          rewriteQuery?: boolean;
+          searchMode?: "keyword" | "semantic";
+        }) => {
+          calls.push(input ?? {});
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [],
+          });
+        },
+      },
+    } satisfies SkillsSearchClient;
+
+    await expect(
+      fetchSkillsSearch({
+        client,
+        limit: 24,
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "keyword",
+      }),
+    ).resolves.toEqual({
+      data: {
+        continueCursor: "",
+        isDone: true,
+        page: [],
+      },
+      status: "ok",
+    });
+
+    expect(calls).toEqual([
+      {
+        limit: 24,
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "keyword",
+      },
+    ]);
+  });
+
   test("maps rate-limited search failures into a recoverable result", async () => {
     const client = {
       skills: {
@@ -312,6 +362,84 @@ describe("fetchSkillFileContent", () => {
   });
 });
 
+describe("fetchSkillDocumentByResolvedSkill", () => {
+  test("builds document content without repeating slug resolution", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      snapshots: {
+        listBySkill: (input?: { limit?: number; skillId?: string }) => {
+          calls.push({ listBySkill: input ?? {} });
+          return Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: [
+              {
+                description: "current snapshot",
+                entryPath: "skills/example/SKILL.md",
+                hash: "abcdef123456",
+                id: "snapshot-1",
+                syncTime: 1710000001000,
+                version: "v1",
+              },
+            ],
+          });
+        },
+        readSnapshotFileContent: (input?: {
+          path?: string;
+          snapshotId?: string;
+          maxBytes?: number;
+        }) => {
+          calls.push({ readSnapshotFileContent: input ?? {} });
+          return Promise.resolve({
+            bytesRead: 96,
+            content:
+              "---\nname: Example Skill\ndescription: Example description\n---\n\n# Title\n\n## Usage\n",
+            isTruncated: false,
+            offset: 0,
+            totalBytes: 96,
+          });
+        },
+      },
+    } as unknown as FetchSkillDocumentClient;
+
+    const result = await fetchSkillDocumentByResolvedSkill({
+      client,
+      locale: "en",
+      resolvedSkill: {
+        authorHandle: "acme",
+        description: "Example description",
+        id: "skill-1",
+        latestVersion: "1.0.0",
+        repoName: "skills",
+        skillSlug: "example-skill",
+        title: "Example Skill",
+      },
+      selectedSnapshotId: undefined,
+    });
+
+    expect(result).toEqual({
+      contentHtml: expect.stringContaining('<h2 id="usage"'),
+      entryMetaLabel: "skills/example/SKILL.md · 96 B",
+      frontmatter: {
+        description: "Example description",
+        name: "Example Skill",
+      },
+      tocItems: [{ depth: 2, slug: "usage", title: "Usage" }],
+    });
+
+    expect(calls).toEqual([
+      { listBySkill: { limit: 3, skillId: "skill-1" } },
+      {
+        readSnapshotFileContent: {
+          maxBytes: 200_000,
+          path: "skills/example/SKILL.md",
+          snapshotId: "snapshot-1",
+        },
+      },
+    ]);
+  });
+});
+
 describe("fetchSkillCheckSaved", () => {
   test("forwards the slug to the injected client", async () => {
     const calls: Array<Record<string, unknown>> = [];
@@ -349,14 +477,17 @@ describe("saveSkillToDashboard", () => {
   test("forwards the slug to the injected client", async () => {
     const calls: Array<Record<string, unknown>> = [];
     const client = {
-      skills: {
-        save: (input?: { slug: string }) => {
-          calls.push({ save: input ?? {} });
+      collections: {
+        saveSkill: (input?: { skillSlug: string }) => {
+          calls.push({ saveSkill: input ?? {} });
           return Promise.resolve({
             alreadySaved: false,
+            collectionId: "collection-1",
             saved: true,
           });
         },
+      },
+      skills: {
         unsave: () => Promise.resolve({ unsaved: true }),
       },
     } satisfies SaveSkillClient;
@@ -373,8 +504,8 @@ describe("saveSkillToDashboard", () => {
 
     expect(calls).toEqual([
       {
-        save: {
-          slug: "workflow-builder",
+        saveSkill: {
+          skillSlug: "workflow-builder",
         },
       },
     ]);
@@ -385,8 +516,11 @@ describe("unsaveSkillFromDashboard", () => {
   test("forwards the slug to the injected client", async () => {
     const calls: Array<Record<string, unknown>> = [];
     const client = {
+      collections: {
+        saveSkill: () =>
+          Promise.resolve({ alreadySaved: false, collectionId: "collection-1", saved: true }),
+      },
       skills: {
-        save: () => Promise.resolve({ alreadySaved: false, saved: true }),
         unsave: (input?: { slug: string }) => {
           calls.push({ unsave: input ?? {} });
           return Promise.resolve({
@@ -478,9 +612,12 @@ describe("resolveSkillBase", () => {
     } as unknown as ResolveSkillBaseClient;
 
     await expect(resolveSkillBase({ client, slug: "builder" })).resolves.toEqual({
+      authorHandle: "acme",
       description: "Builds things",
       id: "skill-1",
       latestVersion: "1.2.3",
+      repoName: "builder-repo",
+      skillSlug: "builder",
       title: "Builder",
     });
 

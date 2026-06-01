@@ -111,57 +111,6 @@ export const createGithubRepoSkillsDiscoveryDeps = (
 
 const normalizeDirectoryKey = (value: string) => normalizeSkillRootPath(value);
 
-const scheduleImportJobs = async (
-  scheduler: WorkflowScheduler<RepoSkillImportWorkflowPayload> | null | undefined,
-  input: {
-    repoName: string;
-    repoOwner: string;
-    roots: { skillRootPath: string }[];
-  },
-) => {
-  if (!scheduler || input.roots.length === 0) {
-    return 0;
-  }
-
-  await Promise.all(
-    input.roots.map((root) =>
-      scheduler.enqueue({
-        repoName: input.repoName,
-        repoOwner: input.repoOwner,
-        skillRootPath: root.skillRootPath,
-      }),
-    ),
-  );
-  return input.roots.length;
-};
-
-const scheduleSnapshotJobs = async (
-  scheduler: WorkflowScheduler<RepoSkillSnapshotSyncWorkflowPayload> | null | undefined,
-  input: {
-    expectedHeadSha: string;
-    repoName: string;
-    repoOwner: string;
-    skills: { skillId: string; skillRootPath: string }[];
-  },
-) => {
-  if (!scheduler || input.skills.length === 0) {
-    return 0;
-  }
-
-  await Promise.all(
-    input.skills.map((skill) =>
-      scheduler.enqueue({
-        expectedHeadSha: input.expectedHeadSha,
-        repoName: input.repoName,
-        repoOwner: input.repoOwner,
-        skillId: skill.skillId,
-        skillRootPath: skill.skillRootPath,
-      }),
-    ),
-  );
-  return input.skills.length;
-};
-
 export const runRepoSkillsDiscoveryWorkflow = async (
   event: Readonly<WorkflowEvent<RepoSkillsDiscoveryWorkflowPayload>>,
   step: WorkflowStep,
@@ -261,26 +210,44 @@ export const runRepoSkillsDiscoveryWorkflow = async (
     (skill) => !discoveredByRoot.has(normalizeDirectoryKey(skill.directoryPath)),
   ).length;
 
-  const [addedCount, changedCount] = await Promise.all([
-    step.do("enqueue-new-skill-imports", workflowStepRetryPolicy.repoSkillsDiscoveryFanout, () =>
-      scheduleImportJobs(activeDeps.importScheduler, {
-        repoName,
-        repoOwner,
-        roots: addedRoots,
-      }),
-    ),
-    step.do(
-      "enqueue-changed-skill-snapshots",
-      workflowStepRetryPolicy.repoSkillsDiscoveryFanout,
-      () =>
-        scheduleSnapshotJobs(activeDeps.snapshotSyncScheduler, {
-          expectedHeadSha: headSha,
-          repoName,
-          repoOwner,
-          skills: changedSkills,
-        }),
-    ),
-  ]);
+  let addedCount = 0;
+  for (const root of addedRoots) {
+    const { importScheduler } = activeDeps;
+    if (importScheduler) {
+      await step.do(
+        `enqueue-import-${normalizeDirectoryKey(root.skillRootPath)}`,
+        workflowStepRetryPolicy.repoSkillsDiscoveryFanout,
+        () =>
+          importScheduler.enqueue({
+            repoName,
+            repoOwner,
+            skillRootPath: root.skillRootPath,
+          }),
+      );
+    }
+    addedCount += 1;
+  }
+
+  let changedCount = 0;
+  for (const skill of changedSkills) {
+    const { snapshotSyncScheduler } = activeDeps;
+
+    if (snapshotSyncScheduler) {
+      await step.do(
+        `enqueue-snapshot-${skill.skillId}`,
+        workflowStepRetryPolicy.repoSkillsDiscoveryFanout,
+        () =>
+          snapshotSyncScheduler.enqueue({
+            expectedHeadSha: headSha,
+            repoName,
+            repoOwner,
+            skillId: skill.skillId,
+            skillRootPath: skill.skillRootPath,
+          }),
+      );
+    }
+    changedCount += 1;
+  }
 
   return {
     addedCount,

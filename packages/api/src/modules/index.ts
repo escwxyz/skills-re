@@ -1,3 +1,4 @@
+export { resolveCliInstall, createCliService, cliService } from "./cli/service";
 export {
   checkExistingSkill,
   claimAsAuthor,
@@ -13,6 +14,7 @@ export {
   listSkills,
   searchSkills,
   resolvePathBySlug,
+  submitGithubPreparedPublic,
   submitGithubRepoPublic,
   uploadSkills,
 } from "./skills/service";
@@ -25,6 +27,13 @@ export {
   savedSkillsService,
   unsaveSkill,
 } from "./saved-skills/service";
+export {
+  createSkillUsageService,
+  getSkillRecommendations,
+  listMyRecentSkillUsage,
+  recordSkillUsage,
+  skillUsageService,
+} from "./skill-usage/service";
 export { fetchRepo as fetchGithubRepo } from "./github/service";
 export {
   createDownloadMetricsRecorder,
@@ -42,6 +51,7 @@ export type { SkillDownloadMetrics, SkillViewMetrics } from "./metrics";
 export { getReportBySnapshot as getStaticAuditReportBySnapshot } from "./static-audits/service";
 export { skillEvalSandboxService } from "./skill-eval-sandbox";
 export {
+  FeedbackCreateError,
   countMineFeedback,
   createFeedbackRecord,
   getFeedbackByIdPublic as getFeedbackById,
@@ -96,10 +106,12 @@ export {
   listTagsForSeoPublic as listTagsForSeo,
   listTagsPagePublic as listTagsPage,
   listTagsPublic as listTags,
+  getTagTopSkillsBySlug,
 } from "./tags/service";
 export {
   countCategoriesPublic as countCategories,
   getCategoryBySlug,
+  getCategoryTopSkillsBySlug,
   listCategoriesForAiPublic as listCategoriesForAi,
   listCategoriesPublic as listCategories,
 } from "./categories/service";
@@ -109,8 +121,11 @@ export {
   createCollection,
   deleteCollection,
   getCollectionBySlug,
+  getMineCollectionById,
+  listMineCollections,
   listCollectionsPublic as listCollections,
   removeSkillFromCollection,
+  saveSkillToCollection,
   setCollectionSkills,
   updateCollection,
 } from "./collections/service";

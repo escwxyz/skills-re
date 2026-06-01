@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import {
+  getRouteApi,
   createFileRoute,
   Outlet,
   redirect,
@@ -17,25 +18,32 @@ import { SkillDetailMetadata } from "@/components/skill-detail-metadata";
 import { SkillVersionPanel } from "@/components/skill-version-panel";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { recordSkillView } from "@/functions/skills/record-skill-view";
-import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
-import { skill_detail_verified } from "@/paraglide/messages";
-import { getLocale } from "@/paraglide/runtime";
 import { SkillBreadcrumb } from "@/components/skill-breadcrumb";
 import { SkillDetailTags } from "@/components/skill-detail-tags";
 import { SkillDetailCategory } from "@/components/skill-detail-category";
 import { ReviewRatingTrigger } from "@/components/review-rating-trigger";
-import { SkillRelated } from "@/components/skill-related";
 import type { CategorySlug } from "@skills-re/contract/categories-taxonomy";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { WriteReviewDialog } from "@/components/write-review-cta";
+import { SkillDetailStats } from "@/components/skill-detail-stats";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { skill_detail_read_full_description, skill_detail_verified } from "@/paraglide/messages";
 
 const searchSchema = z.object({
   snapshotId: z.string().optional(),
 });
 
+const LazySkillRelated = lazy(async () => {
+  const module = await import("@/components/skill-related");
+  return { default: module.SkillRelated };
+});
+
+const LazyWriteReviewDialog = lazy(async () => {
+  const module = await import("@/components/write-review-cta");
+  return { default: module.WriteReviewDialog };
+});
+
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug")({
-  loader: async ({ location, params }) => {
+  beforeLoad: async ({ location, params }) => {
     const data = await getSkillBase({ data: { skillSlug: params.slug } });
     if (!data) {
       throw redirect({ to: "/skills" });
@@ -57,24 +65,16 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug"
       });
     }
 
-    return data;
+    return {
+      skillDetail: data,
+    };
   },
+  loader: ({ context }) => context.skillDetail,
   validateSearch: searchSchema,
-  head: ({ loaderData, params }) =>
-    createSeo({
-      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}`,
-      description: loaderData?.skill.description,
-      image:
-        buildSkillOgImagePath({
-          authorHandle: params.author,
-          repoName: params.repo,
-          skillSlug: params.slug,
-        }) ?? undefined,
-      title: loaderData?.skill.title,
-      locale: getLocale(),
-    }),
   component: RouteComponent,
 });
+
+export const skillDetailRouteApi = getRouteApi("/_publicLayout/skills/$author/$repo/$slug");
 
 function RouteComponent() {
   const data = Route.useLoaderData();
@@ -83,6 +83,8 @@ function RouteComponent() {
   const location = useLocation();
 
   const isMobile = useIsMobile();
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const [isDescClipped, setIsDescClipped] = useState(false);
 
   const { author, repo, slug } = Route.useParams();
   const { skill } = data;
@@ -106,6 +108,13 @@ function RouteComponent() {
       wait: 1000,
     },
   );
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsDescClipped(el.scrollHeight > el.clientHeight);
+    }
+  }, [skill.description]);
 
   useEffect(() => {
     if (!skill.id) {
@@ -139,11 +148,28 @@ function RouteComponent() {
             ) : null}
           </h1>
 
-          <p className="text-muted-foreground m-0 mb-7 max-w-170 font-serif text-lg">
-            {skill.description}
-          </p>
+          <div className="mb-7 space-y-2">
+            <p
+              ref={descRef}
+              className="text-muted-foreground m-0 max-w-170 font-serif text-lg line-clamp-3"
+            >
+              {skill.description}
+            </p>
+            {isDescClipped && (
+              <Dialog>
+                <DialogTrigger className="font-mono text-[10.5px] uppercase tracking-[.14em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  {skill_detail_read_full_description()}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  <p className="font-serif text-base text-foreground/80 leading-relaxed">
+                    {skill.description}
+                  </p>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2">
             <div className="space-y-4">
               <SkillDetailCategory
                 categorySlug={(skill.primaryCategory ?? "other") as CategorySlug}
@@ -153,16 +179,31 @@ function RouteComponent() {
             <ReviewRatingTrigger skillId={skill.id} />
           </div>
 
-          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div className="col-span-2">TODO</div>
+          <div className="border-border mt-8 border-t pt-6 grid grid-cols-1 md:grid-cols-3 md:gap-0 gap-6 items-center">
+            <div className="col-span-2">
+              <SkillDetailStats
+                auditScore={skill.latestAuditScore ?? null}
+                createdAt={skill.createdAt ?? null}
+                downloadsAllTime={skill.downloadsAllTime ?? null}
+                latestSnapshotTotalBytes={skill.latestSnapshotTotalBytes ?? null}
+                skillId={skill.id}
+                viewsAllTime={skill.viewsAllTime ?? null}
+              />
+            </div>
 
-            <div className="col-span-1 space-y-4">
-              {isMobile ? null : <InstallTabs author={author} repo={repo} slug={skill.slug} />}
-
-              <SkillDetailActions
+            <div className="col-span-1 border-t border-border pt-6 md:border-t-0 md:border-l md:pl-6 md:pt-0">
+              <SkillVersionPanel
+                author={author}
+                onSnapshotChange={(id) => {
+                  navigate({
+                    replace: true,
+                    search: (prev) => ({ ...prev, snapshotId: id }),
+                  });
+                }}
+                repo={repo}
+                skillId={data.skill.id}
                 snapshotId={selectedSnapshotId}
-                slug={skill.slug}
-                version={latestVersion}
+                slug={slug}
               />
             </div>
           </div>
@@ -179,19 +220,17 @@ function RouteComponent() {
             updatedAt={skill.updatedAt}
           />
 
-          <SkillVersionPanel
-            author={author}
-            onSnapshotChange={(id) => {
-              navigate({
-                replace: true,
-                search: (prev) => ({ ...prev, snapshotId: id }),
-              });
-            }}
-            repo={repo}
-            skillId={data.skill.id}
-            snapshotId={selectedSnapshotId}
-            slug={slug}
-          />
+          <div className="py-4 space-y-4">
+            {isMobile ? null : <InstallTabs author={author} repo={repo} slug={skill.slug} />}
+
+            <SkillDetailActions
+              snapshotId={selectedSnapshotId}
+              slug={skill.slug}
+              skillId={skill.id}
+              title={skill.title}
+              version={latestVersion}
+            />
+          </div>
         </div>
       </section>
 
@@ -206,8 +245,36 @@ function RouteComponent() {
       <div>
         <Outlet />
       </div>
-      <SkillRelated primaryCategory={skill.primaryCategory} skillId={skill.id} tags={skill.tags} />
-      <WriteReviewDialog />
+      <Suspense fallback={<SkillRelatedPending />}>
+        <LazySkillRelated
+          primaryCategory={skill.primaryCategory}
+          skillId={skill.id}
+          tags={skill.tags}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LazyWriteReviewDialog />
+      </Suspense>
     </>
   );
 }
+
+const SkillRelatedPending = () => (
+  <section className="border-b border-border px-4 py-10 md:px-6">
+    <div className="mb-3 flex items-end justify-between">
+      <div className="h-10 w-48 animate-pulse bg-muted" />
+      <div className="hidden h-3 w-32 animate-pulse bg-muted md:block" />
+    </div>
+    <div className="mb-6 border-t border-border" />
+    <div className="grid grid-cols-1 border-l border-border sm:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="border-r border-b border-border p-5">
+          <div className="mb-3 h-3 w-20 animate-pulse bg-muted" />
+          <div className="mb-3 h-6 w-3/4 animate-pulse bg-muted" />
+          <div className="mb-2 h-3 w-full animate-pulse bg-muted" />
+          <div className="h-3 w-2/3 animate-pulse bg-muted" />
+        </div>
+      ))}
+    </div>
+  </section>
+);

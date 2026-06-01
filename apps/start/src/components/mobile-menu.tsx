@@ -29,7 +29,16 @@ export const MobileMenu = () => {
   const [isOpen, setIsOpen] = useAtom(isMobileMenuOpenAtom);
 
   return (
-    <Drawer direction="top" open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
+    <Drawer
+      direction="top"
+      open={isOpen}
+      onOpenChange={(v) => {
+        if (v && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        setIsOpen(v);
+      }}
+    >
       <DrawerTrigger asChild>
         <button type="button" aria-label="Open navigation menu" className="p-1 md:hidden">
           <span className="relative block size-5" aria-hidden>
@@ -64,7 +73,10 @@ export const MobileMenu = () => {
         </button>
       </DrawerTrigger>
 
-      <DrawerContent className="border-b border-border bg-paper data-[vaul-drawer-direction=top]:mb-0 data-[vaul-drawer-direction=top]:h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:max-h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:mt-(--header-height)">
+      <DrawerContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="border-b border-border bg-background data-[vaul-drawer-direction=top]:mb-0 data-[vaul-drawer-direction=top]:h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:max-h-[calc(100dvh-(--header-height))] data-[vaul-drawer-direction=top]:mt-(--header-height)"
+      >
         <DrawerHeader className="border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
@@ -89,6 +101,7 @@ export const MobileMenu = () => {
               <li key={link.to} className="border-b border-border last:border-b-0">
                 <DrawerClose asChild>
                   <Link
+                    title={link.label}
                     to={link.to}
                     className="block py-4 font-mono text-2xl transition-colors hover:text-foreground"
                     inactiveProps={{ className: "text-foreground/70" }}
@@ -104,15 +117,19 @@ export const MobileMenu = () => {
         <DrawerFooter>
           <div className="flex items-center justify-between gap-2.5">
             <ThemeToggle />
-            <Link
-              to="/submit"
-              className={cn(
-                "no-underline! inline-flex font-mono",
-                buttonVariants({ variant: "ghost", size: "lg" }),
-              )}
-            >
-              <CloudArrowUpIcon />
-            </Link>
+            <DrawerClose asChild>
+              <Link
+                to="/submit"
+                title={m.header_submit()}
+                aria-label={m.header_submit()}
+                className={cn(
+                  "no-underline! inline-flex font-mono",
+                  buttonVariants({ variant: "ghost", size: "lg" }),
+                )}
+              >
+                <CloudArrowUpIcon />
+              </Link>
+            </DrawerClose>
           </div>
         </DrawerFooter>
       </DrawerContent>

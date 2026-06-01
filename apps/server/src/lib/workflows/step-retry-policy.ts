@@ -100,4 +100,9 @@ export const workflowStepRetryPolicy = {
     limit: 3,
     timeout: "3 minutes",
   }),
+  snapshotRawFilesBackfillBatch: buildStepConfig({
+    delay: "15 seconds",
+    limit: 3,
+    timeout: "10 minutes",
+  }),
 } as const satisfies Record<string, WorkflowStepConfig>;

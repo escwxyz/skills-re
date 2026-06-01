@@ -6,6 +6,10 @@ import {
   agentHostsTable,
   agentsTable,
   approvalRequestsTable,
+  oauthAccessTokensTable,
+  oauthClientsTable,
+  oauthConsentsTable,
+  oauthRefreshTokensTable,
   sessionsTable,
   usersTable,
 } from "./auth";
@@ -13,6 +17,7 @@ import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
 import { sandboxAgentsTable } from "./sandbox-agents";
 import { savedSkillsTable } from "./saved-skills";
+import { skillUsageEventsTable } from "./skill-usage-events";
 import { reviewsTable } from "./reviews";
 import { skillsTable, skillsTagsTable } from "./skills";
 import { skillEvalCasesTable, skillEvalSuitesTable } from "./skill-eval-suites";
@@ -24,7 +29,12 @@ import { tagsTable } from "./tags";
 export const usersRelations = relations(usersTable, ({ many }) => ({
   accounts: many(accountsTable),
   sessions: many(sessionsTable),
+  oauthClients: many(oauthClientsTable),
+  oauthRefreshTokens: many(oauthRefreshTokensTable),
+  oauthAccessTokens: many(oauthAccessTokensTable),
+  oauthConsents: many(oauthConsentsTable),
   savedSkills: many(savedSkillsTable),
+  skillUsageEvents: many(skillUsageEventsTable),
   agentHosts: many(agentHostsTable),
   agents: many(agentsTable),
   agentCapabilityGrantsDeniedBy: many(agentCapabilityGrantsTable, {
@@ -37,9 +47,67 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
   skillEvalRuns: many(skillEvalRunsTable),
 }));
 
-export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
+export const sessionsRelations = relations(sessionsTable, ({ one, many }) => ({
   user: one(usersTable, {
     fields: [sessionsTable.userId],
+    references: [usersTable.id],
+  }),
+  oauthAccessTokens: many(oauthAccessTokensTable),
+  oauthRefreshTokens: many(oauthRefreshTokensTable),
+}));
+
+export const oauthClientsRelations = relations(oauthClientsTable, ({ one, many }) => ({
+  user: one(usersTable, {
+    fields: [oauthClientsTable.userId],
+    references: [usersTable.id],
+  }),
+  accessTokens: many(oauthAccessTokensTable),
+  consents: many(oauthConsentsTable),
+  refreshTokens: many(oauthRefreshTokensTable),
+}));
+
+export const oauthRefreshTokensRelations = relations(oauthRefreshTokensTable, ({ one, many }) => ({
+  accessTokens: many(oauthAccessTokensTable),
+  client: one(oauthClientsTable, {
+    fields: [oauthRefreshTokensTable.clientId],
+    references: [oauthClientsTable.clientId],
+  }),
+  session: one(sessionsTable, {
+    fields: [oauthRefreshTokensTable.sessionId],
+    references: [sessionsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [oauthRefreshTokensTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const oauthAccessTokensRelations = relations(oauthAccessTokensTable, ({ one }) => ({
+  client: one(oauthClientsTable, {
+    fields: [oauthAccessTokensTable.clientId],
+    references: [oauthClientsTable.clientId],
+  }),
+  refreshToken: one(oauthRefreshTokensTable, {
+    fields: [oauthAccessTokensTable.refreshId],
+    references: [oauthRefreshTokensTable.id],
+  }),
+  session: one(sessionsTable, {
+    fields: [oauthAccessTokensTable.sessionId],
+    references: [sessionsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [oauthAccessTokensTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const oauthConsentsRelations = relations(oauthConsentsTable, ({ one }) => ({
+  client: one(oauthClientsTable, {
+    fields: [oauthConsentsTable.clientId],
+    references: [oauthClientsTable.clientId],
+  }),
+  user: one(usersTable, {
+    fields: [oauthConsentsTable.userId],
     references: [usersTable.id],
   }),
 }));
@@ -119,6 +187,7 @@ export const skillsRelations = relations(skillsTable, ({ one, many }) => ({
   skillEvalSuites: many(skillEvalSuitesTable),
   skillEvalCases: many(skillEvalCasesTable),
   skillEvalRuns: many(skillEvalRunsTable),
+  usageEvents: many(skillUsageEventsTable),
 }));
 
 export const skillsTagsRelations = relations(skillsTagsTable, ({ one }) => ({
@@ -265,5 +334,16 @@ export const skillEvalCaseResultsRelations = relations(skillEvalCaseResultsTable
   run: one(skillEvalRunsTable, {
     fields: [skillEvalCaseResultsTable.runId],
     references: [skillEvalRunsTable.id],
+  }),
+}));
+
+export const skillUsageEventsRelations = relations(skillUsageEventsTable, ({ one }) => ({
+  skill: one(skillsTable, {
+    fields: [skillUsageEventsTable.skillId],
+    references: [skillsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [skillUsageEventsTable.userId],
+    references: [usersTable.id],
   }),
 }));

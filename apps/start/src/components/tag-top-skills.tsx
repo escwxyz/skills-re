@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SkillCard } from "@/components/skill-card";
 import { getTagTopSkills } from "@/functions/tags/get-tag-top-skills";
 import {
+  tag_page_load_error,
   tag_page_no_public_skills,
   tag_page_see_all_skills,
   tag_page_top_skills,
@@ -30,7 +31,7 @@ export const TagTopSkills = ({ slug }: { slug: string }) => {
   if (isError || !data) {
     return (
       <div className="border-border border px-6 py-10 font-mono text-sm text-destructive">
-        Something went wrong while loading the top skills for this tag. Please try again later.
+        {tag_page_load_error()}
       </div>
     );
   }

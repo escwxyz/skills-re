@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_publicLayout/authors/")({
   loader: () => getAuthorsInitial(),
+  staleTime: 1000 * 60 * 60 * 5,
   head: () =>
     createSeo({
       canonicalPath: "/authors",
@@ -57,12 +58,12 @@ function RouteComponent() {
     },
     {
       label: String(authors_index_stats_verified()),
-      value: `▣ ${formatInteger(data.verifiedCount, locale)}`,
+      value: formatInteger(data.verifiedCount, locale),
       accent: "green" as const,
     },
     {
       label: String(authors_index_stats_new_this_week()),
-      value: `+ ${formatInteger(sumDailyMetrics(data.dailyMetrics).newSkills, locale)}`,
+      value: formatInteger(sumDailyMetrics(data.dailyMetrics).newSkills, locale),
     },
     {
       label: String(authors_index_stats_skills_published()),
@@ -91,10 +92,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        <div
-          className="border-border grid border-t"
-          style={{ gridTemplateColumns: "1.4fr 1fr 1fr" }}
-        >
+        <div className="border-border grid border-t grid-cols-1 md:grid-cols-3">
           {topAuthors.map((author, index) => (
             <Link
               key={author.handle}
@@ -124,20 +122,10 @@ function RouteComponent() {
                 {authors_index_public_author()}
                 {author.isVerified ? <SealCheckIcon className="inline-block ml-1" /> : ""}
               </div>
-              <h3
-                // oxlint-disable-next-line no-nested-ternary
-                className={`font-display m-0 mb-3 leading-none font-normal tracking-tight${index === 1 ? " text-destructive" : index === 2 ? " text-editorial-blue" : ""}`}
-                style={{ fontSize: index === 0 ? "76px" : "44px" }}
-              >
+              <h3 className="font-display m-0 mb-3 text-[44px] leading-none font-normal tracking-tight">
                 {getAuthorDisplayName(author)}
               </h3>
-              <p
-                className="text-muted-foreground mb-4 font-serif leading-[1.55]"
-                style={{
-                  fontSize: index === 0 ? "18px" : "15.5px",
-                  maxWidth: index === 0 ? "520px" : "400px",
-                }}
-              >
+              <p className="text-muted-foreground mb-4 max-w-100 font-serif text-[15.5px] leading-[1.55]">
                 {authors_index_signed_skills_description({ handle: author.handle })}
               </p>
               <div className="text-muted-foreground flex gap-5 font-mono text-[10.5px] tracking-widest uppercase">

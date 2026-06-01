@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SITE_URL } from "@/lib/constants";
 import { createServerORPCClient } from "@/lib/orpc.server";
-import { buildSitemapSkillsPageUrl, wrapSitemapIndex } from "@/lib/sitemap";
-
-const SITEMAP_SKILLS_PAGE_SIZE = 5000;
+import {
+  SITEMAP_SKILLS_PAGE_SIZE,
+  buildSitemapSkillsPageUrl,
+  wrapSitemapIndex,
+} from "@/lib/sitemap";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -21,7 +23,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { loc: `${SITE_URL}/sitemap/docs.xml` },
           { loc: `${SITE_URL}/sitemap/collections.xml` },
           ...Array.from({ length: totalPages }, (_, index) => ({
-            loc: buildSitemapSkillsPageUrl(index + 1),
+            loc: buildSitemapSkillsPageUrl(SITE_URL, index + 1),
           })),
         ]);
 

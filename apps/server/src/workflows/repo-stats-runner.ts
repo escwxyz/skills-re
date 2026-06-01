@@ -25,7 +25,7 @@ export interface RepoStatsSyncWorkflowDeps {
 }
 
 const DEFAULT_LIMIT = 20;
-const MAX_PAGES_PER_RUN = 25;
+const DEFAULT_MAX_PAGES_PER_RUN = 5;
 
 const defaultDeps: RepoStatsSyncWorkflowDeps = {
   skillsDiscoveryScheduler: null,
@@ -78,6 +78,7 @@ export const runRepoStatsSyncWorkflow = async (
     ...deps,
   };
   const limit = Math.max(1, Math.min(event.payload.limit ?? DEFAULT_LIMIT, 20));
+  const maxPages = Math.max(1, Math.min(event.payload.maxPages ?? DEFAULT_MAX_PAGES_PER_RUN, 25));
   let { cursor } = event.payload;
   let processedPages = 0;
   let completedEarly = false;
@@ -87,7 +88,7 @@ export const runRepoStatsSyncWorkflow = async (
     updatedAt: number;
   }[] = [];
 
-  while (processedPages < MAX_PAGES_PER_RUN) {
+  while (processedPages < maxPages) {
     const currentCursor = cursor;
     const result = await step.do(
       `sync-repo-stats-page-${processedPages + 1}`,

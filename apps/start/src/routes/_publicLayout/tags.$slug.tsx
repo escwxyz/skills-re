@@ -97,9 +97,9 @@ function RouteComponent() {
       <section className="grid grid-cols-1 border-b border-border lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <aside className="border-border border-b px-6 py-8 lg:border-b-0 lg:border-r">
           <div className="mb-4 font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
-            § {tags_skill_tags()}
+            {tags_skill_tags()}
           </div>
-          <p className="max-w-2xl font-serif text-[17px] leading-[1.65] text-ink-2">
+          <p className="max-w-2xl font-serif text-[17px] leading-[1.65] text-muted-foreground">
             {seo.description}
           </p>
           <p className="mt-4 max-w-2xl font-mono text-[11px] leading-relaxed tracking-[.12em] uppercase text-muted-foreground">

@@ -13,6 +13,7 @@ export const DesktopMenu = () => (
   <div className="hidden items-center gap-4.5 md:flex">
     {MENUS.map((menu) => (
       <Link
+        title={menu.label}
         to={menu.path}
         key={menu.path}
         inactiveProps={{ className: "text-muted-foreground" }}

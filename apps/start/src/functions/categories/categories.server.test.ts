@@ -112,15 +112,6 @@ describe("fetchCategoryDetailPageData", () => {
             name: "Automation",
             relatedTags: [{ count: 4, slug: "workflow" }],
             slug: categorySlug,
-            topSkills: [
-              {
-                description: "Builds automation",
-                id: "skill-1",
-                slug: "automation-helper",
-                syncTime: 1710000000,
-                title: "Automation Helper",
-              },
-            ],
           });
         },
       },
@@ -142,14 +133,11 @@ describe("fetchCategoryTopSkills", () => {
     const calls: string[] = [];
     const client = {
       categories: {
-        getBySlug: ({ slug }: { slug: string }) => {
+        getTopSkillsBySlug: ({ slug }: { slug: string }) => {
           calls.push(slug);
           return Promise.resolve({
             count: 12,
             id: "cat-2",
-            name: "Automation",
-            relatedTags: [{ count: 4, slug: "workflow" }],
-            slug: categorySlug,
             topSkills: [
               {
                 description: "Builds automation",

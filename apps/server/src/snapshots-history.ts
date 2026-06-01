@@ -180,6 +180,10 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
         ...new Set(skills.map((skill) => normalizeSkillDirectoryRoot(skill.directoryPath))),
       ];
 
+      const usedVersionsBySkill = new Map(
+        skills.map((skill) => [skill.id, new Set([skill.latestVersion])]),
+      );
+
       for (const [commitIndex, commit] of commits.entries()) {
         const commitSha = await normalizeCommitSha(githubHistory, {
           owner: input.repoOwner,
@@ -223,6 +227,13 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
             continue;
           }
 
+          const version = deriveHistoricalVersion(skill.latestVersion, commitIndex + 1);
+          const usedVersions = usedVersionsBySkill.get(skill.id);
+          if (usedVersions?.has(version)) {
+            continue;
+          }
+          usedVersions?.add(version);
+
           await createHistoricalSnapshot({
             description: skill.latestDescription,
             directoryPath,
@@ -237,7 +248,7 @@ export function createSnapshotsHistoryRuntime(deps: CreateSnapshotHistoryRuntime
             sourceCommitMessage: truncateCommitMessage(commit.message),
             sourceCommitSha: commitSha,
             sourceCommitUrl: commit.url ?? undefined,
-            version: deriveHistoricalVersion(skill.latestVersion, commitIndex + 1),
+            version,
           });
         }
       }

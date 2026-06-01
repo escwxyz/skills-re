@@ -1,7 +1,7 @@
 ---
 title: Nutzungsbedingungen
 description: Die Bedingungen für die Nutzung von skills.re.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. Akzeptanz

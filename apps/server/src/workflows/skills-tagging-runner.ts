@@ -2,17 +2,11 @@ import type { AiTaskRuntime } from "@skills-re/api/types";
 import type { RunSkillsTaggingPipelineOverrides } from "@skills-re/api/modules/tags/service";
 import { runSkillsTaggingPipeline } from "@skills-re/api/modules/tags/service";
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
-import type { WorkflowCreateBinding } from "./lib/scheduler";
-import { makeWorkflowScheduler } from "./lib/scheduler";
 
 export interface SkillsTaggingWorkflowPayload {
   skillIds: string[];
   triggerCategorizationAfterTagging?: boolean;
 }
-
-type SkillsCategorizationWorkflowBinding = WorkflowCreateBinding<{
-  skillIds: string[];
-}>;
 
 export interface RunSkillsTaggingWorkflowDeps {
   aiTasks?: AiTaskRuntime;
@@ -22,9 +16,6 @@ export interface RunSkillsTaggingWorkflowDeps {
 }
 
 type SkillsTaggingWorkflowResult = Awaited<ReturnType<typeof runSkillsTaggingPipeline>>;
-type CategorizationWorkflowScheduler = (input: { skillIds: string[] }) => Promise<{
-  workId: string;
-}>;
 
 export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
@@ -38,7 +29,7 @@ export const runSkillsTaggingWorkflow = async (
   const { scheduleCategorization } = deps;
   if (event.payload.triggerCategorizationAfterTagging && !scheduleCategorization) {
     throw new Error(
-      "Skills categorization workflow binding is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW.",
+      "Skills categorization workflow scheduler is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW_QUEUE or SKILLS_CATEGORIZATION_WORKFLOW.",
     );
   }
 
@@ -67,7 +58,7 @@ export const runSkillsTaggingWorkflow = async (
     const requiredScheduleCategorization = scheduleCategorization;
     if (!requiredScheduleCategorization) {
       throw new Error(
-        "Skills categorization workflow binding is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW.",
+        "Skills categorization workflow scheduler is unavailable. Configure SKILLS_CATEGORIZATION_WORKFLOW_QUEUE or SKILLS_CATEGORIZATION_WORKFLOW.",
       );
     }
 
@@ -77,15 +68,4 @@ export const runSkillsTaggingWorkflow = async (
   }
 
   return result;
-};
-
-export const createCategorizationWorkflowScheduler = (
-  binding?: SkillsCategorizationWorkflowBinding,
-): CategorizationWorkflowScheduler | undefined => {
-  if (!binding) {
-    return;
-  }
-
-  const scheduler = makeWorkflowScheduler("skills-categorization", binding);
-  return (input: { skillIds: string[] }) => scheduler.enqueue(input);
 };

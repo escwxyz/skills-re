@@ -4,6 +4,7 @@ import { ORPCError } from "@orpc/server";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../procedures";
 import {
   checkDuplicatedRepo,
+  resolveCliInstall,
   checkExistingRepo,
   enqueueRepoStatsSync,
   checkExistingSkill,
@@ -16,6 +17,7 @@ import {
   countMineReviews,
   createCollection,
   createFeedbackRecord,
+  FeedbackCreateError,
   createReviewRecord,
   newsletterService,
   deleteCollection,
@@ -23,12 +25,14 @@ import {
   getMineFeedbackById,
   getMyReviewBySkill,
   getCollectionBySlug,
+  getMineCollectionById,
   countSkills,
   countTags,
   claimAsAuthor,
   getAuthorByHandle,
   getBasicSkill,
   getCategoryBySlug,
+  getCategoryTopSkillsBySlug,
   getBySkillAndVersion,
   getSkillByPath,
   getSkillsHistoryInfo,
@@ -36,12 +40,14 @@ import {
   getSnapshotFileSignedUrl,
   getSnapshotTreeEntries,
   getTagBySlug,
+  getTagTopSkillsBySlug,
   listAuthors,
   listCategories,
   listCategoriesForAi,
   listCollections,
   listFeedback,
   listMineFeedback,
+  listMineCollections,
   listIndexableTags,
   listReposByOwner,
   listReposPage,
@@ -61,13 +67,14 @@ import {
   getStaticAuditReportBySnapshot,
   removeSkillFromCollection,
   resolvePathBySlug,
-  saveSkill,
+  saveSkillToCollection,
   setCollectionSkills,
   syncRepoStats,
   updateCollection,
   updateRepoStats,
   updateFeedbackResponse,
   updateFeedbackStatus,
+  submitGithubPreparedPublic,
   submitGithubRepoPublic,
   uploadSnapshotFiles,
   readSnapshotFileContent,
@@ -78,6 +85,53 @@ import {
 import { metricsRouter } from "./metrics";
 
 const DUPLICATE_REVIEW_MESSAGE = "You have already reviewed this skill.";
+const SKILL_REPORT_TYPES = ["skill_issue", "skill_display", "skill_takedown"] as const;
+
+export const canCreateFeedbackAnonymously = (type?: string | null): boolean =>
+  type ? (SKILL_REPORT_TYPES as readonly string[]).includes(type) : false;
+
+export const mapCreateFeedbackError = (error: unknown) => {
+  if (!(error instanceof FeedbackCreateError)) {
+    return null;
+  }
+
+  return new ORPCError(error.code, { message: error.message });
+};
+
+export const mapCollectionReadError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : null;
+  if (!message) {
+    return null;
+  }
+
+  if (message.includes("not found")) {
+    return new ORPCError("NOT_FOUND", { message });
+  }
+
+  if (message.includes("Forbidden")) {
+    return new ORPCError("FORBIDDEN", { message });
+  }
+
+  return null;
+};
+
+export const normalizeErrorForLog = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+    };
+  }
+
+  return {
+    message: typeof error === "string" ? error : "Unknown error",
+    name: "NonError",
+  };
+};
+
+export const anonymizeIdForLog = (value: string) =>
+  value.length <= 8 ? "[redacted]" : `${value.slice(0, 4)}...${value.slice(-4)}`;
 
 const isSkillEvalSandboxEnabled = (context: { features?: { skillEvalSandboxEnabled?: boolean } }) =>
   context.features?.skillEvalSandboxEnabled === true;
@@ -123,17 +177,101 @@ export const appRouter = {
     getBySlug: publicProcedure.categories.getBySlug.handler(({ input }) =>
       getCategoryBySlug(input),
     ),
+    getTopSkillsBySlug: publicProcedure.categories.getTopSkillsBySlug.handler(({ input }) =>
+      getCategoryTopSkillsBySlug(input),
+    ),
     list: publicProcedure.categories.list.handler(({ input }) => listCategories(input)),
     listForAi: publicProcedure.categories.listForAi.handler(({ input }) =>
       listCategoriesForAi(input as { limit?: number } | undefined),
     ),
   },
+  cli: {
+    auth: {
+      revoke: protectedProcedure.cli.auth.revoke.handler(async ({ context }) => {
+        await context.revokeSession?.();
+        return { revoked: true };
+      }),
+      session: protectedProcedure.cli.auth.session.handler(({ context }) => {
+        const { user, session } = context.session;
+        return {
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          user: { email: user.email, id: user.id, name: user.name },
+        };
+      }),
+    },
+    skills: {
+      resolveInstall: publicProcedure.cli.skills.resolveInstall.handler(
+        async ({ input, context }) => {
+          try {
+            return await resolveCliInstall({
+              requestHeaders: context.requestHeaders,
+              skill: input.skill,
+              version: input.version,
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Install resolution failed.";
+            if (message.includes("not found") || message.includes("No installable snapshot")) {
+              throw new ORPCError("NOT_FOUND", { message });
+            }
+            throw error;
+          }
+        },
+      ),
+      notifyInstall: publicProcedure.cli.skills.notifyInstall.handler(
+        async ({ input, context }) => {
+          const match = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)/i.exec(input.repoUrl);
+          if (!match?.[1] || !match?.[2]) {
+            return { received: false };
+          }
+          const [, repoOwner] = match;
+          const repoName = match[2].replace(/\.git$/, "");
+          const { findRepoByNameWithOwner } = await import("../modules/repos/repo");
+          const existing = await findRepoByNameWithOwner(`${repoOwner}/${repoName}`);
+          // oxlint-disable-next-line unicorn/prefer-ternary
+          if (existing) {
+            await context.workflowSchedulers?.repoSnapshotSync?.enqueue({ repoName, repoOwner });
+          } else {
+            await context.workflowSchedulers?.repoSkillsDiscovery?.enqueue({
+              repoName,
+              repoOwner,
+            });
+          }
+          return { received: true };
+        },
+      ),
+    },
+  },
   collections: {
     count: publicProcedure.collections.count.handler(() => countCollections()),
-    getBySlug: publicProcedure.collections.getBySlug.handler(({ input }) =>
-      getCollectionBySlug(input),
+    getBySlug: publicProcedure.collections.getBySlug.handler(({ input, context }) =>
+      getCollectionBySlug(input, {
+        isAdmin: context.session?.user.role === "admin",
+        userId: context.session?.user.id,
+      }),
     ),
     list: publicProcedure.collections.list.handler(({ input }) => listCollections(input)),
+    listMine: protectedProcedure.collections.listMine.handler(({ context }) =>
+      listMineCollections({
+        isAdmin: context.session.user.role === "admin",
+        userId: context.session.user.id,
+      }),
+    ),
+    getMineById: protectedProcedure.collections.getMineById.handler(async ({ input, context }) => {
+      try {
+        return await getMineCollectionById(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const mapped = mapCollectionReadError(error);
+        if (mapped) {
+          throw mapped;
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Read collection failed.",
+        });
+      }
+    }),
     create: protectedProcedure.collections.create.handler(async ({ input, context }) => {
       try {
         return await createCollection(input, {
@@ -198,6 +336,26 @@ export const appRouter = {
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Add skill failed." });
       }
     }),
+    saveSkill: protectedProcedure.collections.saveSkill.handler(async ({ input, context }) => {
+      try {
+        return await saveSkillToCollection(input, {
+          isAdmin: context.session.user.role === "admin",
+          userId: context.session.user.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Save skill failed.";
+        if (message === "Skill not found." || message.includes("not found")) {
+          throw new ORPCError("NOT_FOUND", { message });
+        }
+        if (message.includes("Forbidden")) {
+          throw new ORPCError("FORBIDDEN", { message });
+        }
+        if (isUniqueConstraintError(error)) {
+          throw new ORPCError("CONFLICT", { message: "Collection slug already exists" });
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Save skill failed." });
+      }
+    }),
     removeSkill: protectedProcedure.collections.removeSkill.handler(async ({ input, context }) => {
       try {
         return await removeSkillFromCollection(input, {
@@ -237,14 +395,32 @@ export const appRouter = {
     countMine: protectedProcedure.feedback.countMine.handler(({ context }) =>
       countMineFeedback({ userId: context.session.user.id }),
     ),
-    create: protectedProcedure.feedback.create.handler(({ input, context }) =>
-      createFeedbackRecord({
-        content: input.content,
-        title: input.title,
-        type: input.type,
-        userId: context.session.user.id,
-      }),
-    ),
+    create: publicProcedure.feedback.create.handler(async ({ input, context }) => {
+      const userId = context.session?.user.id ?? null;
+      if (!userId && !canCreateFeedbackAnonymously(input.type)) {
+        throw new ORPCError("UNAUTHORIZED");
+      }
+
+      try {
+        return await createFeedbackRecord({
+          content: input.content,
+          skillId: input.skillId,
+          skillSlug: input.skillSlug,
+          skillTitle: input.skillTitle,
+          title: input.title,
+          type: input.type,
+          userId,
+        });
+      } catch (error) {
+        const mappedError = mapCreateFeedbackError(error);
+        if (mappedError) {
+          throw mappedError;
+        }
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Create feedback failed.",
+        });
+      }
+    }),
     getById: adminProcedure.feedback.getById.handler(({ input }) => getFeedbackById(input.id)),
     getMineById: protectedProcedure.feedback.getMineById.handler(({ input, context }) =>
       getMineFeedbackById({
@@ -468,12 +644,28 @@ export const appRouter = {
     count: publicProcedure.skills.count.handler(() => countSkills()),
     save: protectedProcedure.skills.save.handler(async ({ input, context }) => {
       try {
-        return await saveSkill({
-          slug: input.slug,
-          userId: context.session.user.id,
-        });
+        const result = await saveSkillToCollection(
+          {
+            skillSlug: input.slug,
+          },
+          {
+            isAdmin: context.session.user.role === "admin",
+            userId: context.session.user.id,
+          },
+        );
+
+        return {
+          alreadySaved: result.alreadySaved,
+          saved: result.saved,
+        };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Save failed.";
+        console.error("[skills.save] failed", {
+          error: normalizeErrorForLog(error),
+          message,
+          skillSlug: input.slug,
+          userId: anonymizeIdForLog(context.session.user.id),
+        });
         if (message === "Skill not found.") {
           throw new ORPCError("NOT_FOUND", { message });
         }
@@ -562,6 +754,16 @@ export const appRouter = {
         return submitGithubRepoPublic(input, runtime, context.workflowSchedulers?.skillsUpload);
       },
     ),
+    submitGithubPreparedPublic: publicProcedure.skills.submitGithubPreparedPublic.handler(
+      ({ input, context }) => {
+        const scheduler = context.workflowSchedulers?.skillsUpload;
+        if (!scheduler) {
+          throw new ORPCError("SERVICE_UNAVAILABLE");
+        }
+
+        return submitGithubPreparedPublic(input, scheduler);
+      },
+    ),
     uploadSkills: protectedProcedure.skills.uploadSkills.handler(({ input, context }) => {
       const scheduler = context.workflowSchedulers?.skillsUpload;
       if (!scheduler) {
@@ -574,6 +776,9 @@ export const appRouter = {
   tags: {
     count: publicProcedure.tags.count.handler(() => countTags()),
     getBySlug: publicProcedure.tags.getBySlug.handler(({ input }) => getTagBySlug(input)),
+    getTopSkillsBySlug: publicProcedure.tags.getTopSkillsBySlug.handler(({ input }) =>
+      getTagTopSkillsBySlug(input),
+    ),
     list: publicProcedure.tags.list.handler(({ input }) => listTags(input)),
     listForSeo: publicProcedure.tags.listForSeo.handler(({ input }) =>
       listTagsForSeo(input as { limit?: number } | undefined),

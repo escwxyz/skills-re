@@ -12,7 +12,7 @@ export const ClaimAuthorButton = ({ slug }: Props) => {
 
   return (
     <Button type="button" onClick={handleClick} className="w-full max-w-md" variant="outline">
-      <UserPlusIcon arial-hidden className="size-4" />{" "}
+      <UserPlusIcon aria-hidden className="size-4" />{" "}
       {m.skill_tabs_actions_sign_in_to_claim_as_author()}
     </Button>
   );

@@ -7,6 +7,7 @@ const renderFinding = (finding: StaticAuditReport["security_audit"]["findings"][
   return [
     `- [${finding.severity.toUpperCase()}] \`${finding.rule_id}\` (${finding.category})`,
     `  - File: \`${finding.location.path}:${lineSuffix}\``,
+    finding.location.snippet ? `  - Snippet: \`${finding.location.snippet.trim()}\`` : null,
     `  - Message: ${finding.message}`,
     `  - Confidence: ${finding.confidence.toFixed(2)}`,
     `  - Evidence: ${finding.evidence}`,

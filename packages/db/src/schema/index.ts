@@ -6,6 +6,12 @@ export {
   approvalRequestsTable,
   apikeysTable,
   authTables,
+  deviceCodesTable,
+  jwkssTable,
+  oauthAccessTokensTable,
+  oauthClientsTable,
+  oauthConsentsTable,
+  oauthRefreshTokensTable,
   sessionsTable,
   usersTable,
   verificationsTable,
@@ -15,6 +21,7 @@ export { categoryCountsTable } from "./category-counts";
 export { reposTable } from "./repos";
 export { sandboxAgentsTable } from "./sandbox-agents";
 export { savedSkillsTable } from "./saved-skills";
+export { skillUsageEventsTable } from "./skill-usage-events";
 export { skillsTagsTable, skillsTable } from "./skills";
 export { skillEvalCasesTable, skillEvalSuitesTable } from "./skill-eval-suites";
 export { skillEvalCaseResultsTable, skillEvalRunsTable } from "./skill-eval-runs";
@@ -33,8 +40,13 @@ export {
   approvalRequestsRelations,
   collectionsRelations,
   collectionsSkillsRelations,
+  oauthAccessTokensRelations,
+  oauthClientsRelations,
+  oauthConsentsRelations,
+  oauthRefreshTokensRelations,
   reposRelations,
   savedSkillsRelations,
+  skillUsageEventsRelations,
   reviewsRelations,
   sandboxAgentsRelations,
   sessionsRelations,

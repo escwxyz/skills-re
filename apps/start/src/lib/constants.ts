@@ -1,9 +1,6 @@
 import { env } from "@skills-re/env/start";
 
 export const SITE_NAME = "skills.re";
-export const SITE_TAGLINE = "The registry for AI agent skills.";
-export const SITE_DESCRIPTION =
-  "Discover, install, and publish skills for AI agents. A curated registry of versioned, audited skills for Claude and compatible runtimes.";
 export const SITE_KEYWORDS = [
   "ai skills",
   "agent skills",
@@ -15,5 +12,6 @@ export const SITE_KEYWORDS = [
 ];
 
 export const SITE_URL = env.VITE_SITE_URL;
+export const SITE_TWITTER_SITE = "@skills_re";
 
-export const OG_IMAGE_DEFAULT = "/og.png";
+export const OG_IMAGE_DEFAULT = "/og_image.png";

@@ -1,5 +1,6 @@
 {
   "name": "server",
+  "private": true,
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -8,9 +9,10 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^3.0.0",
+    "@better-auth/oauth-provider": "catalog:",
     "@cloudflare/sandbox": "^0.10.1",
-    "@cloudflare/tanstack-ai": "^0.1.9",
-    "@hono/mcp": "^0.2.5",
+    "@hono/mcp": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -21,9 +23,9 @@
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
     "@skills-re/utils": "workspace:*",
-    "@tanstack/ai-gemini": "^0.10.4",
-    "@tanstack/ai-groq": "^0.2.0",
     "agent-skills-eval": "^0.1.1",
+    "ai": "^6.0.0",
+    "ai-gateway-provider": "^3.1.3",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",

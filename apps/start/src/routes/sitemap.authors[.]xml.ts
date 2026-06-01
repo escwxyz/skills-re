@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SITE_URL } from "@/lib/constants";
 import { createServerORPCClient } from "@/lib/orpc.server";
-import { renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
+import { getAllMultilingualUrls, renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
 import type { AppRouterClient } from "@skills-re/api";
 
 export const Route = createFileRoute("/sitemap/authors.xml")({
@@ -30,12 +30,14 @@ export const Route = createFileRoute("/sitemap/authors.xml")({
         }
 
         const xml = wrapUrlSet(
-          authors.map((author) =>
-            renderUrlEntry({
-              changefreq: "weekly",
-              loc: `${SITE_URL}/authors/${encodeURIComponent(author.handle)}`,
-              priority: "0.6",
-            }),
+          authors.flatMap((author) =>
+            getAllMultilingualUrls([`/authors/${encodeURIComponent(author.handle)}`]).map((path) =>
+              renderUrlEntry({
+                changefreq: "weekly",
+                loc: `${SITE_URL}${path}`,
+                priority: "0.6",
+              }),
+            ),
           ),
         );
 

@@ -15,6 +15,8 @@ export const staticAuditCategorySchema = z.enum([
   "obfuscation",
   "hidden_helpers",
   "prompt_injection",
+  "social_engineering",
+  "specification",
 ]);
 
 export const staticAuditFindingSchema = z.object({
@@ -25,6 +27,7 @@ export const staticAuditFindingSchema = z.object({
   location: z.object({
     endLine: z.number().int().positive().optional(),
     path: z.string().min(1),
+    snippet: z.string().optional(),
     startLine: z.number().int().positive(),
   }),
   message: z.string().min(1),

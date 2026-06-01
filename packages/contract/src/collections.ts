@@ -3,15 +3,17 @@ import { z } from "zod";
 import { baseContract } from "./common/base";
 import { collectionDetailSchema, collectionListItemSchema } from "./common/content";
 import { idSchema } from "./common/ids";
-import { tagSlugSchema } from "./common/slugs";
+import { skillSlugSchema, tagSlugSchema } from "./common/slugs";
 
 const collectionSlugInputSchema = z.object({
-  slug: tagSlugSchema,
+  slug: z.string().trim().min(1),
 });
 
 const collectionIdInputSchema = z.object({
   id: idSchema,
 });
+
+export const collectionVisibilitySchema = z.enum(["public", "private"]);
 
 const COLLECTIONS_LIST_LIMIT_MAX = 100;
 
@@ -88,9 +90,35 @@ const createCollectionContract = baseContract
       description: z.string().min(1),
       slug: tagSlugSchema,
       title: z.string().min(1),
+      visibility: collectionVisibilitySchema.optional(),
     }),
   )
   .output(z.object({ id: idSchema }));
+
+const collectionsMineContract = baseContract
+  .route({
+    description:
+      "Returns collections owned by the authenticated user, including the default saved collection.",
+    method: "GET",
+    path: "/collections/mine",
+    tags: ["Collections"],
+    successDescription: "Authenticated collection list",
+    summary: "List my collections",
+  })
+  .output(z.array(collectionListItemSchema));
+
+const collectionMineByIdContract = baseContract
+  .route({
+    description:
+      "Returns an authenticated user's own collection detail, including visible Skill contents.",
+    method: "GET",
+    path: "/collections/mine/by-id",
+    tags: ["Collections"],
+    successDescription: "Authenticated collection detail",
+    summary: "Read my collection by id",
+  })
+  .input(collectionIdInputSchema)
+  .output(collectionDetailSchema.nullable());
 
 const updateCollectionContract = baseContract
   .route({
@@ -108,6 +136,7 @@ const updateCollectionContract = baseContract
       slug: tagSlugSchema.optional(),
       status: z.enum(["active", "archived"]).optional(),
       title: z.string().min(1).optional(),
+      visibility: collectionVisibilitySchema.optional(),
     }),
   )
   .output(z.null());
@@ -141,6 +170,39 @@ const addSkillToCollectionContract = baseContract
     }),
   )
   .output(z.null());
+
+const saveSkillToCollectionContract = baseContract
+  .route({
+    description:
+      "Saves a Skill to an owned collection, optionally creating a new collection before adding the Skill.",
+    method: "POST",
+    path: "/collections/save-skill",
+    tags: ["Collections"],
+    successDescription: "Skill saved to collection",
+    summary: "Save skill to collection",
+  })
+  .input(
+    z.object({
+      collectionId: idSchema.optional(),
+      newCollection: z
+        .object({
+          description: z.string().min(1).optional(),
+          slug: tagSlugSchema.optional(),
+          title: z.string().min(1),
+          visibility: collectionVisibilitySchema.optional(),
+        })
+        .optional(),
+      skillSlug: skillSlugSchema,
+      visibility: collectionVisibilitySchema.optional(),
+    }),
+  )
+  .output(
+    z.object({
+      alreadySaved: z.boolean(),
+      collectionId: idSchema,
+      saved: z.boolean(),
+    }),
+  );
 
 const removeSkillFromCollectionContract = baseContract
   .route({
@@ -176,10 +238,13 @@ export const collectionsContract = {
   count: collectionsCountContract,
   getBySlug: collectionBySlugContract,
   list: collectionsListContract,
+  listMine: collectionsMineContract,
+  getMineById: collectionMineByIdContract,
   create: createCollectionContract,
   update: updateCollectionContract,
   delete: deleteCollectionContract,
   addSkill: addSkillToCollectionContract,
+  saveSkill: saveSkillToCollectionContract,
   removeSkill: removeSkillFromCollectionContract,
   setSkills: setCollectionSkillsContract,
 } as const;

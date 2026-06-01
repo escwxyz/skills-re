@@ -5,6 +5,7 @@ import { FadersHorizontalIcon } from "@phosphor-icons/react";
 
 import { BrowseSortDropdown } from "@/components/browse-sort-dropdown";
 import { SkillsSearchField } from "@/components/skills-search-field";
+import type { SkillsSearchMode } from "@/components/skills-search-field";
 import { SkillsViewModeToggle } from "@/components/skills-view-mode-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,8 +22,10 @@ interface Props {
   onClearSearch: () => void;
   onSearchChange: (value: string) => void;
   onSearchFocus: () => void;
+  onSearchModeChange: (value: SkillsSearchMode) => void;
   onSearchSubmit: () => void;
   onToggleFilters: () => void;
+  searchMode: SkillsSearchMode;
   searchValue: string;
 }
 
@@ -36,14 +39,18 @@ export const BrowseToolbar = ({
   onClearSearch,
   onSearchChange,
   onSearchFocus,
+  onSearchModeChange,
   onSearchSubmit,
   onToggleFilters,
+  searchMode,
   searchValue,
 }: Props) => (
   <div
     className={cn(
-      "bg-background sticky top-(--header-height) z-20 grid h-(--header-height) grid-cols-[minmax(0,1fr)_auto_auto] bg-paper/95 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
-      isSearchMode ? "" : "border-b border-border",
+      "bg-background/90 sticky top-(--header-height) z-20 h-(--header-height) backdrop-blur",
+      isSearchMode
+        ? "grid grid-cols-1"
+        : "grid grid-cols-[minmax(0,1fr)_auto] border-b border-border lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]",
     )}
   >
     <SkillsSearchField
@@ -53,19 +60,17 @@ export const BrowseToolbar = ({
       onChange={onSearchChange}
       onClear={onClearSearch}
       onFocus={onSearchFocus}
+      onSearchModeChange={onSearchModeChange}
       onSubmit={onSearchSubmit}
+      searchMode={searchMode}
       value={searchValue}
     />
-    {isSearchMode ? (
-      <div className="hidden h-full items-center border-l border-border px-4 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text lg:flex">
-        Relevance
-      </div>
-    ) : (
+    {!isSearchMode && (
       <>
         <Button
           aria-pressed={filtersOpen}
           aria-label={m.skills_browse_controls_filters()}
-          className="relative h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-ink hover:bg-muted hover:text-ink"
+          className="relative h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-foreground hover:bg-muted hover:text-foreground"
           onClick={onToggleFilters}
           size="icon-sm"
           type="button"
@@ -73,7 +78,7 @@ export const BrowseToolbar = ({
         >
           <FadersHorizontalIcon />
           {activeFilterCount > 0 ? (
-            <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-ink text-[9px] leading-none text-paper">
+            <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-foreground text-[9px] leading-none text-background">
               {activeFilterCount}
             </span>
           ) : null}
@@ -81,8 +86,8 @@ export const BrowseToolbar = ({
         <div className="hidden lg:block">
           <BrowseSortDropdown filters={filters} />
         </div>
+        <SkillsViewModeToggle className="hidden w-(--header-height) lg:flex" />
       </>
     )}
-    <SkillsViewModeToggle className="hidden w-(--header-height) lg:flex" />
   </div>
 );

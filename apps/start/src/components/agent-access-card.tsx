@@ -32,13 +32,13 @@ export function AgentAccessCard() {
   });
 
   return (
-    <Card className="rounded-none border-rule/70 bg-background">
-      <CardHeader className="border-b border-rule/60 pb-3">
-        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+    <Card className="rounded-none border-border/70 bg-background">
+      <CardHeader className="border-b border-border/60 pb-3">
+        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
           {m.dashboard_settings_agent_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-display text-[1.35rem] leading-none tracking-[-0.03em]">
-          <RobotIcon className="size-5 text-muted-text" />
+          <RobotIcon className="size-5 text-muted-foreground" />
           {m.dashboard_settings_agent_title()}
         </CardTitle>
       </CardHeader>
@@ -53,8 +53,8 @@ export function AgentAccessCard() {
 
         {agentConfiguration ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <div className="border border-rule/70 bg-paper/70 p-4">
-              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+            <div className="border border-border/70 bg-background/70 p-4">
+              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                 {m.dashboard_settings_agent_provider_label()}
               </p>
               <p className="mt-2 font-display text-[18px] leading-[1.1]">
@@ -68,8 +68,8 @@ export function AgentAccessCard() {
               </p>
             </div>
 
-            <div className="border border-rule/70 bg-paper/70 p-4">
-              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+            <div className="border border-border/70 bg-background/70 p-4">
+              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                 {m.dashboard_settings_agent_modes_label()}
               </p>
               <p className="mt-2 text-[12px] leading-[1.6] text-foreground/70">
@@ -95,8 +95,8 @@ export function AgentAccessCard() {
               </p>
             </div>
 
-            <div className="border border-rule/70 bg-paper/70 p-4">
-              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+            <div className="border border-border/70 bg-background/70 p-4">
+              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                 {m.dashboard_settings_agent_discovery_path_label()}
               </p>
               <p className="mt-2 font-mono text-[12px] leading-[1.6] text-foreground/70">
@@ -115,11 +115,11 @@ export function AgentAccessCard() {
             </div>
           </div>
         ) : isLoading ? (
-          <p className="text-[13px] leading-normal text-muted-text">
+          <p className="text-[13px] leading-normal text-muted-foreground">
             {m.dashboard_settings_agent_loading()}
           </p>
         ) : (
-          <p className="text-[13px] leading-normal text-muted-text">
+          <p className="text-[13px] leading-normal text-muted-foreground">
             {m.dashboard_settings_agent_empty()}
           </p>
         )}

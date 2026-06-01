@@ -12,7 +12,7 @@
       "typescript": "^5",
       "@types/node": "^25.1.0",
       "@cloudflare/workers-types": "^4.20260421.1",
-      "hono": "^4.8.2",
+      "hono": "^4.11.5",
       "@orpc/contract": "^1.14.1",
       "@orpc/server": "^1.14.1",
       "@orpc/openapi": "^1.14.1",
@@ -53,7 +53,8 @@
     "audit:run": "bun scripts/audit/run-skill-scanner-audit.ts",
     "audit:ingest": "bun scripts/audit/ingest-audits.ts",
     "check": "bun ./scripts/ultracite-run.mjs check",
-    "fix": "bun ./scripts/ultracite-run.mjs fix"
+    "fix": "bun ./scripts/ultracite-run.mjs fix",
+    "cli:release": "turbo -F @skills-re/cli build && changeset publish"
   },
   "dependencies": {
     "@skills-re/env": "workspace:*",
@@ -61,6 +62,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@cloudflare/workers-types": "catalog:",
     "@skills-re/config": "workspace:*",
     "@types/node": "catalog:",
@@ -69,7 +71,8 @@
     "oxlint": "^1.60.0",
     "turbo": "^2.8.12",
     "typescript": "catalog:",
-    "ultracite": "7.6.0"
+    "ultracite": "7.6.0",
+    "wrangler": "catalog:"
   },
   "engines": {
     "node": ">=25.0.0"

@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { baseContract } from "./common/base";
-import { categoryDetailSchema, categoryListItemSchema } from "./common/content";
+import {
+  categoryDetailSchema,
+  categoryListItemSchema,
+  categoryTopSkillsSchema,
+} from "./common/content";
 
 const listCategoriesInputSchema = z
   .object({
@@ -20,7 +24,7 @@ const categoriesListContract = baseContract
       "Returns the public category index used by browse pages and SEO discovery surfaces.",
     method: "GET",
     path: "/categories",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Public category list",
     summary: "List public categories",
   })
@@ -32,7 +36,7 @@ const categoriesCountContract = baseContract
     description: "Returns the total number of public categories currently available.",
     method: "GET",
     path: "/categories/count",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Public category count",
     summary: "Count public categories",
   })
@@ -40,23 +44,34 @@ const categoriesCountContract = baseContract
 
 const categoryBySlugContract = baseContract
   .route({
-    description:
-      "Returns the public category detail payload, including related tags and top skills.",
+    description: "Returns the public category detail payload, including related tags.",
     method: "GET",
     path: "/categories/by-slug",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "Category detail page payload",
     summary: "Read a category by slug",
   })
   .input(categoryLookupInputSchema)
   .output(categoryDetailSchema.nullable());
 
+const categoryTopSkillsBySlugContract = baseContract
+  .route({
+    description: "Returns the top skills for a public category detail page.",
+    method: "GET",
+    path: "/categories/by-slug/top-skills",
+    tags: ["Categories", "Internal"],
+    successDescription: "Category top skills payload",
+    summary: "Read category top skills by slug",
+  })
+  .input(categoryLookupInputSchema)
+  .output(categoryTopSkillsSchema.nullable());
+
 const listCategoriesForAiContract = baseContract
   .route({
     description: "Returns the category slug list used by AI-assisted categorization prompts.",
     method: "GET",
     path: "/categories/ai",
-    tags: ["Categories"],
+    tags: ["Categories", "Internal"],
     successDescription: "AI category list",
     summary: "List categories for AI",
   })
@@ -65,6 +80,7 @@ const listCategoriesForAiContract = baseContract
 export const categoriesContract = {
   count: categoriesCountContract,
   getBySlug: categoryBySlugContract,
+  getTopSkillsBySlug: categoryTopSkillsBySlugContract,
   list: categoriesListContract,
   listForAi: listCategoriesForAiContract,
 } as const;

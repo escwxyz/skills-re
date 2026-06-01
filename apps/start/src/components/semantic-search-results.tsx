@@ -1,12 +1,8 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useAtomValue } from "jotai";
-import { AnimatePresence, motion } from "motion/react";
 
-import { skillsViewModeAtom } from "@/atoms/app";
 import { buildSkillDetailPath } from "@/lib/skill-path";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
@@ -24,6 +20,7 @@ interface SemanticSearchResultsProps {
   isLoading: boolean;
   items: BrowseSkillItem[];
   meta?: SemanticSearchMeta;
+  mode?: "keyword" | "semantic";
   query: string;
 }
 
@@ -78,63 +75,72 @@ const SemanticResultSkeletonRow = () => (
   </div>
 );
 
-const SemanticResultSkeletonCard = () => (
-  <div className="flex min-h-72 flex-col border-b border-r border-border p-5">
-    <Skeleton className="mb-4 h-2.5 w-24" />
-    <Skeleton className="h-7 w-3/4" />
-    <Skeleton className="mt-3 h-3.5 w-full" />
-    <Skeleton className="mt-1.5 h-3.5 w-5/6" />
-    <Skeleton className="mt-1.5 h-3.5 w-2/3" />
-    <div className="mt-auto flex items-end justify-between pt-5">
-      <div className="flex gap-1">
-        <Skeleton className="h-5 w-10" />
-        <Skeleton className="h-5 w-14" />
-      </div>
-      <Skeleton className="h-2.5 w-8" />
-    </div>
+const SemanticSearchSkeleton = () => (
+  <div>
+    {Array.from({ length: 6 }).map((_, i) => (
+      <SemanticResultSkeletonRow key={i} />
+    ))}
   </div>
 );
 
-const SemanticSearchSkeleton = ({ viewMode }: { viewMode: "list" | "grid" }) => {
-  if (viewMode === "list") {
-    return (
-      <div>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SemanticResultSkeletonRow key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("grid border-border border-l", "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <SemanticResultSkeletonCard key={i} />
-      ))}
-    </div>
-  );
-};
-
-const SemanticSearchEmpty = ({ query }: { query: string }) => (
+const SemanticSearchEmpty = ({
+  mode = "semantic",
+  query,
+}: {
+  mode?: "keyword" | "semantic";
+  query: string;
+}) => (
   <div className="border-border border-t px-6 py-16 text-center">
-    <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-      {query ? m.semantic_search_no_matches() : m.semantic_search_start_typing()}
+    <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
+      {getSearchEmptyTitle({ mode, query })}
     </div>
-    <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">
-      {query ? m.semantic_search_try_broader_phrase() : m.semantic_search_use_natural_language()}
+    <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
+      {getSearchEmptyDescription({ mode, query })}
     </p>
   </div>
 );
 
+const getSearchEmptyTitle = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (!input.query) {
+    return m.semantic_search_start_typing();
+  }
+
+  return input.mode === "keyword" ? m.keyword_search_no_matches() : m.semantic_search_no_matches();
+};
+
+const getSearchEmptyDescription = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (!input.query) {
+    return m.semantic_search_use_natural_language();
+  }
+
+  if (input.mode === "keyword") {
+    return m.keyword_search_instructions();
+  }
+
+  return m.semantic_search_try_broader_phrase();
+};
+
+const getSearchHeaderTitle = (input: { mode: "keyword" | "semantic"; query: string }) => {
+  if (input.mode === "keyword") {
+    return input.query ? m.keyword_results_for({ query: input.query }) : m.keyword_search_title();
+  }
+
+  return input.query
+    ? m.semantic_search_results_for({ query: input.query })
+    : m.semantic_search_title();
+};
+
 const SemanticSearchHeader = ({
   isLoading,
   meta,
+  mode = "semantic",
   query,
-}: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "query">) => {
-  let statusLabel = m.semantic_search_status_ai();
+}: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "mode" | "query">) => {
+  let statusLabel =
+    mode === "keyword" ? m.keyword_search_metadata_label() : m.semantic_search_status_ai();
   if (isLoading) {
     statusLabel = m.semantic_search_status_searching();
-  } else if (meta) {
+  } else if (mode === "semantic" && meta) {
     statusLabel = m.semantic_search_status_matches({
       resolvedSkillsCount: formatInteger(meta.resolvedSkillsCount),
       resultCount: formatInteger(meta.resultCount),
@@ -142,53 +148,138 @@ const SemanticSearchHeader = ({
   }
 
   return (
-    <div className="flex items-center justify-between border-border border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
-      <span>{query ? m.semantic_search_results_for({ query }) : m.semantic_search_title()}</span>
+    <div className="flex items-center justify-between border-border border-b px-6 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
+      <span>{getSearchHeaderTitle({ mode, query })}</span>
       <span>{statusLabel}</span>
     </div>
   );
 };
 
-const MatchSnippet = ({ skill }: { skill: BrowseSkillItem }) =>
-  skill.aiMatch?.snippet ? (
-    <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-ink-2">
-      {skill.aiMatch.sourcePath ? (
-        <div className="mb-1 text-[10px] tracking-[.12em] uppercase text-muted-text">
+const escapeRegex = (s: string) => s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const leadingFrontmatterPat = /^---\s*\n[\s\S]*?\n---\s*/;
+const mdCodeFencePat = /```[\s\S]*?```/g;
+const mdInlineCodePat = /`([^`]+)`/g;
+const mdImagePat = /!\[([^\]]*)\]\([^)]+\)/g;
+const mdLinkPat = /\[([^\]]+)\]\([^)]+\)/g;
+const mdHeadingPat = /^\s{0,3}#{1,6}\s+/gm;
+const mdListPat = /^\s{0,3}[-*+]\s+/gm;
+const mdOrderedListPat = /^\s{0,3}\d+\.\s+/gm;
+const mdQuotePat = /^\s{0,3}>\s?/gm;
+const mdEmphasisPat = /[*_~]/g;
+const mdWhitespacePat = /\s+/g;
+
+const toPlainTextSnippet = (value: string) =>
+  value
+    .replace(leadingFrontmatterPat, "")
+    .replaceAll(mdCodeFencePat, " ")
+    .replaceAll(mdInlineCodePat, "$1")
+    .replaceAll(mdImagePat, "$1")
+    .replaceAll(mdLinkPat, "$1")
+    .replaceAll(mdHeadingPat, "")
+    .replaceAll(mdListPat, "")
+    .replaceAll(mdOrderedListPat, "")
+    .replaceAll(mdQuotePat, "")
+    .replaceAll("|", " ")
+    .replaceAll(mdEmphasisPat, "")
+    .replaceAll(mdWhitespacePat, " ")
+    .trim();
+
+const getQueryTerms = (query: string) =>
+  [
+    ...new Set(
+      query
+        .toLowerCase()
+        .split(/\s+/)
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 2),
+    ),
+  ].slice(0, 8);
+
+const HighlightedText = ({ query, text }: { query?: string; text: string }) => {
+  const terms = getQueryTerms(query ?? "");
+  if (!terms.length) {
+    return <>{text}</>;
+  }
+
+  const pattern = new RegExp(`(${terms.map(escapeRegex).join("|")})`, "gi");
+  const parts = text.split(pattern);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        terms.some((t) => t === part.toLowerCase()) ? (
+          <mark className="bg-primary/20 font-semibold text-primary-foreground not-italic" key={i}>
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+};
+
+const MatchSnippet = ({ query, skill }: { query?: string; skill: BrowseSkillItem }) => {
+  const raw = skill.aiMatch?.snippet;
+  if (!raw) {
+    return null;
+  }
+  const snippet = toPlainTextSnippet(raw);
+  if (!snippet) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-l-2 border-accent bg-muted/40 px-4 py-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+      {skill.aiMatch?.sourcePath ? (
+        <div className="mb-1 text-[10px] tracking-[.12em] uppercase text-muted-foreground">
           {skill.aiMatch.sourcePath}
         </div>
       ) : null}
-      {skill.aiMatch.snippet}
+      <HighlightedText query={query} text={snippet} />
     </div>
-  ) : null;
+  );
+};
 
-const SemanticResultRow = ({ index, skill }: { index: number; skill: BrowseSkillItem }) => {
+const SemanticResultRow = ({
+  index,
+  mode = "semantic",
+  query,
+  skill,
+}: {
+  index: number;
+  mode?: "keyword" | "semantic";
+  query?: string;
+  skill: BrowseSkillItem;
+}) => {
   const locale = getLocale();
   const score = formatScore(skill.aiMatch?.score);
   const downloads = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
 
   return (
     <Link
-      className="grid gap-5 border-border border-b px-6 py-6 text-ink no-underline transition-colors hover:bg-paper-2 md:grid-cols-[4.5rem_minmax(0,1fr)_8rem]"
+      className="grid gap-5 border-border border-b px-6 py-6 text-foreground no-underline transition-colors hover:bg-muted md:grid-cols-[4.5rem_minmax(0,1fr)_8rem]"
       to={getSkillHref(skill)}
     >
-      <div className="font-display text-5xl italic leading-none text-muted-text">
+      <div className="font-display text-5xl italic leading-none text-muted-foreground">
         {String(index + 1).padStart(2, "0")}.
       </div>
       <div className="min-w-0">
-        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
+        <div className="font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
           Skill · {skill.latestVersion ? `v.${skill.latestVersion} · ` : ""}
           {skill.authorHandle ?? "unknown"}
         </div>
         <h3 className="mt-2 font-display text-[30px] font-normal leading-none">{skill.title}</h3>
-        <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-ink-2">
+        <p className="mt-2 max-w-3xl font-serif text-[15px] leading-relaxed text-muted-foreground">
           {skill.description}
         </p>
-        <MatchSnippet skill={skill} />
+        {mode === "semantic" ? <MatchSnippet query={query} skill={skill} /> : null}
         {skill.tags?.length ? (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {skill.tags.slice(0, 5).map((tag) => (
               <span
-                className="border border-border px-2 py-1 font-mono text-[10px] tracking-widest uppercase text-muted-text"
+                className="border border-border px-2 py-1 font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
                 key={tag}
               >
                 {tag}
@@ -197,54 +288,16 @@ const SemanticResultRow = ({ index, skill }: { index: number; skill: BrowseSkill
           </div>
         ) : null}
       </div>
-      <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-text md:text-right">
-        {score ? (
+      <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-foreground md:text-right">
+        {mode === "semantic" && score ? (
           <div className="font-display text-3xl italic tracking-normal text-accent">{score}</div>
         ) : null}
-        {score ? <div>{m.semantic_search_match_score()}</div> : null}
+        {mode === "semantic" && score ? <div>{m.semantic_search_match_score()}</div> : null}
         <div className="mt-4">
           Inst
-          <b className="block font-display text-base font-normal tracking-normal text-ink">
+          <b className="block font-display text-base font-normal tracking-normal text-foreground">
             {downloads}
           </b>
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-const SemanticResultCard = ({ skill }: { skill: BrowseSkillItem }) => {
-  const locale = getLocale();
-  const score = formatScore(skill.aiMatch?.score);
-  const downloads = formatCompactNumber(skill.downloadsAllTime ?? 0, locale);
-
-  return (
-    <Link
-      className="flex min-h-72 flex-col border-b border-r border-border p-5 text-ink no-underline transition-colors hover:bg-paper-2"
-      to={getSkillHref(skill)}
-    >
-      <div className="mb-4 flex items-start justify-between gap-3 font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
-        <span className="truncate">{skill.authorHandle ?? "unknown"}</span>
-        {score ? <span className="text-accent">{score}</span> : null}
-      </div>
-      <h3 className="font-display text-[24px] font-normal leading-[1.05]">{skill.title}</h3>
-      <p className="mt-3 line-clamp-3 font-serif text-[13px] leading-normal text-ink-2">
-        {skill.description}
-      </p>
-      <MatchSnippet skill={skill} />
-      <div className="mt-auto flex items-end justify-between gap-4 pt-5">
-        <div className="flex flex-wrap gap-1">
-          {(skill.tags ?? []).slice(0, 3).map((tag) => (
-            <span
-              className="border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[.08em] uppercase text-muted-text"
-              key={tag}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className="font-mono text-[10px] tracking-[.12em] uppercase text-muted-text">
-          {downloads}
         </div>
       </div>
     </Link>
@@ -254,35 +307,34 @@ const SemanticResultCard = ({ skill }: { skill: BrowseSkillItem }) => {
 const SemanticSearchRail = ({
   items,
   meta,
+  mode = "semantic",
   query,
-}: Pick<SemanticSearchResultsProps, "items" | "meta" | "query">) => {
+}: Pick<SemanticSearchResultsProps, "items" | "meta" | "mode" | "query">) => {
   const tags = getRelatedTags(items);
 
   return (
-    <aside className="hidden border-border border-l bg-paper-2 p-6 xl:block">
+    <aside className="hidden border-border border-l bg-muted p-6 xl:block">
       <div className="border border-border bg-card p-5">
-        <div className="font-serif text-base italic text-ink-2">
+        <div className="font-serif text-base italic text-muted-foreground">
           {m.semantic_search_did_you_mean()}
         </div>
         <div className="mt-4 font-display text-2xl italic">
           {query || m.semantic_search_describe_task()}
         </div>
-        <div className="mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase text-muted-text">
-          {meta
-            ? m.semantic_search_matches_count({ count: formatInteger(meta.resultCount) })
-            : m.semantic_search_index_label()}
+        <div className="mt-4 font-mono text-[10.5px] tracking-[.12em] uppercase text-muted-foreground">
+          {getRailStatusLabel({ meta, mode })}
         </div>
       </div>
 
       {tags.length ? (
         <section className="mt-8">
-          <h4 className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-            Related tags
+          <h4 className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
+            {m.semantic_search_related_tags()}
           </h4>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <Link
-                className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-widest uppercase text-ink no-underline hover:bg-ink hover:text-paper"
+                className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-widest uppercase text-foreground no-underline hover:bg-foreground hover:text-background"
                 key={tag}
                 search={{ tag: [tag] }}
                 to="/skills"
@@ -297,83 +349,78 @@ const SemanticSearchRail = ({
   );
 };
 
+const getRailStatusLabel = ({
+  meta,
+  mode,
+}: {
+  meta?: SemanticSearchMeta;
+  mode: "keyword" | "semantic";
+}) => {
+  if (mode === "keyword") {
+    return "Metadata";
+  }
+
+  return meta
+    ? m.semantic_search_matches_count({ count: formatInteger(meta.resultCount) })
+    : m.semantic_search_index_label();
+};
+
 export const SemanticSearchResults = ({
   error,
   isLoading,
   items,
   meta,
+  mode = "semantic",
   query,
 }: SemanticSearchResultsProps) => {
-  const viewMode = useAtomValue(skillsViewModeAtom);
-
   if (error) {
     if (isRateLimitedSearchError(error)) {
       return (
         <div className="border-border border-t px-6 py-16 text-center">
-          <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-            Search temporarily limited
+          <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
+            {m.semantic_search_rate_limited()}
           </div>
-          <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
+          <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
+            {error.message}
+          </p>
         </div>
       );
     }
 
     return (
       <div className="border-border border-t px-6 py-16 text-center">
-        <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-text">
-          Search unavailable
+        <div className="font-mono text-[10.5px] tracking-[.16em] uppercase text-muted-foreground">
+          {m.semantic_search_unavailable()}
         </div>
-        <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-ink-2">{error.message}</p>
+        <p className="mx-auto mt-3 max-w-lg font-serif text-sm text-muted-foreground">
+          {error.message}
+        </p>
       </div>
     );
   }
 
   let resultsContent;
   if (isLoading && items.length === 0 && query.trim().length > 0) {
-    resultsContent = <SemanticSearchSkeleton viewMode={viewMode} />;
+    resultsContent = <SemanticSearchSkeleton />;
   } else if (items.length === 0) {
-    resultsContent = <SemanticSearchEmpty query={query} />;
-  } else if (viewMode === "list") {
+    resultsContent = <SemanticSearchEmpty mode={mode} query={query} />;
+  } else {
     resultsContent = (
       <div>
         {items.map((skill, index) => (
-          <SemanticResultRow index={index} key={skill.id} skill={skill} />
+          <SemanticResultRow index={index} key={skill.id} mode={mode} query={query} skill={skill} />
         ))}
       </div>
-    );
-  } else {
-    resultsContent = (
-      <motion.div
-        className={cn("grid border-border border-l", "grid-cols-1 md:grid-cols-2 xl:grid-cols-3")}
-        layout
-        transition={{ layout: { duration: 0.25, ease: "easeOut" } }}
-      >
-        <AnimatePresence initial={false} mode="popLayout">
-          {items.map((skill) => (
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="min-w-0"
-              exit={{ opacity: 0, scale: 0.98 }}
-              initial={{ opacity: 0, y: 8 }}
-              key={skill.id}
-              layout
-              transition={{ duration: 0.18, ease: "easeOut" }}
-            >
-              <SemanticResultCard skill={skill} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
     );
   }
 
   return (
     <div className="grid min-h-[50svh] xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0">
-        <SemanticSearchHeader isLoading={isLoading} meta={meta} query={query} />
+        <SemanticSearchHeader isLoading={isLoading} meta={meta} mode={mode} query={query} />
         {resultsContent}
       </div>
-      <SemanticSearchRail items={items} meta={meta} query={query} />
+      <SemanticSearchRail items={items} meta={meta} mode={mode} query={query} />
     </div>
   );
 };

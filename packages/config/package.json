@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./tsconfig.base.json": "./tsconfig.base.json",
-    "./dev": "./src/dev.ts"
+    "./tsconfig.base.json": "./tsconfig.base.json"
   }
 }

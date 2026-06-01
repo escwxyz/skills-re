@@ -21,7 +21,7 @@ export const GithubSubmitForm = () => {
           {m.page_title()}
         </h3>
 
-        <p className="font-serif mb-7 max-w-160 text-sm leading-relaxed text-ink-2">
+        <p className="font-serif mb-7 max-w-160 text-sm leading-relaxed text-muted-foreground">
           {m.page_description()}
         </p>
 

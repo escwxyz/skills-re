@@ -1,6 +1,6 @@
 import {
   ArrowBendUpLeftIcon,
-  CaretRightIcon,
+  FolderSimpleIcon,
   HouseIcon,
   InfoIcon,
   UsersIcon,
@@ -9,7 +9,6 @@ import { ChatCircleTextIcon } from "@phosphor-icons/react/dist/icons/ChatCircleT
 import { ChatsIcon } from "@phosphor-icons/react/dist/icons/Chats";
 import { GearIcon } from "@phosphor-icons/react/dist/icons/Gear";
 import { RowsIcon } from "@phosphor-icons/react/dist/icons/Rows";
-import { useState, useEffect } from "react";
 import { Link, Outlet, createFileRoute, useMatchRoute } from "@tanstack/react-router";
 import {
   Sidebar,
@@ -22,16 +21,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getUser } from "@/functions/get-user";
 import { NavUser } from "@/components/nav-user";
+import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/_authedLayout/dashboard")({
   ssr: "data-only",
@@ -52,31 +48,32 @@ export const Route = createFileRoute("/_authedLayout/dashboard")({
   component: RouteComponent,
 });
 
+const routeTitles = [
+  { title: m.dashboard_nav_overview_label(), to: "/dashboard" as const, fuzzy: false },
+  { title: m.dashboard_nav_skills_label(), to: "/dashboard/skills" as const, fuzzy: true },
+  {
+    title: m.dashboard_nav_collections_label(),
+    to: "/dashboard/collections" as const,
+    fuzzy: true,
+  },
+  { title: m.dashboard_nav_reviews_label(), to: "/dashboard/reviews" as const, fuzzy: false },
+  {
+    title: m.dashboard_nav_feedbacks_label(),
+    to: "/dashboard/feedbacks" as const,
+    fuzzy: false,
+  },
+  { title: m.dashboard_nav_settings_label(), to: "/dashboard/settings" as const, fuzzy: false },
+  // i18n
+  { title: "Users", to: "/dashboard/users" as const, fuzzy: false },
+];
+
 function RouteComponent() {
   const { currentUser, isAdmin } = Route.useLoaderData();
   const matchRoute = useMatchRoute();
 
-  const isSkillsActive = Boolean(matchRoute({ to: "/dashboard/skills", fuzzy: true }));
-  const [skillsOpen, setSkillsOpen] = useState(isSkillsActive);
-
-  useEffect(() => {
-    if (isSkillsActive) {
-      setSkillsOpen(true);
-    }
-  }, [isSkillsActive]);
-
-  const routeTitles = [
-    { title: "Account overview", to: "/dashboard" as const, fuzzy: false },
-    { title: "Skills", to: "/dashboard/skills" as const, fuzzy: true },
-    { title: "Review history", to: "/dashboard/reviews" as const, fuzzy: false },
-    { title: "Feedback inbox", to: "/dashboard/feedbacks" as const, fuzzy: false },
-    { title: "Access controls", to: "/dashboard/settings" as const, fuzzy: false },
-    { title: "Users", to: "/dashboard/users" as const, fuzzy: false },
-  ];
-
   const activeTitle =
     routeTitles.find((item) => matchRoute({ to: item.to, fuzzy: item.fuzzy }))?.title ??
-    "Account overview";
+    m.dashboard_nav_overview_label();
 
   return (
     <SidebarProvider defaultOpen>
@@ -89,7 +86,7 @@ function RouteComponent() {
                   <Link to="/" className="flex items-center gap-2">
                     <ArrowBendUpLeftIcon className="size-4 shrink-0" />
                     <span className="font-mono text-[11px] uppercase tracking-[0.08em]">
-                      Back to home
+                      {m.dashboard_nav_back_to_home()}
                     </span>
                   </Link>
                 }
@@ -97,24 +94,22 @@ function RouteComponent() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
-
-        <SidebarContent>
+        <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-text">
-              Navigation
+            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {m.dashboard_nav_section_label()}
             </SidebarGroupLabel>
 
-            <SidebarMenu className="gap-1">
-              {/* Overview */}
+            <SidebarMenu className="gap-1 px-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
-                    <Link to="/dashboard" className="flex flex-col w-full rounded-none px-0">
+                    <Link to="/dashboard" className="flex flex-col w-full rounded-none px-2">
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <HouseIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Overview
+                            {m.dashboard_nav_overview_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -122,7 +117,7 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        High-level status and account summary
+                        {m.dashboard_nav_overview_description()}
                       </p>
                     </Link>
                   }
@@ -131,75 +126,43 @@ function RouteComponent() {
                 />
               </SidebarMenuItem>
 
-              {/* Skills — collapsible with Published / Saved sub-items */}
-              <Collapsible
-                defaultOpen={true}
-                open={skillsOpen}
-                onOpenChange={setSkillsOpen}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger
-                    render={
-                      <SidebarMenuButton
-                        className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
-                        isActive={isSkillsActive}
-                      >
-                        <span className="flex w-full flex-col">
-                          <span className="flex w-full items-center justify-between gap-3">
-                            <span className="flex items-center gap-2">
-                              <RowsIcon className="size-3" />
-                              <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                                Skills
-                              </span>
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                                02
-                              </span>
-                              <CaretRightIcon className="size-3 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                            </span>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link to="/dashboard/skills" className="flex flex-col w-full rounded-none px-2">
+                      <span className="flex w-full items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <RowsIcon className="size-3" />
+                          <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
+                            {m.dashboard_nav_skills_label()}
                           </span>
-                          <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                            Published skills linked to your account
-                          </p>
                         </span>
-                      </SidebarMenuButton>
-                    }
-                  />
+                        <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
+                          02
+                        </span>
+                      </span>
+                      <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
+                        {m.dashboard_nav_skills_description()}
+                      </p>
+                    </Link>
+                  }
+                  className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
+                  isActive={Boolean(matchRoute({ to: "/dashboard/skills", fuzzy: true }))}
+                />
+              </SidebarMenuItem>
 
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          isActive={!matchRoute({ to: "/dashboard/skills/saved" })}
-                          render={<Link to="/dashboard/skills">Published</Link>}
-                        />
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          isActive={Boolean(matchRoute({ to: "/dashboard/skills/saved" }))}
-                          render={<Link to="/dashboard/skills/saved">Saved</Link>}
-                        />
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-
-              {/* Reviews */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
                     <Link
-                      to="/dashboard/reviews"
-                      className="flex flex-col w-full rounded-none px-0"
+                      to="/dashboard/collections"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
-                          <ChatsIcon className="size-3" />
+                          <FolderSimpleIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Reviews
+                            {m.dashboard_nav_collections_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
@@ -207,7 +170,36 @@ function RouteComponent() {
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Read-only archive of the reviews you have written
+                        {m.dashboard_nav_collections_description()}
+                      </p>
+                    </Link>
+                  }
+                  className="h-auto items-start p-3 text-left data-active:bg-sidebar-accent/70"
+                  isActive={Boolean(matchRoute({ to: "/dashboard/collections", fuzzy: true }))}
+                />
+              </SidebarMenuItem>
+
+              {/* Reviews */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link
+                      to="/dashboard/reviews"
+                      className="flex flex-col w-full rounded-none px-2"
+                    >
+                      <span className="flex w-full items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <ChatsIcon className="size-3" />
+                          <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
+                            {m.dashboard_nav_reviews_label()}
+                          </span>
+                        </span>
+                        <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
+                          04
+                        </span>
+                      </span>
+                      <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
+                        {m.dashboard_nav_reviews_description()}
                       </p>
                     </Link>
                   }
@@ -222,21 +214,21 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/feedbacks"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <ChatCircleTextIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Feedback
+                            {m.dashboard_nav_feedbacks_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                          04
+                          05
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Feedback you have submitted
+                        {m.dashboard_nav_feedbacks_description()}
                       </p>
                     </Link>
                   }
@@ -251,21 +243,21 @@ function RouteComponent() {
                   render={
                     <Link
                       to="/dashboard/settings"
-                      className="flex flex-col w-full rounded-none px-0"
+                      className="flex flex-col w-full rounded-none px-2"
                     >
                       <span className="flex w-full items-center justify-between gap-3">
                         <span className="flex items-center gap-2">
                           <GearIcon className="size-3" />
                           <span className="font-display text-[16px] leading-none tracking-[-0.02em]">
-                            Settings
+                            {m.dashboard_nav_settings_label()}
                           </span>
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-sidebar-foreground/50">
-                          05
+                          06
                         </span>
                       </span>
                       <p className="mt-2 pl-7 text-[12px] leading-[1.45] text-sidebar-foreground/60">
-                        Account actions and quick shortcuts
+                        {m.dashboard_nav_settings_description()}
                       </p>
                     </Link>
                   }
@@ -337,7 +329,7 @@ function RouteComponent() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-20 flex h-(--header-height) items-center justify-between border-b  bg-paper/95 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-(--header-height) items-center justify-between border-b  bg-background/95 px-4 backdrop-blur">
           <div className="flex min-w-0 items-center gap-3">
             <SidebarTrigger className="bg-background text-foreground hover:bg-secondary" />
             <div className="min-w-0">

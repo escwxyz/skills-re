@@ -1,9 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowUpRightIcon, CircleIcon, TriangleIcon } from "@phosphor-icons/react";
 import { z } from "zod/v4";
-import { SkillSnapshotDiffDialog } from "@/components/skill-snapshot-diff-dialog";
+// import { SkillSnapshotDiffDialog } from "@/components/skill-snapshot-diff-dialog";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getSkillChangelog } from "@/functions/skills/get-skill-changelog";
@@ -23,13 +23,21 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/changelog")({
   loaderDeps: ({ search }) => ({ snapshotId: search.snapshotId }),
-  loader: ({ deps, params }) =>
-    getSkillChangelog({
+  loader: async ({ deps, params }) => {
+    const changelog = await getSkillChangelog({
       data: { selectedSnapshotId: deps.snapshotId, skillSlug: params.slug },
-    }),
+    });
+
+    if (!changelog) {
+      throw notFound();
+    }
+
+    return changelog;
+  },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/changelog`,
       description: loaderData?.skillDescription,
       image:
@@ -38,21 +46,17 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_changelog()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_changelog()),
     }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const data = Route.useLoaderData();
-  if (!data) {
-    throw notFound();
-  }
 
-  const { currentSnapshotId } = data;
+  // const { currentSnapshotId } = data;
 
   const locale = getLocale();
 
@@ -63,13 +67,13 @@ function RouteComponent() {
           <h2 className="font-display text-[clamp(36px,5vw,52px)] font-normal leading-none tracking-tight">
             {m.skill_detail_changelog()}
           </h2>
-          <SkillSnapshotDiffDialog
+          {/* <SkillSnapshotDiffDialog
             currentSnapshotId={currentSnapshotId}
             skillId={data.skillId}
             triggerClassName="w-auto min-w-0 px-4"
             triggerLabel={m.skill_changelog_diff_button()}
             versions={data.versions}
-          />
+          /> */}
         </div>
       </div>
 
@@ -90,7 +94,7 @@ function RouteComponent() {
                   <div className="flex flex-wrap items-center gap-3">
                     {/** TODO */}
                     <span
-                      className={`flex items-center gap-1.5 font-mono text-sm tracking-wide ${entry.isCurrent ? "text-editorial-red" : "text-ink"}`}
+                      className={`flex items-center gap-1.5 font-mono text-sm tracking-wide ${entry.isCurrent ? "text-editorial-red" : "text-foreground"}`}
                     >
                       {entry.isCurrent ? <TriangleIcon /> : <CircleIcon />}
                       <b className="font-semibold">v.{entry.version}</b>
@@ -113,7 +117,7 @@ function RouteComponent() {
                     {commitUrl ? (
                       <a
                         aria-label={m.skill_changelog_open_commit_link()}
-                        className="border-border hover:bg-paper-2 inline-flex size-8 items-center justify-center border transition-colors"
+                        className="border-border hover:bg-muted inline-flex size-8 items-center justify-center border transition-colors"
                         href={commitUrl}
                         rel="noreferrer"
                         target="_blank"
@@ -139,9 +143,11 @@ function RouteComponent() {
           })}
         </div>
       ) : (
-        <div className="border-border bg-paper-2 border px-5 py-6">
-          <div className="eyebrow text-editorial-red mb-2">{m.skill_changelog_empty_eyebrow()}</div>
-          <p className="text-ink-2 m-0 max-w-110">{m.skill_changelog_empty_body()}</p>
+        <div className="border-border bg-muted border px-5 py-6">
+          <div className="font-mono text-xs uppercase text-muted-foreground mb-2">
+            {m.skill_changelog_empty_eyebrow()}
+          </div>
+          <p className="text-muted-foreground m-0 max-w-110">{m.skill_changelog_empty_body()}</p>
         </div>
       )}
     </div>

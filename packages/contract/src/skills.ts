@@ -106,6 +106,7 @@ export const searchSkillsInputSchema = z.object({
   repoName: z.string().min(1).optional(),
   query: z.string().trim().min(1).optional(),
   rewriteQuery: z.boolean().optional(),
+  searchMode: z.enum(["keyword", "semantic"]).optional(),
   sort: z
     .enum(["newest", "updated", "views", "downloads-trending", "downloads-all-time", "stars"])
     .optional(),
@@ -296,7 +297,7 @@ export const skillsContract = {
       description: "Returns the latest snapshot metadata for a set of public skills.",
       method: "POST",
       path: "/skills/history-info",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "Skill history info",
       summary: "Read skill history info",
     })
@@ -318,7 +319,7 @@ export const skillsContract = {
       description: "Searches the managed AI Search corpus and returns the raw provider payload.",
       method: "POST",
       path: "/skills/ai-search",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "AI search result",
       summary: "Run AI search",
     })
@@ -403,12 +404,24 @@ export const skillsContract = {
       description: "Uploads a prepared GitHub skill payload into the background workflow pipeline.",
       method: "POST",
       path: "/skills/upload",
-      tags: ["Skills"],
+      tags: ["Skills", "Internal"],
       successDescription: "Upload queued",
       summary: "Upload prepared skills",
     })
     .input(submitGithubPreparedOutputSchema)
     .output(uploadSkillsResultSchema),
+  submitGithubPreparedPublic: baseContract
+    .route({
+      description:
+        "Submits a prepared GitHub skill payload for public ingestion without rebuilding the repository payload.",
+      method: "POST",
+      path: "/skills/submit-prepared",
+      tags: ["Skills"],
+      successDescription: "Prepared GitHub submission result",
+      summary: "Submit prepared public GitHub skills",
+    })
+    .input(submitGithubPreparedOutputSchema)
+    .output(submitGithubRepoPublicResultSchema),
   submitGithubRepoPublic: baseContract
     .route({
       description:

@@ -4,9 +4,11 @@ import type {
   SnapshotUploadScheduler,
   SkillsTaggingScheduler,
 } from "@skills-re/api/types";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 import {
   createSnapshot,
   deprecateSnapshotsBeyondLimit,
+  findSnapshotByContentHashes,
   setSkillLatestSnapshot,
 } from "@skills-re/api/modules/snapshots/repo";
 import { ensureRepo } from "@skills-re/api/modules/repos/service";
@@ -15,6 +17,7 @@ import type { StaticAuditWorkflowTarget } from "@skills-re/api/modules/static-au
 import {
   createSkill,
   checkSkillExistingBySlug,
+  listRepoSkillSnapshotHeadsByRepoId,
   updateSkillAiSearchItemId,
 } from "@skills-re/api/modules/skills/repo";
 import { normalizeSkillTags } from "@skills-re/api/modules/tags/ai-tagging";
@@ -22,6 +25,9 @@ import { syncSkillTags } from "@skills-re/api/modules/tags/service";
 import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
+import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
+import type { StaticAuditDispatchRateLimitReservation } from "@/dos/static-audit-dispatch-rate-limiter";
+import { asRepoId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
 import type {
@@ -49,6 +55,7 @@ export interface WorkflowEvent<TPayload> {
 
 export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+  sleep?(name: string, duration: string | number): Promise<void>;
 }
 
 export interface RunSkillsUploadWorkflowDeps {
@@ -56,8 +63,12 @@ export interface RunSkillsUploadWorkflowDeps {
   checkSkillExistingBySlug?: typeof checkSkillExistingBySlug;
   createSkill?: typeof createSkill;
   createSnapshot?: typeof createSnapshot;
+  findSnapshotByContentHashes?: typeof findSnapshotByContentHashes;
   deprecateSnapshotsBeyondLimit?: typeof deprecateSnapshotsBeyondLimit;
   ensureRepo?: typeof ensureRepo;
+  listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
+  reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
+  reserveStaticAuditDispatchSlot?: () => Promise<StaticAuditDispatchRateLimitReservation>;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
@@ -140,6 +151,7 @@ const buildEnsureRepoInput = (repo: NonNullable<SkillsUploadContentPayload["repo
   nameWithOwner: repo.nameWithOwner,
   owner: {
     avatarUrl: repo.owner.avatarUrl ?? null,
+    bio: repo.owner.bio ?? null,
     handle: repo.owner.handle,
     name: repo.owner.name ?? null,
   },
@@ -156,9 +168,35 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
       })
     : skill.initialSnapshot.files.find((file) => file.path.split("/").at(-1) === SKILL_FILENAME);
 
+const normalizeCanonicalSlug = (value: string) => normalizeSkillSlug(value);
+
+const buildUniqueSkillIdByCanonicalSlug = (
+  existingRepoSkills: Awaited<ReturnType<typeof listRepoSkillSnapshotHeadsByRepoId>>,
+) => {
+  const skillIdsBySlug = new Map<string, string[]>();
+  for (const existingSkill of existingRepoSkills) {
+    const canonicalSlug = normalizeCanonicalSlug(existingSkill.canonicalSlug ?? existingSkill.slug);
+    const skillIds = skillIdsBySlug.get(canonicalSlug) ?? [];
+    skillIds.push(existingSkill.skillId);
+    skillIdsBySlug.set(canonicalSlug, skillIds);
+  }
+
+  const uniqueSkillIds = new Map<string, string>();
+  for (const [canonicalSlug, skillIds] of skillIdsBySlug) {
+    const [skillId] = skillIds;
+    if (skillIds.length === 1 && skillId) {
+      uniqueSkillIds.set(canonicalSlug, skillId);
+    }
+  }
+
+  return uniqueSkillIds;
+};
+
 interface ProcessUploadSkillParams {
   authorHandle: string;
   deps: RunSkillsUploadWorkflowDeps;
+  existingRepoSkillIdByCanonicalSlug: Map<string, string>;
+  existingRepoSkillIdByDirectoryPath: Map<string, string>;
   repoId: string;
   repoName: string;
   skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number];
@@ -168,21 +206,78 @@ interface ProcessUploadSkillParams {
   usedSlugs: Set<string>;
 }
 
-const processUploadSkill = async ({
-  authorHandle,
+const waitForAiSearchUploadSlot = async ({
   deps,
+  skillIndex,
+  step,
+}: Pick<ProcessUploadSkillParams, "deps" | "skillIndex" | "step">) => {
+  if (!deps.reserveAiSearchUploadSlot) {
+    return;
+  }
+
+  const reservation = await step.do(
+    `reserve-upload-skill-ai-search-${skillIndex}`,
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () => await deps.reserveAiSearchUploadSlot?.(),
+  );
+  if (reservation && reservation.delaySeconds > 0) {
+    await step.sleep?.(
+      `wait-upload-skill-ai-search-${skillIndex}`,
+      `${reservation.delaySeconds} seconds`,
+    );
+  }
+};
+
+const waitForStaticAuditDispatchSlot = async ({
+  auditTargets,
+  deps,
+  step,
+}: {
+  auditTargets: StaticAuditWorkflowTarget[];
+  deps: RunSkillsUploadWorkflowDeps;
+  step: WorkflowStep;
+}) => {
+  if (!deps.reserveStaticAuditDispatchSlot || auditTargets.length === 0) {
+    return;
+  }
+
+  const reservation = await step.do(
+    "reserve-static-audit-dispatch",
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () => await deps.reserveStaticAuditDispatchSlot?.(),
+  );
+  if (reservation && reservation.delaySeconds > 0) {
+    await step.sleep?.("wait-static-audit-dispatch", `${reservation.delaySeconds} seconds`);
+  }
+};
+
+const resolveUploadSkillRecord = async ({
+  deps,
+  existingRepoSkillIdByCanonicalSlug,
+  existingRepoSkillIdByDirectoryPath,
   repoId,
-  repoName,
   skill,
   skillIndex,
   step,
   syncTime,
   usedSlugs,
-}: ProcessUploadSkillParams) => {
-  const skillMdContent = findSkillMdContent(skill);
-  const computedFingerprint = skillMdContent
-    ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdContent)
-    : null;
+}: Omit<ProcessUploadSkillParams, "authorHandle" | "repoName">) => {
+  const normalizedDirectoryPath = normalizeUploadDirectoryPath(skill.directoryPath);
+  const canonicalSlug = normalizeCanonicalSlug(skill.slug);
+  const existingSkillId =
+    existingRepoSkillIdByDirectoryPath.get(normalizedDirectoryPath) ??
+    existingRepoSkillIdByCanonicalSlug.get(canonicalSlug) ??
+    null;
+
+  if (existingSkillId) {
+    usedSlugs.add(skill.slug);
+    return {
+      canonicalSlug,
+      normalizedDirectoryPath,
+      skillId: existingSkillId,
+      slug: skill.slug,
+    };
+  }
 
   const slug = await step.do(
     `resolve-upload-skill-slug-${skillIndex}`,
@@ -200,6 +295,7 @@ const processUploadSkill = async ({
     workflowStepRetryPolicy.skillsUploadPipeline,
     async () =>
       await (deps.createSkill ?? createSkill)({
+        canonicalSlug,
         description: skill.description,
         repoId,
         slug,
@@ -210,6 +306,66 @@ const processUploadSkill = async ({
       }),
   );
 
+  existingRepoSkillIdByDirectoryPath.set(normalizedDirectoryPath, skillId);
+
+  return {
+    canonicalSlug,
+    normalizedDirectoryPath,
+    skillId,
+    slug,
+  };
+};
+
+const processUploadSkill = async ({
+  authorHandle,
+  deps,
+  existingRepoSkillIdByCanonicalSlug,
+  existingRepoSkillIdByDirectoryPath,
+  repoId,
+  repoName,
+  skill,
+  skillIndex,
+  step,
+  syncTime,
+  usedSlugs,
+}: ProcessUploadSkillParams) => {
+  const skillMdContent = findSkillMdContent(skill);
+  const computedFingerprint = skillMdContent
+    ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdContent)
+    : null;
+
+  const effectiveFrontmatterHash =
+    skill.frontmatterHash ?? computedFingerprint?.frontmatterHash ?? null;
+  const effectiveSkillContentHash =
+    skill.skillContentHash ?? computedFingerprint?.skillContentHash ?? null;
+
+  if (effectiveFrontmatterHash && effectiveSkillContentHash) {
+    const duplicate = await step.do(
+      `check-duplicate-content-${skillIndex}`,
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await (deps.findSnapshotByContentHashes ?? findSnapshotByContentHashes)({
+          frontmatterHash: effectiveFrontmatterHash,
+          skillContentHash: effectiveSkillContentHash,
+        }),
+    );
+    if (duplicate) {
+      return { reason: "duplicate-content" as const, status: "skipped" as const };
+    }
+  }
+
+  const { normalizedDirectoryPath, skillId, slug } = await resolveUploadSkillRecord({
+    deps,
+    existingRepoSkillIdByCanonicalSlug,
+    existingRepoSkillIdByDirectoryPath,
+    repoId,
+    skill,
+    skillIndex,
+    step,
+    syncTime,
+    usedSlugs,
+  });
+
   const snapshotVersion = skill.preferredVersion ?? "1.0.0";
   const snapshotId = await step.do(
     `create-upload-snapshot-${skillIndex}`,
@@ -217,12 +373,12 @@ const processUploadSkill = async ({
     async () =>
       await (deps.createSnapshot ?? createSnapshot)({
         description: skill.description,
-        directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
+        directoryPath: normalizedDirectoryPath,
         entryPath: normalizeUploadEntryPath(skill.entryPath),
-        frontmatterHash: skill.frontmatterHash ?? computedFingerprint?.frontmatterHash ?? null,
+        frontmatterHash: effectiveFrontmatterHash,
         hash: skill.snapshotHash,
         name: skill.title,
-        skillContentHash: skill.skillContentHash ?? computedFingerprint?.skillContentHash ?? null,
+        skillContentHash: effectiveSkillContentHash,
         skillId,
         sourceCommitDate: skill.initialSnapshot.sourceCommitDate,
         sourceCommitMessage: truncateUploadCommitMessage(skill.initialSnapshot.sourceCommitMessage),
@@ -297,11 +453,15 @@ const processUploadSkill = async ({
       }),
   );
 
+  const skillMdFile = findSkillMdFile(skill);
+  if (deps.aiSearchItems && skillMdFile && deps.reserveAiSearchUploadSlot) {
+    await waitForAiSearchUploadSlot({ deps, skillIndex, step });
+  }
+
   const aiSearchItemId = await step.do(
     `upload-skill-ai-search-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
     async () => {
-      const skillMdFile = findSkillMdFile(skill);
       if (!deps.aiSearchItems) {
         console.warn("[skills-upload] ai-search skipped: binding not configured", {
           skillId,
@@ -388,53 +548,54 @@ const dispatchUploadStaticAudit = async ({
   createdSkillIds: string[];
   deps: RunSkillsUploadWorkflowDeps;
   step: WorkflowStep;
-}) =>
-  await step.do("dispatch-static-audit", workflowStepRetryPolicy.skillsUploadPipeline, async () => {
-    const dispatchStaticAuditWorkflow =
-      deps.dispatchStaticAuditWorkflow ??
-      (() => ({
-        dispatched: false as const,
-        reason: "missing-dispatch-runtime",
-      }));
+}) => {
+  const dispatchStaticAuditWorkflow =
+    deps.dispatchStaticAuditWorkflow ??
+    (() => ({
+      dispatched: false as const,
+      reason: "missing-dispatch-runtime",
+    }));
 
-    console.info("[skills-upload] preparing static audit dispatch", {
-      createdSkillsCount: createdSkillIds.length,
-      auditTargetsCount: auditTargets.length,
-      auditTargets: auditTargets.map((target) => ({
-        owner: target.owner,
-        repo: target.repo,
-        skillRootPath: target.skillRootPath ?? null,
-        snapshotId: target.snapshotId ?? null,
-        sourceCommitSha: target.sourceCommitSha ?? null,
-        sourceRef: target.sourceRef ?? null,
-      })),
-    });
-
-    try {
-      const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
-      if (auditDispatch.dispatched) {
-        console.info("[skills-upload] static audit workflow dispatched", {
-          createdSkillsCount: createdSkillIds.length,
-          repository: auditDispatch.repository,
-          step: "dispatch-static-audit",
-          workflowFile: auditDispatch.workflowFile,
-        });
-      } else {
-        console.warn("[skills-upload] static audit workflow not dispatched", {
-          createdSkillsCount: createdSkillIds.length,
-          reason: auditDispatch.reason,
-          step: "dispatch-static-audit",
-          targetCount: auditTargets.length,
-        });
-      }
-    } catch (error) {
-      console.warn("[skills-upload] failed to dispatch static audit workflow", {
-        createdSkillsCount: createdSkillIds.length,
-        message: formatErrorMessage(error),
-        step: "dispatch-static-audit",
-      });
-    }
+  console.info("[skills-upload] preparing static audit dispatch", {
+    createdSkillsCount: createdSkillIds.length,
+    auditTargetsCount: auditTargets.length,
+    auditTargets: auditTargets.map((target) => ({
+      owner: target.owner,
+      repo: target.repo,
+      skillRootPath: target.skillRootPath ?? null,
+      snapshotId: target.snapshotId ?? null,
+      sourceCommitSha: target.sourceCommitSha ?? null,
+      sourceRef: target.sourceRef ?? null,
+    })),
   });
+
+  try {
+    await waitForStaticAuditDispatchSlot({ auditTargets, deps, step });
+    const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
+    if (auditDispatch.dispatched) {
+      console.info("[skills-upload] static audit workflow dispatched", {
+        createdSkillsCount: createdSkillIds.length,
+        repository: auditDispatch.repository,
+        step: "dispatch-static-audit",
+        workflowFile: auditDispatch.workflowFile,
+      });
+      return;
+    }
+
+    console.warn("[skills-upload] static audit workflow not dispatched", {
+      createdSkillsCount: createdSkillIds.length,
+      reason: auditDispatch.reason,
+      step: "dispatch-static-audit",
+      targetCount: auditTargets.length,
+    });
+  } catch (error) {
+    console.warn("[skills-upload] failed to dispatch static audit workflow", {
+      createdSkillsCount: createdSkillIds.length,
+      message: formatErrorMessage(error),
+      step: "dispatch-static-audit",
+    });
+  }
+};
 
 const createHistoricalSnapshotsIfNeeded = async ({
   authorHandle,
@@ -499,18 +660,36 @@ export const runSkillsUploadWorkflow = async (
       workflowStepRetryPolicy.skillsUploadPipeline,
       async () => await (deps.ensureRepo ?? ensureRepo)(buildEnsureRepoInput(repo)),
     );
+    const existingRepoSkills = await step.do(
+      "list-existing-upload-repo-skills",
+      workflowStepRetryPolicy.skillsUploadPipeline,
+      async () =>
+        await (deps.listRepoSkillSnapshotHeadsByRepoId ?? listRepoSkillSnapshotHeadsByRepoId)(
+          asRepoId(repoId),
+        ),
+    );
 
     const [authorHandle = "", repoName = ""] = repo.nameWithOwner.split("/");
     const createdSkillIds: string[] = [];
     const auditTargets: StaticAuditWorkflowTarget[] = [];
     let firstWorkId: string | null = null;
     const usedSlugs = new Set<string>();
+    const existingRepoSkillIdByDirectoryPath = new Map(
+      existingRepoSkills.map((existingSkill) => [
+        normalizeUploadDirectoryPath(existingSkill.directoryPath),
+        existingSkill.skillId,
+      ]),
+    );
+    const existingRepoSkillIdByCanonicalSlug =
+      buildUniqueSkillIdByCanonicalSlug(existingRepoSkills);
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
-      const { auditTarget, skillId, uploadWorkId } = await processUploadSkill({
+      const result = await processUploadSkill({
         authorHandle,
         deps,
+        existingRepoSkillIdByCanonicalSlug,
+        existingRepoSkillIdByDirectoryPath,
         repoId,
         repoName,
         skill,
@@ -520,11 +699,15 @@ export const runSkillsUploadWorkflow = async (
         usedSlugs,
       });
 
-      auditTargets.push(auditTarget);
-      createdSkillIds.push(skillId);
+      if (result.status === "skipped") {
+        continue;
+      }
+
+      auditTargets.push(result.auditTarget);
+      createdSkillIds.push(result.skillId);
 
       if (!firstWorkId) {
-        firstWorkId = uploadWorkId;
+        firstWorkId = result.uploadWorkId;
       }
     }
 

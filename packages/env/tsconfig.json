@@ -2,5 +2,6 @@
   "extends": "@skills-re/config/tsconfig.base.json",
   "compilerOptions": {
     "strictNullChecks": true
-  }
+  },
+  "include": ["env.d.ts", "env.server.d.ts", "src/server.ts", "src/start.ts"]
 }

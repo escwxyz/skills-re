@@ -12,8 +12,9 @@ export const REPO_SKILLS_DISCOVERY_CRON = "15 */6 * * *";
 export const DAILY_METRICS_REFRESH_CRON = "30 0 * * *";
 
 const DEFAULT_REPO_STATS_SYNC_LIMIT = 20;
-const DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT = 50;
-const DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES = 25;
+const DEFAULT_REPO_STATS_SYNC_MAX_PAGES = 5;
+const DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT = 20;
+const DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES = 5;
 
 export interface ScheduledJob {
   cron: string;
@@ -52,6 +53,12 @@ const parsePositiveInteger = (value: string | undefined, fallback: number) => {
 const getRepoStatsSyncLimit = (env: Env) =>
   parsePositiveInteger(getEnvString(env, "REPO_STATS_SYNC_LIMIT"), DEFAULT_REPO_STATS_SYNC_LIMIT);
 
+const getRepoStatsSyncMaxPages = (env: Env) =>
+  parsePositiveInteger(
+    getEnvString(env, "REPO_STATS_SYNC_MAX_PAGES"),
+    DEFAULT_REPO_STATS_SYNC_MAX_PAGES,
+  );
+
 const getRepoSkillsDiscoveryLimit = (env: Env) =>
   parsePositiveInteger(
     getEnvString(env, "REPO_SKILLS_DISCOVERY_LIMIT"),
@@ -71,6 +78,7 @@ export const enqueueScheduledRepoStatsSync = async (env: Env, deps: RepoSyncCron
   );
   return await reposService.enqueueStatsSync(scheduler, {
     limit: getRepoStatsSyncLimit(env),
+    maxPages: getRepoStatsSyncMaxPages(env),
   });
 };
 

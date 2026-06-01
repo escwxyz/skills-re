@@ -1,85 +1,121 @@
 ---
 title: API Reference
-description: REST API for querying, installing, and managing skills programmatically.
+description: REST API for querying and installing skills programmatically.
 category: Reference
-order: 4
-updatedAt: 2025-01-01
+order: 5
+updatedAt: 2026-05-19
 ---
 
 ## Base URL
 
 ```
-https://api.skills.re/v1
+https://api.skills.re
 ```
 
-All endpoints return JSON. Authentication uses Bearer tokens from **Settings → API Tokens**.
+## Interactive Docs
+
+The full OpenAPI specification is available at:
+
+```
+https://api.skills.re/docs
+```
+
+All request and response schemas are defined there. The sections below cover the endpoints most commonly used by external consumers.
+
+## Authentication
+
+Most read endpoints are public. Authenticated requests use a Bearer token obtained via `skills-re auth login` (device flow):
+
+```
+Authorization: Bearer <token>
+```
 
 ## Skills
 
-### GET /skills
+### Search skills
 
-List skills with optional filtering.
-
-**Query parameters**
-
-| Parameter  | Type    | Description                              |
-| ---------- | ------- | ---------------------------------------- |
-| `q`        | string  | Full-text search query                   |
-| `tag`      | string  | Filter by tag                            |
-| `author`   | string  | Filter by publisher handle               |
-| `page`     | integer | Page number (default: 1)                 |
-| `per_page` | integer | Results per page (default: 20, max: 100) |
-
-**Example**
-
-```bash
-curl https://api.skills.re/v1/skills?q=code+review&tag=development
+```
+POST /skills/search
 ```
 
-### GET /skills/:slug
-
-Fetch a single skill by slug.
-
-```bash
-curl https://api.skills.re/v1/skills/code-review
-```
-
-**Response**
+**Body**
 
 ```json
 {
-  "id": "SR-0001",
-  "slug": "code-review",
-  "name": "code-review",
-  "description": "A diff-first code reviewer...",
-  "version": "2.4.1",
-  "license": "MIT",
-  "compatibility": ["claude-code", "claude-api"],
-  "author": { "handle": "anthropic-labs", "name": "Anthropic Labs" },
-  "tags": ["development", "quality"],
-  "createdAt": "2024-06-01T00:00:00Z",
-  "updatedAt": "2025-01-15T00:00:00Z"
+  "query": "code review",
+  "tags": ["testing"],
+  "categories": ["development"],
+  "limit": 20,
+  "cursor": "<pagination-cursor>"
 }
 ```
 
-### GET /skills/:slug/raw
+All fields are optional. Returns a paginated result with `page`, `continueCursor`, and `isDone`.
 
-Download the raw `SKILL.md` content.
+### Get skill by path
 
-```bash
-curl https://api.skills.re/v1/skills/code-review/raw
+```
+GET /skills/by-path?authorHandle=<handle>&skillSlug=<slug>
+GET /skills/by-path?authorHandle=<handle>&repoName=<repo>&skillSlug=<slug>
 ```
 
-## Authors
+### Submit a GitHub repository
 
-### GET /authors/:handle
-
-Fetch an author profile and their published skills.
-
-```bash
-curl https://api.skills.re/v1/authors/anthropic-labs
+```
+POST /skills/submit-github-repo-public
 ```
 
-## Rate Limits
+Triggers discovery and ingestion of skills from a public GitHub repository. Used by the `/submit` page.
 
-Unauthenticated requests: **60 req/hour**. Authenticated requests: **5000 req/hour**. Rate limit headers are returned on every response.
+## CLI Endpoints
+
+These endpoints are used by the `skills-re` CLI and follow the same authentication rules.
+
+### Resolve install
+
+```
+GET /cli/skills/resolve-install?skill=<author/repo/skill>&version=<version>
+```
+
+Resolves the latest installable snapshot for a given skill path (and optional pinned version). Returns archive download URL, lock entry, and snapshot metadata.
+
+### Download skill archive
+
+```
+GET /skills/download?snapshotId=<id>
+```
+
+Downloads the `.tar.gz` archive for an installed skill snapshot.
+
+### Notify install
+
+```
+POST /cli/skills/notify-install
+```
+
+**Body:** `{ "repoUrl": "https://github.com/owner/repo", "ref": "<sha>" }`
+
+Notifies the registry after a GitHub-sourced skill install so the repo can be indexed or synced.
+
+## Auth
+
+Device-flow endpoints used by `skills-re auth login`:
+
+```
+POST /auth/device/code
+POST /auth/device/token
+GET  /cli/auth/session
+POST /cli/auth/revoke
+```
+
+## MCP Server
+
+A Model Context Protocol server is available at:
+
+```
+GET/POST https://api.skills.re/mcp
+```
+
+Transport: streamable HTTP. Tools exposed: `search_skills`, `get_skill`, `get_my_saved_skills`, `save_skill`, `unsave_skill`, `record_skill_usage`, `get_my_recently_used`, `get_skill_recommendations`.
+
+The local MCP server (stdio) is started with `skills-re mcp`. Run `skills-re mcp --remote-config` to print the full configuration block for both transports.

@@ -1,12 +1,21 @@
-import type { Thing, WebSite, WithContext } from "schema-dts";
+import type {
+  BreadcrumbList,
+  ListItem,
+  Person,
+  ProfilePage,
+  Thing,
+  WebPage,
+  WithContext,
+} from "schema-dts";
 
 import {
   OG_IMAGE_DEFAULT,
-  SITE_DESCRIPTION,
   SITE_KEYWORDS,
   SITE_NAME,
+  SITE_TWITTER_SITE,
   SITE_URL,
 } from "@/lib/constants";
+import { m } from "@/paraglide/messages";
 import {
   baseLocale as defaultLocale,
   deLocalizeHref,
@@ -23,6 +32,8 @@ export interface SeoOptions {
   structuredData?: (WithContext<Thing> | Thing)[];
   locale?: Locale;
   image?: string;
+  includePageStructuredData?: boolean;
+  includeSiteStructuredData?: boolean;
 }
 
 interface SeoMetaDescriptor {
@@ -36,6 +47,8 @@ interface SeoMetaDescriptor {
 interface SeoLinkDescriptor {
   href: string;
   hrefLang?: string;
+  as?: string;
+  crossOrigin?: "anonymous" | "use-credentials";
   rel: string;
   sizes?: string;
   type?: string;
@@ -48,29 +61,234 @@ interface SeoScriptDescriptor {
 
 const resolveUrl = (pathOrUrl: string) => new URL(pathOrUrl, SITE_URL).toString();
 
-const createWebsiteSchema = (): WithContext<WebSite> => ({
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  description: SITE_DESCRIPTION,
-  name: SITE_NAME,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${SITE_URL}/skills?mode=search&q={search_term_string}`,
+const createWebsiteSchema = (): WithContext<Thing> =>
+  ({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    description: m.home_meta_description(),
+    name: SITE_NAME,
+    potentialAction: {
+      "@type": "SearchAction",
+      "query-input": "required name=search_term_string",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/skills?mode=search&q={search_term_string}`,
+      },
     },
-  },
+    url: SITE_URL,
+  }) as unknown as WithContext<Thing>;
+
+const createOrganizationSchema = (): WithContext<Thing> => ({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  logo: resolveUrl("/favicon.svg"),
+  name: SITE_NAME,
   url: SITE_URL,
 });
 
+const createWebPageSchema = ({
+  canonicalUrl,
+  description,
+  locale,
+  title,
+}: {
+  canonicalUrl: string;
+  description: string;
+  locale: Locale;
+  title: string;
+}): WithContext<WebPage> => ({
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  description,
+  inLanguage: locale,
+  isPartOf: {
+    "@id": `${SITE_URL}/#website`,
+  },
+  name: title,
+  url: canonicalUrl,
+});
+
+export const createProfilePageSchema = ({
+  canonicalUrl,
+  description,
+  identifier,
+  image,
+  name,
+  sameAs,
+  alternateName,
+}: {
+  alternateName?: string;
+  canonicalUrl: string;
+  description?: string;
+  identifier?: string;
+  image?: string;
+  name: string;
+  sameAs?: string[];
+}): WithContext<ProfilePage> => ({
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  ...(description ? { description } : {}),
+  ...(image ? { image } : {}),
+  mainEntity: {
+    "@type": "Person",
+    ...(alternateName ? { alternateName } : {}),
+    ...(description ? { description } : {}),
+    ...(identifier ? { identifier } : {}),
+    ...(image ? { image } : {}),
+    ...(sameAs?.length ? { sameAs } : {}),
+    name,
+  } as Person,
+  url: canonicalUrl,
+});
+
+export const createBreadcrumbListSchema = (
+  items: { item?: string; name: string }[],
+): WithContext<BreadcrumbList> => ({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: items.map(
+    (item, index) =>
+      ({
+        "@type": "ListItem",
+        ...(item.item ? { item: item.item } : {}),
+        name: item.name,
+        position: index + 1,
+      }) as ListItem,
+  ),
+});
+
+export const createSkillBreadcrumbSchema = ({
+  authorHandle,
+  currentPath,
+  skillTitle,
+}: {
+  authorHandle: string;
+  currentPath: string;
+  skillTitle: string;
+}): WithContext<BreadcrumbList> =>
+  createBreadcrumbListSchema([
+    {
+      item: `${SITE_URL}/skills`,
+      name: String(m.skill_breadcrumb_root({})),
+    },
+    {
+      item: `${SITE_URL}/authors/${authorHandle}`,
+      name: authorHandle,
+    },
+    {
+      item: `${SITE_URL}${currentPath}`,
+      name: skillTitle,
+    },
+  ]);
+
+export const createSkillDetailSeo = ({
+  authorHandle,
+  canonicalPath,
+  description,
+  image,
+  locale,
+  skillTitle,
+  tabLabel,
+}: {
+  authorHandle: string;
+  canonicalPath: string;
+  description?: string;
+  image?: string;
+  locale: Locale;
+  skillTitle?: string;
+  tabLabel?: string;
+}) => {
+  let title: string | undefined;
+  if (skillTitle) {
+    title = tabLabel ? `${tabLabel} · ${skillTitle}` : skillTitle;
+  }
+
+  const structuredData = skillTitle
+    ? [
+        createSkillBreadcrumbSchema({
+          authorHandle,
+          currentPath: canonicalPath,
+          skillTitle,
+        }),
+      ]
+    : [];
+
+  return createSeo({
+    canonicalPath,
+    description,
+    image,
+    structuredData,
+    title,
+    locale,
+  });
+};
+
+const createStructuredDataScripts = ({
+  canonicalUrl,
+  description,
+  includePageStructuredData,
+  includeSiteStructuredData,
+  locale,
+  structuredData,
+  title,
+}: {
+  canonicalUrl: string;
+  description: string;
+  includePageStructuredData: boolean;
+  includeSiteStructuredData: boolean;
+  locale: Locale;
+  structuredData: (WithContext<Thing> | Thing)[];
+  title: string;
+}): SeoScriptDescriptor[] => {
+  const scripts: SeoScriptDescriptor[] = [];
+
+  if (includeSiteStructuredData) {
+    scripts.push(
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(createWebsiteSchema()),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(createOrganizationSchema()),
+      },
+    );
+  }
+
+  if (includePageStructuredData) {
+    scripts.push({
+      type: "application/ld+json",
+      children: JSON.stringify(
+        createWebPageSchema({
+          canonicalUrl,
+          description,
+          locale,
+          title,
+        }),
+      ),
+    });
+  }
+
+  scripts.push(
+    ...structuredData.map((item) => ({
+      type: "application/ld+json" as const,
+      children: JSON.stringify(item),
+    })),
+  );
+
+  return scripts;
+};
+
 export function createSeo({
   title,
-  description = SITE_DESCRIPTION,
+  description = m.home_meta_description(),
   canonicalPath,
   noIndex = false,
   structuredData = [],
   locale = defaultLocale,
   image = OG_IMAGE_DEFAULT,
+  includePageStructuredData = true,
+  includeSiteStructuredData = false,
 }: SeoOptions = {}) {
   const resolvedTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
   const resolvedRobots = noIndex ? "noindex, nofollow" : "index, follow";
@@ -90,6 +308,7 @@ export function createSeo({
     { property: "og:description", content: description },
     { property: "og:url", content: canonicalUrl },
     { name: "twitter:card", content: resolvedImage ? "summary_large_image" : "summary" },
+    { name: "twitter:site", content: SITE_TWITTER_SITE },
     { name: "twitter:title", content: resolvedTitle },
     { name: "twitter:description", content: description },
     { name: "twitter:url", content: canonicalUrl },
@@ -139,20 +358,17 @@ export function createSeo({
     });
   }
 
-  const scripts: SeoScriptDescriptor[] = [
-    {
-      type: "application/ld+json",
-      children: JSON.stringify(createWebsiteSchema()),
-    },
-    ...structuredData.map((item) => ({
-      type: "application/ld+json" as const,
-      children: JSON.stringify(item),
-    })),
-  ];
-
   return {
     links,
     meta,
-    scripts,
+    scripts: createStructuredDataScripts({
+      canonicalUrl,
+      description,
+      includePageStructuredData,
+      includeSiteStructuredData,
+      locale,
+      structuredData,
+      title: resolvedTitle,
+    }),
   };
 }

@@ -9,7 +9,8 @@ import type {
 
 import { buildAiSearchResult } from "../ai-search";
 import type { AiSearchResult } from "../ai-search";
-import { toSearchSkillItem } from "../shared/search-skill";
+import { findSnapshotByContentHashes } from "../snapshots/repo";
+import { toSearchSkillItem, toValidSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
 
 interface SkillListRow {
@@ -22,6 +23,7 @@ interface SkillListRow {
 
 interface AuthorRow {
   avatarUrl: string | null;
+  bio: string | null;
   githubUrl: string;
   handle: string;
   isVerified: number;
@@ -51,6 +53,8 @@ interface SkillPathRow {
   forkCount: number;
   id: string;
   isVerified: boolean;
+  latestAuditScore?: number | null;
+  latestSnapshotTotalBytes?: number | null;
   latestVersion: string | null;
   license: string | null;
   ownerAvatarUrl: string | null;
@@ -108,6 +112,28 @@ const filterSelectedPayloadSkills = (
       )
     : skills;
 
+const filterNewSkillsByContent = async (
+  skills: SkillsUploadContentPayload["skills"],
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
+): Promise<SkillsUploadContentPayload["skills"]> => {
+  const filteredSkills = await Promise.all(
+    skills.map(async (skill) => {
+      if (skill.frontmatterHash && skill.skillContentHash) {
+        const duplicate = await findSnapshotByContentHashesFn({
+          frontmatterHash: skill.frontmatterHash,
+          skillContentHash: skill.skillContentHash,
+        });
+        if (duplicate) {
+          return null;
+        }
+      }
+      return skill;
+    }),
+  );
+
+  return filteredSkills.filter((skill): skill is NonNullable<typeof skill> => skill !== null);
+};
+
 interface SearchSkillRow {
   authorHandle: string;
   createdAt: number;
@@ -141,6 +167,7 @@ interface SearchSkillsPageInput {
   repoName?: string;
   query?: string;
   rewriteQuery?: boolean;
+  searchMode?: "keyword" | "semantic";
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
 }
@@ -156,7 +183,7 @@ export interface SkillsServiceDeps {
   countSkills: () => Promise<number>;
   countAuthors: () => Promise<AuthorCountRow>;
   findAuthorByHandle: (handle: string) => Promise<AuthorRow | null>;
-  findSkillById: (id: string) => Promise<SkillListRow | null>;
+  findSkillById: (id: string) => Promise<SkillPathRow | null>;
   findSkillClaimContextBySlug: (slug: string) => Promise<SkillClaimContextRow | null>;
   findSkillByPath: (input: {
     authorHandle: string;
@@ -165,6 +192,7 @@ export interface SkillsServiceDeps {
   }) => Promise<SkillPathRow | null>;
   claimSkillById: (input: { skillId: string; userId: string }) => Promise<void>;
   createSkill: (input: {
+    canonicalSlug?: string | null;
     description: string;
     repoId: string;
     slug: string;
@@ -173,7 +201,7 @@ export interface SkillsServiceDeps {
     userId?: string | null;
     visibility?: "public" | "private";
   }) => Promise<string>;
-  findSkillBySlug: (slug: string) => Promise<SkillListRow | null>;
+  findSkillBySlug: (slug: string) => Promise<SkillPathRow | null>;
   listAuthors: (input?: {
     cursor?: string;
     limit?: number;
@@ -304,6 +332,7 @@ const defaultDeps: SkillsServiceDeps = {
 
 const toAuthor = (row: AuthorRow) => ({
   avatarUrl: row.avatarUrl ?? undefined,
+  bio: row.bio ?? undefined,
   githubUrl: row.githubUrl,
   handle: row.handle,
   isVerified: Boolean(row.isVerified),
@@ -461,10 +490,19 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
     > {
       const browseSearch = async () => {
         const result = await deps.searchSkillsPageByFilters(input);
-        return { ...result, page: result.page.map(toSearchSkillItem) };
+        return {
+          ...result,
+          page: result.page
+            .map(toValidSearchSkillItem)
+            .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
+        };
       };
 
       if (!input.query) {
+        return await browseSearch();
+      }
+
+      if (input.searchMode === "keyword") {
         return await browseSearch();
       }
 
@@ -636,6 +674,7 @@ export async function submitGithubRepoPublic(
   input: SubmitGithubRepoPublicInput,
   runtime: GithubSubmitRuntime,
   scheduler?: SkillsUploadScheduler,
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
 ): Promise<SubmitGithubRepoPublicResult> {
   const selectedSkillRootPaths = getSelectedSkillRootPathSet(input.skillRootPaths);
   const result = await runtime.buildPayload({
@@ -665,15 +704,66 @@ export async function submitGithubRepoPublic(
     };
   }
 
+  const newSkills = await filterNewSkillsByContent(
+    selectedPayloadSkills,
+    findSnapshotByContentHashesFn,
+  );
+
+  if (newSkills.length === 0) {
+    return {
+      reason: "duplicate-content",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
   const uploaded = await uploadSkills(
     {
       ...result.payload,
-      skills: selectedPayloadSkills,
+      skills: newSkills,
     },
     scheduler,
   );
   return {
-    skillsCount: selectedPayloadSkills.length,
+    skillsCount: newSkills.length,
+    status: "submitted",
+    workflowId: uploaded.workId,
+  };
+}
+
+export async function submitGithubPreparedPublic(
+  input: SkillsUploadContentPayload,
+  scheduler?: SkillsUploadScheduler,
+  findSnapshotByContentHashesFn: typeof findSnapshotByContentHashes = findSnapshotByContentHashes,
+): Promise<SubmitGithubRepoPublicResult> {
+  if (input.skills.length === 0) {
+    return {
+      reason: "no-valid-skills",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
+  const newSkills = await filterNewSkillsByContent(input.skills, findSnapshotByContentHashesFn);
+
+  if (newSkills.length === 0) {
+    return {
+      reason: "duplicate-content",
+      skillsCount: 0,
+      status: "skipped",
+    };
+  }
+
+  const uploaded = await uploadSkills(
+    {
+      ...input,
+      skills: newSkills,
+    },
+    scheduler,
+  );
+
+  return {
+    skillsCount: newSkills.length,
     status: "submitted",
     workflowId: uploaded.workId,
   };

@@ -7,12 +7,26 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createDownloadMetricsRecorder, skillEvalSandboxService } from "@skills-re/api/modules";
 import { createServerContext } from "./context";
 import { createHttpRequestLogger, createWorkflowQueueLogger, logHandledError } from "./logging";
+import { mcpRouter } from "./routes/mcp";
+import { mcpRateLimiter } from "./middlewares/mcp-rate-limiter";
+import {
+  createAgentSkillMdResponse,
+  createAgentSkillsDiscoveryIndexResponse,
+  setAgentSkillsDiscoveryHeaders,
+} from "./routes/agent-skills-discovery";
+import { createMcpServerCard, setMcpServerCardHeaders } from "./routes/mcp-server-card";
+import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
 import { createSkillEvalSandboxSmokeResponse } from "./skill-eval-sandbox/smoke";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
+import { agentSkillsDiscoveryService } from "@skills-re/api/modules/agent-skills-discovery/service";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
+import {
+  oauthProviderAuthServerMetadata,
+  oauthProviderOpenIdConfigMetadata,
+} from "@better-auth/oauth-provider";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { processWorkflowQueueBatch } from "./queues/workflow-queue";
@@ -34,15 +48,20 @@ export { RepoSkillSnapshotSyncWorkflow } from "./workflows/repo-skill-snapshot-s
 export { RepoSkillsDiscoveryWorkflow } from "./workflows/repo-skills-discovery-workflow";
 export { RepoSnapshotSyncWorkflow } from "./workflows/repo-snapshot-sync-workflow";
 export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
+export { SnapshotRawFilesBackfillWorkflow } from "./workflows/snapshot-raw-files-backfill-workflow";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
 export { SnapshotsArchiveUploadWorkflow } from "./workflows/snapshots-archive-upload-workflow";
 export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization";
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";
 export { StaticAuditBackfillWorkflow } from "./workflows/static-audit-backfill-workflow";
+export { McpRateLimiter } from "./dos/mcp-rate-limiter";
 export { SubmitRateLimiter } from "./dos/submit-rate-limiter";
 export { SearchRateLimiter } from "./dos/search-rate-limiter";
 export { Sandbox } from "@cloudflare/sandbox";
+export { AiWorkflowRateLimiter } from "./dos/ai-workflow-rate-limiter";
+export { AiSearchUploadRateLimiter } from "./dos/ai-search-upload-rate-limiter";
+export { StaticAuditDispatchRateLimiter } from "./dos/static-audit-dispatch-rate-limiter";
 
 const AUTH_PREFIX = "/auth";
 const RPC_PREFIX = "/rpc";
@@ -85,12 +104,6 @@ const app = new Hono<{
   };
 }>();
 
-// Ref: https://honohub.dev/docs/hono-mcp
-// const mcpServer = new McpServer({
-//   name: "skills-re-mcp",
-//   version: "1.0.0",
-// });
-
 app.use("/*", async (c, next) => {
   const startedAt = Date.now();
   const requestUrl = new URL(c.req.url);
@@ -129,6 +142,38 @@ app.use("/*", async (c, next) => {
     });
   }
 });
+app.get("/.well-known/mcp/server-card.json", (c) => {
+  setMcpServerCardHeaders(c.res.headers);
+  return c.json(createMcpServerCard(c.env.PUBLIC_SERVER_URL));
+});
+app.options("/.well-known/mcp/server-card.json", (c) => {
+  setMcpServerCardHeaders(c.res.headers);
+  return c.body(null, 204);
+});
+app.on(
+  ["GET", "HEAD"],
+  "/.well-known/agent-skills/index.json",
+  async (c) => await createAgentSkillsDiscoveryIndexResponse(undefined, c.req.method),
+);
+app.on(
+  ["GET", "HEAD"],
+  "/.well-known/agent-skills/:snapshotId/SKILL.md",
+  async (c) =>
+    await createAgentSkillMdResponse(
+      {
+        method: c.req.method as "GET" | "HEAD",
+        snapshotId: c.req.param("snapshotId"),
+      },
+      {
+        getArtifactMetadata: (input) => agentSkillsDiscoveryService.getArtifactMetadata(input),
+        snapshotStorage: createSnapshotArchiveStorageRuntime(c.env),
+      },
+    ),
+);
+app.options("/.well-known/agent-skills/*", (c) => {
+  setAgentSkillsDiscoveryHeaders(c.res.headers);
+  return c.body(null, 204);
+});
 app.use("/*", (c, next) =>
   cors({
     origin: (requestOrigin) => getAllowedCorsOrigin(requestOrigin, c.env),
@@ -144,6 +189,19 @@ app.get("/.well-known/agent-configuration", async (c) => {
   const configuration = await runtimeAuth.api.getAgentConfiguration();
   return c.json(configuration);
 });
+// OAuth 2.0 discovery for MCP clients (RFC 8414 + RFC 9728).
+// The authorization server is Better Auth; this Worker is the resource server.
+app.get("/.well-known/oauth-authorization-server", async (c) => {
+  const response = await oauthProviderAuthServerMetadata(createRuntimeAuth())(c.req.raw);
+  return c.newResponse(response.body, response);
+});
+app.get("/.well-known/openid-configuration", async (c) => {
+  const response = await oauthProviderOpenIdConfigMetadata(createRuntimeAuth())(c.req.raw);
+  return c.newResponse(response.body, response);
+});
+app.get("/.well-known/oauth-protected-resource", (c) =>
+  c.json(createOAuthProtectedResourceMetadata(c.env.PUBLIC_SERVER_URL)),
+);
 app.get("/skills/download", async (c) => {
   const url = new URL(c.req.url);
   return await createSkillArchiveDownloadResponse(
@@ -217,6 +275,14 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
           title: "OpenAPI References",
           version: "1.0.0",
         },
+        filter: ({ contract, path }) => {
+          const INTERNAL_NAMESPACES = new Set(["github", "metrics", "staticAudits"]);
+          if (INTERNAL_NAMESPACES.has(path[0] ?? "")) {
+            return false;
+          }
+          const tags = contract["~orpc"].route?.tags ?? [];
+          return !tags.includes("Internal");
+        },
       },
     }),
   ],
@@ -245,14 +311,14 @@ export const rpcHandler = new RPCHandler(appRouter, {
   ],
 });
 
-// app.all("/mcp", async (c) => {
-//   const transport = new StreamableHTTPTransport();
-//   await mcpServer.connect(transport);
-//   return transport.handleRequest(c);
-// });
+app.use("/mcp", mcpRateLimiter);
+app.use("/mcp/*", mcpRateLimiter);
+app.route("/mcp", mcpRouter);
 
 app.use("/rpc/skills/submitGithubRepoPublic", submitPublicRateLimiter);
+app.use("/rpc/skills/submitGithubPreparedPublic", submitPublicRateLimiter);
 app.use("/skills/submit", submitPublicRateLimiter);
+app.use("/skills/submit-prepared", submitPublicRateLimiter);
 app.use("/rpc/skills/search", searchRateLimiter);
 app.use("/skills/search", searchRateLimiter);
 

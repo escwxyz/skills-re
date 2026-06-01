@@ -11,7 +11,7 @@ import { getSkillFileTree } from "@/functions/skills/get-skill-file-tree";
 import { getSkillFileContent } from "@/functions/skills/get-skill-file-content";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
 import { cn } from "@/lib/utils";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getFileIconForPath } from "@/utils/file-icon";
@@ -57,7 +57,8 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
       },
     }),
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/file-tree`,
       description: loaderData?.skillDescription,
       image:
@@ -66,10 +67,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_file_tree()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_file_tree()),
     }),
   validateSearch: searchSchema,
   component: RouteComponent,
@@ -107,6 +107,7 @@ function RouteComponent() {
     queryFn: () =>
       getContent({
         data: {
+          fileTreeBase: `/skills/${author}/${repo}/${slug}/file-tree`,
           path: activePath ?? "",
           snapshotId: data.snapshotId ?? "",
         },
@@ -136,19 +137,19 @@ function RouteComponent() {
     <div className="flex min-h-160 flex-col lg:flex-row lg:items-start">
       <aside
         className={cn(
-          "sticky top-[calc(var(--header-height)+3.5rem)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)+3.5rem+1px)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-paper-2 lg:overflow-hidden lg:z-0",
+          "sticky top-[calc(var(--header-height)*2)] z-30 w-full border-b border-border bg-background lg:top-[calc(var(--header-height)*2+1px)] lg:h-[calc(100svh-var(--header-height)*2)] lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-muted lg:overflow-hidden lg:z-0",
           isTreeExpanded ? "lg:w-75" : "lg:w-12",
         )}
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b border-border bg-background/95 px-5 py-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
+            "flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-5 backdrop-blur lg:bg-transparent lg:backdrop-blur-0",
             !isTreeExpanded && "lg:justify-center",
           )}
         >
           <span
             className={cn(
-              "font-mono text-[11px] uppercase tracking-[.18em] text-muted-text",
+              "font-mono text-[11px] uppercase tracking-[.18em] text-muted-foreground",
               !isTreeExpanded && "lg:hidden",
             )}
           >
@@ -156,7 +157,7 @@ function RouteComponent() {
           </span>
           <button
             type="button"
-            className="inline-flex shrink-0 items-center justify-center text-muted-text transition-colors hover:text-foreground"
+            className="inline-flex shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
             aria-label={
               isTreeExpanded
                 ? m.skill_detail_file_tree_collapse()
@@ -171,13 +172,16 @@ function RouteComponent() {
           >
             <CaretRightIcon
               aria-hidden
-              className={cn("size-4 transition-transform", isTreeExpanded ? "rotate-180" : "")}
+              className={cn(
+                "size-4 transition-transform",
+                isTreeExpanded ? "-rotate-90 lg:rotate-180" : "rotate-90 lg:rotate-0",
+              )}
             />
           </button>
         </div>
 
         {isTreeExpanded ? (
-          <div className="bg-background lg:h-[calc(100svh-var(--header-height)-3.5rem-3.5rem)] lg:overflow-y-auto lg:bg-paper-2">
+          <div className="bg-background lg:h-[calc(100svh-var(--header-height)*2-3.5rem)] lg:overflow-y-auto">
             {data.rows.length > 0 ? (
               <div className="py-4">
                 {visibleRows.map((row) => {
@@ -186,7 +190,7 @@ function RouteComponent() {
                       <button
                         key={row.path}
                         type="button"
-                        className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-text transition-colors hover:bg-paper"
+                        className="flex w-full items-center gap-2 px-5 py-1.5 text-left font-mono text-[11px] uppercase tracking-[.06em] text-muted-foreground transition-colors hover:bg-background"
                         style={{ paddingLeft: `${20 + row.depth * 18}px` }}
                         aria-expanded={!collapsedFolders.has(row.path)}
                         aria-label={`${collapsedFolders.has(row.path) ? "Expand" : "Collapse"} ${row.name}`}
@@ -214,8 +218,8 @@ function RouteComponent() {
                       className={[
                         "flex items-baseline justify-between gap-2 px-5 py-1.5 font-mono text-[11px] no-underline transition-colors",
                         row.path === activePath
-                          ? "bg-ink text-paper"
-                          : "text-ink-2 hover:bg-paper hover:no-underline",
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:bg-background hover:no-underline",
                       ].join(" ")}
                       style={{ paddingLeft: `${20 + row.depth * 18}px` }}
                     >
@@ -233,7 +237,7 @@ function RouteComponent() {
                         <span
                           className={[
                             "shrink-0 tabular-nums",
-                            row.path === activePath ? "opacity-60" : "text-muted-text",
+                            row.path === activePath ? "opacity-60" : "text-muted-foreground",
                           ].join(" ")}
                         >
                           {formatFileSize(row.size)}
@@ -244,7 +248,7 @@ function RouteComponent() {
                 })}
               </div>
             ) : (
-              <div className="text-ink-2 px-5 py-6 text-sm">
+              <div className="text-muted-foreground px-5 py-6 text-sm">
                 {m.skill_file_tree_sidebar_empty()}
               </div>
             )}
@@ -254,7 +258,7 @@ function RouteComponent() {
 
       <div
         ref={contentScrollRef}
-        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:flex-1 lg:overflow-y-auto lg:border-r"
+        className="min-w-0 border-border lg:h-[calc(100svh-var(--header-height)*2)] lg:flex-1 lg:overflow-y-auto lg:border-r"
       >
         {activePath && data.snapshotId ? (
           <SkillFileContent activePath={activePath} data={fileContent} isLoading={isLoading} />
@@ -263,7 +267,7 @@ function RouteComponent() {
         )}
       </div>
 
-      <aside className="hidden min-w-0 lg:block lg:sticky lg:top-[calc(var(--header-height)+3.5rem)] lg:h-[calc(100svh-var(--header-height)-3.5rem)] lg:overflow-y-auto">
+      <aside className="hidden min-w-0 lg:block lg:sticky lg:top-[calc(var(--header-height)*2)] lg:h-[calc(100svh-var(--header-height)*2)] lg:overflow-y-auto">
         <div className="p-6">
           {fileContent?.tocItems.length ? (
             <SkillMdToc items={fileContent.tocItems} scrollContainerRef={contentScrollRef} />

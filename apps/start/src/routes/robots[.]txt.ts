@@ -8,8 +8,32 @@ const disallowedPaths = getAllMultilingualUrls(["/dashboard", "/api"]);
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: () => {
         const robotsTxt = [
+          "User-agent: SemrushBot",
+          "Disallow: /",
+          "",
+          "User-agent: SiteAuditBot",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-BA",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-SI",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-SWA",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-OCOB",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-FT",
+          "Disallow: /",
+          "",
+          "User-agent: SemrushBot-ESI",
+          "Disallow: /",
+          "",
           "User-agent: *",
           "Allow: /",
           "Content-Signal: ai-train=no, search=yes, ai-input=no",
@@ -18,7 +42,7 @@ export const Route = createFileRoute("/robots.txt")({
           `Sitemap: ${new URL("/sitemap.xml", SITE_URL).href}`,
         ].join("\n");
 
-        return await new Response(robotsTxt, {
+        return new Response(robotsTxt, {
           headers: { "Content-Type": "text/plain" },
         });
       },

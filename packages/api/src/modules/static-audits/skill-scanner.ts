@@ -13,14 +13,20 @@ const CATEGORY_BY_KEYWORD: Record<string, StaticAuditFinding["category"]> = {
   filesystem: "filesystem",
   helper: "hidden_helpers",
   hidden: "hidden_helpers",
+  license: "specification",
+  manifest: "specification",
   network: "network",
   obfus: "obfuscation",
+  steganograph: "obfuscation",
+  unicode: "obfuscation",
   package: "supply_chain",
   persist: "persistence",
   prompt: "prompt_injection",
   secret: "credentials",
   shell: "execution",
+  social: "social_engineering",
   socket: "network",
+  spec: "specification",
   supply: "supply_chain",
   token: "credentials",
   vuln: "supply_chain",
@@ -46,6 +52,7 @@ interface SarifArtifactLocation {
 
 interface SarifRegion {
   endLine?: number;
+  snippet?: { text?: string };
   startLine?: number;
 }
 
@@ -293,6 +300,7 @@ const resolveResultLocation = (repoDir: string, result: SarifResult) => {
   return {
     endLine: location?.region?.endLine,
     path: resolveArtifactPath(repoDir, location?.artifactLocation?.uri),
+    snippet: readString(location?.region?.snippet?.text),
     startLine: location?.region?.startLine ?? 1,
   };
 };

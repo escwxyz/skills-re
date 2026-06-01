@@ -7,7 +7,7 @@ import { SkillAuditReport } from "@/components/skill-audit-report";
 import { getSkillBase } from "@/functions/skills/get-skill-base";
 import { getSkillVersionHistory } from "@/functions/skills/get-skill-version-history";
 import { buildSkillOgImagePath } from "@/lib/og-image-paths";
-import { createSeo } from "@/lib/seo";
+import { createSkillDetailSeo } from "@/lib/seo";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 
@@ -37,9 +37,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   },
   validateSearch: searchSchema,
   head: ({ loaderData, params }) =>
-    createSeo({
+    createSkillDetailSeo({
+      authorHandle: params.author,
       canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/audit`,
-      // todo: use audit description?
       description: loaderData?.skillDescription,
       image:
         buildSkillOgImagePath({
@@ -47,10 +47,9 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
           repoName: params.repo,
           skillSlug: params.slug,
         }) ?? undefined,
-      title: loaderData?.skillTitle
-        ? `${m.skill_detail_static_audit()} · ${loaderData.skillTitle}`
-        : undefined,
       locale: getLocale(),
+      skillTitle: loaderData?.skillTitle,
+      tabLabel: String(m.skill_detail_static_audit()),
     }),
   component: RouteComponent,
 });
@@ -65,7 +64,6 @@ function RouteComponent() {
     queryKey: ["skillVersionHistory", skillId],
     queryFn: () => getVersionHistory({ data: { skillId } }),
     enabled: !!skillId,
-    // todo will depend on how often we update the snapshot
     refetchInterval: 12 * 60 * 60 * 1000,
   });
 
@@ -80,7 +78,9 @@ function RouteComponent() {
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-10 md:py-12">
       <div className="border-border mb-8 flex items-start justify-between gap-6 border-b pb-6">
         <div>
-          <div className="eyebrow text-editorial-red mb-3">§ {m.skill_audit_section_label()}</div>
+          <div className="font-mono text-xs uppercase text-muted-foreground mb-3">
+            {m.skill_audit_section_label()}
+          </div>
           <h2 className="font-display text-[clamp(36px,5vw,52px)] font-normal leading-none tracking-tight">
             {m.skill_detail_static_audit()}
           </h2>

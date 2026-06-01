@@ -40,10 +40,8 @@ const VersionHistoryList = ({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <span className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">
-          {skill_version_history()}
-        </span>
+      <div className="mb-3 font-mono text-[9.5px] uppercase tracking-[.18em] text-muted-foreground">
+        {skill_version_history()}
       </div>
 
       <div className="font-mono">
@@ -53,10 +51,10 @@ const VersionHistoryList = ({
 
           return (
             <div key={version.snapshotId}>
-              <div className="flex items-baseline justify-between gap-4 py-3">
+              <div className="flex items-baseline justify-between gap-4 py-2.5">
                 <span
                   className={cn(
-                    "min-w-0 truncate text-[11px] uppercase tracking-[.08em]",
+                    "min-w-0 truncate text-[10.5px] uppercase tracking-[.08em]",
                     isSelected ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
@@ -64,7 +62,7 @@ const VersionHistoryList = ({
                   {isCurrent ? ` (${skill_version_current_badge()})` : ""}
                   {isSelected && !isCurrent ? ` (${skill_version_selected()})` : ""}
                 </span>
-                <span className="shrink-0 text-[10px] tracking-[.06em] text-muted-foreground">
+                <span className="shrink-0 text-[9.5px] tracking-[.06em] text-muted-foreground">
                   <TimeValue time={version.date} locale={locale} />
                 </span>
               </div>
@@ -110,7 +108,7 @@ export const SkillVersionPanel = ({
     null;
 
   return (
-    <div className="border-border border-b py-6">
+    <div className="py-6">
       <div className="mb-5">
         <VersionHistoryList selectedSnapshotId={selectedSnapshotId} versions={versions} />
       </div>
@@ -120,7 +118,7 @@ export const SkillVersionPanel = ({
           className="font-mono text-[10px] uppercase tracking-[.14em] text-muted-foreground transition-colors hover:text-foreground"
           to="/skills/$author/$repo/$slug/changelog"
           params={{ author, repo, slug }}
-          resetScroll={true}
+          hash="skill-tabs"
         >
           {skill_version_view_full_changelog()}
         </Link>
@@ -128,7 +126,6 @@ export const SkillVersionPanel = ({
         <SkillVersionDialog
           onSnapshotChange={onSnapshotChange}
           selectedSnapshotId={selectedSnapshotId}
-          triggerClassName="min-w-36"
           versions={versions}
         />
       </div>

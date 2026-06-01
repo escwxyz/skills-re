@@ -2,19 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import type { WorkerLogger } from "../worker-logger";
 import { createRuntimeAuth } from "@skills-re/auth/runtime";
 import type { RateLimitResult } from "@/lib/cloudflare/do";
-
-// oRPC encodes input as { json: { ... } }; OpenAPI sends it flat
-async function requestHasQuery(req: Request): Promise<boolean> {
-  try {
-    // oxlint-disable-next-line typescript/no-explicit-any
-    const body = (await req.clone().json()) as any;
-    return !!(body?.json?.query ?? body?.query);
-  } catch {
-    // Non-JSON body (e.g. crafted FormData oRPC request) — fail closed to
-    // prevent throttle bypass via alternative oRPC encodings.
-    return true;
-  }
-}
+import { shouldApplySearchRateLimit } from "./search-rate-limit-mode";
 
 // Cast needed: alchemy wraps the DO namespace with Rpc.DurableObjectBranded causing TS2589
 // oxlint-disable-next-line typescript/no-explicit-any
@@ -30,16 +18,12 @@ export const searchRateLimiter: MiddlewareHandler<{
   Bindings: Env;
   Variables: { workerLogger?: WorkerLogger };
 }> = async (c, next) => {
-  if (c.env.TEST_USER === "true") {
-    return next();
-  }
-
   const session = await createRuntimeAuth().api.getSession({ headers: c.req.raw.headers });
   if (session?.user) {
     return next();
   }
 
-  if (!(await requestHasQuery(c.req.raw))) {
+  if (!(await shouldApplySearchRateLimit(c.req.raw))) {
     return next();
   }
 

@@ -1,3 +1,4 @@
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 import { normalizeDirectoryPath } from "../repos/directory-path";
 import type { SkillsUploadContentPayload } from "../../types";
 
@@ -48,7 +49,7 @@ export const resolveUploadSkillSlug = async (input: {
   preferredSlug: string;
   usedSlugs: Set<string>;
 }) => {
-  const baseSlug = input.preferredSlug.trim();
+  const baseSlug = normalizeSkillSlug(input.preferredSlug);
   if (!baseSlug) {
     throw new Error("preferredSlug must not be empty.");
   }

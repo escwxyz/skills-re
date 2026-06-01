@@ -1,5 +1,6 @@
 // oxlint-disable jsx_a11y/label-has-associated-control
 // oxlint-disable no-nested-ternary
+// TODO
 import { useState } from "react";
 
 import { useAppForm } from "@/hooks/form-hook";
@@ -131,9 +132,9 @@ export const ManualSubmitForm = () => {
   });
 
   const inputClass =
-    "w-full border border-border bg-paper px-3 py-2.5 font-mono text-[13px] text-ink outline-none focus:border-ink/40 transition-colors";
+    "w-full border border-border bg-background px-3 py-2.5 font-mono text-[13px] text-foreground outline-none focus:border-foreground/40 transition-colors";
   const labelClass =
-    "mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text";
+    "mb-1.5 block font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground";
   const fieldClass = "mb-5";
 
   return (
@@ -155,20 +156,20 @@ export const ManualSubmitForm = () => {
                 i < 3 && "lg:border-r",
                 // Active / visited
                 i === currentStep
-                  ? "bg-ink text-paper"
+                  ? "bg-foreground text-background"
                   : i < currentStep
-                    ? "bg-paper-2 text-ink"
-                    : "bg-transparent text-ink",
+                    ? "bg-muted text-foreground"
+                    : "bg-transparent text-foreground",
               )}
             >
               <span
                 className={cn(
                   "font-display shrink-0 text-4xl leading-none italic",
                   i === currentStep
-                    ? "text-paper"
+                    ? "text-background"
                     : i < currentStep
-                      ? "text-ink"
-                      : "text-muted-text-2",
+                      ? "text-foreground"
+                      : "text-muted-foreground-2",
                 )}
               >
                 {step.num}
@@ -177,7 +178,7 @@ export const ManualSubmitForm = () => {
                 <span
                   className={cn(
                     "block font-mono text-[11px] tracking-[.14em] uppercase",
-                    i === currentStep ? "text-paper/70" : "text-muted-text",
+                    i === currentStep ? "text-background/70" : "text-muted-foreground",
                   )}
                 >
                   {step.label}
@@ -197,7 +198,7 @@ export const ManualSubmitForm = () => {
             className="border-b border-border px-6 py-10 lg:border-b-0 lg:border-r lg:px-8"
           >
             <h3 className="font-display mb-4.5 border-b border-border pb-2.5 text-3xl font-normal">
-              § 01 Metadata
+              01 Metadata
             </h3>
 
             {/* Skill name */}
@@ -215,7 +216,7 @@ export const ManualSubmitForm = () => {
                     onChange={(e) => field.handleChange(e.target.value)}
                     className={inputClass}
                   />
-                  <p className="font-serif mt-1 text-xs italic text-muted-text">
+                  <p className="font-serif mt-1 text-xs italic text-muted-foreground">
                     This becomes your install string:{" "}
                     <span className="font-mono not-italic">
                       skr install {field.state.value || "my-skill"}
@@ -263,8 +264,8 @@ export const ManualSubmitForm = () => {
                             "flex-1  border border-border px-2 py-2.5 font-mono text-[10.5px] tracking-[.14em] uppercase transition-colors",
                             i > 0 && "-ml-px",
                             field.state.value === value
-                              ? "relative z-10 bg-ink text-paper"
-                              : "text-muted-text hover:bg-paper-2",
+                              ? "relative z-10 bg-foreground text-background"
+                              : "text-muted-foreground hover:bg-muted",
                           )}
                         >
                           {label}
@@ -408,8 +409,8 @@ export const ManualSubmitForm = () => {
                         className={cn(
                           " border border-border px-2 py-1 font-mono text-[10px] tracking-[.08em] uppercase transition-colors",
                           field.state.value.includes(tag)
-                            ? "bg-ink text-paper"
-                            : "text-ink hover:bg-paper-2",
+                            ? "bg-foreground text-background"
+                            : "text-foreground hover:bg-muted",
                         )}
                       >
                         {tag}
@@ -424,9 +425,9 @@ export const ManualSubmitForm = () => {
             {/* Cover image drop zone */}
             <div className={fieldClass}>
               <label className={labelClass}>Cover Image</label>
-              <div className=" border-2 border-dashed border-border p-7 text-center hover:bg-paper-2 transition-colors">
+              <div className=" border-2 border-dashed border-border p-7 text-center hover:bg-muted transition-colors">
                 <b className="font-display mb-1.5 block text-2xl font-normal">Drop an image</b>
-                <span className="font-mono text-xs text-muted-text">
+                <span className="font-mono text-xs text-muted-foreground">
                   16:9 · PNG or JPG · Up to 2MB · The registry crops to fit.
                 </span>
               </div>
@@ -434,19 +435,19 @@ export const ManualSubmitForm = () => {
           </Form>
 
           {/* Preview column */}
-          <div className="bg-paper-2 px-6 py-10 lg:px-8">
+          <div className="bg-muted px-6 py-10 lg:px-8">
             <form.Subscribe selector={(state) => state.values}>
               {(values) => {
                 const checklistItems = buildChecklistItems(values as ManualSubmitFormValues);
 
                 return (
                   <>
-                    <p className="eyebrow mb-4.5 text-muted-text">
-                      § Live Preview — how your skill appears in the registry
+                    <p className="font-mono text-xs uppercase text-muted-foreground mb-4.5">
+                      Live Preview — how your skill appears in the registry
                     </p>
 
                     {/* Card preview */}
-                    <div className="flex min-h-80 flex-col border border-border bg-paper p-5.5">
+                    <div className="flex min-h-80 flex-col border border-border bg-background p-5.5">
                       {/* Cover placeholder */}
                       <div
                         className="-mx-5.5 -mt-5.5 mb-4 flex aspect-video items-center justify-center"
@@ -460,29 +461,29 @@ export const ManualSubmitForm = () => {
                         </span>
                       </div>
 
-                      <div className="flex justify-between font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-text">
+                      <div className="flex justify-between font-mono text-[10.5px] tracking-[.14em] uppercase text-muted-foreground">
                         <span>SKILL_ID: CR-44</span>
-                        <b className="font-medium text-ink">v.{values.version || "0.0.0"}</b>
+                        <b className="font-medium text-foreground">v.{values.version || "0.0.0"}</b>
                       </div>
 
                       <h4 className="font-display my-2.5 text-4xl font-normal leading-[1.05]">
                         {values.skillName || "skill-name"}
                       </h4>
 
-                      <p className="font-serif text-sm leading-relaxed text-ink-2">
+                      <p className="font-serif text-sm leading-relaxed text-muted-foreground">
                         {values.oneLiner || "Your one-liner description goes here."}
                       </p>
 
-                      <div className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-3 font-mono text-[10px] tracking-[.14em] uppercase text-muted-text">
+                      <div className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-3 font-mono text-[10px] tracking-[.14em] uppercase text-muted-foreground">
                         <div>
                           PASS RATE
-                          <b className="font-display mt-1 block text-sm font-normal normal-case tracking-normal text-ink">
+                          <b className="font-display mt-1 block text-sm font-normal normal-case tracking-normal text-foreground">
                             pending eval
                           </b>
                         </div>
                         <div>
                           LATENCY
-                          <b className="font-display mt-1 block text-sm font-normal normal-case tracking-normal text-ink">
+                          <b className="font-display mt-1 block text-sm font-normal normal-case tracking-normal text-foreground">
                             pending eval
                           </b>
                         </div>
@@ -493,8 +494,10 @@ export const ManualSubmitForm = () => {
                     <div className="mt-6 border-t border-border pt-4.5 font-mono text-[11.5px] leading-loose">
                       {checklistItems.map((item) => (
                         <div key={item.label} className="flex justify-between">
-                          <span className="text-ink">{item.label}</span>
-                          <span className={item.ok ? "text-editorial-green" : "text-muted-text"}>
+                          <span className="text-foreground">{item.label}</span>
+                          <span
+                            className={item.ok ? "text-editorial-green" : "text-muted-foreground"}
+                          >
                             {item.display}
                           </span>
                         </div>
@@ -503,8 +506,11 @@ export const ManualSubmitForm = () => {
 
                     {/* Style note */}
                     <div className="mt-6 border-t border-border pt-4.5">
-                      <b className="eyebrow mb-1 block text-ink">§ Style note</b>
-                      <p className="font-serif text-[13px] italic leading-relaxed text-muted-text">
+                      <b className="font-mono text-xs uppercase mb-1 block text-foreground">
+                        {" "}
+                        Style note
+                      </b>
+                      <p className="font-serif text-[13px] italic leading-relaxed text-muted-foreground">
                         The registry deliberately under-formats skill cards. What distinguishes
                         yours is the one-liner. Be specific. "Reads a diff the way a careful
                         colleague would" beats "AI-powered PR review tool" every time.
@@ -521,21 +527,21 @@ export const ManualSubmitForm = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-5 lg:px-8">
           <a
             href={localizeHref("/")}
-            className="border border-border px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-ink no-underline hover:bg-paper-2 transition-colors"
+            className="border border-border px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-foreground no-underline hover:bg-muted transition-colors"
           >
             ← Save draft & exit
           </a>
           <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
-              className=" border border-border bg-transparent px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-ink hover:bg-paper-2 transition-colors"
+              className=" border border-border bg-transparent px-5 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-foreground hover:bg-muted transition-colors"
             >
               Preview registry card
             </button>
             <button
               type="button"
               onClick={() => setCurrentStep((s) => Math.min(s + 1, 3))}
-              className=" border-0 bg-ink px-6 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-paper hover:opacity-85 transition-opacity"
+              className=" border-0 bg-foreground px-6 py-2.5 font-mono text-[11px] tracking-[.14em] uppercase text-background hover:opacity-85 transition-opacity"
             >
               Continue to step 0{currentStep + 2} →
             </button>

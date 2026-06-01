@@ -120,6 +120,26 @@ const coerceFiniteNumber = (value: unknown) => {
   return value;
 };
 
+// Extracts the skill slug from a SKILL.md frontmatter block embedded in chunk text.
+// Chunks from Cloudflare AI Search include the raw document text; when the chunk
+// covers the start of the document we can read `name:` from the YAML frontmatter.
+const extractSlugFromSkillMdText = (text: unknown): string | null => {
+  const str = coerceNonEmptyString(text);
+  if (!str || !str.startsWith("---")) {
+    return null;
+  }
+  const endFm = str.indexOf("\n---", 3);
+  if (endFm === -1) {
+    return null;
+  }
+  const nameMatch = str.slice(3, endFm).match(/^name:\s*([^\n]+)/m);
+  if (!nameMatch?.[1]) {
+    return null;
+  }
+  const name = nameMatch[1].trim().replaceAll(/^["']|["']$/g, "");
+  return name && slugPattern.test(name) ? name : null;
+};
+
 const coerceSnippet = (value: unknown) => {
   const text = coerceNonEmptyString(value);
   if (!text) {
@@ -331,13 +351,12 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     }
   };
 
-  const payload = raw as { data?: unknown } | null;
-  const rows = Array.isArray(payload?.data) ? payload.data : [];
-  for (const row of rows) {
+  for (const row of getRawRows(raw)) {
     const item = row as {
       attributes?: {
         folder?: unknown;
       };
+      content?: unknown;
       filename?: unknown;
       id?: unknown;
       itemKey?: unknown;
@@ -352,6 +371,8 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
         slug?: unknown;
       };
       slug?: unknown;
+      source?: unknown;
+      text?: unknown;
     };
 
     fromPath(item.key);
@@ -366,7 +387,10 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
     fromPath(item.metadata?.filename);
     fromPath(item.metadata?.path);
     fromPath(item.filename);
+    fromPath(item.source);
     fromPath(item.attributes?.folder);
+    addSlug(extractSlugFromSkillMdText(item.text));
+    addSlug(extractSlugFromSkillMdText(item.content));
   }
 
   return {
@@ -375,17 +399,30 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
   };
 };
 
+// Extracts a skill ID from a flat source filename like "${skillId}.md".
+// Does not apply to path-like values (e.g. "owner/repo/skill.md").
+const getSkillIdFromSourceFilename = (source: unknown): string | null => {
+  const str = coerceNonEmptyString(source);
+  if (!str || str.includes("/") || str.includes("\\") || !str.endsWith(".md")) {
+    return null;
+  }
+  const id = str.slice(0, -3);
+  return id.length > 0 ? id : null;
+};
+
 const getAiRowKey = (item: {
   filename?: unknown;
   id?: unknown;
   itemKey?: unknown;
   item_key?: unknown;
   key?: unknown;
+  source?: unknown;
 }) =>
   coerceNonEmptyString(item.key) ??
   coerceNonEmptyString(item.item_key) ??
   coerceNonEmptyString(item.itemKey) ??
   coerceNonEmptyString(item.filename) ??
+  coerceNonEmptyString(item.source) ??
   coerceNonEmptyString(item.id) ??
   null;
 
@@ -457,6 +494,7 @@ const extractAiRow = (row: unknown): AiSearchRow => {
       slug?: unknown;
     };
     score?: unknown;
+    source?: unknown;
     text?: unknown;
   };
   const directPathDetails = getAiRowDirectPathDetails(item);
@@ -470,19 +508,20 @@ const extractAiRow = (row: unknown): AiSearchRow => {
     skillId:
       coerceNonEmptyString(item.metadata?.skillId) ??
       coerceNonEmptyString(item.metadata?.skill_id) ??
+      getSkillIdFromSourceFilename(item.source) ??
       null,
-    skillSlug: getAiRowSkillSlug(item, directPathDetails),
+    skillSlug:
+      getAiRowSkillSlug(item, directPathDetails) ??
+      extractSlugFromSkillMdText(item.text) ??
+      extractSlugFromSkillMdText(item.content) ??
+      null,
     sourcePath: directPathDetails?.sourcePath ?? null,
     version: directPathDetails?.version ?? null,
   };
 };
 
-const extractAiRows = (raw: unknown): AiSearchRow[] => {
-  const payload = raw as { data?: unknown } | null;
-  const rows = Array.isArray(payload?.data) ? payload.data : [];
-
-  return rows.map((row) => extractAiRow(row));
-};
+const extractAiRows = (raw: unknown): AiSearchRow[] =>
+  getRawRows(raw).map((row) => extractAiRow(row));
 
 const rowRank = (row: AiSearchRow) => row.score ?? Number.NEGATIVE_INFINITY;
 
@@ -546,8 +585,18 @@ const toResolvedSkillItem = (row: AiSearchResolvedSkillRow) => {
   };
 };
 
-const getAiSearchResultCount = (raw: unknown) =>
-  Array.isArray((raw as { data?: unknown })?.data) ? (raw as { data: unknown[] }).data.length : 0;
+const getRawRows = (raw: unknown): unknown[] => {
+  const payload = raw as { chunks?: unknown; data?: unknown } | null;
+  if (Array.isArray(payload?.chunks)) {
+    return payload.chunks;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  return [];
+};
+
+const getAiSearchResultCount = (raw: unknown) => getRawRows(raw).length;
 
 const getAiMatch = (aiRows: AiSearchRow[], skill: AiSearchResolvedSkillRow) => {
   const bestRowByPath = pickBestRowByPath(aiRows, {

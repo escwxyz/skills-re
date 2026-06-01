@@ -1,8 +1,10 @@
 ---
-question: Was ist das Agent Skill Registry?
+question: Was sind Agent Skills?
 order: 1
 ---
 
-Das Agent Skill Registry (skills.re) ist ein zentrales Repository zum Entdecken, Versionieren und Verteilen von Skills für KI-Agenten. Ein Skill ist eine strukturierte Markdown-Datei (`SKILL.md`), die einem Agenten erklärt, wie er eine bestimmte Aufgabe ausführen soll — z. B. Code-Review, Tests schreiben oder Issues priorisieren.
+Agent Skills sind ein leichtgewichtiges offenes Format zur Erweiterung von KI-Agenten mit spezialisiertem Wissen, Workflows und Leitplanken. Ein Skill besteht aus einem Ordner mit einer `SKILL.md`-Datei, die Metadaten enthält (mindestens `name` und `description`) sowie die Anweisungen, denen ein Agent folgen soll. Skills können auch Skripte, Vorlagen, Beispiele oder andere unterstützende Dateien bündeln.
 
-Im Gegensatz zu allgemeinen Prompt-Bibliotheken sind Skills versioniert, signiert und werden vor der Aufnahme ins Registry gegen eine Standard-Evaluierungssuite getestet.
+Im Gegensatz zu einer losen Prompt-Bibliothek folgen Skills einer definierten [Spezifikation](https://agentskills.io/specification) und sind portierbar. Jeder Agent, der eine Textdatei lesen und markdown-formatierte Anweisungen ausführen kann, kann sie nutzen.
+
+Das **Agent Skill Registry** (skills.re) ist die zentrale Anlaufstelle zum Entdecken, Teilen und Verteilen von Skills. Skills im Registry werden versioniert und vor der Veröffentlichung gegen eine Standard-Evaluierungssuite getestet, damit ihr Verhalten beim Installieren verlässlicher ist.

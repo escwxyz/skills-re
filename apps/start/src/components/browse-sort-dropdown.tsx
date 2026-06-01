@@ -40,7 +40,7 @@ export const BrowseSortDropdown = ({ filters }: Props) => {
         render={(props) => (
           <Button
             aria-label={`${m.skills_browse_sort_prefix()} ${activeSortLabel}`}
-            className="h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-ink hover:bg-muted hover:text-ink"
+            className="h-full w-(--header-height) rounded-none border-l border-border bg-transparent text-foreground hover:bg-muted hover:text-foreground"
             size="icon-sm"
             type="button"
             variant="ghost"

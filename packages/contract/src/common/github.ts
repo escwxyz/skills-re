@@ -81,6 +81,7 @@ export const fetchGithubRepoOutputSchema = z.object({
   nameWithOwner: z.string().nullable(),
   owner: z.string(),
   ownerAvatarUrl: z.string().nullable(),
+  ownerBio: z.string().nullable(),
   ownerHandle: z.string(),
   ownerName: z.string().nullable(),
   recentCommits: z.array(githubCommitSchema),
@@ -103,6 +104,7 @@ export const uploadRepoInputSchema = z.object({
   nameWithOwner: z.string(),
   owner: z.object({
     avatarUrl: z.string().optional(),
+    bio: z.string().nullable().optional(),
     handle: z.string(),
     name: z.string().optional(),
   }),

@@ -10,7 +10,8 @@ interface Stat {
 
 interface PageHeroProps {
   eyebrow: string;
-  description: string;
+  description?: string;
+  descriptionClassName?: string;
   descriptionItalic?: boolean;
   stats?: Stat[];
   borderThick?: boolean;
@@ -40,6 +41,7 @@ const accentClass = (accent?: "green" | "blue" | "red") => {
 export const PageHero = ({
   eyebrow,
   description,
+  descriptionClassName,
   descriptionItalic = false,
   stats,
   borderThick = false,
@@ -90,8 +92,9 @@ export const PageHero = ({
         </h1>
         <p
           className={cn(
-            "text-ink-2 mt-5 max-w-170 font-serif text-[20px] leading-[1.45]",
+            "text-muted-foreground mt-5 max-w-170 font-serif text-[20px] leading-[1.45]",
             descriptionItalic && "italic",
+            descriptionClassName,
           )}
         >
           {description}

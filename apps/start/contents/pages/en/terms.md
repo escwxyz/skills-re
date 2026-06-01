@@ -1,7 +1,7 @@
 ---
 title: Terms of Service
 description: The terms and conditions governing your use of skills.re.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. Acceptance

@@ -22,10 +22,15 @@ interface Props {
 export const BrowseSkillList = ({ skills }: Props) => {
   const locale = getLocale();
 
+  const colsCls = "grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)_8rem_6rem_6rem_5rem_7rem]";
+
   return (
     <div className="divide-rule divide-y">
-      <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(10rem,0.85fr)_7rem_8rem_6rem_7rem] border-border border-b bg-muted/25 px-6 py-2.5 font-mono text-[10px] tracking-[.12em] uppercase text-muted-text">
+      <div
+        className={`grid border-border border-b bg-muted/25 px-6 py-2.5 font-mono text-[10px] tracking-[.12em] uppercase text-muted-foreground ${colsCls}`}
+      >
         <span>Title</span>
+        <span>Description</span>
         <span>{m.skill_detail_meta_author()}</span>
         <span>{m.skill_detail_meta_category()}</span>
         <span>{m.skill_detail_metric_installs()}</span>
@@ -55,43 +60,44 @@ export const BrowseSkillList = ({ skills }: Props) => {
                 repoName: skill.repoName ?? "unknown-repo",
                 skillSlug: skill.slug,
               })}
-              className="grid grid-cols-[minmax(0,1.25fr)_minmax(10rem,0.85fr)_7rem_8rem_6rem_7rem] items-center px-6 py-3 text-sm transition-colors hover:bg-muted/40"
+              className={`grid items-center px-6 py-3.5 transition-colors hover:bg-muted/40 ${colsCls}`}
             >
-              <div className="min-w-0">
-                <div className="truncate font-medium text-ink">{skill.title}</div>
-                <div className="mt-1 line-clamp-1 text-muted-text text-xs">{skill.description}</div>
-              </div>
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Avatar className="size-5 shrink-0 rounded-none border-0 bg-background shadow-none after:rounded-none">
-                    {authorAvatarUrl ? (
-                      <AvatarImage
-                        className="rounded-none object-cover"
-                        alt={authorLabel}
-                        src={authorAvatarUrl}
-                      />
-                    ) : null}
-                    <AvatarFallback className="rounded-none bg-ink font-mono text-[9px] text-paper">
-                      {authorInitial}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-ink">{authorLabel}</div>
-                    <div className="mt-1 truncate text-muted-text text-xs">{authorHandle}</div>
-                  </div>
+              <div className="min-w-0 pr-4">
+                <div className="truncate font-display font-semibold text-sm text-foreground">
+                  {skill.title}
                 </div>
               </div>
-              <div className="truncate text-muted-text text-xs">{categoryLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">{downloadsLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">{starsLabel}</div>
-              <div className="truncate font-mono text-muted-text text-xs">
+              <div className="min-w-0 pr-6">
+                <div className="truncate text-xs text-muted-foreground">{skill.description}</div>
+              </div>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Avatar className="size-4 shrink-0 rounded-none border-0 bg-background shadow-none after:rounded-none">
+                  {authorAvatarUrl ? (
+                    <AvatarImage
+                      className="rounded-none object-cover"
+                      alt={authorLabel}
+                      src={authorAvatarUrl}
+                    />
+                  ) : null}
+                  <AvatarFallback className="rounded-none bg-foreground font-mono text-[8px] text-background">
+                    {authorInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate text-xs text-muted-foreground">{authorHandle}</span>
+              </div>
+              <div className="truncate text-muted-foreground text-xs">{categoryLabel}</div>
+              <div className="truncate font-mono text-muted-foreground text-xs">
+                {downloadsLabel}
+              </div>
+              <div className="truncate font-mono text-muted-foreground text-xs">{starsLabel}</div>
+              <div className="truncate font-mono text-muted-foreground text-xs">
                 {updatedAt ? <TimeValue locale={locale} time={updatedAt} /> : "—"}
               </div>
             </Link>
           );
         })
       ) : (
-        <div className="px-6 py-12 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-text">
+        <div className="px-6 py-12 text-center font-mono text-[11px] tracking-[.14em] uppercase text-muted-foreground">
           {m.skills_browse_no_matches()}
         </div>
       )}

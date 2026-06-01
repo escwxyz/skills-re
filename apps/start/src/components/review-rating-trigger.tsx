@@ -1,13 +1,9 @@
 import { useSetAtom } from "jotai";
 import { useRouteContext } from "@tanstack/react-router";
 
-import {
-  isLoginDialogOpenAtom,
-  isWriteReviewDialogOpenAtom,
-  writeReviewInitialStarsAtom,
-  writeReviewSkillIdAtom,
-} from "@/atoms/app";
+import { loginDialogAtom, pendingActionAtom, writeReviewDialogAtom } from "@/atoms/app";
 import { Rating, RatingItem } from "@/components/ui/rating/rating";
+import { openLoginDialog } from "@/utils/login-dialog";
 
 interface ReviewRatingTriggerProps {
   skillId: string;
@@ -15,21 +11,22 @@ interface ReviewRatingTriggerProps {
 
 export function ReviewRatingTrigger({ skillId }: ReviewRatingTriggerProps) {
   const { currentUser } = useRouteContext({ from: "__root__" });
-  const setLoginDialogOpen = useSetAtom(isLoginDialogOpenAtom);
-  const setOpen = useSetAtom(isWriteReviewDialogOpenAtom);
-  const setInitialStars = useSetAtom(writeReviewInitialStarsAtom);
-  const setSkillId = useSetAtom(writeReviewSkillIdAtom);
+  const setWriteReviewDialog = useSetAtom(writeReviewDialogAtom);
+  const setLoginDialog = useSetAtom(loginDialogAtom);
+  const setPendingAction = useSetAtom(pendingActionAtom);
 
   const handleValueChange = (value: number) => {
-    setSkillId(skillId);
-    setInitialStars(value);
-
     if (currentUser) {
-      setOpen(true);
+      setWriteReviewDialog({ open: true, initialStars: value, skillId });
       return;
     }
 
-    setLoginDialogOpen(true);
+    setPendingAction({
+      initialStars: value,
+      skillId,
+      type: "write-review",
+    });
+    openLoginDialog(setLoginDialog);
   };
 
   return (

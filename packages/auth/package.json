@@ -1,5 +1,6 @@
 {
   "name": "@skills-re/auth",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {

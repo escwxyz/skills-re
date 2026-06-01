@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { tagDetailSchema, tagListItemSchema } from "./common/content";
+import { tagDetailSchema, tagListItemSchema, tagTopSkillsSchema } from "./common/content";
 import { tagsContract } from "./tags";
 
 describe("tags contract", () => {
@@ -40,6 +40,32 @@ describe("tags contract", () => {
           },
         ],
         slug: "automation",
+      }),
+    ).toEqual({
+      count: 5,
+      id: "tag-1",
+      indexable: true,
+      relatedCategories: [
+        {
+          count: 2,
+          name: "Tools & Platforms",
+          slug: "tools-platforms",
+        },
+      ],
+      relatedTags: [
+        {
+          count: 1,
+          slug: "workflow",
+        },
+      ],
+      slug: "automation",
+    });
+  });
+
+  test("accepts a tag top skills payload", () => {
+    expect(
+      tagTopSkillsSchema.parse({
+        count: 5,
         topSkills: [
           {
             authorHandle: "acme",
@@ -66,22 +92,6 @@ describe("tags contract", () => {
       }),
     ).toEqual({
       count: 5,
-      id: "tag-1",
-      indexable: true,
-      relatedCategories: [
-        {
-          count: 2,
-          name: "Tools & Platforms",
-          slug: "tools-platforms",
-        },
-      ],
-      relatedTags: [
-        {
-          count: 1,
-          slug: "workflow",
-        },
-      ],
-      slug: "automation",
       topSkills: [
         expect.objectContaining({
           description: "Widget skill",
@@ -97,6 +107,7 @@ describe("tags contract", () => {
     expect(tagsContract.list).toBeDefined();
     expect(tagsContract.count).toBeDefined();
     expect(tagsContract.getBySlug).toBeDefined();
+    expect(tagsContract.getTopSkillsBySlug).toBeDefined();
     expect(tagsContract.listForSeo).toBeDefined();
     expect(tagsContract.listIndexable).toBeDefined();
     expect(tagsContract.listPage).toBeDefined();

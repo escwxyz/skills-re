@@ -1,9 +1,11 @@
-import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { reposTable } from "@skills-re/db/schema/repos";
+import { usersTable } from "@skills-re/db/schema/auth";
 import { skillsTable } from "@skills-re/db/schema/skills";
 import { snapshotFilesTable, snapshotsTable } from "@skills-re/db/schema/snapshots";
-import { skillsTagsTable, tagsTable } from "@skills-re/db/schema";
+import { skillsTagsTable, tagsTable, staticAuditsTable } from "@skills-re/db/schema";
 import { asRepoId, asSkillId, asUserId, createId } from "@skills-re/db/utils";
 import type { RepoId, SkillId, SnapshotId } from "@skills-re/db/utils";
 
@@ -29,6 +31,11 @@ export interface SkillClaimContext {
 
 const isDefined = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
+
+export const normalizeSkillCanonicalSlug = (value: string | null | undefined) => {
+  const normalized = value?.trim();
+  return normalized ? normalizeSkillSlug(normalized) : null;
+};
 
 interface AuthorListCursor {
   sort: "alphabetical" | "popular";
@@ -144,6 +151,7 @@ export async function listSkillsByUserId(input: { userId: string; limit?: number
 }
 
 export async function createSkill(input: {
+  canonicalSlug?: string | null;
   description: string;
   repoId: string;
   slug: string;
@@ -152,9 +160,12 @@ export async function createSkill(input: {
   userId?: string | null;
   visibility?: "public" | "private";
 }) {
+  const slug = normalizeSkillSlug(input.slug);
+  const canonicalSlug = normalizeSkillCanonicalSlug(input.canonicalSlug);
   const rows = await db
     .insert(skillsTable)
     .values({
+      canonicalSlug,
       description: input.description,
       id: asSkillId(createId()),
       latestCommitDate: null,
@@ -165,22 +176,34 @@ export async function createSkill(input: {
       latestSnapshotId: null,
       primaryCategory: null,
       repoId: asRepoId(input.repoId),
-      slug: input.slug,
+      slug,
       syncTime: input.syncTime,
       title: input.title,
       userId: input.userId ? asUserId(input.userId) : null,
       visibility: input.visibility ?? "public",
     } as never)
+    .onConflictDoNothing()
     .returning({
       id: skillsTable.id,
     });
 
   const [created] = rows;
-  if (!created) {
-    throw new Error("Failed to create skill record");
+  if (created) {
+    return created.id;
   }
 
-  return created.id;
+  // Conflict: another concurrent workflow already inserted this slug — reuse its ID.
+  const [existing] = await db
+    .select({ id: skillsTable.id })
+    .from(skillsTable)
+    .where(and(eq(skillsTable.repoId, asRepoId(input.repoId)), eq(skillsTable.slug, slug)))
+    .limit(1);
+
+  if (!existing) {
+    throw new Error("Failed to create or find skill record");
+  }
+
+  return existing.id;
 }
 
 export async function listSkillCategorizationTargetsByIds(skillIds: SkillId[]) {
@@ -235,33 +258,81 @@ export async function countSkills() {
 export async function findSkillById(id: string) {
   const rows = await db
     .select({
+      authorHandle: reposTable.ownerHandle,
+      createdAt: skillsTable.createdAt,
       description: skillsTable.description,
+      downloadsAllTime: skillsTable.downloadsAllTime,
+      downloadsTrending: skillsTable.downloadsTrending,
+      forkCount: reposTable.forks,
       id: skillsTable.id,
+      isVerified: skillsTable.isVerified,
+      latestVersion: skillsTable.latestVersion,
+      license: reposTable.license,
+      ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      primaryCategory: skillsTable.primaryCategory,
+      repoName: reposTable.name,
+      repoUrl: reposTable.url,
       slug: skillsTable.slug,
+      stargazerCount: reposTable.stars,
       syncTime: skillsTable.syncTime,
+      tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
       title: skillsTable.title,
+      updatedAt: skillsTable.updatedAt,
+      viewsAllTime: skillsTable.viewsAllTime,
     })
     .from(skillsTable)
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(skillsTagsTable, eq(skillsTagsTable.skillId, skillsTable.id))
+    .leftJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
     .where(and(eq(skillsTable.id, id as SkillId), eq(skillsTable.visibility, "public")))
+    .groupBy(skillsTable.id)
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+  return { ...row, tags: row.tags ? row.tags.split(",").filter(Boolean) : [] };
 }
 
 export async function findSkillBySlug(slug: string) {
   const rows = await db
     .select({
+      authorHandle: reposTable.ownerHandle,
+      createdAt: skillsTable.createdAt,
       description: skillsTable.description,
+      downloadsAllTime: skillsTable.downloadsAllTime,
+      downloadsTrending: skillsTable.downloadsTrending,
+      forkCount: reposTable.forks,
       id: skillsTable.id,
+      isVerified: skillsTable.isVerified,
+      latestVersion: skillsTable.latestVersion,
+      license: reposTable.license,
+      ownerAvatarUrl: reposTable.ownerAvatarUrl,
+      primaryCategory: skillsTable.primaryCategory,
+      repoName: reposTable.name,
+      repoUrl: reposTable.url,
       slug: skillsTable.slug,
+      stargazerCount: reposTable.stars,
       syncTime: skillsTable.syncTime,
+      tags: sql<string>`coalesce(group_concat(distinct ${tagsTable.slug}), '')`,
       title: skillsTable.title,
+      updatedAt: skillsTable.updatedAt,
+      viewsAllTime: skillsTable.viewsAllTime,
     })
     .from(skillsTable)
+    .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
+    .leftJoin(skillsTagsTable, eq(skillsTagsTable.skillId, skillsTable.id))
+    .leftJoin(tagsTable, eq(tagsTable.id, skillsTagsTable.tagId))
     .where(and(eq(skillsTable.slug, slug), eq(skillsTable.visibility, "public")))
+    .groupBy(skillsTable.id)
     .limit(1);
 
-  return rows[0] ?? null;
+  const [row] = rows;
+  if (!row) {
+    return null;
+  }
+  return { ...row, tags: row.tags ? row.tags.split(",").filter(Boolean) : [] };
 }
 
 export async function findSkillByPath(input: {
@@ -303,6 +374,18 @@ export async function findSkillByPath(input: {
       title: skillsTable.title,
       updatedAt: skillsTable.updatedAt,
       viewsAllTime: skillsTable.viewsAllTime,
+      latestAuditScore: sql<number | null>`(
+        SELECT ${staticAuditsTable.overallScore}
+        FROM ${staticAuditsTable}
+        WHERE ${staticAuditsTable.snapshotId} = ${skillsTable.latestSnapshotId}
+        ORDER BY ${staticAuditsTable.syncTime} DESC
+        LIMIT 1
+      )`,
+      latestSnapshotTotalBytes: sql<number>`COALESCE((
+        SELECT SUM(${snapshotFilesTable.size})
+        FROM ${snapshotFilesTable}
+        WHERE ${snapshotFilesTable.snapshotId} = ${skillsTable.latestSnapshotId}
+      ), 0)`,
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
@@ -351,39 +434,45 @@ export async function listAuthors(input?: {
   const limit = input?.limit ?? defaultLimit;
   const sort = input?.sort ?? "popular";
   const cursor = decodeAuthorCursor(input?.cursor);
-  // todo: type check
+  const distinctSkillCountExpr = sql<number>`count(distinct ${skillsTable.id})`;
   // oxlint-disable-next-line typescript/no-explicit-any
   let query: any = db
     .select({
-      avatarUrl: sql<string | null>`max(${reposTable.ownerAvatarUrl})`,
+      avatarUrl: sql<
+        string | null
+      >`coalesce(max(${usersTable.image}), max(${reposTable.ownerAvatarUrl}))`,
+      bio: sql<string | null>`coalesce(max(${usersTable.bio}), max(${reposTable.ownerBio}))`,
       githubUrl: sql<string>`'https://github.com/' || ${reposTable.ownerHandle}`,
       handle: reposTable.ownerHandle,
-      displayName: sql<string>`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
+      displayName: sql<string>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
-      name: sql<string | null>`max(${reposTable.ownerName})`,
+      name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: distinctSkillCountExpr,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(eq(skillsTable.visibility, "public"), sql`trim(${reposTable.ownerHandle}) <> ''`))
     .groupBy(reposTable.ownerHandle);
 
   if (sort === "alphabetical") {
     query = query.orderBy(
-      asc(sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`),
+      asc(
+        sql`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle})`,
+      ),
       asc(reposTable.ownerHandle),
     );
     if (cursor) {
       query = query.having(
-        sql`coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) > ${cursor.value} OR (coalesce(max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) = ${cursor.value} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+        sql`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) > ${cursor.value} OR (coalesce(max(${usersTable.name}), max(${reposTable.ownerName}), '@' || ${reposTable.ownerHandle}) = ${cursor.value} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
       );
     }
   } else {
-    query = query.orderBy(desc(sql`count(${skillsTable.id})`), asc(reposTable.ownerHandle));
+    query = query.orderBy(desc(distinctSkillCountExpr), asc(reposTable.ownerHandle));
     if (cursor) {
       query = query.having(
-        sql`count(${skillsTable.id}) < ${Number(cursor.value)} OR (count(${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
+        sql`count(distinct ${skillsTable.id}) < ${Number(cursor.value)} OR (count(distinct ${skillsTable.id}) = ${Number(cursor.value)} AND ${reposTable.ownerHandle} > ${cursor.handle})`,
       );
     }
   }
@@ -435,16 +524,20 @@ export async function countAuthors() {
 export async function findAuthorByHandle(handle: string) {
   const rows = await db
     .select({
-      avatarUrl: sql<string | null>`max(${reposTable.ownerAvatarUrl})`,
+      avatarUrl: sql<
+        string | null
+      >`coalesce(max(${usersTable.image}), max(${reposTable.ownerAvatarUrl}))`,
+      bio: sql<string | null>`coalesce(max(${usersTable.bio}), max(${reposTable.ownerBio}))`,
       githubUrl: sql<string>`'https://github.com/' || ${reposTable.ownerHandle}`,
       handle: reposTable.ownerHandle,
       isVerified: sql<number>`max(case when ${skillsTable.isVerified} then 1 else 0 end)`,
-      name: sql<string | null>`max(${reposTable.ownerName})`,
+      name: sql<string | null>`coalesce(max(${usersTable.name}), max(${reposTable.ownerName}))`,
       repoCount: sql<number>`count(distinct ${reposTable.id})`,
-      skillCount: sql<number>`count(${skillsTable.id})`,
+      skillCount: sql<number>`count(distinct ${skillsTable.id})`,
     })
     .from(reposTable)
     .innerJoin(skillsTable, eq(skillsTable.repoId, reposTable.id))
+    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(eq(reposTable.ownerHandle, handle), eq(skillsTable.visibility, "public")))
     .groupBy(reposTable.ownerHandle)
     .limit(1);
@@ -566,9 +659,20 @@ interface SearchSkillsPageInput {
   minScore?: number;
   repoName?: string;
   query?: string;
+  searchMode?: "keyword" | "semantic";
   sort?: "newest" | "updated" | "views" | "downloads-trending" | "downloads-all-time" | "stars";
   tags?: string[];
 }
+
+export const keywordSearchMetadataFields = [
+  "skill-title",
+  "skill-description",
+  "skill-slug",
+  "repo-name",
+  "author-handle",
+  "author-name",
+  "author-github",
+] as const;
 
 interface SearchCursor {
   offset: number;
@@ -640,6 +744,22 @@ function buildSearchWhereClauses(input: SearchSkillsPageInput) {
     trimmedAuthorHandle ? eq(reposTable.ownerHandle, trimmedAuthorHandle) : null,
     trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
     categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
+    queryPattern
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(usersTable)
+            .where(
+              and(
+                sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`,
+                or(
+                  sql`lower(${usersTable.name}) like ${queryPattern}`,
+                  sql`lower(${usersTable.github}) like ${queryPattern}`,
+                ),
+              ),
+            ),
+        )
+      : null,
     queryPattern
       ? sql`(
           lower(${skillsTable.title}) like ${queryPattern}
@@ -784,6 +904,7 @@ async function listRepoSkillDirectoryPathsByRepoOwnerAndName(input: {
 }
 
 export interface RepoSkillSnapshotHead {
+  canonicalSlug: string | null;
   directoryPath: string;
   entryPath: string;
   latestDescription: string;
@@ -799,6 +920,7 @@ export interface RepoSkillSnapshotHead {
 export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
   const rows = await db
     .select({
+      canonicalSlug: skillsTable.canonicalSlug,
       description: snapshotsTable.description,
       directoryPath: snapshotsTable.directoryPath,
       entryPath: snapshotsTable.entryPath,
@@ -832,6 +954,7 @@ export async function listRepoSkillSnapshotHeadsByRepoId(repoId: RepoId) {
     }
 
     latestBySkillId.set(row.skillId, {
+      canonicalSlug: row.canonicalSlug,
       directoryPath: row.directoryPath,
       entryPath: row.entryPath,
       latestDescription: row.description ?? "",

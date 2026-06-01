@@ -84,7 +84,7 @@ const repoStatsUpdateContract = baseContract
     description: "Updates repository stats for the public catalog.",
     method: "POST",
     path: "/repos/update-stats",
-    tags: ["Repos"],
+    tags: ["Repos", "Internal"],
     successDescription: "Repository stats update result",
     summary: "Update repository stats",
   })
@@ -96,7 +96,7 @@ const repoStatsSyncContract = baseContract
     description: "Syncs repository stats from GitHub for the current repo page.",
     method: "POST",
     path: "/repos/sync-stats",
-    tags: ["Repos"],
+    tags: ["Repos", "Internal"],
     successDescription: "Repository stats sync result",
     summary: "Sync repository stats",
   })
@@ -108,7 +108,7 @@ const repoStatsEnqueueContract = baseContract
     description: "Enqueues a repository stats sync workflow.",
     method: "POST",
     path: "/repos/enqueue-stats-sync",
-    tags: ["Repos"],
+    tags: ["Repos", "Internal"],
     successDescription: "Repository stats sync enqueue result",
     summary: "Enqueue repository stats sync",
   })
@@ -130,7 +130,7 @@ const repoSkillsDiscoveryEnqueueContract = baseContract
     description: "Enqueues a repository skill discovery workflow for content sync.",
     method: "POST",
     path: "/repos/enqueue-skills-discovery",
-    tags: ["Repos"],
+    tags: ["Repos", "Internal"],
     successDescription: "Repository skill discovery enqueue result",
     summary: "Enqueue repository skill discovery",
   })

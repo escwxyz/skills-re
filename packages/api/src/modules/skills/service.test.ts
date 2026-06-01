@@ -4,7 +4,13 @@ import { describe, expect, test } from "bun:test";
 
 import type { SkillsUploadContentPayload } from "../../types";
 import { encodeRepoCursor } from "../repos/cursor";
-import { aiSearch, createSkillsService, submitGithubRepoPublic, uploadSkills } from "./service";
+import {
+  aiSearch,
+  createSkillsService,
+  submitGithubPreparedPublic,
+  submitGithubRepoPublic,
+  uploadSkills,
+} from "./service";
 
 describe("skills service", () => {
   test("returns paginated authors from the public authors list contract", async () => {
@@ -18,6 +24,7 @@ describe("skills service", () => {
           page: [
             {
               avatarUrl: null,
+              bio: "Builds useful tools.",
               displayName: "Acme",
               githubUrl: "https://github.com/acme",
               handle: "acme",
@@ -28,6 +35,7 @@ describe("skills service", () => {
             },
             {
               avatarUrl: null,
+              bio: null,
               displayName: "Beta",
               githubUrl: "https://github.com/beta",
               handle: "beta",
@@ -49,6 +57,7 @@ describe("skills service", () => {
       page: [
         {
           avatarUrl: undefined,
+          bio: "Builds useful tools.",
           githubUrl: "https://github.com/acme",
           handle: "acme",
           isVerified: true,
@@ -58,6 +67,7 @@ describe("skills service", () => {
         },
         {
           avatarUrl: undefined,
+          bio: undefined,
           githubUrl: "https://github.com/beta",
           handle: "beta",
           isVerified: false,
@@ -163,6 +173,7 @@ describe("skills service", () => {
           githubUrl: `https://github.com/${handle}`,
           handle,
           isVerified: 1,
+          bio: "Maintains the widget stack.",
           name: "Widget Author",
           repoCount: 2,
           skillCount: 3,
@@ -171,6 +182,7 @@ describe("skills service", () => {
 
     await expect(service.getAuthorByHandle({ handle: "acme" })).resolves.toEqual({
       avatarUrl: undefined,
+      bio: "Maintains the widget stack.",
       githubUrl: "https://github.com/acme",
       handle: "acme",
       isVerified: true,
@@ -245,6 +257,131 @@ describe("skills service", () => {
         repoName: "skills",
       },
     ]);
+  });
+
+  test("routes explicit keyword queries through the database search path", async () => {
+    const filterCalls: Array<Record<string, unknown>> = [];
+    const aiCalls: unknown[] = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "Workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-1",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: null,
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "Workflow",
+              updatedAt: 123,
+              viewsAllTime: 42,
+            } as any,
+          ],
+        } as any);
+      },
+    });
+
+    const result = await service.search(
+      {
+        limit: 24,
+        query: "workflow",
+        searchMode: "keyword",
+      },
+      {
+        search(input) {
+          aiCalls.push(input);
+          return Promise.resolve({ data: [] });
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          repoName: "skills",
+          slug: "workflow",
+          title: "Workflow",
+        },
+      ],
+    });
+    expect(filterCalls).toEqual([
+      {
+        limit: 24,
+        query: "workflow",
+        searchMode: "keyword",
+      },
+    ]);
+    expect(aiCalls).toEqual([]);
+  });
+
+  test("routes explicit semantic queries through AI Search", async () => {
+    const filterCalls: unknown[] = [];
+    const aiCalls: unknown[] = [];
+    const service = createSkillsService({
+      findSkillByPath: () => Promise.resolve(null),
+      findSkillBySlug: () => Promise.resolve(null),
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input);
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
+    });
+
+    const result = await service.search(
+      {
+        query: "workflow",
+        rewriteQuery: false,
+        searchMode: "semantic",
+      },
+      {
+        search(input) {
+          aiCalls.push(input);
+          return Promise.resolve({
+            data: [],
+            has_more: false,
+            search_query: "workflow",
+          });
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      ai: {
+        resolvedSkillsCount: 0,
+        resultCount: 0,
+      },
+      continueCursor: "",
+      isDone: true,
+      page: [],
+    });
+    expect(aiCalls).toEqual([
+      {
+        query: "workflow",
+        rewriteQuery: false,
+      },
+    ]);
+    expect(filterCalls).toEqual([]);
   });
 
   test("claims a skill when the authenticated github handle matches the repo owner", async () => {
@@ -694,6 +831,63 @@ describe("skills service", () => {
     });
     expect(scheduledPayloads).toHaveLength(1);
     expect(scheduledPayloads[0]?.skills.map((skill) => skill.slug)).toEqual(["selected"]);
+  });
+
+  test("submits a prepared public github payload without rebuilding the repo payload", async () => {
+    const scheduledPayloads: SkillsUploadContentPayload[] = [];
+
+    const result = await submitGithubPreparedPublic(
+      {
+        recentCommits: [{ sha: "abc123" }],
+        repo: {
+          createdAt: 1,
+          defaultBranch: "main",
+          forks: 2,
+          license: "MIT",
+          nameWithOwner: "example/skills",
+          owner: {
+            handle: "example",
+          },
+          stars: 3,
+          updatedAt: 4,
+        },
+        skills: [
+          {
+            description: "Prepared skill",
+            directoryPath: "skills/prepared/",
+            entryPath: "skills/prepared/SKILL.md",
+            frontmatterHash: "frontmatter-hash",
+            initialSnapshot: {
+              files: [{ content: "prepared", path: "SKILL.md" }],
+              sourceCommitDate: 1,
+              sourceCommitSha: "abc123",
+              sourceRef: "main",
+              tree: [{ path: "SKILL.md", sha: "abc123", type: "blob" }],
+            },
+            skillContentHash: "content-hash",
+            slug: "prepared-skill",
+            sourceLocator: "github:example/skills/skills/prepared/SKILL.md",
+            sourceType: "github",
+            title: "Prepared skill",
+          },
+        ],
+      },
+      {
+        enqueue: (input) => {
+          scheduledPayloads.push(input);
+          return Promise.resolve({ workId: "workflow-prepared" });
+        },
+      },
+      () => Promise.resolve(null),
+    );
+
+    expect(result).toEqual({
+      skillsCount: 1,
+      status: "submitted",
+      workflowId: "workflow-prepared",
+    });
+    expect(scheduledPayloads).toHaveLength(1);
+    expect(scheduledPayloads[0]?.skills.map((skill) => skill.slug)).toEqual(["prepared-skill"]);
   });
 
   test("returns snapshot history info for the requested skills", async () => {

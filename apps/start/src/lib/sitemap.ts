@@ -1,10 +1,8 @@
 import { baseLocale, locales } from "@/paraglide/runtime";
 
-import { SITE_URL } from "./constants";
-
 const SITEMAP_SKILLS_PAGE_PATTERN = /^(\d+)(?:\.xml)?$/;
 
-export const SITEMAP_SKILLS_PAGE_SIZE = 5000;
+export const SITEMAP_SKILLS_PAGE_SIZE = 2500;
 
 const escapeXml = (value: string) =>
   value
@@ -16,22 +14,24 @@ const escapeXml = (value: string) =>
 
 const normalizePath = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
-export const resolveUrl = (path: string) => `${SITE_URL}${normalizePath(path)}`;
+export const resolveUrl = (siteUrl: string, path: string) => `${siteUrl}${normalizePath(path)}`;
 
 export const buildSitemapSkillsPagePath = (page: number) => `/sitemap/skills/${page}.xml`;
 
-export const buildSitemapSkillsPageUrl = (page: number) =>
-  `${SITE_URL}${buildSitemapSkillsPagePath(page)}`;
+export const buildSitemapSkillsPageUrl = (siteUrl: string, page: number) =>
+  resolveUrl(siteUrl, buildSitemapSkillsPagePath(page));
 
 export const parseSitemapSkillsPageParam = (value: string) => {
   const normalized = value.trim();
   const match = SITEMAP_SKILLS_PAGE_PATTERN.exec(normalized);
 
-  if (!match || match[1] !== normalized) {
+  const pageText = match?.[1];
+
+  if (!match || match[0] !== normalized || !pageText) {
     return null;
   }
 
-  const page = Number.parseInt(match[1], 10);
+  const page = Number.parseInt(pageText, 10);
   return Number.isSafeInteger(page) && page > 0 ? page : null;
 };
 

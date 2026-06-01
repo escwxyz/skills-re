@@ -258,6 +258,7 @@ describe("createGithubSubmitRuntime", () => {
           nameWithOwner: "acme/skills",
           owner: {
             avatarUrl: undefined,
+            bio: null,
             handle: "acme",
             name: "Acme",
           },
@@ -292,6 +293,7 @@ describe("createGithubSubmitRuntime", () => {
               ],
             },
             license: "MIT",
+            preferredVersion: undefined,
             slug: "example-skill",
             sourceLocator: "github:acme/skills/skills/example/SKILL.md",
             sourceType: "github",
@@ -306,6 +308,116 @@ describe("createGithubSubmitRuntime", () => {
     expect(
       requests.every((request) => request.headers.get("authorization") === "Bearer test-token"),
     ).toBe(true);
+  });
+
+  test("uses skill frontmatter license for repo payload when github has no license", async () => {
+    const runtime = createGithubSubmitRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+
+          if (request.url.endsWith("/repos/acme/skills")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  archived: false,
+                  default_branch: "main",
+                  disabled: false,
+                  fork: false,
+                  forks_count: 1,
+                  full_name: "acme/skills",
+                  license: null,
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/skills/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "skills/example/SKILL.md",
+                      sha: "blob-1",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/skills/git/blobs/blob-1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(
+                    `---\nname: example-skill\ndescription: Example skill\nlicense: MIT\n---\n# Example`,
+                  ),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.buildPayload({
+        owner: "acme",
+        repo: "skills",
+      }),
+    ).resolves.toMatchObject({
+      payload: {
+        repo: {
+          license: "MIT",
+        },
+        skills: [
+          {
+            license: "MIT",
+          },
+        ],
+      },
+      reason: undefined,
+    });
   });
 
   test("supports a root SKILL.md file when building the upload payload", async () => {
@@ -528,6 +640,114 @@ Respond terse like smart caveman.`;
             description: "Ultra-compressed communication mode. Cuts token usage ~75%.",
             slug: "caveman",
             title: "caveman",
+          },
+        ],
+      },
+      reason: undefined,
+    });
+  });
+
+  test("normalizes invalid frontmatter names into a storage-safe slug without changing title", async () => {
+    const runtime = createGithubSubmitRuntime(
+      {
+        GH_PAT: "test-token",
+      },
+      {
+        fetch: (async (input: string | URL | Request, init?: RequestInit) => {
+          const request = new Request(getRequestUrl(input), init);
+
+          if (request.url.endsWith("/repos/acme/redux-toolkit")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  archived: false,
+                  default_branch: "master",
+                  disabled: false,
+                  fork: false,
+                  forks_count: 1,
+                  full_name: "acme/redux-toolkit",
+                  license: { name: "MIT" },
+                  owner: {
+                    avatar_url: null,
+                    login: "acme",
+                    name: "Acme",
+                  },
+                  private: false,
+                  stargazers_count: 2,
+                  updated_at: "2024-01-01T00:00:00.000Z",
+                  created_at: "2023-01-01T00:00:00.000Z",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/redux-toolkit/commits?per_page=2")) {
+            return await Promise.resolve(
+              Response.json(
+                [
+                  {
+                    commit: {
+                      author: { date: "2024-01-02T00:00:00.000Z" },
+                      committer: { date: "2024-01-02T00:00:00.000Z" },
+                      message: "initial commit",
+                    },
+                    html_url: "https://github.com/acme/redux-toolkit/commit/abc123",
+                    sha: "abc123",
+                  },
+                ],
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/redux-toolkit/git/trees/abc123?recursive=1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  tree: [
+                    {
+                      path: "packages/toolkit/skills/orchestrate-side-effects/handle-side-effects/SKILL.md",
+                      sha: "blob-1",
+                      type: "blob",
+                    },
+                  ],
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          if (request.url.includes("/repos/acme/redux-toolkit/git/blobs/blob-1")) {
+            return await Promise.resolve(
+              Response.json(
+                {
+                  content: encodeBase64(
+                    `---\nname: orchestrate-side-effects/handle-side-effects\ndescription: Example skill\n---\n# Example`,
+                  ),
+                  encoding: "base64",
+                },
+                { status: 200 },
+              ),
+            );
+          }
+
+          return new Response("not found", { status: 404 });
+        }) as typeof fetch,
+      },
+    );
+
+    await expect(
+      runtime.buildPayload({
+        owner: "acme",
+        repo: "redux-toolkit",
+      }),
+    ).resolves.toMatchObject({
+      payload: {
+        skills: [
+          {
+            slug: "orchestrate-side-effects-handle-side-effects",
+            title: "orchestrate-side-effects/handle-side-effects",
           },
         ],
       },

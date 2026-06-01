@@ -1,21 +1,25 @@
 ---
 title: Cookie-Richtlinie
 description: Welche Cookies skills.re setzt und wie Sie diese steuern können.
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
+
+Diese Seite erklärt, welche Cookies und ähnlichen Speicherfunktionen wir auf skills.re einsetzen. Wir halten die Liste bewusst klein und verwenden sie nur für Anmeldung, Sprach- und Theme-Einstellungen, Einwilligungen und optionale Statistiksteuerung.
 
 ## Von uns gesetzte Cookies
 
-| Name      | Zweck                                  | Dauer    |
-| --------- | -------------------------------------- | -------- |
-| `session` | Hält Sie angemeldet                    | Sitzung  |
-| `locale`  | Speichert Ihre Spracheinstellung       | 400 Tage |
-| `theme`   | Speichert die Hell-/Dunkel-Einstellung | 400 Tage |
+- `session`: hält Sie während des Besuchs angemeldet. Sie läuft am Ende der Sitzung ab.
+- `locale`: merkt sich Ihre Spracheinstellung, damit die Seite in der von Ihnen gewählten Sprache bleibt. Sie gilt für 400 Tage.
+- `theme`: merkt sich, ob Sie den hellen oder dunklen Modus bevorzugen. Sie gilt für 400 Tage.
+- `cookie_consent`: speichert Ihre Cookie-Auswahl, damit wir Sie nicht bei jedem Besuch erneut fragen. Sie gilt für 365 Tage.
+- `cookiePreferences`: speichert Ihre Funktions- und Statistik-Einstellungen. Sie gilt für 90 Tage.
 
 ## Cookies von Drittanbietern
 
-Wir laden keine Analyse- oder Werbeskripte von Drittanbietern, die Cookies setzen.
+Wir laden keine Werbeskripte von Drittanbietern, die Cookies setzen. Statistik-Cookies aktivieren wir erst, wenn Sie zustimmen. Sollte sich das in Zukunft ändern, aktualisieren wir diese Seite, bevor neue Tracking-Cookies eingeführt werden.
 
 ## Cookies steuern
 
-Sie können Cookies jederzeit über Ihre Browser-Einstellungen löschen. Das Entfernen des `session`-Cookies meldet Sie ab. Das Entfernen von `locale` oder `theme` setzt diese Einstellungen auf die Standardwerte zurück.
+Sie können Cookies jederzeit über Ihre Browsereinstellungen löschen. Das Entfernen des `session`-Cookies meldet Sie ab. Das Entfernen von `locale`, `theme`, `cookie_consent` oder `cookiePreferences` setzt diese Einstellungen auf die Standardwerte zurück.
+
+Wenn Sie die Seite weiter nutzen möchten, ohne Einstellungen zu speichern, ist das möglich. Einige Präferenzen werden dann jedoch bei Ihrem nächsten Besuch wieder auf die Standardwerte zurückgesetzt.

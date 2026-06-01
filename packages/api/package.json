@@ -1,5 +1,6 @@
 {
   "name": "@skills-re/api",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -19,6 +20,7 @@
     "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/provider": "^3.0.0",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -27,8 +29,7 @@
     "@skills-re/contract": "workspace:*",
     "@skills-re/db": "workspace:*",
     "@skills-re/env": "workspace:*",
-    "@tanstack/ai": "^0.17.0",
-    "@tanstack/ai-groq": "^0.2.0",
+    "ai": "^6.0.0",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "modern-tar": "^0.7.3",

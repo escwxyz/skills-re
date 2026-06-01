@@ -15,6 +15,13 @@ describe("snapshots repo", () => {
   test("creates a snapshot row with snapshot defaults", async () => {
     const inserted: unknown[] = [];
     const database = {
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: () => Promise.resolve([]),
+          }),
+        }),
+      }),
       insert: () => ({
         values: (value: unknown) => {
           inserted.push(value);

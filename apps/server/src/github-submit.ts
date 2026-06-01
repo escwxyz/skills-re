@@ -1,4 +1,5 @@
 import type { GithubSnapshotTreeEntry, GithubSubmitRuntime } from "@skills-re/api/types";
+import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
 
 import { buildGithubRepoOverview, createGithubHeaders } from "./github-api";
 import type { GithubRepoOverview } from "./github-api";
@@ -27,20 +28,25 @@ const buildSubmitRepoPayload = (
     repo: string;
   },
   overview: GithubRepoOverview,
+  fallbackLicense?: string,
 ) => ({
   createdAt: Date.parse(overview.repo.createdAt ?? "") || Date.now(),
   defaultBranch: overview.defaultBranch,
   forks: overview.repo.forkCount ?? 0,
-  license: overview.repo.licenseName ?? "Unknown",
+  license: overview.repo.licenseName ?? fallbackLicense ?? "Unknown",
   nameWithOwner: overview.repo.nameWithOwner ?? `${input.owner}/${input.repo}`,
   owner: {
     avatarUrl: overview.owner.avatarUrl ?? undefined,
+    bio: overview.owner.bio,
     handle: overview.owner.handle,
     name: overview.owner.name ?? undefined,
   },
   stars: overview.repo.stargazerCount ?? 0,
   updatedAt: Date.parse(overview.repo.updatedAt ?? "") || Date.now(),
 });
+
+const getFallbackLicenseFromSkills = (skills: { license?: string }[]) =>
+  skills.map((skill) => skill.license?.trim()).find(Boolean);
 
 const buildSubmitSkill = async (
   input: {
@@ -83,6 +89,7 @@ const buildSubmitSkill = async (
   const fingerprint = await buildSkillDuplicateFingerprint(frontmatter, skillMd.content);
 
   const normalizedRoot = normalizeSkillRootPath(root.skillRootPath);
+  const normalizedSlug = normalizeSkillSlug(frontmatter.name);
   return {
     description: frontmatter.description,
     directoryPath: normalizedRoot.length > 0 ? `${normalizedRoot}/` : "",
@@ -97,9 +104,13 @@ const buildSubmitSkill = async (
       sourceRef: overview.defaultBranch,
       tree: snapshotHelpers.buildSkillTreeEntries(tree, root.skillRootPath),
     },
-    license: overview.repo.licenseName ?? undefined,
+    license:
+      frontmatter.license ??
+      frontmatter.metadata?.["license"] ??
+      overview.repo.licenseName ??
+      undefined,
     preferredVersion: frontmatter.metadata?.["version"],
-    slug: frontmatter.name,
+    slug: normalizedSlug,
     sourceLocator: `github:${input.owner}/${input.repo}/${root.skillMdPath}`,
     sourceType: "github" as const,
     skillContentHash: fingerprint.skillContentHash,
@@ -184,7 +195,7 @@ const buildPayloadFromOverview = async (input: {
   return {
     payload: {
       recentCommits: overview.commits,
-      repo: buildSubmitRepoPayload(input, overview),
+      repo: buildSubmitRepoPayload(input, overview, getFallbackLicenseFromSkills(skills)),
       skills,
     },
     reason: undefined,

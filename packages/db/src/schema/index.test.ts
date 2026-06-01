@@ -15,6 +15,15 @@ import {
   approvalRequestsTable,
   apikeysTable,
   authTables,
+  jwkssTable,
+  oauthAccessTokensRelations,
+  oauthAccessTokensTable,
+  oauthClientsRelations,
+  oauthClientsTable,
+  oauthConsentsRelations,
+  oauthConsentsTable,
+  oauthRefreshTokensRelations,
+  oauthRefreshTokensTable,
   newsletterTable,
   sessionsRelations,
   sessionsTable,
@@ -53,9 +62,18 @@ describe("database schema registry", () => {
     expect(authTables.agentCapabilityGrants).toBe(agentCapabilityGrantsTable);
     expect(authTables.approvalRequests).toBe(approvalRequestsTable);
     expect(authTables.verifications).toBe(verificationsTable);
+    expect(authTables.jwkss).toBe(jwkssTable);
+    expect(authTables.oauthClients).toBe(oauthClientsTable);
+    expect(authTables.oauthRefreshTokens).toBe(oauthRefreshTokensTable);
+    expect(authTables.oauthAccessTokens).toBe(oauthAccessTokensTable);
+    expect(authTables.oauthConsents).toBe(oauthConsentsTable);
     expect(usersRelations).toBeDefined();
     expect(sessionsRelations).toBeDefined();
     expect(accountsRelations).toBeDefined();
+    expect(oauthClientsRelations).toBeDefined();
+    expect(oauthRefreshTokensRelations).toBeDefined();
+    expect(oauthAccessTokensRelations).toBeDefined();
+    expect(oauthConsentsRelations).toBeDefined();
     expect(agentHostsRelations).toBeDefined();
     expect(agentsRelations).toBeDefined();
     expect(agentCapabilityGrantsRelations).toBeDefined();

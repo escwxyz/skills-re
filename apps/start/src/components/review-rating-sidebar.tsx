@@ -31,7 +31,7 @@ export const ReviewRatingSidebar = ({
           {ratingAvg}
           <span className="text-[22px] text-muted-foreground md:text-[32px]">/5</span>
         </div>
-        <div className="eyebrow mt-1.5 md:mt-2.5">
+        <div className="font-mono text-xs uppercase text-muted-foreground mt-1.5 md:mt-2.5">
           {m.reviews_sidebar_rating_summary({
             count: totalReviews.toLocaleString(getLocale()),
             recommendPct,
@@ -54,7 +54,7 @@ export const ReviewRatingSidebar = ({
           >
             <span className="text-muted-foreground">{stars}</span>
             <div className="h-1 bg-rule">
-              <div className="h-full bg-ink" style={{ width: `${pct}%` }} />
+              <div className="h-full bg-foreground" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-right text-muted-foreground">{count}</span>
           </div>
@@ -64,12 +64,14 @@ export const ReviewRatingSidebar = ({
 
     {mentionedTags && mentionedTags.length > 0 && (
       <div className="mt-7 hidden border-t border-border pt-6 md:block">
-        <div className="eyebrow text-editorial-red mb-3">{m.reviews_sidebar_mentioned_tags()}</div>
+        <div className="font-mono text-xs uppercase text-muted-foreground mb-3">
+          {m.reviews_sidebar_mentioned_tags()}
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {mentionedTags.map((tag) => (
             <span
               key={tag}
-              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-ink-2"
+              className="border border-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground"
             >
               {tag}
             </span>

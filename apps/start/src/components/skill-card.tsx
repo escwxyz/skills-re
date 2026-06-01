@@ -1,4 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { memo } from "react";
+
 import { skill_card_metric_audit } from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 import { getCategoryTitle } from "@/utils/category-data";
@@ -7,6 +8,7 @@ import type { BrowseSkillItem } from "@/utils/types";
 import { StarIcon } from "@phosphor-icons/react";
 
 import { Link } from "@tanstack/react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const getAuthorInitial = (authorLabel?: string | null) => {
   const initial = (authorLabel ?? "").trim().charAt(0).toUpperCase();
@@ -96,7 +98,7 @@ const SkillCardFooter = ({
   </div>
 );
 
-export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
+const SkillCardComponent = ({ skill, hideAuthorName = true }: Props) => {
   const locale = getLocale();
   const authorLabel =
     skill.author?.name ?? skill.authorHandle ?? skill.author?.handle ?? "Community";
@@ -113,6 +115,7 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
   return (
     <Link
       to="/skills/$author/$repo/$slug"
+      preload="viewport"
       params={{
         author: authorHandle,
         repo: skill.repoName ?? "unknown-repo",
@@ -144,3 +147,5 @@ export const SkillCard = ({ skill, hideAuthorName = true }: Props) => {
     </Link>
   );
 };
+
+export const SkillCard = memo(SkillCardComponent);

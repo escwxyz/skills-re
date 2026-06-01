@@ -13,6 +13,7 @@ export const reposTable = sqliteTable(
     name: text("name").notNull(),
     nameWithOwner: text("name_with_owner").notNull(),
     ownerAvatarUrl: text("owner_avatar_url"),
+    ownerBio: text("owner_bio"),
     ownerHandle: text("owner_handle").notNull(),
     ownerName: text("owner_name"),
     stars: integer("stars").default(0).notNull(),

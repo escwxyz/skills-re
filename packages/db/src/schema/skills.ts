@@ -36,8 +36,8 @@ export const skillsTable = sqliteTable(
     latestCommitDate: integer("latest_commit_date"),
     latestCommitMessage: text("latest_commit_message"),
     aiSearchItemId: text("ai_search_item_id"),
+    canonicalSlug: text("canonical_slug"),
     slug: text("slug").notNull(),
-    stargazerCount: integer("stargazer_count").default(0).notNull(),
     syncTime: integer("sync_time").default(currentTimestampMs).notNull(),
     title: text("title").notNull(),
     updatedAt: integer("updated_at").default(currentTimestampMs).notNull(),
@@ -62,7 +62,6 @@ export const skillsTable = sqliteTable(
     index("skills_slug_idx").on(table.slug),
     index("skills_syncTime_idx").on(table.syncTime),
     uniqueIndex("skills_repo_id_slug_unique").on(table.repoId, table.slug),
-    uniqueIndex("skills_slug_unique").on(table.slug),
   ],
 );
 

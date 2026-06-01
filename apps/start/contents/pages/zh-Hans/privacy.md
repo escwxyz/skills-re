@@ -1,7 +1,7 @@
 ---
 title: 隐私政策
 description: skills.re 如何收集、使用和保护您的个人数据。
-updatedAt: 2025-01-01
+updatedAt: 2026-05-19
 ---
 
 ## 1. 我们收集的数据

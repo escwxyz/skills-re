@@ -1,5 +1,5 @@
 // oxlint-disable no-nested-ternary
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 
 import { ArrowRightIcon } from "@phosphor-icons/react";
 import { createFileRoute, useRouteContext } from "@tanstack/react-router";
@@ -52,16 +52,16 @@ function OverviewMetricCard({
   value: string;
 }) {
   return (
-    <Card size="sm" className="rounded-none border-rule/70 bg-background">
-      <CardHeader className="border-b border-rule/60 pb-3">
-        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+    <Card size="sm" className="rounded-none border-border/70 bg-background">
+      <CardHeader className="border-b border-border/60 pb-3">
+        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
           {label}
         </CardDescription>
         <CardTitle className="font-display text-[clamp(1.8rem,2.4vw,2.7rem)] leading-none tracking-[-0.04em]">
           {value}
         </CardTitle>
       </CardHeader>
-      <CardContent className="py-3 text-[12px] text-muted-text">{note}</CardContent>
+      <CardContent className="py-3 text-[12px] text-muted-foreground">{note}</CardContent>
     </Card>
   );
 }
@@ -82,11 +82,11 @@ function DashboardSection({
   title: string;
 }) {
   return (
-    <section className="rounded-none border bg-paper shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
-      <header className="border-b border-rule/60 p-6 md:p-8">
+    <section className="rounded-none border bg-background shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
+      <header className="border-b border-border/60 p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+            <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
               {eyebrow}
             </div>
             <h2 className="mt-2 font-display text-[clamp(1.6rem,2.1vw,2.5rem)] leading-[0.96] tracking-[-0.03em] text-foreground">
@@ -95,7 +95,9 @@ function DashboardSection({
           </div>
           {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
-        <p className="max-w-2xl pt-2 text-[13px] leading-[1.6] text-muted-text">{description}</p>
+        <p className="max-w-2xl pt-2 text-[13px] leading-[1.6] text-muted-foreground">
+          {description}
+        </p>
       </header>
       <div className="p-6 md:p-8">{children}</div>
     </section>
@@ -220,13 +222,13 @@ function OverviewActivity({
       description={m.dashboard_overview_activity_description()}
     >
       {items.length === 0 ? (
-        <p className="text-[13px] text-muted-text">{m.dashboard_overview_activity_empty()}</p>
+        <p className="text-[13px] text-muted-foreground">{m.dashboard_overview_activity_empty()}</p>
       ) : (
         <ul className="space-y-3">
           {items.map((item, index) => (
             <li key={item.id}>
               <div className="flex items-start gap-3">
-                <span className="mt-1 inline-flex size-7 shrink-0 items-center justify-center border border-rule bg-paper font-mono text-[10px] text-muted-text">
+                <span className="mt-1 inline-flex size-7 shrink-0 items-center justify-center border border-border bg-background font-mono text-[10px] text-muted-foreground">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">
@@ -240,7 +242,7 @@ function OverviewActivity({
                   ) : (
                     <p className="text-[13px] leading-[1.6] text-foreground/80">{item.label}</p>
                   )}
-                  <p className="text-[11px] text-muted-text">
+                  <p className="text-[11px] text-muted-foreground">
                     <TimeValue locale={locale} time={item.date} />
                   </p>
                 </div>
@@ -256,7 +258,7 @@ function OverviewActivity({
 
 // ---- OverviewShortcuts ----
 
-function OverviewShortcuts() {
+const OverviewShortcuts = memo(function OverviewShortcuts() {
   const shortcuts = [
     {
       description: m.dashboard_overview_shortcuts_skills_desc(),
@@ -281,9 +283,9 @@ function OverviewShortcuts() {
   ];
 
   return (
-    <Card className="rounded-none border-rule/80 bg-paper shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
-      <CardHeader className="border-b border-rule/60 pb-4">
-        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+    <Card className="rounded-none border-border/80 bg-background shadow-[0_10px_40px_rgba(20,18,14,0.05)]">
+      <CardHeader className="border-b border-border/60 pb-4">
+        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
           {m.dashboard_overview_shortcuts_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 font-display text-[1.85rem] leading-[0.95] tracking-[-0.03em]">
@@ -294,24 +296,24 @@ function OverviewShortcuts() {
         {shortcuts.map((shortcut) => (
           <a
             key={shortcut.href}
-            className="flex items-center justify-between gap-3 border border-rule/70 bg-background px-3 py-3 transition-colors hover:bg-primary hover:text-primary-foreground"
+            className="flex items-center justify-between gap-3 border border-border/70 bg-background px-3 py-3 transition-colors hover:bg-primary hover:text-primary-foreground"
             href={localizeHref(shortcut.href)}
           >
             <div>
               <p className="font-display text-[18px] leading-none tracking-[-0.03em]">
                 {shortcut.label}
               </p>
-              <p className="mt-1 text-[12px] leading-normal text-muted-text">
+              <p className="mt-1 text-[12px] leading-normal text-muted-foreground">
                 {shortcut.description}
               </p>
             </div>
-            <ArrowRightIcon className="size-4 shrink-0 text-muted-text" />
+            <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
           </a>
         ))}
       </CardContent>
     </Card>
   );
-}
+});
 
 // ---- Route component ----
 

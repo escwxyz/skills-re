@@ -27,7 +27,7 @@ function RouteComponent() {
   return (
     <>
       <PageHero
-        eyebrow="§ Curated Collections"
+        eyebrow=" Curated Collections"
         description={m.collections_meta_description()}
         borderThick
       >

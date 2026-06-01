@@ -50,14 +50,14 @@ export const fetchCategoryDetailPageData = async (input: {
 };
 
 interface CategoryTopSkillsClient {
-  categories: Pick<AppRouterClient["categories"], "getBySlug">;
+  categories: Pick<AppRouterClient["categories"], "getTopSkillsBySlug">;
 }
 
 export const fetchCategoryTopSkills = async (input: {
   client: CategoryTopSkillsClient;
   slug: string;
 }) => {
-  const category = await input.client.categories.getBySlug({ slug: input.slug });
+  const category = await input.client.categories.getTopSkillsBySlug({ slug: input.slug });
 
   if (!category) {
     return null;

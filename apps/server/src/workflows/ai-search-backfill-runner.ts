@@ -1,9 +1,15 @@
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { AiSearchItemsRuntime, SnapshotStorageRuntime } from "@skills-re/api/types";
-import type { AiSearchBackfillWorkflowPayload } from "./ai-search-backfill";
+import type {
+  AiSearchBackfillWorkflowPayload,
+  AiSearchBackfillWorkflowScheduler,
+} from "./ai-search-backfill";
 import type { AiSearchBackfillRow } from "@skills-re/api/modules/skills/repo";
+import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
 
-const DEFAULT_BATCH_SIZE = 50;
+const DEFAULT_BATCH_SIZE = 10;
+const MAX_BATCH_SIZE = 10;
+const CONTINUATION_DELAY_SECONDS = 1200;
 
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
@@ -11,6 +17,7 @@ export interface WorkflowEvent<TPayload> {
 
 export interface WorkflowStep {
   do<T>(name: string, policy: unknown, callback: () => Promise<T>): Promise<T>;
+  sleep?(name: string, duration: string | number): Promise<void>;
 }
 
 export interface AiSearchBackfillWorkflowDeps {
@@ -19,7 +26,9 @@ export interface AiSearchBackfillWorkflowDeps {
     batchSize: number;
     lastSeenId?: string;
   }) => Promise<AiSearchBackfillRow[]>;
+  reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
   snapshotStorage: SnapshotStorageRuntime;
+  scheduleContinuation?: AiSearchBackfillWorkflowScheduler | null;
   updateSkillAiSearchItemId: (input: { aiSearchItemId: string; skillId: string }) => Promise<void>;
 }
 
@@ -28,7 +37,10 @@ export const runAiSearchBackfillWorkflow = async (
   step: WorkflowStep,
   deps: AiSearchBackfillWorkflowDeps,
 ) => {
-  const batchSize = event.payload.batchSize ?? DEFAULT_BATCH_SIZE;
+  const batchSize = Math.max(
+    1,
+    Math.min(event.payload.batchSize ?? DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE),
+  );
   const { lastSeenId } = event.payload;
 
   const skills = await step.do(
@@ -46,6 +58,20 @@ export const runAiSearchBackfillWorkflow = async (
   for (const skill of skills) {
     if (!skill.skillMdR2Key) {
       continue;
+    }
+
+    if (deps.reserveAiSearchUploadSlot) {
+      const reservation = await step.do(
+        `ai-search-backfill-reserve-upload-${skill.skillId}`,
+        workflowStepRetryPolicy.aiSearchBackfillBatch,
+        async () => await deps.reserveAiSearchUploadSlot?.(),
+      );
+      if (reservation && reservation.delaySeconds > 0) {
+        await step.sleep?.(
+          `ai-search-backfill-wait-upload-${skill.skillId}`,
+          `${reservation.delaySeconds} seconds`,
+        );
+      }
     }
 
     await step.do(
@@ -69,7 +95,7 @@ export const runAiSearchBackfillWorkflow = async (
           repoName: skill.repoName,
           skillId: skill.skillId,
           skillSlug: skill.skillSlug,
-          version: skill.version ?? "0.0.1",
+          version: skill.version ?? "1.0.0",
         });
 
         await deps.updateSkillAiSearchItemId({
@@ -77,6 +103,23 @@ export const runAiSearchBackfillWorkflow = async (
           skillId: skill.skillId,
         });
       },
+    );
+  }
+
+  if (nextLastSeenId !== null && deps.scheduleContinuation) {
+    await step.do(
+      "enqueue-ai-search-backfill-continuation",
+      workflowStepRetryPolicy.aiSearchBackfillBatch,
+      async () =>
+        await deps.scheduleContinuation?.enqueue(
+          {
+            batchSize,
+            lastSeenId: nextLastSeenId,
+          },
+          {
+            delaySeconds: CONTINUATION_DELAY_SECONDS,
+          },
+        ),
     );
   }
 

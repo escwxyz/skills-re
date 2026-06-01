@@ -1,4 +1,5 @@
 import { renderContentAsync } from "@/lib/markdown";
+import { measureAsync } from "@/lib/dev-performance";
 import { m } from "@/paraglide/messages";
 import type { Locale } from "@/paraglide/runtime";
 import { normalizeSkillsBrowseFilters } from "@/utils/browse";
@@ -64,53 +65,62 @@ interface ResolvePathSkillClient {
   skills: Pick<AppRouterClient["skills"], "resolvePathBySlug" | "getByPath">;
 }
 
-export const resolveSkillBase = async (input: { client: ResolvePathSkillClient; slug: string }) => {
-  const path = await input.client.skills.resolvePathBySlug({ slug: input.slug });
-  if (!path) {
-    return null;
-  }
-  const skill = await input.client.skills.getByPath({
-    authorHandle: path.authorHandle,
-    repoName: path.repoName,
-    skillSlug: path.skillSlug,
+export const resolveSkillBase = async (input: { client: ResolvePathSkillClient; slug: string }) =>
+  await measureAsync("skills.resolveSkillBase", { slug: input.slug }, async () => {
+    const path = await input.client.skills.resolvePathBySlug({ slug: input.slug });
+    if (!path) {
+      return null;
+    }
+    const skill = await input.client.skills.getByPath({
+      authorHandle: path.authorHandle,
+      repoName: path.repoName,
+      skillSlug: path.skillSlug,
+    });
+    if (!skill) {
+      return null;
+    }
+    return {
+      authorHandle: path.authorHandle,
+      description: skill.description,
+      id: skill.id,
+      latestVersion: skill.latestVersion ?? null,
+      repoName: path.repoName,
+      skillSlug: path.skillSlug,
+      title: skill.title,
+    };
   });
-  if (!skill) {
-    return null;
-  }
-  return {
-    description: skill.description,
-    id: skill.id,
-    latestVersion: skill.latestVersion ?? null,
-    title: skill.title,
-  };
-};
+
+export type ResolvedSkillDocumentContext = NonNullable<
+  Awaited<ReturnType<typeof resolveSkillBase>>
+>;
 
 export const fetchSkillBase = async (input: {
   client: ResolvePathSkillClient;
   skillSlug: string;
-}) => {
-  const path = await input.client.skills.resolvePathBySlug({ slug: input.skillSlug });
+}) =>
+  await measureAsync("skills.fetchSkillBase", { skillSlug: input.skillSlug }, async () => {
+    const path = await input.client.skills.resolvePathBySlug({ slug: input.skillSlug });
 
-  if (!path) {
-    return null;
-  }
+    if (!path) {
+      return null;
+    }
 
-  const skill = await input.client.skills.getByPath({
-    authorHandle: path.authorHandle,
-    repoName: path.repoName,
-    skillSlug: path.skillSlug,
-  });
-  if (!skill) {
-    return null;
-  }
-  return {
-    skill: {
-      ...skill,
+    const skill = await input.client.skills.getByPath({
       authorHandle: path.authorHandle,
       repoName: path.repoName,
-    },
-  };
-};
+      skillSlug: path.skillSlug,
+    });
+    if (!skill) {
+      return null;
+    }
+    return {
+      skill: {
+        ...skill,
+        authorHandle: path.authorHandle,
+        repoName: path.repoName,
+      },
+    };
+  });
 
 interface SkillAuditClient {
   staticAudits: Pick<AppRouterClient["staticAudits"], "getReportBySnapshot">;
@@ -179,11 +189,18 @@ export const fetchSkillCheckSaved = async (input: {
 }) => await input.client.skills.checkSaved({ slug: input.slug });
 
 interface SkillSaveClient {
-  skills: Pick<AppRouterClient["skills"], "save" | "unsave">;
+  collections: Pick<AppRouterClient["collections"], "saveSkill">;
+  skills: Pick<AppRouterClient["skills"], "unsave">;
 }
 
-export const saveSkillToDashboard = async (input: { client: SkillSaveClient; slug: string }) =>
-  await input.client.skills.save({ slug: input.slug });
+export const saveSkillToDashboard = async (input: { client: SkillSaveClient; slug: string }) => {
+  const result = await input.client.collections.saveSkill({ skillSlug: input.slug });
+
+  return {
+    alreadySaved: result.alreadySaved,
+    saved: result.saved,
+  };
+};
 
 export const unsaveSkillFromDashboard = async (input: { client: SkillSaveClient; slug: string }) =>
   await input.client.skills.unsave({ slug: input.slug });
@@ -243,18 +260,13 @@ interface SkillDocumentClient extends ResolvePathSkillClient {
   snapshots: Pick<AppRouterClient["snapshots"], "readSnapshotFileContent" | "listBySkill">;
 }
 
-export const fetchSkillDocument = async (input: {
+const buildSkillDocument = async (input: {
   client: SkillDocumentClient;
   locale: Locale;
+  resolvedSkill: ResolvedSkillDocumentContext;
   selectedSnapshotId?: string;
-  skillSlug: string;
 }) => {
-  const { client } = input;
-  const skill = await resolveSkillBase({ client, slug: input.skillSlug });
-
-  if (!skill) {
-    return null;
-  }
+  const { client, resolvedSkill: skill } = input;
 
   const snapshotsResult = await client.snapshots.listBySkill({ limit: 3, skillId: skill.id });
   const snapshots = snapshotsResult.page;
@@ -281,6 +293,7 @@ export const fetchSkillDocument = async (input: {
   return {
     contentHtml: await renderContentAsync({
       content: parsed.body,
+      fileTreeBase: `/skills/${skill.authorHandle}/${skill.repoName}/${skill.skillSlug}/file-tree`,
       isMarkdown: true,
       path: snapshot.entryPath,
     }),
@@ -296,12 +309,58 @@ export const fetchSkillDocument = async (input: {
   };
 };
 
+export const fetchSkillDocumentByResolvedSkill = async (input: {
+  client: SkillDocumentClient;
+  locale: Locale;
+  resolvedSkill: ResolvedSkillDocumentContext;
+  selectedSnapshotId?: string;
+}) =>
+  await measureAsync(
+    "skills.fetchSkillDocumentByResolvedSkill",
+    {
+      selectedSnapshotId: input.selectedSnapshotId ?? null,
+      skillId: input.resolvedSkill.id,
+      skillSlug: input.resolvedSkill.skillSlug,
+    },
+    async () => await buildSkillDocument(input),
+  );
+
+export const fetchSkillDocument = async (input: {
+  client: SkillDocumentClient;
+  locale: Locale;
+  selectedSnapshotId?: string;
+  skillSlug: string;
+}) =>
+  await measureAsync(
+    "skills.fetchSkillDocument",
+    {
+      selectedSnapshotId: input.selectedSnapshotId ?? null,
+      skillSlug: input.skillSlug,
+    },
+    async () => {
+      const { client } = input;
+      const skill = await resolveSkillBase({ client, slug: input.skillSlug });
+
+      if (!skill) {
+        return null;
+      }
+
+      return await buildSkillDocument({
+        client,
+        locale: input.locale,
+        resolvedSkill: skill,
+        selectedSnapshotId: input.selectedSnapshotId,
+      });
+    },
+  );
+
 interface SkillFileContentClient {
   snapshots: Pick<AppRouterClient["snapshots"], "readSnapshotFileContent">;
 }
 
 export const fetchSkillFileContent = async (input: {
   client: SkillFileContentClient;
+  fileTreeBase?: string;
   path: string;
   snapshotId: string;
 }) => {
@@ -317,6 +376,7 @@ export const fetchSkillFileContent = async (input: {
   return {
     html: await renderContentAsync({
       content: renderSource,
+      fileTreeBase: input.fileTreeBase,
       path: input.path,
     }),
     isTruncated: content.isTruncated,
@@ -427,6 +487,15 @@ export const fetchSkillDownloadMetrics = async (input: {
   await input.client.metrics.getSkillDownloadMetrics({
     skillId: input.skillId,
   });
+
+interface SkillReviewStatsClient {
+  reviews: Pick<AppRouterClient["reviews"], "statsBySkill">;
+}
+
+export const fetchSkillReviewStats = async (input: {
+  client: SkillReviewStatsClient;
+  skillId: string;
+}) => await input.client.reviews.statsBySkill({ skillId: input.skillId });
 
 interface SkillReviewsInitialClient extends ResolvePathSkillClient {
   reviews: Pick<AppRouterClient["reviews"], "statsBySkill" | "listBySkill">;
@@ -688,12 +757,14 @@ export const fetchSkillsSearch = async (input: {
   limit?: number;
   query: string;
   rewriteQuery?: boolean;
+  searchMode?: "keyword" | "semantic";
 }): Promise<FetchSkillsSearchResult> => {
   try {
     const result = await input.client.skills.search({
       limit: input.limit,
       query: input.query,
       rewriteQuery: input.rewriteQuery,
+      searchMode: input.searchMode,
     });
 
     return {

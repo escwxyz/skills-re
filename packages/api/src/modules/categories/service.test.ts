@@ -37,7 +37,6 @@ describe("categories service", () => {
   test("returns public categories directly", async () => {
     const service = createCategoriesService({
       getRelatedTagsByCategorySlug: () => [],
-      getTopSkillsByCategorySlug: () => [],
       findCategoryBySlug: () => ({
         count: 3,
         id: "category-1",
@@ -66,7 +65,6 @@ describe("categories service", () => {
       name: "Old",
       relatedTags: [],
       slug: "tools-platforms",
-      topSkills: [],
     });
     await expect(service.listCategories()).resolves.toEqual([
       {
@@ -84,7 +82,7 @@ describe("categories service", () => {
     ]);
   });
 
-  test("maps category detail payload with related tags and top skills", async () => {
+  test("maps category detail payload with related tags", async () => {
     const service = createCategoriesService({
       findCategoryBySlug: (slug) =>
         slug === "tools-platforms"
@@ -101,6 +99,31 @@ describe("categories service", () => {
           slug: "automation",
         },
       ],
+    });
+
+    await expect(service.getCategoryBySlug({ slug: "tools-platforms" })).resolves.toEqual({
+      count: 5,
+      id: "category-1",
+      name: "Tools & Platforms",
+      relatedTags: [
+        {
+          count: 2,
+          slug: "automation",
+        },
+      ],
+      slug: "tools-platforms",
+    });
+    await expect(service.getCategoryBySlug({ slug: "missing" })).resolves.toBeNull();
+  });
+
+  test("returns top skills for a category separately from the detail payload", async () => {
+    const service = createCategoriesService({
+      findCategoryBySlug: () => ({
+        count: 5,
+        id: "category-1",
+        name: "Tools & Platforms",
+        slug: "tools-platforms",
+      }),
       getTopSkillsByCategorySlug: () => [
         {
           authorHandle: "acme",
@@ -126,17 +149,8 @@ describe("categories service", () => {
       ],
     });
 
-    await expect(service.getCategoryBySlug({ slug: "tools-platforms" })).resolves.toEqual({
+    await expect(service.getTopSkillsByCategorySlug({ slug: "tools-platforms" })).resolves.toEqual({
       count: 5,
-      id: "category-1",
-      name: "Tools & Platforms",
-      relatedTags: [
-        {
-          count: 2,
-          slug: "automation",
-        },
-      ],
-      slug: "tools-platforms",
       topSkills: [
         expect.objectContaining({
           description: "Widget skill",
@@ -146,7 +160,6 @@ describe("categories service", () => {
         }),
       ],
     });
-    await expect(service.getCategoryBySlug({ slug: "missing" })).resolves.toBeNull();
   });
 
   test("passes through ai category slugs", async () => {

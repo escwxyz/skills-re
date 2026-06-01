@@ -3,13 +3,23 @@ import { z } from "zod";
 import { baseContract } from "./common/base";
 
 const feedbackStatusSchema = z.enum(["pending", "resolved", "in_review"]);
-const feedbackTypeSchema = z.enum(["bug", "request", "general"]);
+const feedbackTypeSchema = z.enum([
+  "bug",
+  "request",
+  "general",
+  "skill_issue",
+  "skill_display",
+  "skill_takedown",
+]);
 
 const feedbackItemSchema = z.object({
   _creationTime: z.number().int().nonnegative(),
   _id: z.string().min(1),
   content: z.string(),
   response: z.string().nullable(),
+  skillId: z.string().min(1).nullable(),
+  skillSlug: z.string().min(1).nullable(),
+  skillTitle: z.string().min(1).nullable(),
   status: feedbackStatusSchema,
   title: z.string(),
   type: feedbackTypeSchema,
@@ -18,6 +28,9 @@ const feedbackItemSchema = z.object({
 
 const feedbackCreateInputSchema = z.object({
   content: z.string().min(1),
+  skillId: z.string().min(1).optional(),
+  skillSlug: z.string().min(1).optional(),
+  skillTitle: z.string().min(1).optional(),
   title: z.string().min(1),
   type: feedbackTypeSchema.optional(),
 });
@@ -55,7 +68,7 @@ export const feedbackContract = {
     ),
   create: baseContract
     .route({
-      description: "Creates a feedback entry for the authenticated user.",
+      description: "Creates a platform feedback entry or Skill report.",
       method: "POST",
       path: "/feedback",
       tags: ["Feedback"],

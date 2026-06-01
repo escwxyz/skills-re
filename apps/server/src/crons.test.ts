@@ -45,6 +45,7 @@ describe("runScheduledJobs", () => {
     expect(enqueued).toEqual([
       {
         limit: 20,
+        maxPages: 5,
         runAfterMs: 0,
       },
     ]);

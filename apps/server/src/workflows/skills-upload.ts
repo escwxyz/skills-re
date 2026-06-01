@@ -20,6 +20,7 @@ const skillsUploadContentPayloadSchema = z.object({
       nameWithOwner: z.string(),
       owner: z.object({
         avatarUrl: z.string().optional(),
+        bio: z.string().nullable().optional(),
         handle: z.string(),
         name: z.string().optional(),
       }),

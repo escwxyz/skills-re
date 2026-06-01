@@ -14,6 +14,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
+import { createAuthRedirectUrl } from "@/utils/create-auth-redirect-url";
 
 interface LinkedAccount {
   id: string;
@@ -94,7 +95,7 @@ export function IdentityLinksCard() {
     setErrorMessage(null);
     try {
       await authClient.linkSocial({
-        callbackURL: localizeHref("/dashboard/settings"),
+        callbackURL: createAuthRedirectUrl(localizeHref("/dashboard/settings")),
         provider,
       });
     } catch (error) {
@@ -142,13 +143,13 @@ export function IdentityLinksCard() {
   const connectedProviderIds = new Set(accounts.map((a) => a.providerId));
 
   return (
-    <Card className="rounded-none border-rule/70 bg-background">
-      <CardHeader className="border-b border-rule/60 pb-3">
-        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+    <Card className="rounded-none border-border/70 bg-background">
+      <CardHeader className="border-b border-border/60 pb-3">
+        <CardDescription className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
           {m.dashboard_settings_identity_eyebrow()}
         </CardDescription>
         <CardTitle className="mt-2 flex items-center gap-2 font-display text-[1.35rem] leading-none tracking-[-0.03em]">
-          <UserCircleIcon className="size-5 text-muted-text" />
+          <UserCircleIcon className="size-5 text-muted-foreground" />
           {m.dashboard_settings_identity_title()}
         </CardTitle>
       </CardHeader>
@@ -170,14 +171,14 @@ export function IdentityLinksCard() {
               const isUnlinking =
                 unlinkMutation.isPending && unlinkMutation.variables?.id === account.id;
               return (
-                <div key={account.id} className="border border-rule/70 bg-paper/70 p-4">
+                <div key={account.id} className="border border-border/70 bg-background/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="flex items-center gap-2 font-display text-[18px] leading-[1.1]">
-                        <LinkSimpleIcon className="size-4 text-muted-text" />
+                        <LinkSimpleIcon className="size-4 text-muted-foreground" />
                         {formatProviderLabel(account.providerId)}
                       </p>
-                      <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-text">
+                      <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
                         {account.accountId}
                       </p>
                       {account.scopes && account.scopes.length > 0 ? (
@@ -204,13 +205,13 @@ export function IdentityLinksCard() {
                   </div>
 
                   {isLastAccount ? (
-                    <p className="mt-3 text-[12px] leading-normal text-muted-text">
+                    <p className="mt-3 text-[12px] leading-normal text-muted-foreground">
                       {m.dashboard_settings_identity_last_account_note()}
                     </p>
                   ) : null}
 
                   {account.providerId === "credential" ? (
-                    <p className="mt-3 text-[12px] leading-normal text-muted-text">
+                    <p className="mt-3 text-[12px] leading-normal text-muted-foreground">
                       {m.dashboard_settings_identity_credential_active()}
                     </p>
                   ) : null}
@@ -218,11 +219,11 @@ export function IdentityLinksCard() {
               );
             })
           ) : isLoading ? (
-            <p className="text-[13px] leading-normal text-muted-text">
+            <p className="text-[13px] leading-normal text-muted-foreground">
               {m.dashboard_settings_identity_loading()}
             </p>
           ) : (
-            <p className="text-[13px] leading-normal text-muted-text">
+            <p className="text-[13px] leading-normal text-muted-foreground">
               {m.dashboard_settings_identity_empty()}
             </p>
           )}
@@ -231,7 +232,7 @@ export function IdentityLinksCard() {
         <Separator />
 
         <div className="space-y-3">
-          <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+          <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
             {m.dashboard_settings_identity_link_another_provider()}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -279,7 +280,7 @@ export function IdentityLinksCard() {
                 className="space-y-3"
               >
                 <div className="space-y-1">
-                  <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-text">
+                  <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
                     {m.dashboard_settings_identity_password_access()}
                   </p>
                   <p className="text-[13px] leading-normal text-foreground/70">
@@ -329,7 +330,7 @@ export function IdentityLinksCard() {
             </passwordForm.AppForm>
           </>
         ) : currentUser?.email ? (
-          <div className="border border-rule/70 bg-paper/70 p-4 text-[13px] leading-[1.6] text-foreground/75">
+          <div className="border border-border/70 bg-background/70 p-4 text-[13px] leading-[1.6] text-foreground/75">
             {m.dashboard_settings_identity_email_not_linked()}
           </div>
         ) : null}

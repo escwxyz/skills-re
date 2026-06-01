@@ -10,15 +10,59 @@ import {
 import { Button } from "@/components/ui/button";
 import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib/cookie-consent";
 import type { CookieConsentChoice } from "@/lib/cookie-consent";
+import {
+  clearCookiePreferences,
+  getCookiePreferences,
+  persistCookiePreferences,
+} from "@/lib/cookies";
 import { m } from "@/paraglide/messages";
 import { localizeHref } from "@/paraglide/runtime";
+import { CookieIcon } from "@phosphor-icons/react";
+
+interface CookieRowProps {
+  name: string;
+  description: string;
+}
+
+const CookieRow = ({ name, description }: CookieRowProps) => (
+  <div className="flex items-start gap-3 py-1.5">
+    <code className="text-foreground shrink-0 font-mono text-[10px] tracking-tight">{name}</code>
+    <span className="text-muted-foreground text-[11px] leading-tight">{description}</span>
+  </div>
+);
+
+interface CookieSectionProps {
+  title: string;
+  badge: string;
+  badgeActive?: boolean;
+  children: React.ReactNode;
+}
+
+const CookieSection = ({ title, badge, badgeActive, children }: CookieSectionProps) => (
+  <div className="border-border border">
+    <div className="border-border flex items-center justify-between border-b px-3 py-1.5">
+      <span className="font-mono text-[10px] tracking-[0.14em] uppercase">{title}</span>
+      <span
+        className={`font-mono text-[9px] tracking-[0.12em] uppercase ${badgeActive ? "text-foreground" : "text-muted-foreground"}`}
+      >
+        {badge}
+      </span>
+    </div>
+    <div className="divide-border divide-y px-3">{children}</div>
+  </div>
+);
 
 export const CookieConsent = () => {
   const [open, setOpen] = useState(false);
-  const [choice, setChoice] = useState<CookieConsentChoice>("essential");
+  const [choice, setChoice] = useState<CookieConsentChoice>("all");
 
   useEffect(() => {
     const run = async () => {
+      const preferences = await getCookiePreferences();
+      if (preferences === null) {
+        setTimeout(() => setOpen(true), 3000);
+        return;
+      }
       const saved = await readCookieConsent();
       setChoice(saved);
     };
@@ -27,26 +71,28 @@ export const CookieConsent = () => {
 
   const updateChoice = async (nextChoice: CookieConsentChoice) => {
     await writeCookieConsent(nextChoice);
+    persistCookiePreferences({ analytics: nextChoice === "all", functional: true });
     setChoice(nextChoice);
     setOpen(false);
   };
 
   const resetConsent = async () => {
     await clearCookieConsent();
+    await clearCookiePreferences();
     setChoice("essential");
   };
+
+  const analyticsEnabled = choice === "all";
 
   return (
     <>
       <Button
         aria-label={m.cookie_consent_toggle_aria_label()}
         aria-expanded={open}
-        className="h-6 px-2 font-mono text-[10px] tracking-[0.12em] uppercase"
         onClick={() => setOpen((current) => !current)}
-        size="xs"
-        variant="outline"
+        variant="ghost"
       >
-        {m.cookie_consent_toggle_aria_label()}
+        <CookieIcon size={16} />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -58,19 +104,51 @@ export const CookieConsent = () => {
             <DialogDescription>{m.cookie_consent_description()}</DialogDescription>
           </DialogHeader>
 
-          <div className="text-ink-2 space-y-3 text-xs leading-relaxed">
-            <div className="border-border bg-paper-2 border px-3 py-2">
-              <div className="text-muted-foreground font-mono text-[10px] tracking-[0.14em] uppercase">
-                {m.cookie_consent_current_choice()}
-              </div>
-              <div className="text-ink mt-1 font-mono text-[11px] tracking-[0.12em] uppercase">
-                {choice === "all"
-                  ? m.cookie_consent_all_cookies_allowed()
-                  : m.cookie_consent_essential_only()}
-              </div>
-            </div>
+          <div className="space-y-2">
+            <CookieSection
+              title={m.cookie_consent_section_essential()}
+              badge={m.cookie_consent_always_active()}
+              badgeActive
+            >
+              <CookieRow
+                name={m.cookie_consent_cookie_session_name()}
+                description={m.cookie_consent_cookie_session_desc()}
+              />
+              <CookieRow
+                name={m.cookie_consent_cookie_consent_name()}
+                description={m.cookie_consent_cookie_consent_desc()}
+              />
+            </CookieSection>
 
-            <p>{m.cookie_consent_change_note()}</p>
+            <CookieSection
+              title={m.cookie_consent_section_functional()}
+              badge={m.cookie_consent_always_active()}
+              badgeActive
+            >
+              <CookieRow
+                name={m.cookie_consent_cookie_locale_name()}
+                description={m.cookie_consent_cookie_locale_desc()}
+              />
+              <CookieRow
+                name={m.cookie_consent_cookie_theme_name()}
+                description={m.cookie_consent_cookie_theme_desc()}
+              />
+            </CookieSection>
+
+            <CookieSection
+              title={m.cookie_consent_section_analytics()}
+              badge={analyticsEnabled ? m.cookie_consent_on() : m.cookie_consent_off()}
+              badgeActive={analyticsEnabled}
+            >
+              <CookieRow
+                name={m.cookie_consent_cookie_clarity_name()}
+                description={m.cookie_consent_cookie_clarity_desc()}
+              />
+              <CookieRow
+                name={m.cookie_consent_cookie_ga_name()}
+                description={m.cookie_consent_cookie_ga_desc()}
+              />
+            </CookieSection>
           </div>
 
           <DialogFooter className="mt-1" showCloseButton={false}>
@@ -94,10 +172,10 @@ export const CookieConsent = () => {
           </DialogFooter>
 
           <div className="border-border text-muted-foreground flex items-center justify-between border-t pt-3 font-mono text-[10px] tracking-[0.14em] uppercase">
-            <a href={localizeHref("/cookies")} className="hover:text-ink">
+            <a href={localizeHref("/cookies")} className="hover:text-foreground">
               {m.cookie_consent_policy()}
             </a>
-            <button type="button" onClick={resetConsent} className="hover:text-ink">
+            <button type="button" onClick={resetConsent} className="hover:text-foreground">
               {m.cookie_consent_reset()}
             </button>
           </div>

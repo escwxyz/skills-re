@@ -8,8 +8,10 @@ import { findRepoByNameWithOwner } from "@skills-re/api/modules/repos/repo";
 import { listRepoSkillSnapshotHeadsByRepoId } from "@skills-re/api/modules/skills/repo";
 import {
   hashSnapshotFiles,
+  normalizeUploadDirectoryPath,
   truncateUploadCommitMessage,
 } from "@skills-re/api/modules/skills/upload-pipeline";
+import { buildSkillDuplicateFingerprintFromSkillMd, SKILL_FILENAME } from "../github-skill-utils";
 import { asRepoId, asSkillId, asSnapshotId } from "@skills-re/db/utils";
 
 import type { RepoSkillSnapshotSyncWorkflowPayload } from "./repo-skills-discovery";
@@ -52,8 +54,10 @@ export interface RepoSkillSnapshotSyncWorkflowDeps {
     description: string;
     directoryPath: string;
     entryPath: string;
+    frontmatterHash?: string | null;
     hash: string;
     name: string;
+    skillContentHash?: string | null;
     skillId: string;
     sourceCommitDate?: number;
     sourceCommitMessage?: string | null;
@@ -212,6 +216,16 @@ export const runRepoSkillSnapshotSyncWorkflow = async (
     return { reason: "unchanged-hash", status: "skipped" as const };
   }
 
+  const relativeEntryPath = skill.entryPath.startsWith(`${skillRootPath}/`)
+    ? skill.entryPath.slice(skillRootPath.length + 1)
+    : (skill.entryPath.split("/").at(-1) ?? SKILL_FILENAME);
+  const skillMdFile = filesResponse.files.find(
+    (f) => f.path === relativeEntryPath || f.path.split("/").at(-1) === SKILL_FILENAME,
+  );
+  const fingerprint = skillMdFile
+    ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdFile.content)
+    : null;
+
   const committedDate = headCommit.committedDate ? Date.parse(headCommit.committedDate) : null;
   const latestCommitMessage = truncateUploadCommitMessage(headCommit.message);
   const nextVersion = deriveNextSnapshotVersion(skill.latestVersion);
@@ -221,10 +235,12 @@ export const runRepoSkillSnapshotSyncWorkflow = async (
     async () =>
       await activeDeps.createSnapshot({
         description: skill.latestDescription,
-        directoryPath: skill.directoryPath,
+        directoryPath: normalizeUploadDirectoryPath(skill.directoryPath),
         entryPath: skill.entryPath,
+        frontmatterHash: fingerprint?.frontmatterHash ?? null,
         hash: nextHash,
         name: skill.latestName,
+        skillContentHash: fingerprint?.skillContentHash ?? null,
         skillId,
         sourceCommitDate: committedDate ?? undefined,
         sourceCommitMessage: latestCommitMessage,

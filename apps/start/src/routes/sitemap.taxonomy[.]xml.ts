@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SITE_URL } from "@/lib/constants";
 import { createServerORPCClient } from "@/lib/orpc.server";
-import { renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
+import { getAllMultilingualUrls, renderUrlEntry, wrapUrlSet } from "@/lib/sitemap";
 
 export const Route = createFileRoute("/sitemap/taxonomy.xml")({
   server: {
@@ -15,19 +15,23 @@ export const Route = createFileRoute("/sitemap/taxonomy.xml")({
         ]);
 
         const xml = wrapUrlSet([
-          ...categories.map((category) =>
-            renderUrlEntry({
-              changefreq: "weekly",
-              loc: `${SITE_URL}/categories/${category.slug}`,
-              priority: "0.7",
-            }),
+          ...categories.flatMap((category) =>
+            getAllMultilingualUrls([`/categories/${category.slug}`]).map((path) =>
+              renderUrlEntry({
+                changefreq: "weekly",
+                loc: `${SITE_URL}${path}`,
+                priority: "0.7",
+              }),
+            ),
           ),
-          ...tags.map((tag) =>
-            renderUrlEntry({
-              changefreq: "weekly",
-              loc: `${SITE_URL}/tags/${tag.slug}`,
-              priority: "0.6",
-            }),
+          ...tags.flatMap((tag) =>
+            getAllMultilingualUrls([`/tags/${tag.slug}`]).map((path) =>
+              renderUrlEntry({
+                changefreq: "weekly",
+                loc: `${SITE_URL}${path}`,
+                priority: "0.6",
+              }),
+            ),
           ),
         ]);
 

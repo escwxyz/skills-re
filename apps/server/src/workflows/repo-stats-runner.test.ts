@@ -89,17 +89,59 @@ describe("runRepoStatsSyncWorkflow", () => {
       },
     );
 
-    expect(discoveryCalls).toHaveLength(25);
+    expect(discoveryCalls).toHaveLength(5);
     expect(discoveryCalls[0]).toEqual({
       expectedUpdatedAt: 123,
       repoName: "skills",
       repoOwner: "acme",
     });
     expect(result).toEqual({
-      changedCount: 25,
+      changedCount: 5,
       continueCursor: "cursor-next",
-      processedPages: 25,
+      processedPages: 5,
       status: "partial",
+    });
+  });
+
+  test("does not schedule content sync for metadata-only repo refreshes", async () => {
+    const discoveryCalls: { expectedUpdatedAt?: number; repoName: string; repoOwner: string }[] =
+      [];
+
+    const result = await runRepoStatsSyncWorkflow(
+      {
+        payload: {
+          limit: 5,
+        },
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        syncStats: () =>
+          Promise.resolve({
+            changed: [],
+            continueCursor: "",
+            isDone: true,
+            metadataChanged: [
+              {
+                repoName: "skills",
+                repoOwner: "acme",
+              },
+            ],
+          }),
+        skillsDiscoveryScheduler: {
+          enqueue: (input) => {
+            discoveryCalls.push(input);
+            return Promise.resolve({ workId: "work-1" });
+          },
+        },
+      },
+    );
+
+    expect(discoveryCalls).toEqual([]);
+    expect(result).toEqual({
+      changedCount: 0,
+      continueCursor: "",
+      processedPages: 1,
+      status: "completed",
     });
   });
 });
