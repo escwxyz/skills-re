@@ -528,17 +528,41 @@ export const appRouter = {
           userId: context.session.user.id,
         }),
     ),
-    getRunDetail: publicProcedure.skillEvalSandbox.getRunDetail.handler(({ input }) =>
-      skillEvalSandboxService.getRunDetail(input),
-    ),
-    getSuite: publicProcedure.skillEvalSandbox.getSuite.handler(({ input }) =>
-      skillEvalSandboxService.getSuite(input),
-    ),
-    listAgents: publicProcedure.skillEvalSandbox.listAgents.handler(({ context }) =>
-      isSkillEvalSandboxEnabled(context) ? skillEvalSandboxService.listAgents() : [],
-    ),
-    listRunsBySkill: publicProcedure.skillEvalSandbox.listRunsBySkill.handler(({ input }) =>
-      skillEvalSandboxService.listRunsBySkill(input),
+    getRunDetail: publicProcedure.skillEvalSandbox.getRunDetail.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.getRunDetail(input);
+    }),
+    getSuite: publicProcedure.skillEvalSandbox.getSuite.handler(({ input, context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Skill eval sandbox is not enabled.",
+        });
+      }
+
+      return skillEvalSandboxService.getSuite(input);
+    }),
+    listAgents: publicProcedure.skillEvalSandbox.listAgents.handler(({ context }) => {
+      if (!isSkillEvalSandboxEnabled(context)) {
+        return [];
+      }
+
+      return skillEvalSandboxService.listAgents();
+    }),
+    listRunsBySkill: publicProcedure.skillEvalSandbox.listRunsBySkill.handler(
+      ({ input, context }) => {
+        if (!isSkillEvalSandboxEnabled(context)) {
+          throw new ORPCError("FORBIDDEN", {
+            message: "Skill eval sandbox is not enabled.",
+          });
+        }
+
+        return skillEvalSandboxService.listRunsBySkill(input);
+      },
     ),
   },
   repos: {
