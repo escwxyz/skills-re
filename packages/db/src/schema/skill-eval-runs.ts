@@ -84,7 +84,7 @@ export const skillEvalRunsTable = sqliteTable(
     index("skill_eval_runs_snapshot_sync_time_idx").on(table.snapshotId, table.syncTime),
     index("skill_eval_runs_status_sync_time_idx").on(table.status, table.syncTime),
     index("skill_eval_runs_created_by_sync_time_idx").on(table.createdBy, table.syncTime),
-    uniqueIndex("skill_eval_runs_idempotency_key_unique").on(table.idempotencyKey),
+    uniqueIndex("skill_eval_runs_idempotency_key_unique").on(table.idempotencyKey, table.createdBy),
   ],
 );
 
