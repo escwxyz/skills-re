@@ -16,6 +16,12 @@ const createFakeBucket = () => {
       const object = objects.get(key);
       return Promise.resolve(object ? { text: () => Promise.resolve(object.value) } : null);
     },
+    list: async ({ prefix }) => ({
+      objects: [...objects.keys()]
+        .filter((key) => key.startsWith(prefix))
+        .sort()
+        .map((key) => ({ key })),
+    }),
     put: (key, value, options) => {
       if (typeof value !== "string") {
         throw new Error("fake bucket only accepts string values");
@@ -61,9 +67,15 @@ describe("skill eval R2 event writer", () => {
       syncTime: 2,
     });
 
-    const written = objects.get("eval-runs/run-1/events.jsonl");
-    expect(written?.contentType).toBe("application/x-ndjson; charset=utf-8");
-    expect(written?.value.split("\n").filter(Boolean)).toHaveLength(2);
+    expect(objects.get("eval-runs/run-1/events.jsonl.chunk.000000000001")?.contentType).toBe(
+      "application/x-ndjson; charset=utf-8",
+    );
+    expect(objects.get("eval-runs/run-1/events.jsonl.chunk.000000000001")?.value).toContain(
+      '"sequence":1',
+    );
+    expect(objects.get("eval-runs/run-1/events.jsonl.chunk.000000000002")?.value).toContain(
+      '"sequence":2',
+    );
   });
 
   test("appends stdout and stderr logs", async () => {
@@ -77,8 +89,9 @@ describe("skill eval R2 event writer", () => {
     await writer.appendStdout(" world");
     await writer.appendStderr("warning");
 
-    expect(objects.get("eval-runs/run-1/stdout.log")?.value).toBe("hello world");
-    expect(objects.get("eval-runs/run-1/stderr.log")?.value).toBe("warning");
+    expect(objects.get("eval-runs/run-1/stdout.log.chunk.000000000001")?.value).toBe("hello");
+    expect(objects.get("eval-runs/run-1/stdout.log.chunk.000000000002")?.value).toBe(" world");
+    expect(objects.get("eval-runs/run-1/stderr.log.chunk.000000000001")?.value).toBe("warning");
   });
 
   test("redacts event and log content before persisting", async () => {
@@ -98,8 +111,10 @@ describe("skill eval R2 event writer", () => {
       syncTime: 1,
     });
 
-    expect(objects.get("eval-runs/run-1/stdout.log")?.value).toBe("token=[REDACTED]");
-    expect(objects.get("eval-runs/run-1/events.jsonl")?.value).toContain(
+    expect(objects.get("eval-runs/run-1/stdout.log.chunk.000000000001")?.value).toBe(
+      "token=[REDACTED]",
+    );
+    expect(objects.get("eval-runs/run-1/events.jsonl.chunk.000000000001")?.value).toContain(
       "Authorization: Bearer [REDACTED]",
     );
   });
@@ -132,6 +147,38 @@ describe("skill eval R2 event writer", () => {
       events: [{ sequence: 2 }],
       isDone: false,
       nextSequence: 2,
+      warnings: [],
+    });
+  });
+
+  test("skips malformed replay lines and returns partial results", async () => {
+    const { bucket, objects } = createFakeBucket();
+    const writer = createSkillEvalR2EventWriter({
+      artifactPrefix: "eval-runs/run-1",
+      bucket,
+    });
+    await writer.appendEvent({
+      eventId: "run-1:1",
+      kind: "status",
+      payload: { to: "running" },
+      runId: "run-1",
+      sequence: 1,
+      syncTime: 1,
+    });
+    objects.set("eval-runs/run-1/events.jsonl.chunk.000000000002", {
+      value: "{not json",
+    });
+
+    await expect(
+      readSkillEvalRunEvents({
+        artifactPrefix: "eval-runs/run-1",
+        bucket,
+        limit: 10,
+      }),
+    ).resolves.toMatchObject({
+      events: [{ sequence: 1 }],
+      nextSequence: 1,
+      warnings: [expect.any(String)],
     });
   });
 

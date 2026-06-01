@@ -95,7 +95,7 @@ describe("skill eval sandbox smoke route", () => {
       runId: "smoke-123",
     });
     expect(calls).toContain("destroy");
-    expect(objects.get("eval-runs/smoke-123/events.jsonl")).toContain(
+    expect(objects.get("eval-runs/smoke-123/events.jsonl.chunk.000000000001")).toContain(
       "Sandbox smoke check completed.",
     );
   });

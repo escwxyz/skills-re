@@ -6,8 +6,19 @@ export interface SkillEvalR2Object {
   text(): Promise<string>;
 }
 
+export interface SkillEvalR2ObjectSummary {
+  key: string;
+}
+
+export interface SkillEvalR2ListResult {
+  cursor?: string;
+  objects: SkillEvalR2ObjectSummary[];
+  truncated?: boolean;
+}
+
 export interface SkillEvalR2Bucket {
   get(key: string): Promise<SkillEvalR2Object | null>;
+  list?(input: { cursor?: string; prefix: string }): Promise<SkillEvalR2ListResult>;
   put(
     key: string,
     value: ArrayBuffer | ReadableStream | string,
@@ -45,13 +56,86 @@ const appendTextObject = async (
   chunk: string,
   contentType: string,
 ) => {
-  const existing = await bucket.get(key);
-  const existingText = existing ? await existing.text() : "";
-  await bucket.put(key, `${existingText}${chunk}`, {
+  await bucket.put(key, chunk, {
     httpMetadata: {
       contentType,
     },
   });
+};
+
+const chunkKeyFor = (key: string, sequence: number) =>
+  `${key}.chunk.${String(sequence).padStart(12, "0")}`;
+
+const isChunkKey = (key: string, baseKey: string) =>
+  key === baseKey || key.startsWith(`${baseKey}.chunk.`) || key.startsWith(`${baseKey}/chunks/`);
+
+const parseChunkSequence = (key: string, baseKey: string) => {
+  if (key === baseKey) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  let suffix = "";
+  if (key.startsWith(`${baseKey}.chunk.`)) {
+    suffix = key.slice(`${baseKey}.chunk.`.length);
+  } else if (key.startsWith(`${baseKey}/chunks/`)) {
+    suffix = key.slice(`${baseKey}/chunks/`.length);
+  }
+
+  const parsed = Number.parseInt(suffix, 10);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+};
+
+const readChunkedTextObjects = async (
+  bucket: Pick<SkillEvalR2Bucket, "get"> & Partial<Pick<SkillEvalR2Bucket, "list">>,
+  key: string,
+) => {
+  const texts: { sequence: number; text: string }[] = [];
+  const { list } = bucket;
+  const seenKeys = new Set<string>();
+
+  if (list) {
+    let cursor: string | undefined;
+    do {
+      const page = await list({
+        cursor,
+        prefix: key,
+      });
+      for (const object of page.objects) {
+        if (!isChunkKey(object.key, key)) {
+          continue;
+        }
+        seenKeys.add(object.key);
+        const chunk = await bucket.get(object.key);
+        if (chunk) {
+          texts.push({
+            sequence: parseChunkSequence(object.key, key),
+            text: await chunk.text(),
+          });
+        }
+      }
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
+
+    if (!seenKeys.has(key)) {
+      const object = await bucket.get(key);
+      if (object) {
+        texts.push({
+          sequence: Number.NEGATIVE_INFINITY,
+          text: await object.text(),
+        });
+      }
+    }
+  } else {
+    const object = await bucket.get(key);
+    if (object) {
+      texts.push({
+        sequence: Number.NEGATIVE_INFINITY,
+        text: await object.text(),
+      });
+    }
+  }
+
+  return texts.toSorted((a, b) => a.sequence - b.sequence).map((entry) => entry.text);
 };
 
 export const createSkillEvalArtifactPrefix = (runId: string) =>
@@ -60,35 +144,57 @@ export const createSkillEvalArtifactPrefix = (runId: string) =>
 export const readSkillEvalRunEvents = async (input: {
   afterSequence?: number;
   artifactPrefix: string;
-  bucket: Pick<SkillEvalR2Bucket, "get">;
+  bucket: Pick<SkillEvalR2Bucket, "get"> & Partial<Pick<SkillEvalR2Bucket, "list">>;
   limit?: number;
 }) => {
   const key = `${trimSlashes(input.artifactPrefix)}/events.jsonl`;
   const object = await input.bucket.get(key);
-  if (!object) {
+  if (!object && !("list" in input.bucket)) {
     return {
       events: [],
       isDone: true,
       nextSequence: input.afterSequence ?? -1,
+      warnings: [],
     };
   }
 
   const afterSequence = input.afterSequence ?? -1;
   const limit = input.limit ?? 100;
-  const text = await object.text();
-  const events = text
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as SkillEvalRunEvent)
-    .filter((event) => event.sequence > afterSequence)
-    .toSorted((a, b) => a.sequence - b.sequence)
-    .slice(0, limit);
-  const lastSequence = events.at(-1)?.sequence ?? afterSequence;
+  const warnings: string[] = [];
+  let texts: string[] = [];
+  if ("list" in input.bucket && input.bucket.list) {
+    texts = await readChunkedTextObjects(input.bucket, key);
+  } else if (object) {
+    texts = [await object.text()];
+  }
+  const events: SkillEvalRunEvent[] = [];
+
+  for (const text of texts) {
+    for (const line of text.split("\n")) {
+      if (!line) {
+        continue;
+      }
+
+      try {
+        const event = JSON.parse(line) as SkillEvalRunEvent;
+        if (event.sequence > afterSequence) {
+          events.push(event);
+        }
+      } catch (error) {
+        warnings.push(error instanceof Error ? error.message : "skipped malformed event line");
+      }
+    }
+  }
+
+  events.sort((a, b) => a.sequence - b.sequence);
+  const limitedEvents = events.slice(0, limit);
+  const lastSequence = limitedEvents.at(-1)?.sequence ?? afterSequence;
 
   return {
-    events,
-    isDone: events.length < limit,
+    events: limitedEvents,
+    isDone: limitedEvents.length < limit,
     nextSequence: lastSequence,
+    warnings,
   };
 };
 
@@ -98,30 +204,34 @@ export const createSkillEvalR2EventWriter = (input: {
 }) => {
   const artifactPrefix = trimSlashes(input.artifactPrefix);
   const keyFor = (suffix: string) => `${artifactPrefix}/${suffix}`;
+  let stdoutSequence = 0;
+  let stderrSequence = 0;
 
   return {
     appendEvent(event: SkillEvalRunEvent) {
       return appendTextObject(
         input.bucket,
-        keyFor("events.jsonl"),
+        chunkKeyFor(keyFor("events.jsonl"), event.sequence),
         serializeSkillEvalRunEvent(sanitizeSkillEvalRunEvent(event)),
         "application/x-ndjson; charset=utf-8",
       );
     },
 
     appendStderr(chunk: string) {
+      stderrSequence += 1;
       return appendTextObject(
         input.bucket,
-        keyFor("stderr.log"),
+        chunkKeyFor(keyFor("stderr.log"), stderrSequence),
         sanitizeSkillEvalLogChunk(chunk).text,
         "text/plain; charset=utf-8",
       );
     },
 
     appendStdout(chunk: string) {
+      stdoutSequence += 1;
       return appendTextObject(
         input.bucket,
-        keyFor("stdout.log"),
+        chunkKeyFor(keyFor("stdout.log"), stdoutSequence),
         sanitizeSkillEvalLogChunk(chunk).text,
         "text/plain; charset=utf-8",
       );
