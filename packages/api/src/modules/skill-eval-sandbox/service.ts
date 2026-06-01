@@ -18,7 +18,7 @@ import {
   skillEvalNetworkPolicySchema,
 } from "@skills-re/contract/skill-eval-sandbox";
 import type { SnapshotId } from "@skills-re/db/utils";
-import { asSkillEvalRunId, asSnapshotId, createId } from "@skills-re/db/utils";
+import { asSkillEvalRunId, asSkillId, asSnapshotId, createId } from "@skills-re/db/utils";
 import { createDepGetter } from "../shared/deps";
 import { decodeCursor, encodeCursor } from "../shared/pagination";
 
@@ -128,7 +128,7 @@ const createDefaultSkillEvalSandboxDeps = async (): Promise<SkillEvalSandboxServ
     listSnapshotsPageBySkill: async (input) => {
       const page = await snapshotsRepo.listSnapshotsPageBySkill({
         limit: input.limit,
-        skillId: input.skillId as never,
+        skillId: asSkillId(input.skillId),
       });
       return {
         ...page,
