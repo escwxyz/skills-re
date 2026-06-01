@@ -8,6 +8,7 @@ import { OpenAICompatibleProvider, evaluateSkills } from "agent-skills-eval";
 
 const EVENT_PREFIX = "__SKILLS_RE_SDK_EVENT__";
 const SUMMARY_PREFIX = "__SKILLS_RE_SDK_SUMMARY__";
+let pendingEventWrite = Promise.resolve();
 
 const parseArgs = () => {
   const configIndex = process.argv.indexOf("--config");
@@ -188,16 +189,17 @@ const createProvider = (provider, input) => {
 const main = async () => {
   const { configPath } = parseArgs();
   const input = await readJson(configPath);
+  pendingEventWrite = Promise.resolve();
   await mkdir(input.workspace, { recursive: true });
   if (input.eventsPath) {
     await mkdir(dirname(input.eventsPath), { recursive: true });
   }
 
   const onEvent = async (event) => {
+    emitLine(EVENT_PREFIX, event);
     if (input.eventsPath) {
       await appendFile(input.eventsPath, `${JSON.stringify(event)}\n`);
     }
-    emitLine(EVENT_PREFIX, event);
   };
 
   const result = await evaluateSkills({
@@ -211,7 +213,8 @@ const main = async () => {
     },
     judgeParams: input.judgeParams,
     onEvent: (event) => {
-      void onEvent(event);
+      pendingEventWrite = pendingEventWrite.then(() => onEvent(event));
+      return pendingEventWrite;
     },
     report: input.report,
     reportOutput: input.reportOutput,
@@ -245,6 +248,7 @@ const main = async () => {
   if (input.summaryPath) {
     await writeJson(input.summaryPath, summary);
   }
+  await pendingEventWrite;
   emitLine(SUMMARY_PREFIX, summary);
 };
 
