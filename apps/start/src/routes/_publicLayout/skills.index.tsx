@@ -19,7 +19,11 @@ import { getSkillsBrowseMeta } from "@/functions/skills/get-skills-browse-meta";
 import { getSkillsSearch } from "@/functions/skills/get-skills-search";
 import type { FetchSkillsSearchResult } from "@/functions/skills/skills.server";
 import { formatInteger } from "@/utils/format";
-import { getBrowseSortLabel, normalizeSkillsBrowseFilters } from "@/utils/browse";
+import {
+  getBrowseSortLabel,
+  normalizeSkillsBrowseFilters,
+  shouldNoIndexSkillsBrowseSearch,
+} from "@/utils/browse";
 import { m } from "@/paraglide/messages";
 import { OG_SKILLS_IMAGE_PATH } from "@/lib/og-image-paths";
 import { createSeo } from "@/lib/seo";
@@ -62,13 +66,14 @@ export const Route = createFileRoute("/_publicLayout/skills/")({
   }),
   staleTime: 1000 * 60 * 60 * 5,
   loader: ({ deps }) => getSkillsBrowseMeta({ data: deps }),
-  head: () =>
+  head: ({ match }) =>
     createSeo({
-      canonicalPath: "/skills/",
+      canonicalPath: "/skills",
       description: String(m.skills_browse_description()),
       image: OG_SKILLS_IMAGE_PATH,
       title: String(m.skills_browse_title()),
       locale: getLocale(),
+      noIndex: shouldNoIndexSkillsBrowseSearch(match.search),
     }),
   component: RouteComponent,
 });

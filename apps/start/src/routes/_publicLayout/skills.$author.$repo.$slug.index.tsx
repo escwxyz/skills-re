@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_publicLayout/skills/$author/$repo/$slug/
   head: ({ loaderData, params }) =>
     createSkillDetailSeo({
       authorHandle: params.author,
-      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}/`,
+      canonicalPath: `/skills/${params.author}/${params.repo}/${params.slug}`,
       description: loaderData?.headData.description,
       locale: getLocale(),
       skillTitle: loaderData?.headData.title,

@@ -60,6 +60,24 @@ interface SeoScriptDescriptor {
 }
 
 const resolveUrl = (pathOrUrl: string) => new URL(pathOrUrl, SITE_URL).toString();
+const SKILL_DETAIL_DESCRIPTION_MAX_LENGTH = 160;
+
+const normalizeCanonicalPath = (path: string): string => {
+  if (path === "/") {
+    return path;
+  }
+
+  return path.replace(/\/+$/, "");
+};
+
+const truncateMetaDescription = (description: string, maxLength: number): string => {
+  const normalizedDescription = description.replaceAll(/\s+/g, " ").trim();
+  if (normalizedDescription.length <= maxLength) {
+    return normalizedDescription;
+  }
+
+  return `${normalizedDescription.slice(0, maxLength - 3).trimEnd()}...`;
+};
 
 const createWebsiteSchema = (): WithContext<Thing> =>
   ({
@@ -198,6 +216,7 @@ export const createSkillDetailSeo = ({
   skillTitle?: string;
   tabLabel?: string;
 }) => {
+  const resolvedCanonicalPath = normalizeCanonicalPath(canonicalPath);
   let title: string | undefined;
   if (skillTitle) {
     title = tabLabel ? `${tabLabel} · ${skillTitle}` : skillTitle;
@@ -207,15 +226,17 @@ export const createSkillDetailSeo = ({
     ? [
         createSkillBreadcrumbSchema({
           authorHandle,
-          currentPath: canonicalPath,
+          currentPath: resolvedCanonicalPath,
           skillTitle,
         }),
       ]
     : [];
 
   return createSeo({
-    canonicalPath,
-    description,
+    canonicalPath: resolvedCanonicalPath,
+    description: description
+      ? truncateMetaDescription(description, SKILL_DETAIL_DESCRIPTION_MAX_LENGTH)
+      : undefined,
     image,
     structuredData,
     title,
@@ -292,8 +313,11 @@ export function createSeo({
 }: SeoOptions = {}) {
   const resolvedTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
   const resolvedRobots = noIndex ? "noindex, nofollow" : "index, follow";
-  const canonicalUrl = canonicalPath ? resolveUrl(canonicalPath) : SITE_URL;
-  const pathWithoutLocale = canonicalPath ? deLocalizeHref(canonicalPath) : undefined;
+  const resolvedCanonicalPath = canonicalPath ? normalizeCanonicalPath(canonicalPath) : undefined;
+  const canonicalUrl = resolvedCanonicalPath ? resolveUrl(resolvedCanonicalPath) : SITE_URL;
+  const pathWithoutLocale = resolvedCanonicalPath
+    ? deLocalizeHref(resolvedCanonicalPath)
+    : undefined;
   const resolvedImage = image ? resolveUrl(image) : null;
 
   const meta: SeoMetaDescriptor[] = [

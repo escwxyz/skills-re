@@ -66,7 +66,9 @@ export interface SkillsBrowseMetaData {
 
 export interface SkillsBrowseSearchInput {
   category?: string;
+  mode?: string;
   q?: string;
+  searchMode?: string;
   sort?: BrowseSort | null;
   tag?: string[];
   tags?: string[];
@@ -95,6 +97,17 @@ export const normalizeSkillsBrowseFilters = (
     tags,
   };
 };
+
+export const shouldNoIndexSkillsBrowseSearch = (input: SkillsBrowseSearchInput): boolean =>
+  Boolean(
+    input.category?.trim() ||
+    input.mode?.trim() ||
+    input.q?.trim() ||
+    input.searchMode?.trim() ||
+    input.sort ||
+    input.tag?.some((tag) => tag.trim()) ||
+    input.tags?.some((tag) => tag.trim()),
+  );
 
 export const buildBrowseUrl = (filters: SkillsBrowseFilters): string => {
   const params = new URLSearchParams();
