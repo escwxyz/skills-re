@@ -53,6 +53,8 @@ const runCli = (provider, prompt, input) =>
         ...process.env,
         ...provider.env,
       },
+      timeout: provider.timeoutMs,
+      killSignal: provider.killSignal ?? "SIGKILL",
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
