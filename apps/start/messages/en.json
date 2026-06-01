@@ -915,5 +915,10 @@
   "semantic_search_did_you_mean": "Did you mean...",
   "semantic_search_describe_task": "describe a task",
   "semantic_search_matches_count": "{count} matches",
-  "semantic_search_index_label": "Semantic index"
+  "semantic_search_index_label": "Semantic index",
+  "keyword_search_no_matches": "No keyword matches",
+  "keyword_search_instructions": "Search skill names, descriptions, repositories, authors, or IDs.",
+  "keyword_results_for": "Keyword results for \"{query}\"",
+  "keyword_search_title": "Keyword search",
+  "keyword_search_metadata_label": "Metadata"
 }

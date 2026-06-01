@@ -798,7 +798,7 @@ export async function searchSkillsPageByFilters(input?: SearchSkillsPageInput) {
     })
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
-    .leftJoin(usersTable, eq(usersTable.id, skillsTable.userId))
+    .leftJoin(usersTable, sql`lower(${usersTable.github}) = lower(${reposTable.ownerHandle})`)
     .where(and(...buildSearchWhereClauses(input ?? {})))
     .orderBy(getSearchSortExpression(sort), desc(skillsTable.id))
     .limit(limit + 1)

@@ -105,7 +105,7 @@ const getSearchEmptyTitle = (input: { mode: "keyword" | "semantic"; query: strin
     return m.semantic_search_start_typing();
   }
 
-  return input.mode === "keyword" ? "No keyword matches" : m.semantic_search_no_matches();
+  return input.mode === "keyword" ? m.keyword_search_no_matches() : m.semantic_search_no_matches();
 };
 
 const getSearchEmptyDescription = (input: { mode: "keyword" | "semantic"; query: string }) => {
@@ -114,7 +114,7 @@ const getSearchEmptyDescription = (input: { mode: "keyword" | "semantic"; query:
   }
 
   if (input.mode === "keyword") {
-    return "Search skill names, descriptions, repositories, authors, or IDs.";
+    return m.keyword_search_instructions();
   }
 
   return m.semantic_search_try_broader_phrase();
@@ -122,7 +122,7 @@ const getSearchEmptyDescription = (input: { mode: "keyword" | "semantic"; query:
 
 const getSearchHeaderTitle = (input: { mode: "keyword" | "semantic"; query: string }) => {
   if (input.mode === "keyword") {
-    return input.query ? `Keyword results for "${input.query}"` : "Keyword search";
+    return input.query ? m.keyword_results_for({ query: input.query }) : m.keyword_search_title();
   }
 
   return input.query
@@ -136,7 +136,8 @@ const SemanticSearchHeader = ({
   mode = "semantic",
   query,
 }: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "mode" | "query">) => {
-  let statusLabel = mode === "keyword" ? "Metadata" : m.semantic_search_status_ai();
+  let statusLabel =
+    mode === "keyword" ? m.keyword_search_metadata_label() : m.semantic_search_status_ai();
   if (isLoading) {
     statusLabel = m.semantic_search_status_searching();
   } else if (mode === "semantic" && meta) {

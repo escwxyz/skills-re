@@ -914,5 +914,10 @@
   "semantic_search_did_you_mean": "你是指...",
   "semantic_search_describe_task": "描述一个任务",
   "semantic_search_matches_count": "{count} 个匹配",
-  "semantic_search_index_label": "语义索引"
+  "semantic_search_index_label": "语义索引",
+  "keyword_search_no_matches": "无关键词匹配",
+  "keyword_search_instructions": "搜索技能名称、描述、仓库、作者或 ID。",
+  "keyword_results_for": "\"{query}\" 的关键词结果",
+  "keyword_search_title": "关键词搜索",
+  "keyword_search_metadata_label": "元数据"
 }

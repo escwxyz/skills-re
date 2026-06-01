@@ -914,5 +914,10 @@
   "semantic_search_did_you_mean": "Meintest du...",
   "semantic_search_describe_task": "eine Aufgabe beschreiben",
   "semantic_search_matches_count": "{count} Treffer",
-  "semantic_search_index_label": "Semantischer Index"
+  "semantic_search_index_label": "Semantischer Index",
+  "keyword_search_no_matches": "Keine Stichworttreffer",
+  "keyword_search_instructions": "Suche nach Skill-Namen, Beschreibungen, Repositories, Autoren oder IDs.",
+  "keyword_results_for": "Stichwortergebnisse für \"{query}\"",
+  "keyword_search_title": "Stichwortsuche",
+  "keyword_search_metadata_label": "Metadaten"
 }
