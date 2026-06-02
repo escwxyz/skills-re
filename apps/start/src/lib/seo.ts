@@ -205,6 +205,7 @@ export const createSkillDetailSeo = ({
   description,
   image,
   locale,
+  noIndex,
   skillTitle,
   tabLabel,
 }: {
@@ -213,6 +214,7 @@ export const createSkillDetailSeo = ({
   description?: string;
   image?: string;
   locale: Locale;
+  noIndex?: boolean;
   skillTitle?: string;
   tabLabel?: string;
 }) => {
@@ -238,6 +240,7 @@ export const createSkillDetailSeo = ({
       ? truncateMetaDescription(description, SKILL_DETAIL_DESCRIPTION_MAX_LENGTH)
       : undefined,
     image,
+    noIndex,
     structuredData,
     title,
     locale,

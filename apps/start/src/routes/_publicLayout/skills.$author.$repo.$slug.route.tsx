@@ -236,7 +236,7 @@ function RouteComponent() {
 
       <div
         id="skill-tabs"
-        className="scroll-mt-(--header-height) sticky top-(--header-height) z-20 flex h-(--header-height) border-b border-border bg-background font-mono text-xs uppercase"
+        className="scroll-mt-(--header-height) sticky top-(--header-height) z-20 flex min-h-(--header-height) flex-col border-b border-border bg-background font-mono text-xs uppercase lg:h-(--header-height) lg:flex-row"
       >
         <SkillDetailTabs author={author} repo={repo} snapshotId={selectedSnapshotId} slug={slug} />
         <SkillDetailTabActions snapshotId={selectedSnapshotId} skillSlug={slug} />

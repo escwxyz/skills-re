@@ -1,15 +1,16 @@
 import type { Icon } from "@phosphor-icons/react";
 import {
-  // ChartBarIcon,
+  ChartBarIcon,
   ChatsIcon,
   ClockCounterClockwiseIcon,
   FileTextIcon,
   ShieldCheckIcon,
-  // TerminalWindowIcon,
+  TerminalWindowIcon,
   TreeViewIcon,
 } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { m } from "@/paraglide/messages";
+import { Badge } from "@/components/ui/badge";
 
 type SkillDetailTabId =
   | "skill.md"
@@ -33,9 +34,11 @@ interface SkillDetailTabItem {
   to: string;
   icon: Icon;
   exact?: boolean;
+  badge?: string;
 }
 
-const BASE_CLASS = "flex items-center gap-2 border-r border-border px-5 py-3.5 no-underline";
+const BASE_CLASS =
+  "flex min-w-0 shrink-0 items-center gap-2 border-r border-border px-4 py-3 no-underline sm:px-5";
 
 export const SKILL_DETAIL_TABS: SkillDetailTabItem[] = [
   {
@@ -57,19 +60,20 @@ export const SKILL_DETAIL_TABS: SkillDetailTabItem[] = [
     to: "/skills/$author/$repo/$slug/audit",
     icon: ShieldCheckIcon,
   },
-  // todo: temporarily hide sandbox and evals tabs until we have better content for them
-  // {
-  //   id: "sandbox",
-  //   label: String(m.skill_detail_sandbox()),
-  //   to: "/skills/$author/$repo/$slug/sandbox",
-  //   icon: TerminalWindowIcon,
-  // },
-  // {
-  //   id: "evals",
-  //   label: String(m.skill_eval_evals()),
-  //   to: "/skills/$author/$repo/$slug/evals",
-  //   icon: ChartBarIcon,
-  // },
+  {
+    id: "sandbox",
+    label: String(m.skill_detail_sandbox()),
+    to: "/skills/$author/$repo/$slug/sandbox",
+    icon: TerminalWindowIcon,
+    badge: "Beta",
+  },
+  {
+    id: "evals",
+    label: String(m.skill_eval_evals()),
+    to: "/skills/$author/$repo/$slug/evals",
+    icon: ChartBarIcon,
+    badge: "Beta",
+  },
   {
     id: "reviews",
     label: String(m.skill_detail_review_tab()),
@@ -85,7 +89,7 @@ export const SKILL_DETAIL_TABS: SkillDetailTabItem[] = [
 ];
 
 export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
-  <div className="flex min-w-0 flex-1 overflow-x-auto">
+  <div className="flex w-full min-w-0 overflow-x-auto lg:flex-1">
     {SKILL_DETAIL_TABS.map((tab) => {
       const Icon = tab.icon;
 
@@ -99,12 +103,20 @@ export const SkillDetailTabs = ({ author, repo, snapshotId, slug }: Props) => (
           activeProps={{ className: "bg-primary text-primary-foreground" }}
           inactiveProps={{ className: "text-muted-foreground bg-transparent" }}
           activeOptions={tab.exact ? { exact: true } : undefined}
-          aria-label={tab.label}
-          title={tab.label}
+          aria-label={tab.badge ? `${tab.label} ${tab.badge}` : tab.label}
+          title={tab.badge ? `${tab.label} ${tab.badge}` : tab.label}
           resetScroll={false}
         >
           <Icon aria-hidden className="size-4 shrink-0" />
           <span className="hidden sm:inline">{tab.label}</span>
+          {tab.badge ? (
+            <Badge
+              variant="secondary"
+              className="border-border/80 text-muted-foreground ml-0.5 border px-1.5 py-0 text-[9px] leading-none"
+            >
+              {tab.badge}
+            </Badge>
+          ) : null}
         </Link>
       );
     })}

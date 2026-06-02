@@ -47,4 +47,20 @@ describe("SEO helpers", () => {
     expect(description).toHaveLength(160);
     expect(description).toEndWith("...");
   });
+
+  test("marks sandbox pages as noindex without dropping the canonical url", () => {
+    const seo = createSkillDetailSeo({
+      authorHandle: "zhjai",
+      canonicalPath: "/skills/zhjai/agent-arena/agent-arena/sandbox",
+      locale: "en",
+      noIndex: true,
+      skillTitle: "agent-arena",
+      tabLabel: "Sandbox",
+    });
+
+    expect(getMetaContent(seo.meta, "robots")).toBe("noindex, nofollow");
+    expect(getCanonicalHref(seo.links)).toBe(
+      "https://skills.re/skills/zhjai/agent-arena/agent-arena/sandbox",
+    );
+  });
 });
