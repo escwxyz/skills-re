@@ -481,6 +481,9 @@ export const start = await TanStackStart("start", {
   cwd: "../../apps/start",
   compatibility: "node",
   compatibilityDate: "2026-03-10",
+  observability: {
+    enabled: false,
+  },
   // Keep default request-proximate placement for the user-facing Start worker.
   bindings: {
     API: server,
