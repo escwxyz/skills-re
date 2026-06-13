@@ -49,6 +49,12 @@ import {
   normalizeSkillRootPath,
 } from "../github-skill-utils";
 
+const QUIET_STATIC_AUDIT_SKIP_REASONS = new Set([
+  "missing-config",
+  "missing-dispatch-runtime",
+  "no-targets",
+]);
+
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
 }
@@ -463,10 +469,6 @@ const processUploadSkill = async ({
     workflowStepRetryPolicy.skillsUploadPipeline,
     async () => {
       if (!deps.aiSearchItems) {
-        console.warn("[skills-upload] ai-search skipped: binding not configured", {
-          skillId,
-          skillIndex,
-        });
         return null;
       }
       if (!skillMdFile) {
@@ -556,38 +558,21 @@ const dispatchUploadStaticAudit = async ({
       reason: "missing-dispatch-runtime",
     }));
 
-  console.info("[skills-upload] preparing static audit dispatch", {
-    createdSkillsCount: createdSkillIds.length,
-    auditTargetsCount: auditTargets.length,
-    auditTargets: auditTargets.map((target) => ({
-      owner: target.owner,
-      repo: target.repo,
-      skillRootPath: target.skillRootPath ?? null,
-      snapshotId: target.snapshotId ?? null,
-      sourceCommitSha: target.sourceCommitSha ?? null,
-      sourceRef: target.sourceRef ?? null,
-    })),
-  });
-
   try {
     await waitForStaticAuditDispatchSlot({ auditTargets, deps, step });
     const auditDispatch = await dispatchStaticAuditWorkflow(auditTargets);
     if (auditDispatch.dispatched) {
-      console.info("[skills-upload] static audit workflow dispatched", {
-        createdSkillsCount: createdSkillIds.length,
-        repository: auditDispatch.repository,
-        step: "dispatch-static-audit",
-        workflowFile: auditDispatch.workflowFile,
-      });
       return;
     }
 
-    console.warn("[skills-upload] static audit workflow not dispatched", {
-      createdSkillsCount: createdSkillIds.length,
-      reason: auditDispatch.reason,
-      step: "dispatch-static-audit",
-      targetCount: auditTargets.length,
-    });
+    if (!QUIET_STATIC_AUDIT_SKIP_REASONS.has(auditDispatch.reason)) {
+      console.warn("[skills-upload] static audit workflow not dispatched", {
+        createdSkillsCount: createdSkillIds.length,
+        reason: auditDispatch.reason,
+        step: "dispatch-static-audit",
+        targetCount: auditTargets.length,
+      });
+    }
   } catch (error) {
     console.warn("[skills-upload] failed to dispatch static audit workflow", {
       createdSkillsCount: createdSkillIds.length,

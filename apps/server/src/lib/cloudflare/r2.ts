@@ -25,13 +25,7 @@ export const createSnapshotArchiveStorageRuntime = (env: SnapshotStorageEnv) => 
       offset: number;
     },
   ) {
-    console.error("[r2.snapshot] getSnapshotFileObject start", {
-      hasPublicBaseUrl: Boolean(env.R2_PUBLIC_BASE_URL),
-      key,
-      range: range ?? null,
-    });
-
-    const object = await env.SNAPSHOT_FILES.get(
+    return await env.SNAPSHOT_FILES.get(
       key,
       range
         ? {
@@ -39,29 +33,13 @@ export const createSnapshotArchiveStorageRuntime = (env: SnapshotStorageEnv) => 
           }
         : undefined,
     );
-
-    console.error("[r2.snapshot] getSnapshotFileObject done", {
-      found: Boolean(object),
-      hasBody: Boolean(object?.body),
-      hasPublicBaseUrl: Boolean(env.R2_PUBLIC_BASE_URL),
-      key,
-      range: range ?? null,
-      size: object?.size ?? null,
-    });
-
-    return object;
   },
   buildSnapshotFilePublicUrl(key: string) {
     const baseUrl = getRequiredBaseUrl(
       env.R2_PUBLIC_BASE_URL,
       "R2_PUBLIC_BASE_URL is missing. Required for snapshot download URLs.",
     );
-    const url = new URL(key, baseUrl).toString();
-    console.error("[r2.snapshot] buildSnapshotFilePublicUrl", {
-      key,
-      url,
-    });
-    return url;
+    return new URL(key, baseUrl).toString();
   },
   async putSnapshotArchiveObject(
     key: string,

@@ -112,8 +112,6 @@ export function createAiSearchRuntime(env: AiSearchRuntimeEnv & Env): AiSearchRu
         query: input.query,
       })) as AiSearchRuntimeResult;
 
-      console.log("[ai-search] raw binding result:", JSON.stringify(result, null, 2));
-
       return result;
     },
   };

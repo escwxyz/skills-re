@@ -114,16 +114,15 @@ app.use("/*", async (c, next) => {
   });
 
   c.set("workerLogger", logger);
-  logger.info("http.request.started", {
-    url: `${requestUrl.origin}${requestUrl.pathname}`,
-  });
 
   let completedStatus = 500;
+  let failedWithThrownError = false;
   try {
     await next();
     completedStatus = c.res.status;
   } catch (error) {
     completedStatus = getCompletedStatus(error, c.res.status);
+    failedWithThrownError = true;
     logHandledError({
       component: "http",
       error,
@@ -136,10 +135,12 @@ app.use("/*", async (c, next) => {
     });
     throw error;
   } finally {
-    logger.info("http.request.completed", {
-      durationMs: Date.now() - startedAt,
-      status: completedStatus,
-    });
+    if (!(failedWithThrownError || completedStatus < 400)) {
+      logger.warn("http.request.unsuccessful", {
+        durationMs: Date.now() - startedAt,
+        status: completedStatus,
+      });
+    }
   }
 });
 app.get("/.well-known/mcp/server-card.json", (c) => {

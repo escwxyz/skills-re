@@ -15,21 +15,9 @@ export const runSkillsCategorizationWorkflow = async (
   deps: RunSkillsCategorizationWorkflowDeps = {},
 ) => {
   const { skillIds } = event.payload;
-  console.info("[skills-categorization] starting pipeline", {
-    skillCount: skillIds.length,
-    skillIds,
-    hasAiTasks: !!deps.aiTasks,
-  });
-
   const pipeline = deps.runSkillsCategorizationPipeline ?? runSkillsCategorizationPipeline;
   try {
-    const result = await pipeline({ skillIds }, deps.aiTasks);
-    console.info("[skills-categorization] pipeline completed", {
-      skillCount: skillIds.length,
-      updatedCount: result.updatedCount,
-      failedCount: result.failedCount,
-    });
-    return result;
+    return await pipeline({ skillIds }, deps.aiTasks);
   } catch (error) {
     console.error("[skills-categorization] pipeline failed", {
       skillCount: skillIds.length,

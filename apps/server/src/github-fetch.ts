@@ -155,12 +155,6 @@ export function createGithubFetchRuntime(
         throw new Error("Invalid GitHub repository URL.");
       }
 
-      logger?.info("github.fetch_repo.started", {
-        owner: parsed.owner,
-        repo: parsed.repo,
-        requestedSkillPath: parsed.skillPath ?? null,
-      });
-
       const overview: GithubRepoOverview = await buildGithubRepoOverview(
         fetchImpl,
         headers,
@@ -292,14 +286,6 @@ export function createGithubFetchRuntime(
         stargazerCount: overview.repo.stargazerCount,
         tree,
       };
-
-      logger?.info("github.fetch_repo.completed", {
-        invalidSkillsCount: invalidSkills.length,
-        owner: parsed.owner,
-        repo: parsed.repo,
-        skillsCount: dedupedSkills.length,
-        treeEntriesCount: tree.length,
-      });
 
       return result;
     },
