@@ -1,6 +1,7 @@
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 import { applyCrawlerResponseHeaders } from "./lib/crawler-response";
 import { paraglideMiddleware } from "./paraglide/server.js";
+import { applyPagefindCspCompatibility } from "./lib/pagefind-csp";
 
 const I18N_MIDDLEWARE_BYPASS_PATTERNS = [
   /^\/api(?:\/|$)/,
@@ -37,7 +38,9 @@ const serverEntry = createServerEntry({
   async fetch(request) {
     const { pathname } = new URL(request.url);
     const createResponse = async () =>
-      applyCrawlerResponseHeaders(pathname, await handler.fetch(request));
+      applyPagefindCspCompatibility(
+        applyCrawlerResponseHeaders(pathname, await handler.fetch(request)),
+      );
 
     return shouldBypassI18nMiddleware(pathname)
       ? await createResponse()

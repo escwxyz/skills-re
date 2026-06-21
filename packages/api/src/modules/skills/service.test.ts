@@ -13,6 +13,74 @@ import {
 } from "./service";
 
 describe("skills service", () => {
+  test("hydrates Pagefind hits in requested order and omits unavailable skills", async () => {
+    const calls: string[][] = [];
+    const rows = {
+      "skill-1": {
+        authorHandle: "acme",
+        createdAt: 1,
+        description: "First skill",
+        downloadsAllTime: 2,
+        downloadsTrending: 1,
+        forkCount: 0,
+        id: "skill-1",
+        isVerified: true,
+        latestVersion: "1.0.0",
+        license: "MIT",
+        ownerAvatarUrl: null,
+        primaryCategory: "tools",
+        repoName: "skills",
+        repoUrl: "https://github.com/acme/skills",
+        slug: "first",
+        stargazerCount: 3,
+        syncTime: 4,
+        title: "First",
+        updatedAt: 5,
+        viewsAllTime: 6,
+      },
+      "skill-2": {
+        authorHandle: "beta",
+        createdAt: 1,
+        description: "Second skill",
+        downloadsAllTime: 2,
+        downloadsTrending: 1,
+        forkCount: 0,
+        id: "skill-2",
+        isVerified: false,
+        latestVersion: null,
+        license: null,
+        ownerAvatarUrl: null,
+        primaryCategory: null,
+        repoName: "skills",
+        repoUrl: "https://github.com/beta/skills",
+        slug: "second",
+        stargazerCount: 3,
+        syncTime: 4,
+        title: "Second",
+        updatedAt: 5,
+        viewsAllTime: 6,
+      },
+    } as const;
+    const service = createSkillsService({
+      listPublicSkillsByIds: async (skillIds: string[]) => {
+        calls.push(skillIds);
+        return skillIds
+          .map((skillId) => rows[skillId as keyof typeof rows])
+          .filter((row): row is (typeof rows)[keyof typeof rows] => Boolean(row));
+      },
+    } as never);
+
+    await expect(
+      (
+        service as unknown as { hydratePagefindHits: (input: { skillIds: string[] }) => unknown }
+      ).hydratePagefindHits({ skillIds: ["skill-2", "missing", "skill-1"] }),
+    ).resolves.toMatchObject([
+      { id: "skill-2", title: "Second" },
+      { id: "skill-1", title: "First" },
+    ]);
+    expect(calls).toEqual([["skill-2", "missing", "skill-1"]]);
+  });
+
   test("returns paginated authors from the public authors list contract", async () => {
     const calls: { cursor?: string; limit?: number; sort?: "alphabetical" | "popular" }[] = [];
     const service = createSkillsService({

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "queries": [
+    {
+      "kind": "exact-title",
+      "query": "cloudflare agents sdk",
+      "expectedTopIds": ["fixture-cloudflare-agents-sdk"]
+    },
+    {
+      "kind": "description",
+      "query": "durable coordination",
+      "expectedTopIds": ["fixture-durable-objects"]
+    },
+    {
+      "kind": "author-repository",
+      "query": "acme skills",
+      "expectedTopIds": ["fixture-acme-skill"]
+    },
+    {
+      "kind": "body-only",
+      "query": "reciprocal rank fusion",
+      "expectedTopIds": ["fixture-search-ranking"]
+    },
+    {
+      "kind": "technical-punctuation",
+      "query": "C++",
+      "expectedTopIds": ["fixture-cpp"]
+    },
+    {
+      "kind": "multilingual",
+      "query": "技能搜索",
+      "expectedTopIds": ["fixture-zh-search"]
+    },
+    {
+      "kind": "zero-result",
+      "query": "no-such-skill-token-9f4d2a",
+      "expectedTopIds": []
+    }
+  ]
+}

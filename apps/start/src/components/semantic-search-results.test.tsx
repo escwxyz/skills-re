@@ -32,4 +32,19 @@ describe("SemanticSearchResults", () => {
     expect(markup).toContain("Search temporarily limited");
     expect(markup).toContain("42 seconds");
   });
+
+  test("shows a non-blocking metadata fallback state", () => {
+    const markup = renderToStaticMarkup(
+      <SemanticSearchResults
+        degraded
+        isLoading={false}
+        items={[]}
+        mode="keyword"
+        query="workflow"
+      />,
+    );
+
+    expect(markup).toContain("Full-text unavailable · metadata fallback");
+    expect(markup).toContain("No keyword matches");
+  });
 });

@@ -11,6 +11,7 @@ import {
   skillPathSchema,
 } from "./common/content";
 import { githubOwnerSchema, githubRepoSchema, skillSlugSchema } from "./common/slugs";
+import { pagefindHydrationInputSchema, pagefindHydrationOutputSchema } from "./pagefind";
 
 const skillLookupInputSchema = z.object({
   slug: skillSlugSchema,
@@ -303,6 +304,17 @@ export const skillsContract = {
     })
     .input(skillHistoryInfoInputSchema)
     .output(z.array(skillHistoryInfoItemSchema)),
+  hydratePagefindHits: baseContract
+    .route({
+      description: "Returns current public skill cards for an ordered Pagefind result batch.",
+      method: "POST",
+      path: "/skills/pagefind/hydrate",
+      tags: ["Skills"],
+      successDescription: "Current public Pagefind result cards",
+      summary: "Hydrate Pagefind skill hits",
+    })
+    .input(pagefindHydrationInputSchema)
+    .output(pagefindHydrationOutputSchema),
   search: baseContract
     .route({
       description: "Searches public skills using semantic AI search.",

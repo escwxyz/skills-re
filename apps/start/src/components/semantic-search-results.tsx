@@ -16,6 +16,7 @@ interface SemanticSearchMeta {
 }
 
 interface SemanticSearchResultsProps {
+  degraded?: boolean;
   error?: Error | null;
   isLoading: boolean;
   items: BrowseSkillItem[];
@@ -131,20 +132,26 @@ const getSearchHeaderTitle = (input: { mode: "keyword" | "semantic"; query: stri
 };
 
 const SemanticSearchHeader = ({
+  degraded,
   isLoading,
   meta,
   mode = "semantic",
   query,
-}: Pick<SemanticSearchResultsProps, "isLoading" | "meta" | "mode" | "query">) => {
-  let statusLabel =
-    mode === "keyword" ? m.keyword_search_metadata_label() : m.semantic_search_status_ai();
+}: Pick<SemanticSearchResultsProps, "degraded" | "isLoading" | "meta" | "mode" | "query">) => {
+  let statusLabel = String(
+    mode === "keyword" ? m.keyword_search_metadata_label() : m.semantic_search_status_ai(),
+  );
   if (isLoading) {
-    statusLabel = m.semantic_search_status_searching();
+    statusLabel = String(m.semantic_search_status_searching());
+  } else if (mode === "keyword" && degraded) {
+    statusLabel = "Full-text unavailable · metadata fallback";
   } else if (mode === "semantic" && meta) {
-    statusLabel = m.semantic_search_status_matches({
-      resolvedSkillsCount: formatInteger(meta.resolvedSkillsCount),
-      resultCount: formatInteger(meta.resultCount),
-    });
+    statusLabel = String(
+      m.semantic_search_status_matches({
+        resolvedSkillsCount: formatInteger(meta.resolvedSkillsCount),
+        resultCount: formatInteger(meta.resultCount),
+      }),
+    );
   }
 
   return (
@@ -366,6 +373,7 @@ const getRailStatusLabel = ({
 };
 
 export const SemanticSearchResults = ({
+  degraded,
   error,
   isLoading,
   items,
@@ -417,7 +425,13 @@ export const SemanticSearchResults = ({
   return (
     <div className="grid min-h-[50svh] xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0">
-        <SemanticSearchHeader isLoading={isLoading} meta={meta} mode={mode} query={query} />
+        <SemanticSearchHeader
+          degraded={degraded}
+          isLoading={isLoading}
+          meta={meta}
+          mode={mode}
+          query={query}
+        />
         {resultsContent}
       </div>
       <SemanticSearchRail items={items} meta={meta} mode={mode} query={query} />
