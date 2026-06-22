@@ -3,6 +3,18 @@
 import { describe, expect, test } from "bun:test";
 
 describe("Pagefind CSP compatibility", () => {
+  test("scopes Pagefind CSP compatibility to localized skills index pages", async () => {
+    const module = await import("./pagefind-csp");
+
+    expect(module.isPagefindSearchPathname?.("/skills")).toBe(true);
+    expect(module.isPagefindSearchPathname?.("/skills/")).toBe(true);
+    expect(module.isPagefindSearchPathname?.("/de/skills")).toBe(true);
+    expect(module.isPagefindSearchPathname?.("/zh-Hans/skills")).toBe(true);
+    expect(module.isPagefindSearchPathname?.("/")).toBe(false);
+    expect(module.isPagefindSearchPathname?.("/skills/example-skill")).toBe(false);
+    expect(module.isPagefindSearchPathname?.("/docs")).toBe(false);
+  });
+
   test("augments existing script and worker directives without creating a new policy", async () => {
     const module = (await import("./pagefind-csp").catch(() => ({}))) as {
       applyPagefindCspCompatibility?: (response: Response) => Response;
