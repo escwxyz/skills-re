@@ -24,4 +24,17 @@ describe("Pagefind CSP compatibility", () => {
       module.applyPagefindCspCompatibility?.(unrestricted).headers.get("content-security-policy"),
     ).toBeNull();
   });
+
+  test("does not grant self when creating missing directives", async () => {
+    const module = await import("./pagefind-csp");
+    const response = new Response("ok", {
+      headers: {
+        "Content-Security-Policy": "default-src 'none'",
+      },
+    });
+
+    expect(
+      module.applyPagefindCspCompatibility(response).headers.get("content-security-policy"),
+    ).toBe("default-src 'none'; script-src 'wasm-unsafe-eval'; worker-src blob:");
+  });
 });

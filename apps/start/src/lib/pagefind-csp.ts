@@ -1,7 +1,7 @@
 const appendDirectiveToken = (directives: string[], name: string, token: string) => {
   const index = directives.findIndex((directive) => directive.trim().startsWith(`${name} `));
   if (index === -1) {
-    directives.push(`${name} 'self' ${token}`);
+    directives.push(`${name} ${token}`);
     return;
   }
   const directive = directives[index] ?? "";
