@@ -80,12 +80,17 @@ export const selectPagefindEntryFile = <T extends { path: string }>(
 ) => {
   const normalizedEntryPath = normalizePath(entryPath);
   const normalizedDirectoryPath = normalizePath(directoryPath);
+  const directoryEntryPath =
+    normalizedDirectoryPath && !normalizedEntryPath.includes("/")
+      ? `${normalizedDirectoryPath}/${normalizedEntryPath}`
+      : undefined;
   const relativeEntryPath =
     normalizedDirectoryPath && normalizedEntryPath.startsWith(`${normalizedDirectoryPath}/`)
       ? normalizedEntryPath.slice(normalizedDirectoryPath.length + 1)
       : normalizedEntryPath;
 
   return (
+    files.find((file) => normalizePath(file.path) === directoryEntryPath) ??
     files.find((file) => normalizePath(file.path) === normalizedEntryPath) ??
     files.find((file) => normalizePath(file.path) === relativeEntryPath) ??
     files.find((file) => ["SKILL.md", "skill.md"].includes(normalizePath(file.path)))

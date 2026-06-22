@@ -30,4 +30,17 @@ describe("Pagefind index repository helpers", () => {
 
     expect(selected?.value).toBe("declared");
   });
+
+  test("resolves a relative entry path within its snapshot directory", () => {
+    const selected = selectPagefindEntryFile(
+      [
+        { path: "SKILL.md", value: "fallback" },
+        { path: "skills/widget/SKILL.md", value: "declared" },
+      ],
+      "SKILL.md",
+      "skills/widget",
+    );
+
+    expect(selected?.value).toBe("declared");
+  });
 });
