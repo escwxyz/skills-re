@@ -22,6 +22,13 @@ export const applyPagefindCspCompatibility = (response: Response) => {
     .filter(Boolean);
   appendDirectiveToken(directives, "script-src", "'wasm-unsafe-eval'");
   appendDirectiveToken(directives, "worker-src", "blob:");
-  response.headers.set("Content-Security-Policy", directives.join("; "));
-  return response;
+  const clonedResponse = response.clone();
+  const headers = new Headers(clonedResponse.headers);
+  headers.set("Content-Security-Policy", directives.join("; "));
+
+  return new Response(clonedResponse.body, {
+    headers,
+    status: clonedResponse.status,
+    statusText: clonedResponse.statusText,
+  });
 };
