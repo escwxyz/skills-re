@@ -128,10 +128,15 @@ function RouteComponent() {
       const serverSearch = async (searchMode: SkillsSearchMode) => {
         const result = (await searchSkills({
           data: {
+            categories:
+              searchMode === "keyword"
+                ? getPagefindCategories(browseFilters.activeClass)
+                : undefined,
             limit: 24,
             query: searchQueryText,
             rewriteQuery: searchMode === "semantic",
             searchMode,
+            tags: searchMode === "keyword" ? browseFilters.tags : undefined,
           },
         })) as FetchSkillsSearchResult;
 
