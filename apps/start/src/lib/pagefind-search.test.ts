@@ -85,6 +85,26 @@ describe("Pagefind browser search", () => {
     expect(result?.page[0]?.aiMatch).toMatchObject({ snippet: "two" });
   });
 
+  test("marks search done when all Pagefind results were inspected", async () => {
+    const module = await import("./pagefind-search");
+    const adapter = module.createPagefindSearchAdapter({
+      fetchManifest: async () => validManifest,
+      hydrate: async () => [],
+      importRuntime: async () => ({
+        init: async () => undefined,
+        options: async () => undefined,
+        search: async () => ({
+          results: [{ data: async () => ({ plain_excerpt: "missing metadata" }) }],
+        }),
+      }),
+      now: () => 200,
+    });
+
+    const result = await adapter.search({ limit: 1, query: "search" });
+
+    expect(result.isDone).toBe(true);
+  });
+
   test("hydrates broad search hits in contract-sized batches", async () => {
     const module = await import("./pagefind-search");
     const hydrationBatches: string[][] = [];

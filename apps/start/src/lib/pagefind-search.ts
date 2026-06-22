@@ -94,8 +94,9 @@ export const createPagefindSearchAdapter = (deps: PagefindSearchDeps) => {
           Object.keys(filters).length > 0 ? { filters } : {},
         );
         const searchedAt = now();
+        const inspectedResults = search.results.slice(0, input.limit * 3);
         const hitData = await Promise.all(
-          search.results.slice(0, input.limit * 3).map(async (result) => await result.data()),
+          inspectedResults.map(async (result) => await result.data()),
         );
         const hits = hitData.flatMap((data) => {
           const skillId = data.meta?.skillId?.trim();
@@ -137,7 +138,7 @@ export const createPagefindSearchAdapter = (deps: PagefindSearchDeps) => {
         return {
           continueCursor: "",
           generationId: manifest.generationId,
-          isDone: search.results.length <= hits.length,
+          isDone: search.results.length <= inspectedResults.length,
           page,
         };
       } catch (error) {
