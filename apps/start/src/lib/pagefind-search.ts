@@ -1,4 +1,7 @@
-import { pagefindGenerationManifestSchema } from "@skills-re/contract/pagefind";
+import {
+  PAGEFIND_HYDRATION_LIMIT,
+  pagefindGenerationManifestSchema,
+} from "@skills-re/contract/pagefind";
 
 import type { BrowseSkillItem } from "@/utils/types";
 
@@ -41,6 +44,14 @@ interface PagefindSearchInput {
   query: string;
   tags?: string[];
 }
+
+const chunkSkillIds = (skillIds: string[]) => {
+  const batches: string[][] = [];
+  for (let index = 0; index < skillIds.length; index += PAGEFIND_HYDRATION_LIMIT) {
+    batches.push(skillIds.slice(index, index + PAGEFIND_HYDRATION_LIMIT));
+  }
+  return batches;
+};
 
 export const createPagefindSearchAdapter = (deps: PagefindSearchDeps) => {
   const now = deps.now ?? Date.now;
@@ -90,9 +101,11 @@ export const createPagefindSearchAdapter = (deps: PagefindSearchDeps) => {
           const skillId = data.meta?.skillId?.trim();
           return skillId ? [{ excerpt: data.plain_excerpt, skillId }] : [];
         });
-        const hydrated = hits.length
-          ? await deps.hydrate([...new Set(hits.map((hit) => hit.skillId))])
-          : [];
+        const uniqueSkillIds = [...new Set(hits.map((hit) => hit.skillId))];
+        const hydratedBatches = await Promise.all(
+          chunkSkillIds(uniqueSkillIds).map(async (skillIds) => await deps.hydrate(skillIds)),
+        );
+        const hydrated = hydratedBatches.flat();
         const hydratedById = new Map(hydrated.map((item) => [item.id, item] as const));
         const page = hits
           .flatMap((hit) => {

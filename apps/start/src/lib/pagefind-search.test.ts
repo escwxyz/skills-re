@@ -85,6 +85,44 @@ describe("Pagefind browser search", () => {
     expect(result?.page[0]?.aiMatch).toMatchObject({ snippet: "two" });
   });
 
+  test("hydrates broad search hits in contract-sized batches", async () => {
+    const module = await import("./pagefind-search");
+    const hydrationBatches: string[][] = [];
+    const hits = Array.from({ length: 72 }, (_, index) => ({
+      data: async () => ({
+        meta: { skillId: `skill-${index}` },
+        plain_excerpt: `excerpt-${index}`,
+      }),
+    }));
+    const adapter = module.createPagefindSearchAdapter({
+      fetchManifest: async () => validManifest,
+      hydrate: async (skillIds) => {
+        hydrationBatches.push(skillIds);
+        if (skillIds.length > 50) {
+          throw new Error("Pagefind hydration contract limit exceeded");
+        }
+        return skillIds.map((skillId) => ({
+          description: skillId,
+          id: skillId,
+          slug: skillId,
+          title: skillId,
+        }));
+      },
+      importRuntime: async () => ({
+        init: async () => undefined,
+        options: async () => undefined,
+        search: async () => ({ results: hits }),
+      }),
+      now: () => 200,
+    });
+
+    const result = await adapter.search({ limit: 24, query: "common" });
+
+    expect(hydrationBatches.map((batch) => batch.length)).toEqual([50, 22]);
+    expect(result.page).toHaveLength(24);
+    expect(result.page.at(-1)?.id).toBe("skill-23");
+  });
+
   test("rejects an incompatible manifest before importing Pagefind", async () => {
     const module = await import("./pagefind-search").catch(() => ({}));
     const createAdapter = (

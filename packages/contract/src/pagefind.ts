@@ -3,6 +3,8 @@ import { z } from "zod";
 import { searchSkillListItemSchema } from "./common/content";
 import { idSchema } from "./common/ids";
 
+export const PAGEFIND_HYDRATION_LIMIT = 50;
+
 const sha256DigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 const generationIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 const publicHttpUrlSchema = z.url().refine((value) => {
@@ -43,7 +45,7 @@ export const pagefindHydrationInputSchema = z.object({
   skillIds: z
     .array(idSchema)
     .min(1)
-    .max(50)
+    .max(PAGEFIND_HYDRATION_LIMIT)
     .refine((skillIds) => new Set(skillIds).size === skillIds.length, "Skill IDs must be unique."),
 });
 
