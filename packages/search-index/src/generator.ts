@@ -20,6 +20,7 @@ import {
 } from "./core";
 
 export const PAGEFIND_INCLUDE_CHARACTERS = "+.#@_-";
+const PAGEFIND_FETCH_TIMEOUT_MS = 30_000;
 export const PAGEFIND_META_WEIGHTS = {
   author: 3,
   description: 2,
@@ -135,6 +136,7 @@ const fetchExportPage = async (
   }
   const response = await fetchImpl(url, {
     headers: { "x-skills-automation-token": automationToken },
+    signal: AbortSignal.timeout(PAGEFIND_FETCH_TIMEOUT_MS),
   });
   if (!response.ok) {
     throw new Error(`Pagefind export failed with HTTP ${response.status}.`);
@@ -223,7 +225,9 @@ export const generatePagefindBundle = async (
   const artifacts = await fetchArtifacts(records, {
     concurrency: options.artifactConcurrency ?? 8,
     fetchArtifact: async (record) => {
-      const response = await fetchImpl(record.artifactUrl);
+      const response = await fetchImpl(record.artifactUrl, {
+        signal: AbortSignal.timeout(PAGEFIND_FETCH_TIMEOUT_MS),
+      });
       if (!response.ok) {
         throw new Error(`Artifact ${record.skillId} failed with HTTP ${response.status}.`);
       }

@@ -70,7 +70,9 @@ describe("Pagefind bundle generator", () => {
     const outputPath = join(outputRoot, "pagefind");
     const content = new TextEncoder().encode("Full body includes reciprocal rank fusion.");
     const digest = `sha256:${new Bun.CryptoHasher("sha256").update(content).digest("hex")}`;
-    const fetchImpl = async (input: string | URL | Request) => {
+    const fetchSignals: (AbortSignal | null | undefined)[] = [];
+    const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
+      fetchSignals.push(init?.signal);
       const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
       if (url.pathname === "/skills/pagefind/export") {
         return Response.json({
@@ -117,6 +119,10 @@ describe("Pagefind bundle generator", () => {
       expect(validate).toBeDefined();
       await expect(validate?.(outputPath, 1)).resolves.toMatchObject({ recordCount: 1 });
       expect(summary.bundleBytes).toBeGreaterThan(0);
+      expect(fetchSignals).toHaveLength(2);
+      expect(fetchSignals.every((signal) => signal instanceof AbortSignal && !signal.aborted)).toBe(
+        true,
+      );
     } finally {
       await rm(outputRoot, { force: true, recursive: true });
     }
