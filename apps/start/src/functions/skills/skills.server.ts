@@ -753,18 +753,22 @@ export type FetchSkillsSearchResult =
     };
 
 export const fetchSkillsSearch = async (input: {
+  categories?: string[];
   client: SkillsSearchClient;
   limit?: number;
   query: string;
   rewriteQuery?: boolean;
   searchMode?: "keyword" | "semantic";
+  tags?: string[];
 }): Promise<FetchSkillsSearchResult> => {
   try {
     const result = await input.client.skills.search({
+      categories: input.categories,
       limit: input.limit,
       query: input.query,
       rewriteQuery: input.rewriteQuery,
       searchMode: input.searchMode,
+      tags: input.tags,
     });
 
     return {

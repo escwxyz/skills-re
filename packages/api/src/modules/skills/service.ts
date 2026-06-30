@@ -208,6 +208,7 @@ export interface SkillsServiceDeps {
     sort?: "alphabetical" | "popular";
   }) => Promise<AuthorListPageRow>;
   listSkillsHistoryInfoByIds: (skillIds: string[]) => Promise<SkillHistoryInfoRow[]>;
+  listPublicSkillsByIds: (skillIds: string[]) => Promise<SearchSkillRow[]>;
   searchSkillsPageByFilters: (input?: SearchSkillsPageInput) => Promise<{
     continueCursor: string;
     isDone: boolean;
@@ -307,6 +308,10 @@ const defaultDeps: SkillsServiceDeps = {
   listSkillsHistoryInfoByIds: async (skillIds) => {
     const { listSkillsHistoryInfoByIds } = await import("./repo");
     return await listSkillsHistoryInfoByIds(skillIds);
+  },
+  listPublicSkillsByIds: async (skillIds) => {
+    const { listPublicSkillsByIds } = await import("./repo");
+    return await listPublicSkillsByIds(skillIds);
   },
   searchSkillsPageByFilters: async (input) => {
     const { searchSkillsPageByFilters } = await import("./repo");
@@ -481,6 +486,13 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
       }));
     },
 
+    async hydratePagefindHits(input: { skillIds: string[] }) {
+      const rows = await deps.listPublicSkillsByIds(input.skillIds);
+      return rows
+        .map(toValidSearchSkillItem)
+        .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null);
+    },
+
     async search(
       input: SearchSkillsPageInput,
       aiSearchRuntime?: AiSearchRuntime,
@@ -557,6 +569,10 @@ export async function checkDuplicatedRepository(input: {
 
 export async function checkExistingSkill(input: { slug: string }) {
   return await skillsService.checkExisting(input);
+}
+
+export async function hydratePagefindHits(input: { skillIds: string[] }) {
+  return await skillsService.hydratePagefindHits(input);
 }
 
 export async function checkExistingRepository(input: { repoOwner: string }) {

@@ -73,6 +73,14 @@ const skillEvalArtifactsBucket = await R2Bucket("skills-re-skill-eval-artifacts"
   },
 });
 
+const pagefindIndexBucket = await R2Bucket("skills-re-pagefind-index", {
+  name: "skills-re-pagefind-index",
+  adopt: true,
+  dev: {
+    remote: true,
+  },
+});
+
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills-re-download-events",
 });
@@ -437,6 +445,7 @@ export const server = await Worker("server", {
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
     METRICS_CACHE: metricsCache,
     SNAPSHOT_FILES: snapshotFilesBucket,
+    PAGEFIND_INDEX: pagefindIndexBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
     CLOUDFLARE_AI_GATEWAY_API_TOKEN: alchemy.secret.env.CLOUDFLARE_AI_GATEWAY_API_TOKEN!,
     CLOUDFLARE_GATEWAY: alchemy.env.CLOUDFLARE_GATEWAY!,
@@ -491,6 +500,7 @@ export const start = await TanStackStart("start", {
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,
     VITE_GA_MEASURE_ID: alchemy.env.GA_MEASURE_ID!,
+    VITE_PAGEFIND_SEARCH_ENABLED: alchemy.env.PAGEFIND_SEARCH_ENABLED ?? "false",
   },
 });
 

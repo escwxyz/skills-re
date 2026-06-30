@@ -5,6 +5,10 @@ import { describe, expect, test } from "bun:test";
 import { appRouter } from "./index";
 
 describe("app router", () => {
+  test("exposes Pagefind hydration", () => {
+    expect(appRouter.skills.hydratePagefindHits).toBeDefined();
+  });
+
   test("exposes skill eval sandbox routes", () => {
     expect(appRouter.skillEvalSandbox).toBeDefined();
     expect(appRouter.skillEvalSandbox.listAgents).toBeDefined();

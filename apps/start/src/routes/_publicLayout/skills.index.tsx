@@ -32,6 +32,8 @@ import { isRateLimitedSearchError } from "@/utils/is-rate-limited-search-error";
 import { BrowseToolbar } from "@/components/browse-toolbar";
 import { openLoginDialog } from "@/utils/login-dialog";
 import type { SkillsSearchMode } from "@/components/skills-search-field";
+import { isPagefindSearchEnabled, pagefindSearchAdapter } from "@/lib/pagefind-search.browser";
+import { executeSkillSearch } from "@/lib/skill-search-strategy";
 
 const browseSortValues = [
   "newest",
@@ -53,6 +55,17 @@ const filterSchema = z.object({
 });
 
 type SemanticSearchData = Extract<FetchSkillsSearchResult, { status: "ok" }>["data"];
+
+const getPagefindCategories = (activeClass: string) =>
+  activeClass === "all" ? undefined : [activeClass];
+
+const getSearchMeta = (mode: SkillsSearchMode, data?: SemanticSearchData) =>
+  mode === "semantic" && data?.ai
+    ? {
+        resolvedSkillsCount: data.ai.resolvedSkillsCount,
+        resultCount: data.ai.resultCount,
+      }
+    : undefined;
 
 export const Route = createFileRoute("/_publicLayout/skills/")({
   validateSearch: filterSchema,
@@ -109,25 +122,54 @@ function RouteComponent() {
     [search.category, search.q, search.sort, search.tag?.join("|"), search.tags?.join("|")],
   );
 
-  const skillsSearchQuery = useQuery<SemanticSearchData, Error>({
+  const skillsSearchQuery = useQuery<SemanticSearchData & { degraded?: boolean }, Error>({
     enabled: isSearchMode && searchQueryText.length > 0 && !isSearchInputLocked,
     queryFn: async () => {
-      const result = (await searchSkills({
-        data: {
-          limit: 24,
-          query: searchQueryText,
-          rewriteQuery: selectedSearchMode === "semantic",
-          searchMode: selectedSearchMode,
-        },
-      })) as FetchSkillsSearchResult;
+      const serverSearch = async (searchMode: SkillsSearchMode) => {
+        const result = (await searchSkills({
+          data: {
+            categories:
+              searchMode === "keyword"
+                ? getPagefindCategories(browseFilters.activeClass)
+                : undefined,
+            limit: 24,
+            query: searchQueryText,
+            rewriteQuery: searchMode === "semantic",
+            searchMode,
+            tags: searchMode === "keyword" ? browseFilters.tags : undefined,
+          },
+        })) as FetchSkillsSearchResult;
 
-      if (result.status === "rate_limited") {
-        throw new Error(result.message);
-      }
+        if (result.status === "rate_limited") {
+          throw new Error(result.message);
+        }
 
-      return result.data;
+        return result.data;
+      };
+
+      return await executeSkillSearch({
+        pagefindEnabled: isPagefindSearchEnabled && search.sort === undefined,
+        pagefindSearch: async () =>
+          (await pagefindSearchAdapter.search({
+            categories: getPagefindCategories(browseFilters.activeClass),
+            limit: 24,
+            query: searchQueryText,
+            tags: browseFilters.tags,
+          })) as SemanticSearchData,
+        query: searchQueryText,
+        searchMode: selectedSearchMode,
+        serverSearch,
+      });
     },
-    queryKey: ["skills-search", selectedSearchMode, searchQueryText],
+    queryKey: [
+      "skills-search",
+      selectedSearchMode,
+      searchQueryText,
+      browseFilters.activeClass,
+      browseFilters.tags,
+      search.sort,
+      isPagefindSearchEnabled,
+    ],
     retry: false,
   });
 
@@ -174,13 +216,7 @@ function RouteComponent() {
     setIsSearchBlocked,
   ]);
   const searchItems = skillsSearchQuery.data?.page ?? [];
-  const searchMeta =
-    selectedSearchMode === "semantic" && skillsSearchQuery.data?.ai
-      ? {
-          resolvedSkillsCount: skillsSearchQuery.data.ai.resolvedSkillsCount,
-          resultCount: skillsSearchQuery.data.ai.resultCount,
-        }
-      : undefined;
+  const searchMeta = getSearchMeta(selectedSearchMode, skillsSearchQuery.data);
 
   const enterSearchMode = useCallback(() => {
     if (isSearchMode) {
@@ -320,6 +356,7 @@ function RouteComponent() {
 
             {isSearchMode ? (
               <SemanticSearchResults
+                degraded={skillsSearchQuery.data?.degraded}
                 error={skillsSearchQuery.error}
                 isLoading={skillsSearchQuery.isFetching}
                 items={searchItems}

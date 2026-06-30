@@ -268,10 +268,12 @@ describe("fetchSkillsSearch", () => {
     const client = {
       skills: {
         search: (input?: {
+          categories?: string[];
           limit?: number;
           query?: string;
           rewriteQuery?: boolean;
           searchMode?: "keyword" | "semantic";
+          tags?: string[];
         }) => {
           calls.push(input ?? {});
           return Promise.resolve({
@@ -285,11 +287,13 @@ describe("fetchSkillsSearch", () => {
 
     await expect(
       fetchSkillsSearch({
+        categories: ["developer-tools"],
         client,
         limit: 24,
         query: "workflow",
         rewriteQuery: false,
         searchMode: "keyword",
+        tags: ["automation", "typescript"],
       }),
     ).resolves.toEqual({
       data: {
@@ -302,10 +306,12 @@ describe("fetchSkillsSearch", () => {
 
     expect(calls).toEqual([
       {
+        categories: ["developer-tools"],
         limit: 24,
         query: "workflow",
         rewriteQuery: false,
         searchMode: "keyword",
+        tags: ["automation", "typescript"],
       },
     ]);
   });

@@ -18,6 +18,8 @@ import { createMcpServerCard, setMcpServerCardHeaders } from "./routes/mcp-serve
 import { createOAuthProtectedResourceMetadata } from "./routes/oauth-discovery";
 import { createSkillArchiveDownloadResponse } from "./routes/skills-download";
 import { createStaticAuditIngestResponse } from "./routes/static-audits-ingest";
+import { createPagefindIndexExportResponse } from "./routes/pagefind-index-export";
+import { createPagefindAssetResponse, setPagefindAssetCorsHeaders } from "./routes/pagefind-assets";
 import { createSkillEvalSandboxSmokeResponse } from "./skill-eval-sandbox/smoke";
 import { createSnapshotArchiveStorageRuntime } from "./lib/cloudflare/r2";
 import { appRouter } from "@skills-re/api/routers/index";
@@ -175,6 +177,20 @@ app.options("/.well-known/agent-skills/*", (c) => {
   setAgentSkillsDiscoveryHeaders(c.res.headers);
   return c.body(null, 204);
 });
+app.on(
+  ["GET", "HEAD"],
+  "/pagefind/*",
+  async (c) =>
+    await createPagefindAssetResponse({
+      bucket: c.env.PAGEFIND_INDEX,
+      key: new URL(c.req.url).pathname.slice("/pagefind/".length),
+      method: c.req.method as "GET" | "HEAD",
+    }),
+);
+app.options("/pagefind/*", (c) => {
+  setPagefindAssetCorsHeaders(c.res.headers);
+  return c.body(null, 204);
+});
 app.use("/*", (c, next) =>
   cors({
     origin: (requestOrigin) => getAllowedCorsOrigin(requestOrigin, c.env),
@@ -218,6 +234,10 @@ app.get("/skills/download", async (c) => {
 app.post(
   "/skills/audits/ingest",
   async (c) => await createStaticAuditIngestResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
+);
+app.get(
+  "/skills/pagefind/export",
+  async (c) => await createPagefindIndexExportResponse(c.req.raw, c.env.AUTOMATION_API_TOKEN),
 );
 app.post(
   "/skill-eval-sandbox/smoke",

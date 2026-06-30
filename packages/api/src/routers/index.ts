@@ -36,6 +36,7 @@ import {
   getBySkillAndVersion,
   getSkillByPath,
   getSkillsHistoryInfo,
+  hydratePagefindHits,
   getSnapshotDownloadManifest,
   getSnapshotFileSignedUrl,
   getSnapshotTreeEntries,
@@ -737,6 +738,9 @@ export const appRouter = {
     getByPath: publicProcedure.skills.getByPath.handler(({ input }) => getSkillByPath(input)),
     getSkillsHistoryInfo: publicProcedure.skills.getSkillsHistoryInfo.handler(({ input }) =>
       getSkillsHistoryInfo(input as { skillIds: string[] }),
+    ),
+    hydratePagefindHits: publicProcedure.skills.hydratePagefindHits.handler(({ input }) =>
+      hydratePagefindHits(input),
     ),
     list: publicProcedure.skills.list.handler(({ input }) => listSkills(input)),
     countAuthors: publicProcedure.skills.countAuthors.handler(() => countAuthors()),
