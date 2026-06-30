@@ -42,29 +42,29 @@ describe("Pagefind relevance configuration", () => {
 
     const fileByPath = new Map(files.map((file) => [file.path, file.content]));
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = (async (input: string | URL | Request) => {
-      const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
-      const content = fileByPath.get(url.pathname.slice(1));
-      return content
-        ? new Response(content, {
-            headers: {
-              "Content-Type": url.pathname.endsWith(".pagefind")
-                ? "application/wasm"
-                : "application/octet-stream",
-            },
-          })
-        : new Response("Not found", { status: 404 });
-    }) as typeof fetch;
-    const directory = await mkdtemp(join(tmpdir(), "skills-re-pagefind-browser-"));
-    temporaryDirectories.push(directory);
-    const browserModulePath = join(directory, "pagefind.mjs");
-    const browserModule = fileByPath.get("pagefind.js");
-    if (!browserModule) {
-      throw new Error("Generated Pagefind browser module is missing.");
-    }
-    await writeFile(browserModulePath, browserModule);
-
     try {
+      globalThis.fetch = (async (input: string | URL | Request) => {
+        const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
+        const content = fileByPath.get(url.pathname.slice(1));
+        return content
+          ? new Response(content, {
+              headers: {
+                "Content-Type": url.pathname.endsWith(".pagefind")
+                  ? "application/wasm"
+                  : "application/octet-stream",
+              },
+            })
+          : new Response("Not found", { status: 404 });
+      }) as typeof fetch;
+      const directory = await mkdtemp(join(tmpdir(), "skills-re-pagefind-browser-"));
+      temporaryDirectories.push(directory);
+      const browserModulePath = join(directory, "pagefind.mjs");
+      const browserModule = fileByPath.get("pagefind.js");
+      if (!browserModule) {
+        throw new Error("Generated Pagefind browser module is missing.");
+      }
+      await writeFile(browserModulePath, browserModule);
+
       const browser = await import(`${pathToFileURL(browserModulePath).href}?test=${Date.now()}`);
       await browser.options({
         basePath: "https://pagefind.test/",
