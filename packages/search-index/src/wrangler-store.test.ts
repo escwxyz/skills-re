@@ -1,8 +1,47 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import { EventEmitter } from "node:events";
 
 describe("Wrangler R2 store", () => {
+  test("kills a hung Wrangler subprocess before timing out", async () => {
+    const module = await import("./wrangler-store");
+    const runWrangler = (
+      module as unknown as {
+        runWrangler?: (
+          args: string[],
+          stdout: "ignore" | "pipe",
+          options: { spawnImpl: (...args: unknown[]) => unknown; timeoutMs: number },
+        ) => Promise<unknown>;
+      }
+    ).runWrangler;
+    const child = new EventEmitter() as EventEmitter & {
+      kill: () => boolean;
+      stderr: null;
+      stdout: null;
+    };
+    let killed = false;
+    child.stderr = null;
+    child.stdout = null;
+    child.kill = () => {
+      killed = true;
+      return true;
+    };
+
+    expect(runWrangler).toBeDefined();
+    if (!runWrangler) {
+      return;
+    }
+
+    await expect(
+      runWrangler([], "ignore", {
+        spawnImpl: () => child,
+        timeoutMs: 5,
+      }),
+    ).rejects.toThrow("Wrangler timed out after 5ms");
+    expect(killed).toBe(true);
+  });
+
   test("classifies only explicit missing-object failures as absent keys", async () => {
     const module = await import("./wrangler-store");
     const isMissingR2ObjectError = (

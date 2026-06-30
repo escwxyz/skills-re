@@ -5,12 +5,19 @@ import { spawn } from "node:child_process";
 
 import type { SearchIndexObjectStore } from "./publisher";
 
-const runWrangler = async (args: string[], stdout: "ignore" | "pipe" = "ignore") =>
+const WRANGLER_TIMEOUT_MS = 30_000;
+
+export const runWrangler = async (
+  args: string[],
+  stdout: "ignore" | "pipe" = "ignore",
+  options: { spawnImpl?: typeof spawn; timeoutMs?: number } = {},
+) => {
+  const timeoutMs = options.timeoutMs ?? WRANGLER_TIMEOUT_MS;
+  const child = (options.spawnImpl ?? spawn)("bunx", ["wrangler", ...args], {
+    stdio: ["ignore", stdout, "pipe"],
+  });
   // oxlint-disable-next-line promise/avoid-new
-  await new Promise<Uint8Array | null>((resolve, reject) => {
-    const child = spawn("bunx", ["wrangler", ...args], {
-      stdio: ["ignore", stdout, "pipe"],
-    });
+  const completion = new Promise<Uint8Array | null>((resolve, reject) => {
     const stderrChunks: Buffer[] = [];
     const stdoutChunks: Buffer[] = [];
     child.stderr?.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
@@ -28,6 +35,23 @@ const runWrangler = async (args: string[], stdout: "ignore" | "pipe" = "ignore")
       resolve(stdout === "pipe" ? new Uint8Array(Buffer.concat(stdoutChunks)) : null);
     });
   });
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  // oxlint-disable-next-line promise/avoid-new
+  const timedOut = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      child.kill();
+      reject(new Error(`Wrangler timed out after ${timeoutMs}ms.`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([completion, timedOut]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+};
 
 export const isMissingR2ObjectError = (error: unknown) =>
   error instanceof Error && error.message.includes("The specified key does not exist.");
