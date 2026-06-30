@@ -78,6 +78,47 @@ describe("Pagefind generation publisher", () => {
     expect(writes).not.toContain("pagefind/current.json");
   });
 
+  test("cleans uploaded generation objects when validation fails", async () => {
+    const { publishGeneration } = await import("./publisher");
+    const uploadedKeys = [
+      "pagefind/generations/123-a/pagefind/pagefind.js",
+      "pagefind/generations/123-a/generation.json",
+    ];
+
+    for (const failureStage of ["remote", "smoke"] as const) {
+      const deleted: string[] = [];
+      await expect(
+        publishGeneration({
+          files: [
+            { bytes: new Uint8Array([1]), contentType: "text/javascript", path: "pagefind.js" },
+          ],
+          manifest: {
+            bundleUrl: "https://api.example.com/pagefind/generations/123-a/pagefind/",
+            generationId: "123-a",
+            pagefindVersion: "1.5.2",
+            publishedAt: 1,
+            recordCount: 1,
+            schemaVersion: 1,
+            sourceWatermark: 123,
+          },
+          smokeTest: async () => {
+            if (failureStage === "smoke") {
+              throw new Error("smoke failed");
+            }
+          },
+          store: {
+            delete: async (key) => {
+              deleted.push(key);
+            },
+            head: async () => failureStage !== "remote",
+            put: async () => undefined,
+          },
+        }),
+      ).rejects.toThrow(failureStage === "remote" ? "Remote Pagefind validation" : "smoke failed");
+      expect(deleted.toSorted()).toEqual(uploadedKeys.toSorted());
+    }
+  });
+
   test("retains active, previous, and recent generations", async () => {
     const publisher = (await import("./publisher").catch(() => ({}))) as {
       selectExpiredGenerationIds?: (

@@ -16,6 +16,7 @@ export interface PublishFile {
 }
 
 export interface SearchIndexObjectStore {
+  delete: (key: string) => Promise<void>;
   head: (key: string) => Promise<boolean>;
   put: (
     key: string,
@@ -66,12 +67,17 @@ export const publishGeneration = async (input: PublishGenerationInput) => {
   );
   uploadedKeys.push(generationManifestKey);
 
-  const remoteChecks = await Promise.all(uploadedKeys.map((key) => input.store.head(key)));
-  const missingIndex = remoteChecks.findIndex((exists) => !exists);
-  if (missingIndex !== -1) {
-    throw new Error(`Remote Pagefind validation failed for ${uploadedKeys[missingIndex]}.`);
+  try {
+    const remoteChecks = await Promise.all(uploadedKeys.map((key) => input.store.head(key)));
+    const missingIndex = remoteChecks.findIndex((exists) => !exists);
+    if (missingIndex !== -1) {
+      throw new Error(`Remote Pagefind validation failed for ${uploadedKeys[missingIndex]}.`);
+    }
+    await input.smokeTest(manifest);
+  } catch (error) {
+    await Promise.all(uploadedKeys.map(async (key) => await input.store.delete(key)));
+    throw error;
   }
-  await input.smokeTest(manifest);
 
   await input.store.put("pagefind/current.json", jsonBytes(manifest), {
     cacheControl: MANIFEST_CACHE_CONTROL,
