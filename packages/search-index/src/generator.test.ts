@@ -71,6 +71,7 @@ describe("Pagefind bundle generator", () => {
     const content = new TextEncoder().encode("Full body includes reciprocal rank fusion.");
     const digest = `sha256:${new Bun.CryptoHasher("sha256").update(content).digest("hex")}`;
     const fetchSignals: (AbortSignal | null | undefined)[] = [];
+    const skippedSkills: string[] = [];
     const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
       fetchSignals.push(init?.signal);
       const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
@@ -95,9 +96,28 @@ describe("Pagefind bundle generator", () => {
               title: "Search",
               updatedAt: 123,
             },
+            {
+              artifactDigest: digest,
+              artifactUrl: "https://api.example.com/artifacts/missing.md",
+              authorHandle: "acme",
+              canonicalUrl: "/skills/acme/repo/missing",
+              description: "Missing artifact",
+              isVerified: false,
+              primaryCategory: "search",
+              repoName: "repo",
+              skillId: "skill-missing",
+              skillSlug: "missing",
+              snapshotId: "snapshot-missing",
+              tags: ["search"],
+              title: "Missing",
+              updatedAt: 124,
+            },
           ],
           sourceWatermark: 123,
         });
+      }
+      if (url.pathname.endsWith("/missing.md")) {
+        return new Response(null, { status: 404 });
       }
       return new Response(content);
     };
@@ -107,6 +127,7 @@ describe("Pagefind bundle generator", () => {
         assetOrigin: "https://search.example.com",
         automationToken: "secret",
         fetchImpl: fetchImpl as typeof fetch,
+        onArtifactFailure: (record) => skippedSkills.push(record.skillId),
         outputPath,
         serverOrigin: "https://api.example.com",
       });
@@ -119,7 +140,10 @@ describe("Pagefind bundle generator", () => {
       expect(validate).toBeDefined();
       await expect(validate?.(outputPath, 1)).resolves.toMatchObject({ recordCount: 1 });
       expect(summary.bundleBytes).toBeGreaterThan(0);
-      expect(fetchSignals).toHaveLength(2);
+      expect(summary.recordCount).toBe(1);
+      expect(summary.skippedRecordCount).toBe(1);
+      expect(skippedSkills).toEqual(["skill-missing"]);
+      expect(fetchSignals).toHaveLength(5);
       expect(fetchSignals.every((signal) => signal instanceof AbortSignal && !signal.aborted)).toBe(
         true,
       );

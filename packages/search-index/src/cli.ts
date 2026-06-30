@@ -32,6 +32,10 @@ if (command === "generate") {
   const summary = await generatePagefindBundle({
     assetOrigin: requireEnv("PAGEFIND_ASSET_ORIGIN"),
     automationToken: requireEnv("AUTOMATION_API_TOKEN"),
+    onArtifactFailure: (record, error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`Skipping Pagefind skill ${record.skillId}: ${message}\n`);
+    },
     outputPath: resolve(outputRoot, "pagefind"),
     serverOrigin: requireEnv("PUBLIC_SERVER_URL"),
   });

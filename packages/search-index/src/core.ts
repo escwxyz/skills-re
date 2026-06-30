@@ -19,6 +19,7 @@ interface ArtifactRecord {
 interface FetchArtifactsOptions<T extends ArtifactRecord> {
   concurrency: number;
   fetchArtifact: (record: T) => Promise<Uint8Array>;
+  onFailure?: (record: T, error: unknown) => void;
   retries: number;
   verifyArtifact: (bytes: Uint8Array, digest: string) => Promise<void>;
 }
@@ -113,7 +114,14 @@ export const fetchArtifacts = async <T extends ArtifactRecord>(
       nextIndex += 1;
       const record = records[index];
       if (record) {
-        results[index] = await fetchWithRetry(record, options);
+        try {
+          results[index] = await fetchWithRetry(record, options);
+        } catch (error) {
+          if (!options.onFailure) {
+            throw error;
+          }
+          options.onFailure(record, error);
+        }
       }
     }
   };
@@ -121,5 +129,5 @@ export const fetchArtifacts = async <T extends ArtifactRecord>(
   await Promise.all(
     Array.from({ length: Math.min(concurrency, records.length) }, async () => await worker()),
   );
-  return results;
+  return results.filter((result) => result !== undefined);
 };

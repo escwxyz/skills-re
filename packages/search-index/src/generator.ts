@@ -53,6 +53,7 @@ interface GenerateOptions {
   artifactConcurrency?: number;
   automationToken: string;
   fetchImpl?: typeof fetch;
+  onArtifactFailure?: (record: PagefindExportRecord, error: unknown) => void;
   outputPath: string;
   pagefindModule?: PagefindModule;
   serverOrigin: string;
@@ -67,6 +68,7 @@ export interface GenerationSummary {
   outputPath: string;
   recordCount: number;
   shardCount: number;
+  skippedRecordCount: number;
   sourceWatermark: number;
 }
 
@@ -218,10 +220,7 @@ export const generatePagefindBundle = async (
     fetchExportPage(options.serverOrigin, options.automationToken, fetchImpl, cursor),
   );
   assertUniqueRecords(records);
-  const generationId = await createGenerationId(
-    sourceWatermark,
-    records.map((record) => `${record.skillId}:${record.snapshotId}:${record.artifactDigest}`),
-  );
+  const failedRecords: PagefindExportRecord[] = [];
   const artifacts = await fetchArtifacts(records, {
     concurrency: options.artifactConcurrency ?? 8,
     fetchArtifact: async (record) => {
@@ -234,9 +233,20 @@ export const generatePagefindBundle = async (
       const body = await response.arrayBuffer();
       return new Uint8Array(body);
     },
+    onFailure: (record, error) => {
+      failedRecords.push(record);
+      options.onArtifactFailure?.(record, error);
+    },
     retries: 2,
     verifyArtifact: verifyArtifactDigest,
   });
+  const indexableRecords = artifacts.map((artifact) => artifact.record);
+  const generationId = await createGenerationId(
+    sourceWatermark,
+    indexableRecords.map(
+      (record) => `${record.skillId}:${record.snapshotId}:${record.artifactDigest}`,
+    ),
+  );
 
   const pagefind =
     options.pagefindModule ?? ((await import("pagefind")) as unknown as PagefindModule);
@@ -249,7 +259,7 @@ export const generatePagefindBundle = async (
   }
 
   try {
-    await addRecordsToPagefind(records, artifacts, created.index);
+    await addRecordsToPagefind(indexableRecords, artifacts, created.index);
     await mkdir(options.outputPath, { recursive: true });
     const writeResult = await created.index.writeFiles({ outputPath: options.outputPath });
     if (writeResult.errors?.length) {
@@ -264,13 +274,13 @@ export const generatePagefindBundle = async (
     generationId,
     pagefindVersion: "1.5.2",
     publishedAt: Date.now(),
-    recordCount: records.length,
+    recordCount: indexableRecords.length,
     schemaVersion: 1,
     sourceWatermark,
   });
   const manifestPath = join(dirname(options.outputPath), "generation.json");
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
-  const bundleStats = await validatePagefindBundle(options.outputPath, records.length);
+  const bundleStats = await validatePagefindBundle(options.outputPath, indexableRecords.length);
   return {
     bundleBytes: bundleStats.bundleBytes,
     bundleUrl: manifest.bundleUrl,
@@ -278,8 +288,9 @@ export const generatePagefindBundle = async (
     generationId,
     manifestPath,
     outputPath: options.outputPath,
-    recordCount: records.length,
+    recordCount: indexableRecords.length,
     shardCount: bundleStats.shardCount,
+    skippedRecordCount: failedRecords.length,
     sourceWatermark,
   };
 };
