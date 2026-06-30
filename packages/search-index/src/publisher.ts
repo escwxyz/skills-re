@@ -4,6 +4,7 @@ import type { PagefindGenerationManifest } from "@skills-re/contract/pagefind";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const MANIFEST_CACHE_CONTROL = "public, max-age=60";
 const DEFAULT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const REMOTE_VALIDATION_CONCURRENCY = 8;
 
 export interface PublishedGenerationDescriptor extends PagefindGenerationManifest {
   files: string[];
@@ -68,7 +69,11 @@ export const publishGeneration = async (input: PublishGenerationInput) => {
   uploadedKeys.push(generationManifestKey);
 
   try {
-    const remoteChecks = await Promise.all(uploadedKeys.map((key) => input.store.head(key)));
+    const remoteChecks: boolean[] = [];
+    for (let index = 0; index < uploadedKeys.length; index += REMOTE_VALIDATION_CONCURRENCY) {
+      const keys = uploadedKeys.slice(index, index + REMOTE_VALIDATION_CONCURRENCY);
+      remoteChecks.push(...(await Promise.all(keys.map((key) => input.store.head(key)))));
+    }
     const missingIndex = remoteChecks.findIndex((exists) => !exists);
     if (missingIndex !== -1) {
       throw new Error(`Remote Pagefind validation failed for ${uploadedKeys[missingIndex]}.`);

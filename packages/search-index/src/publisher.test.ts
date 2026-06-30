@@ -41,6 +41,43 @@ describe("Pagefind generation publisher", () => {
     ]);
   });
 
+  test("bounds concurrent remote object validation", async () => {
+    const { publishGeneration } = await import("./publisher");
+    let activeChecks = 0;
+    let maxActiveChecks = 0;
+
+    await publishGeneration({
+      files: Array.from({ length: 20 }, (_, index) => ({
+        bytes: new Uint8Array([index]),
+        contentType: "application/octet-stream",
+        path: `index/${index}.pf_index`,
+      })),
+      manifest: {
+        bundleUrl: "https://api.example.com/pagefind/generations/123-a/pagefind/",
+        generationId: "123-a",
+        pagefindVersion: "1.5.2",
+        publishedAt: 1,
+        recordCount: 20,
+        schemaVersion: 1,
+        sourceWatermark: 123,
+      },
+      smokeTest: async () => undefined,
+      store: {
+        delete: async () => undefined,
+        head: async () => {
+          activeChecks += 1;
+          maxActiveChecks = Math.max(maxActiveChecks, activeChecks);
+          await Bun.sleep(2);
+          activeChecks -= 1;
+          return true;
+        },
+        put: async () => undefined,
+      },
+    });
+
+    expect(maxActiveChecks).toBeLessThanOrEqual(8);
+  });
+
   test("does not activate a generation when asset upload fails", async () => {
     const publisher = (await import("./publisher").catch(() => ({}))) as {
       publishGeneration?: (input: Record<string, unknown>) => Promise<unknown>;
