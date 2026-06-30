@@ -11,6 +11,8 @@ import {
 import type { PublishedGenerationDescriptor, PublishFile } from "./publisher";
 import { WranglerR2Store } from "./wrangler-store";
 
+const PAGEFIND_SMOKE_TIMEOUT_MS = 30_000;
+
 const contentTypeByExtension: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -28,6 +30,34 @@ const getContentType = (path: string) => {
   return extension
     ? (contentTypeByExtension[extension] ?? "application/octet-stream")
     : "application/octet-stream";
+};
+
+export const readJsonObject = async <T>(
+  store: { get: (key: string) => Promise<Uint8Array | null | undefined> },
+  key: string,
+): Promise<T | null> => {
+  const bytes = await store.get(key);
+  if (!bytes) {
+    return null;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as T;
+  } catch (error) {
+    throw new Error(`Invalid JSON object: ${key}`, { cause: error });
+  }
+};
+
+export const fetchPagefindSmokeAsset = async (
+  url: URL,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> => {
+  const response = await fetchImpl(url, {
+    signal: AbortSignal.timeout(PAGEFIND_SMOKE_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    const asset = url.pathname.split("/").at(-1) ?? url.pathname;
+    throw new Error(`Remote Pagefind smoke check failed for ${asset}: HTTP ${response.status}.`);
+  }
 };
 
 export const readPagefindBundleFiles = async (root: string) => {
@@ -57,27 +87,16 @@ export const publishLocalGeneration = async (input: { bucket: string; outputPath
   );
   const store = new WranglerR2Store(input.bucket);
   const files = await readPagefindBundleFiles(input.outputPath);
-  const readJson = async <T>(key: string): Promise<T | null> => {
-    try {
-      return JSON.parse(new TextDecoder().decode(await store.get(key))) as T;
-    } catch {
-      return null;
-    }
-  };
-  const previous = await readJson<{ generationId?: string }>("pagefind/current.json");
+  const previous = await readJsonObject<{ generationId?: string }>(store, "pagefind/current.json");
   const history =
-    (await readJson<PublishedGenerationDescriptor[]>("pagefind/generations.json")) ?? [];
+    (await readJsonObject<PublishedGenerationDescriptor[]>(store, "pagefind/generations.json")) ??
+    [];
   const published = await publishGeneration({
     files,
     manifest,
     smokeTest: async (activeManifest) => {
       for (const asset of ["pagefind-entry.json", "pagefind.js", "pagefind-worker.js"]) {
-        const response = await fetch(new URL(asset, activeManifest.bundleUrl));
-        if (!response.ok) {
-          throw new Error(
-            `Remote Pagefind smoke check failed for ${asset}: HTTP ${response.status}.`,
-          );
-        }
+        await fetchPagefindSmokeAsset(new URL(asset, activeManifest.bundleUrl));
       }
     },
     store,
@@ -120,8 +139,12 @@ export const rollbackLocalGeneration = async (input: { bucket: string; generatio
   }
   const store = new WranglerR2Store(input.bucket);
   const generationKey = `pagefind/generations/${input.generationId}/generation.json`;
+  const retainedBytes = await store.get(generationKey);
+  if (!retainedBytes) {
+    throw new Error(`Retained generation does not exist: ${input.generationId}.`);
+  }
   const retained = pagefindGenerationManifestSchema.parse(
-    JSON.parse(new TextDecoder().decode(await store.get(generationKey))),
+    JSON.parse(new TextDecoder().decode(retainedBytes)),
   );
   if (!(await store.head(`pagefind/generations/${input.generationId}/pagefind/pagefind.js`))) {
     throw new Error(`Retained generation is incomplete: ${input.generationId}.`);

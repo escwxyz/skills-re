@@ -29,6 +29,9 @@ const runWrangler = async (args: string[], stdout: "ignore" | "pipe" = "ignore")
     });
   });
 
+export const isMissingR2ObjectError = (error: unknown) =>
+  error instanceof Error && error.message.includes("The specified key does not exist.");
+
 export class WranglerR2Store implements SearchIndexObjectStore {
   readonly bucket: string;
 
@@ -37,19 +40,22 @@ export class WranglerR2Store implements SearchIndexObjectStore {
   }
 
   async head(key: string) {
-    try {
-      await runWrangler(["r2", "object", "get", `${this.bucket}/${key}`, "--pipe", "--remote"]);
-      return true;
-    } catch {
-      return false;
-    }
+    return (await this.get(key)) !== null;
   }
 
   async get(key: string) {
-    const bytes = await runWrangler(
-      ["r2", "object", "get", `${this.bucket}/${key}`, "--pipe", "--remote"],
-      "pipe",
-    );
+    let bytes: Uint8Array | null;
+    try {
+      bytes = await runWrangler(
+        ["r2", "object", "get", `${this.bucket}/${key}`, "--pipe", "--remote"],
+        "pipe",
+      );
+    } catch (error) {
+      if (isMissingR2ObjectError(error)) {
+        return null;
+      }
+      throw error;
+    }
     if (!bytes) {
       throw new Error(`R2 object was empty: ${key}`);
     }

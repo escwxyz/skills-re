@@ -2,14 +2,13 @@
 
 import { describe, expect, test } from "bun:test";
 
-const loadCore = async () =>
-  (await import("./core").catch(() => ({}))) as Record<string, (...args: never[]) => unknown>;
+const loadCore = async () => await import("./core");
 
 describe("search index generator core", () => {
   test("collects all export pages and preserves the source watermark", async () => {
     const core = await loadCore();
     const cursors: (string | undefined)[] = [];
-    const result = await core.collectExportRecords?.(async (cursor?: string) => {
+    const result = await core.collectExportRecords(async (cursor?: string) => {
       cursors.push(cursor);
       return cursor
         ? { continueCursor: "", isDone: true, page: [{ skillId: "skill-2" }], sourceWatermark: 42 }
@@ -35,9 +34,9 @@ describe("search index generator core", () => {
       { canonicalUrl: "/skills/acme/repo/two", skillId: "skill-1" },
     ];
 
-    expect(() => core.assertUniqueRecords?.(records)).toThrow("Duplicate skill ID");
-    const first = await core.createGenerationId?.(123, ["a", "b"]);
-    const second = await core.createGenerationId?.(123, ["a", "b"]);
+    expect(() => core.assertUniqueRecords(records)).toThrow("Duplicate skill ID");
+    const first = await core.createGenerationId(123, ["a", "b"]);
+    const second = await core.createGenerationId(123, ["a", "b"]);
     expect(first).toBe(second);
   });
 
@@ -46,8 +45,8 @@ describe("search index generator core", () => {
     const bytes = new TextEncoder().encode("skill content");
     const digest = `sha256:${new Bun.CryptoHasher("sha256").update(bytes).digest("hex")}`;
 
-    await expect(core.verifyArtifactDigest?.(bytes, digest)).resolves.toBeUndefined();
-    await expect(core.verifyArtifactDigest?.(bytes, `sha256:${"0".repeat(64)}`)).rejects.toThrow(
+    await expect(core.verifyArtifactDigest(bytes, digest)).resolves.toBeUndefined();
+    await expect(core.verifyArtifactDigest(bytes, `sha256:${"0".repeat(64)}`)).rejects.toThrow(
       "digest mismatch",
     );
   });
@@ -63,7 +62,7 @@ describe("search index generator core", () => {
       skillId: `skill-${index}`,
     }));
 
-    const result = await core.fetchArtifacts?.(records, {
+    const result = await core.fetchArtifacts(records, {
       concurrency: 2,
       fetchArtifact: async (record: { skillId: string }) => {
         const attempt = (attempts.get(record.skillId) ?? 0) + 1;
