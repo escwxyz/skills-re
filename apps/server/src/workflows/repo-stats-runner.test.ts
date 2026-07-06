@@ -103,6 +103,43 @@ describe("runRepoStatsSyncWorkflow", () => {
     });
   });
 
+  test("enqueues a continuation when the workflow reaches its page limit", async () => {
+    const continuations: RepoStatsSyncSchedulerInput[] = [];
+
+    const result = await runRepoStatsSyncWorkflow(
+      {
+        payload: {
+          limit: 1,
+          maxPages: 1,
+        },
+      } as never,
+      createWorkflowStepStub() as never,
+      {
+        continuationScheduler: {
+          enqueue(input) {
+            continuations.push(input);
+            return Promise.resolve({ workId: "continuation-1" });
+          },
+        },
+        syncStats: () =>
+          Promise.resolve({
+            changed: [],
+            continueCursor: "cursor-2",
+            isDone: false,
+          }),
+      },
+    );
+
+    expect(result.status).toBe("partial");
+    expect(continuations).toEqual([
+      {
+        cursor: "cursor-2",
+        limit: 1,
+        maxPages: 1,
+      },
+    ]);
+  });
+
   test("does not schedule content sync for metadata-only repo refreshes", async () => {
     const discoveryCalls: { expectedUpdatedAt?: number; repoName: string; repoOwner: string }[] =
       [];

@@ -16,6 +16,7 @@ interface WorkflowScheduler<TPayload> {
 }
 
 export interface RepoStatsSyncWorkflowDeps {
+  continuationScheduler?: WorkflowScheduler<RepoStatsSyncWorkflowPayload> | null;
   syncStats: typeof reposService.syncStats;
   skillsDiscoveryScheduler?: WorkflowScheduler<{
     expectedUpdatedAt?: number;
@@ -28,6 +29,7 @@ const DEFAULT_LIMIT = 20;
 const DEFAULT_MAX_PAGES_PER_RUN = 5;
 
 const defaultDeps: RepoStatsSyncWorkflowDeps = {
+  continuationScheduler: null,
   skillsDiscoveryScheduler: null,
   syncStats: reposService.syncStats,
 };
@@ -127,6 +129,17 @@ export const runRepoStatsSyncWorkflow = async (
       status: "completed",
     } as const;
   }
+
+  const continuationPayload = {
+    cursor,
+    limit,
+    maxPages,
+  };
+  await step.do(
+    "enqueue-repo-stats-continuation",
+    workflowStepRetryPolicy.repoSyncPage,
+    async () => await activeDeps.continuationScheduler?.enqueue(continuationPayload),
+  );
 
   return {
     changedCount: changed.length,

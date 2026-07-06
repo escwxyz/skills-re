@@ -14,7 +14,6 @@ export const DAILY_METRICS_REFRESH_CRON = "30 0 * * *";
 const DEFAULT_REPO_STATS_SYNC_LIMIT = 20;
 const DEFAULT_REPO_STATS_SYNC_MAX_PAGES = 5;
 const DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT = 20;
-const DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES = 5;
 
 export interface ScheduledJob {
   cron: string;
@@ -65,12 +64,6 @@ const getRepoSkillsDiscoveryLimit = (env: Env) =>
     DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT,
   );
 
-const getRepoSkillsDiscoveryMaxPages = (env: Env) =>
-  parsePositiveInteger(
-    getEnvString(env, "REPO_SKILLS_DISCOVERY_MAX_PAGES"),
-    DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES,
-  );
-
 export const enqueueScheduledRepoStatsSync = async (env: Env, deps: RepoSyncCronDeps = {}) => {
   const scheduler = (deps.getRepoStatsSyncWorkflowScheduler ?? getRepoStatsSyncWorkflowScheduler)(
     env,
@@ -95,12 +88,11 @@ export const enqueueScheduledRepoSkillsDiscovery = async (
 
   const listReposPage = deps.listReposPage ?? reposService.listPage;
   const limit = getRepoSkillsDiscoveryLimit(env);
-  const maxPages = getRepoSkillsDiscoveryMaxPages(env);
   let cursor: string | undefined;
   let pages = 0;
   let scheduledCount = 0;
 
-  while (pages < maxPages) {
+  while (true) {
     const page = await listReposPage({
       cursor,
       limit,
@@ -128,13 +120,6 @@ export const enqueueScheduledRepoSkillsDiscovery = async (
 
     cursor = page.continueCursor;
   }
-
-  return {
-    continueCursor: cursor ?? "",
-    pages,
-    scheduledCount,
-    status: "partial" as const,
-  };
 };
 
 export const getScheduledJobs = (env: Env, deps: RepoSyncCronDeps = {}): ScheduledJob[] => {
@@ -201,6 +186,7 @@ const runJobSafely = async (
       },
       logger,
     });
+    throw error;
   }
 };
 

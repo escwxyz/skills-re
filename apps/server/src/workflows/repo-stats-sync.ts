@@ -5,6 +5,7 @@ import { reposService } from "@skills-re/api/modules/repos/service";
 import { createGithubRepoStatsRuntime } from "../github-stats";
 import { runRepoStatsSyncWorkflow } from "./repo-stats-runner";
 import { runWorkflowWithFailureLog } from "./workflow-failure-log";
+import { getRepoStatsSyncWorkflowScheduler } from "./repo-stats";
 import type { RepoStatsSyncWorkflowPayload } from "./repo-stats";
 import { getRepoSkillsDiscoveryWorkflowScheduler } from "./repo-skills-discovery-scheduler";
 
@@ -15,6 +16,7 @@ export class RepoStatsSyncWorkflow extends WorkflowEntrypoint<Env, unknown> {
       instanceId: event.instanceId,
       run: () =>
         runRepoStatsSyncWorkflow(event, step, {
+          continuationScheduler: getRepoStatsSyncWorkflowScheduler(this.env),
           skillsDiscoveryScheduler: getRepoSkillsDiscoveryWorkflowScheduler(this.env),
           syncStats: (input) =>
             reposService.syncStats(input, {

@@ -113,6 +113,62 @@ describe("runScheduledJobs", () => {
     ]);
   });
 
+  test("continues repo skills discovery until every page is scheduled", async () => {
+    const enqueued: unknown[] = [];
+    const requestedCursors: (string | undefined)[] = [];
+    const { context, scheduled } = createExecutionContextStub();
+
+    runScheduledJobs(
+      { cron: REPO_SKILLS_DISCOVERY_CRON } as ScheduledController,
+      {} as Env,
+      context,
+      {
+        getRepoSkillsDiscoveryWorkflowScheduler: () => ({
+          enqueue(input) {
+            enqueued.push(input);
+            return Promise.resolve({ workId: `discovery-${enqueued.length}` });
+          },
+        }),
+        listReposPage: async (input) => {
+          requestedCursors.push(input?.cursor);
+          const pageNumber = requestedCursors.length;
+          return {
+            continueCursor: pageNumber < 3 ? `cursor-${pageNumber + 1}` : "",
+            isDone: pageNumber === 3,
+            repos: [
+              {
+                nameWithOwner: `acme/skills-${pageNumber}`,
+                repoName: `skills-${pageNumber}`,
+                repoOwner: "acme",
+                skillCount: 1,
+              },
+            ],
+          };
+        },
+      },
+    );
+
+    await Promise.all(scheduled);
+
+    expect(requestedCursors).toEqual([undefined, "cursor-2", "cursor-3"]);
+    expect(enqueued).toHaveLength(3);
+  });
+
+  test("propagates scheduled job failures so Cloudflare can retry", async () => {
+    const { context, scheduled } = createExecutionContextStub();
+
+    runScheduledJobs({ cron: REPO_STATS_SYNC_CRON } as ScheduledController, {} as Env, context, {
+      getRepoStatsSyncWorkflowScheduler: () => ({
+        enqueue() {
+          return Promise.reject(new Error("queue unavailable"));
+        },
+      }),
+    });
+
+    expect(scheduled).toHaveLength(1);
+    await expect(scheduled[0]).rejects.toThrow("queue unavailable");
+  });
+
   test("refreshes daily metrics on the metrics cron", async () => {
     const refreshed: unknown[] = [];
     const { context, scheduled } = createExecutionContextStub();
