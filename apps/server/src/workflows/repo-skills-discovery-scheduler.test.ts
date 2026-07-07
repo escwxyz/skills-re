@@ -3,12 +3,45 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  getRepoSkillsDiscoverySweepScheduler,
   getRepoSkillsDiscoveryWorkflowScheduler,
   getRepoSkillImportWorkflowQueueScheduler,
   getRepoSkillSnapshotSyncWorkflowQueueScheduler,
 } from "./repo-skills-discovery-scheduler";
 
 describe("repo skill fan-out queue schedulers", () => {
+  test("enqueues discovery sweep continuations with their cursor and page budget", async () => {
+    const messages: unknown[] = [];
+    const scheduler = getRepoSkillsDiscoverySweepScheduler({
+      REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE: {
+        send(message: unknown) {
+          messages.push(message);
+          return Promise.resolve();
+        },
+      },
+    } as never);
+
+    await expect(
+      scheduler?.enqueue({
+        cursor: "cursor-2",
+        limit: 20,
+        maxPages: 1,
+      }),
+    ).resolves.toEqual({ workId: expect.stringMatching(/^repo-skills-discovery-sweep-/) });
+
+    expect(messages).toEqual([
+      {
+        kind: "repo-skills-discovery-sweep",
+        payload: {
+          cursor: "cursor-2",
+          limit: 20,
+          maxPages: 1,
+        },
+        workflowId: expect.stringMatching(/^repo-skills-discovery-sweep-/),
+      },
+    ]);
+  });
+
   test("reserves a rate-limited slot for discovery queue messages when a limiter is configured", async () => {
     const messages: unknown[] = [];
     const requests: { dailyLimit?: number; spacingMs?: number; units?: number }[] = [];
