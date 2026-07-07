@@ -12,6 +12,12 @@ import type { WorkerLogger } from "../worker-logger";
 import { createWorkflowQueueLogger } from "../logging";
 import { CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS } from "../lib/cloudflare/queues";
 import { logWorkflowFailure } from "../workflows/workflow-failure-log";
+import { enqueueScheduledRepoSkillsDiscovery } from "../crons";
+import type { RepoSkillsDiscoverySweepPayload } from "../crons";
+import {
+  getRepoSkillsDiscoverySweepScheduler,
+  getRepoSkillsDiscoveryWorkflowScheduler,
+} from "../workflows/repo-skills-discovery-scheduler";
 
 export interface EvaluationWorkflowPayload {
   archiveR2Key?: string | null;
@@ -70,6 +76,12 @@ export type WorkflowQueueMessage =
       kind: "repo-skills-discovery";
       notBeforeMs?: number;
       payload: RepoSkillsDiscoveryWorkflowPayload;
+      workflowId: string;
+    }
+  | {
+      kind: "repo-skills-discovery-sweep";
+      notBeforeMs?: number;
+      payload: RepoSkillsDiscoverySweepPayload;
       workflowId: string;
     }
   | {
@@ -207,6 +219,14 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
     const payload = value.payload as Record<string, unknown>;
     return typeof payload.repoName === "string" && typeof payload.repoOwner === "string";
   }
+  if (value.kind === "repo-skills-discovery-sweep") {
+    const payload = value.payload as Record<string, unknown>;
+    return (
+      (payload.cursor === undefined || typeof payload.cursor === "string") &&
+      (payload.limit === undefined || typeof payload.limit === "number") &&
+      (payload.maxPages === undefined || typeof payload.maxPages === "number")
+    );
+  }
   if (value.kind === "repo-skill-snapshot-sync") {
     const payload = value.payload as Record<string, unknown>;
     return (
@@ -250,6 +270,9 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
     }
     case "repo-skills-discovery": {
       return "skills-re-v1-repo-skills-discovery";
+    }
+    case "repo-skills-discovery-sweep": {
+      return "skills-re-v1-repo-skills-discovery-sweep";
     }
     case "repo-skill-snapshot-sync": {
       return "skills-re-v1-repo-skill-snapshot-sync";
@@ -337,6 +360,17 @@ const startWorkflowFromQueueMessage = async (
         id: message.workflowId,
         params: message.payload,
       });
+      return;
+    }
+    case "repo-skills-discovery-sweep": {
+      await enqueueScheduledRepoSkillsDiscovery(
+        env,
+        {
+          getRepoSkillsDiscoverySweepScheduler,
+          getRepoSkillsDiscoveryWorkflowScheduler,
+        },
+        message.payload,
+      );
       return;
     }
     case "repo-skill-snapshot-sync": {

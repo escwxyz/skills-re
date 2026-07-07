@@ -3,7 +3,10 @@ import { refreshDailySkillsSnapshots } from "@skills-re/api/modules";
 
 import { logHandledError } from "./logging";
 import { getRepoStatsSyncWorkflowScheduler } from "./workflows/repo-stats";
-import { getRepoSkillsDiscoveryWorkflowScheduler } from "./workflows/repo-skills-discovery-scheduler";
+import {
+  getRepoSkillsDiscoverySweepScheduler,
+  getRepoSkillsDiscoveryWorkflowScheduler,
+} from "./workflows/repo-skills-discovery-scheduler";
 import { createWorkerLogger } from "./worker-logger";
 import type { WorkerLogger } from "./worker-logger";
 
@@ -14,7 +17,7 @@ export const DAILY_METRICS_REFRESH_CRON = "30 0 * * *";
 const DEFAULT_REPO_STATS_SYNC_LIMIT = 20;
 const DEFAULT_REPO_STATS_SYNC_MAX_PAGES = 5;
 const DEFAULT_REPO_SKILLS_DISCOVERY_LIMIT = 20;
-const DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES = 5;
+const DEFAULT_REPO_SKILLS_DISCOVERY_MAX_PAGES = 1;
 
 export interface ScheduledJob {
   cron: string;
@@ -25,12 +28,20 @@ export interface ScheduledJob {
 type ListReposPage = typeof reposService.listPage;
 type RepoStatsSchedulerFactory = typeof getRepoStatsSyncWorkflowScheduler;
 type RepoSkillsDiscoverySchedulerFactory = typeof getRepoSkillsDiscoveryWorkflowScheduler;
+type RepoSkillsDiscoverySweepSchedulerFactory = typeof getRepoSkillsDiscoverySweepScheduler;
+
+export interface RepoSkillsDiscoverySweepPayload {
+  cursor?: string;
+  limit?: number;
+  maxPages?: number;
+}
 
 type RefreshDailyMetricsFn = typeof refreshDailySkillsSnapshots;
 
 export interface RepoSyncCronDeps {
   refreshDailySkillsSnapshots?: RefreshDailyMetricsFn;
   getRepoSkillsDiscoveryWorkflowScheduler?: RepoSkillsDiscoverySchedulerFactory;
+  getRepoSkillsDiscoverySweepScheduler?: RepoSkillsDiscoverySweepSchedulerFactory;
   getRepoStatsSyncWorkflowScheduler?: RepoStatsSchedulerFactory;
   listReposPage?: ListReposPage;
   logger?: WorkerLogger;
@@ -85,6 +96,7 @@ export const enqueueScheduledRepoStatsSync = async (env: Env, deps: RepoSyncCron
 export const enqueueScheduledRepoSkillsDiscovery = async (
   env: Env,
   deps: RepoSyncCronDeps = {},
+  input: RepoSkillsDiscoverySweepPayload = {},
 ) => {
   const scheduler = (
     deps.getRepoSkillsDiscoveryWorkflowScheduler ?? getRepoSkillsDiscoveryWorkflowScheduler
@@ -94,9 +106,9 @@ export const enqueueScheduledRepoSkillsDiscovery = async (
   }
 
   const listReposPage = deps.listReposPage ?? reposService.listPage;
-  const limit = getRepoSkillsDiscoveryLimit(env);
-  const maxPages = getRepoSkillsDiscoveryMaxPages(env);
-  let cursor: string | undefined;
+  const limit = input.limit ?? getRepoSkillsDiscoveryLimit(env);
+  const maxPages = input.maxPages ?? getRepoSkillsDiscoveryMaxPages(env);
+  let { cursor } = input;
   let pages = 0;
   let scheduledCount = 0;
 
@@ -129,6 +141,17 @@ export const enqueueScheduledRepoSkillsDiscovery = async (
     cursor = page.continueCursor;
   }
 
+  const continuation = {
+    cursor,
+    limit,
+    maxPages,
+  };
+  const continuationScheduler = deps.getRepoSkillsDiscoverySweepScheduler?.(env);
+  if (!continuationScheduler) {
+    throw new Error("Repo skills discovery sweep continuation is not configured.");
+  }
+  await continuationScheduler.enqueue(continuation);
+
   return {
     continueCursor: cursor ?? "",
     pages,
@@ -157,13 +180,19 @@ export const getScheduledJobs = (env: Env, deps: RepoSyncCronDeps = {}): Schedul
       cron: REPO_SKILLS_DISCOVERY_CRON,
       name: "repo-skills-discovery",
       run: async () => {
-        const result = await enqueueScheduledRepoSkillsDiscovery(env, { ...deps, logger });
+        const scheduler = (
+          deps.getRepoSkillsDiscoverySweepScheduler ?? getRepoSkillsDiscoverySweepScheduler
+        )(env);
+        if (!scheduler) {
+          throw new Error("Repo skills discovery sweep queue is not configured.");
+        }
+        const result = await scheduler.enqueue({
+          limit: getRepoSkillsDiscoveryLimit(env),
+          maxPages: getRepoSkillsDiscoveryMaxPages(env),
+        });
         logger.info("cron.job.completed", {
-          continueCursor: result.continueCursor,
           job: "repo-skills-discovery",
-          pages: result.pages,
-          scheduledCount: result.scheduledCount,
-          status: result.status,
+          workId: result.workId,
         });
       },
     },
@@ -201,6 +230,7 @@ const runJobSafely = async (
       },
       logger,
     });
+    throw error;
   }
 };
 

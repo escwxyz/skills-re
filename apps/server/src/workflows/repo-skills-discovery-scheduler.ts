@@ -12,6 +12,7 @@ import type {
   RepoSkillSnapshotSyncWorkflowPayload,
   RepoSkillsDiscoveryWorkflowPayload,
 } from "./repo-skills-discovery";
+import type { RepoSkillsDiscoverySweepPayload } from "../crons";
 
 interface RepoSkillsDiscoveryWorkflowEnv {
   AI_WORKFLOW_RATE_LIMITER?: unknown;
@@ -82,6 +83,31 @@ export const getRepoSkillsDiscoveryWorkflowScheduler = (
     };
   }
   return binding ? makeWorkflowScheduler("repo-skills-discovery", binding) : null;
+};
+
+export const getRepoSkillsDiscoverySweepScheduler = (
+  env: RepoSkillsDiscoveryWorkflowEnv,
+): WorkflowScheduler<RepoSkillsDiscoverySweepPayload> | null => {
+  const queueBinding = env.REPO_SKILLS_DISCOVERY_WORKFLOW_QUEUE;
+  if (!queueBinding) {
+    return null;
+  }
+
+  return {
+    async enqueue(payload) {
+      const workflowId = `repo-skills-discovery-sweep-${nanoid()}`;
+      await enqueueQueueMessage({
+        binding: queueBinding,
+        context: "repo-skills-discovery-sweep",
+        message: {
+          kind: "repo-skills-discovery-sweep",
+          payload,
+          workflowId,
+        },
+      });
+      return { workId: workflowId };
+    },
+  };
 };
 
 export const getRepoSkillImportWorkflowQueueScheduler = (
