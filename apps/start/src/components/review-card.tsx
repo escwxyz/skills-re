@@ -59,10 +59,16 @@ export const ReviewCard = ({
         </div>
       </div>
 
-      <div className="mb-2 text-[16px] tracking-widest md:text-[18px]">
+      <div className="mb-2 text-[16px] inline-flex items-center gap-1 md:text-[18px]">
         {Array.from({ length: 5 }).map((_, index) => (
-          <span key={index} className={index < stars ? "text-foreground" : "text-rule"}>
-            <StarIcon weight="fill" />
+          <span
+            key={index}
+            className={cn(
+              "inline-flex size-[1em] items-center justify-center",
+              index < stars ? "text-foreground" : "text-rule",
+            )}
+          >
+            <StarIcon weight="fill" aria-hidden="true" className="size-full" />
           </span>
         ))}
       </div>
