@@ -21,6 +21,7 @@ export { categoryCountsTable } from "./category-counts";
 export { reposTable } from "./repos";
 export { sandboxAgentsTable } from "./sandbox-agents";
 export { savedSkillsTable } from "./saved-skills";
+export { skillSearchDocumentsTable } from "./search-documents";
 export { skillUsageEventsTable } from "./skill-usage-events";
 export { skillsTagsTable, skillsTable } from "./skills";
 export { skillEvalCasesTable, skillEvalSuitesTable } from "./skill-eval-suites";
@@ -46,6 +47,7 @@ export {
   oauthRefreshTokensRelations,
   reposRelations,
   savedSkillsRelations,
+  skillSearchDocumentsRelations,
   skillUsageEventsRelations,
   reviewsRelations,
   sandboxAgentsRelations,

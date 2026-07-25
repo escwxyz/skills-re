@@ -148,6 +148,7 @@ export interface ReposServiceDeps {
     owner: string;
     repo: string;
   }) => Promise<{ path: string; sha: string; size?: number; type: "blob" | "tree" }[]>;
+  refreshRepoSkillSearchDocumentMetadata: (nameWithOwner: string) => Promise<unknown>;
   createSnapshot: (input: {
     description: string;
     directoryPath: string;
@@ -345,6 +346,11 @@ const defaultDeps: ReposServiceDeps = {
     const { updateRepoStatsByNameWithOwner } = await import("./repo");
     return await updateRepoStatsByNameWithOwner(input);
   },
+  refreshRepoSkillSearchDocumentMetadata: async (nameWithOwner) => {
+    const { refreshRepoSkillSearchDocumentMetadata } =
+      await import("../skills/search-document-service");
+    return await refreshRepoSkillSearchDocumentMetadata(nameWithOwner);
+  },
 };
 
 export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) => {
@@ -534,6 +540,17 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
               updatedAt,
             });
           }
+          if (resultUpdate.metadataChanged) {
+            try {
+              await activeDeps.refreshRepoSkillSearchDocumentMetadata(repository.nameWithOwner);
+            } catch (error) {
+              console.warn("[repos] search document metadata refresh failed", {
+                error: error instanceof Error ? error.message : String(error),
+                nameWithOwner: repository.nameWithOwner,
+              });
+            }
+          }
+
           if (!resultUpdate.changed && resultUpdate.metadataChanged) {
             metadataChanged.push({
               repoName: repo.repoName,

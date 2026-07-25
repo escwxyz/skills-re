@@ -121,6 +121,8 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
         patchTagCount,
         removeSkillTagLinks,
       } = await import("./repo");
+      const { refreshSkillSearchDocumentMetadata } =
+        await import("../skills/search-document-service");
 
       const skillId = asSkillId(input.skillId);
       const skill = await getSkillById(skillId);
@@ -182,6 +184,14 @@ const createDefaultTagsDeps = async (): Promise<TagsServiceDeps> => {
           await patchTagCount({
             count: nextCount,
             tagId: impactedTagId,
+          });
+        }
+        try {
+          await refreshSkillSearchDocumentMetadata(skillId);
+        } catch (error) {
+          console.warn("[tags] search document metadata refresh failed", {
+            error: error instanceof Error ? error.message : String(error),
+            skillId,
           });
         }
       }

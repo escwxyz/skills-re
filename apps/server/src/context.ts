@@ -19,6 +19,7 @@ import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-sc
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
 import type { WorkerLogger } from "./worker-logger";
 import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
+import { getSkillKeywordSearchStrategyConfig } from "@skills-re/api/modules/skills/search-strategy";
 import { getSnapshotBySkillAndCommit } from "@skills-re/api/modules/skills/repo";
 import { isSkillEvalSandboxEnabled } from "./skill-eval-sandbox/runtime";
 
@@ -51,6 +52,11 @@ export interface CreateServerRuntimeDeps {
 interface CreateServerRuntimeOptions {
   logger?: WorkerLogger;
 }
+
+const getSkillKeywordSearchStrategyEnv = (env: Env) => ({
+  SKILL_KEYWORD_SEARCH_STRATEGY: (env as { SKILL_KEYWORD_SEARCH_STRATEGY?: string | null })
+    .SKILL_KEYWORD_SEARCH_STRATEGY,
+});
 
 export function createServerContextFromBase(
   baseContext: {
@@ -123,6 +129,9 @@ async function createServerRuntime(
     githubStats,
     githubSubmit,
     features: {
+      skillKeywordSearch: getSkillKeywordSearchStrategyConfig(
+        getSkillKeywordSearchStrategyEnv(env),
+      ),
       skillEvalSandboxEnabled: isSkillEvalSandboxEnabled(env),
     },
     metrics: {

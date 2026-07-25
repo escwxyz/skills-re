@@ -226,6 +226,7 @@ describe("repos service", () => {
   });
 
   test("does not record a changed repo for metadata-only profile refreshes", async () => {
+    const refreshedSearchMetadata: string[] = [];
     const updated: {
       nameWithOwner: string;
       ownerBio?: string | null;
@@ -264,6 +265,10 @@ describe("repos service", () => {
         updated.push(input);
         return { changed: false, metadataChanged: true };
       },
+      refreshRepoSkillSearchDocumentMetadata: (nameWithOwner) => {
+        refreshedSearchMetadata.push(nameWithOwner);
+        return Promise.resolve();
+      },
     });
 
     await expect(service.syncStats()).resolves.toEqual({
@@ -288,6 +293,7 @@ describe("repos service", () => {
         updatedAt: Date.parse("2026-04-18T12:00:00.000Z"),
       },
     ]);
+    expect(refreshedSearchMetadata).toEqual(["acme/widget"]);
   });
 
   test("syncs repo stats with an injected GitHub stats fetch runtime", async () => {

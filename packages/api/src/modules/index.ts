@@ -9,7 +9,6 @@ export {
   getBasicSkill,
   getByPath as getSkillByPath,
   getSkillsHistoryInfo,
-  hydratePagefindHits,
   listAuthorsPublic as listAuthors,
   listMineSkills,
   listSkills,

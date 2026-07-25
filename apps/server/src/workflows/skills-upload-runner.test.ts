@@ -6,6 +6,9 @@ import { runSkillsUploadWorkflow } from "./skills-upload-runner";
 import { stageSkillsUploadPayload } from "./skills-upload";
 import { createWorkflowStepStub } from "./test-support";
 
+const replaceSkillSearchDocumentNoop = () =>
+  Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const });
+
 describe("runSkillsUploadWorkflow", () => {
   test("runs the upload pipeline as separate workflow steps", async () => {
     const stepNames: string[] = [];
@@ -21,6 +24,7 @@ describe("runSkillsUploadWorkflow", () => {
       dispatchStaticAuditWorkflow: [] as unknown[],
       runUploadSnapshotFilesPipeline: [] as unknown[],
       scheduleSkillsTagging: [] as unknown[],
+      replaceSkillSearchDocument: [] as unknown[],
       setSkillLatestSnapshot: [] as unknown[],
       syncSkillTags: [] as unknown[],
       uploadSnapshotFiles: [] as unknown[],
@@ -153,6 +157,13 @@ describe("runSkillsUploadWorkflow", () => {
             workId: "snapshot-upload-1",
           });
         },
+        replaceSkillSearchDocument: (input: unknown) => {
+          calls.replaceSkillSearchDocument.push(input);
+          return Promise.resolve({
+            indexingStatus: "indexed" as const,
+            status: "replaced" as const,
+          });
+        },
         scheduleSkillsTagging: {
           enqueue: (input: unknown) => {
             calls.scheduleSkillsTagging.push(input);
@@ -198,6 +209,7 @@ describe("runSkillsUploadWorkflow", () => {
       "upload-skill-snapshot-files-0",
       "set-upload-skill-latest-snapshot-0",
       "sync-upload-skill-tags-0",
+      "replace-upload-skill-search-document-0",
       "deprecate-upload-skill-snapshots-0",
       "upload-skill-ai-search-0",
       "link-skill-ai-search-0",
@@ -286,6 +298,22 @@ describe("runSkillsUploadWorkflow", () => {
         tags: ["ai-tools"],
       },
     ]);
+    expect(calls.replaceSkillSearchDocument).toEqual([
+      {
+        authorHandle: "acme",
+        body: "---\nname: widget\ndescription: Widget skill\n---\n# Widget",
+        contentHash: expect.any(String),
+        description: "Widget skill",
+        isPublic: true,
+        repository: "skills",
+        skillId: "skill-1",
+        slug: "widget",
+        snapshotId: "snapshot-1",
+        tags: ["ai-tools"],
+        title: "Widget",
+        updatedAt: expect.any(Number),
+      },
+    ]);
     expect(calls.deprecateSnapshotsBeyondLimit).toEqual([
       {
         keepLatest: 3,
@@ -346,7 +374,7 @@ describe("runSkillsUploadWorkflow", () => {
     ]);
   });
 
-  test("keeps ai search linking failures non-blocking", async () => {
+  test("keeps search indexing and ai search linking failures non-blocking", async () => {
     const storage = new Map<string, string>();
     const bucket = {
       delete(key: string) {
@@ -444,6 +472,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        replaceSkillSearchDocument: () => Promise.reject(new Error("transient fts failure")),
         snapshotFilesBucket: bucket,
       } as never,
     );
@@ -557,6 +586,7 @@ describe("runSkillsUploadWorkflow", () => {
           });
         },
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        replaceSkillSearchDocument: replaceSkillSearchDocumentNoop,
         snapshotFilesBucket: bucket,
       } as never,
     );
@@ -669,6 +699,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-1" }),
+        replaceSkillSearchDocument: replaceSkillSearchDocumentNoop,
         snapshotFilesBucket: bucket,
       } as never,
     );
@@ -815,6 +846,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-existing" }),
+        replaceSkillSearchDocument: replaceSkillSearchDocumentNoop,
         snapshotFilesBucket: bucket,
       } as never,
     );
@@ -827,6 +859,7 @@ describe("runSkillsUploadWorkflow", () => {
       "upload-skill-snapshot-files-0",
       "set-upload-skill-latest-snapshot-0",
       "sync-upload-skill-tags-0",
+      "replace-upload-skill-search-document-0",
       "deprecate-upload-skill-snapshots-0",
       "upload-skill-ai-search-0",
       "link-skill-ai-search-0",
@@ -989,6 +1022,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-existing" }),
+        replaceSkillSearchDocument: replaceSkillSearchDocumentNoop,
         snapshotFilesBucket: bucket,
       } as never,
     );
@@ -1148,6 +1182,7 @@ describe("runSkillsUploadWorkflow", () => {
             workflowFile: "skill-audit-submit.yml",
           }),
         uploadSnapshotFiles: () => Promise.resolve({ workId: "snapshot-upload-existing" }),
+        replaceSkillSearchDocument: replaceSkillSearchDocumentNoop,
         snapshotFilesBucket: bucket,
       } as never,
     );

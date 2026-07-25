@@ -20,6 +20,7 @@ import {
   listRepoSkillSnapshotHeadsByRepoId,
   updateSkillAiSearchItemId,
 } from "@skills-re/api/modules/skills/repo";
+import { replaceSkillSearchDocument } from "@skills-re/api/modules/skills/search-document-service";
 import { normalizeSkillTags } from "@skills-re/api/modules/tags/ai-tagging";
 import { syncSkillTags } from "@skills-re/api/modules/tags/service";
 import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
@@ -27,7 +28,7 @@ import { uploadSnapshotFiles } from "@skills-re/api/modules/snapshots/service";
 import { workflowStepRetryPolicy } from "@/lib/workflows/step-retry-policy";
 import type { AiSearchUploadRateLimitReservation } from "@/dos/ai-search-upload-rate-limiter";
 import type { StaticAuditDispatchRateLimitReservation } from "@/dos/static-audit-dispatch-rate-limiter";
-import { asRepoId } from "@skills-re/db/utils";
+import { asRepoId, asSkillId, asSnapshotId } from "@skills-re/db/utils";
 
 import { cleanupStagedSkillsUploadPayload, loadStagedSkillsUploadPayload } from "./skills-upload";
 import type {
@@ -75,6 +76,7 @@ export interface RunSkillsUploadWorkflowDeps {
   listRepoSkillSnapshotHeadsByRepoId?: typeof listRepoSkillSnapshotHeadsByRepoId;
   reserveAiSearchUploadSlot?: () => Promise<AiSearchUploadRateLimitReservation>;
   reserveStaticAuditDispatchSlot?: () => Promise<StaticAuditDispatchRateLimitReservation>;
+  replaceSkillSearchDocument?: typeof replaceSkillSearchDocument;
   scheduleSkillsTagging?: SkillsTaggingScheduler | null;
   snapshotFilesBucket?: SkillsStagingBucket | null;
   snapshotHistory?: SnapshotHistoryRuntime | null;
@@ -373,6 +375,7 @@ const processUploadSkill = async ({
   });
 
   const snapshotVersion = skill.preferredVersion ?? "1.0.0";
+  const skillTags = normalizeSkillTags(skill.tags ?? []);
   const snapshotId = await step.do(
     `create-upload-snapshot-${skillIndex}`,
     workflowStepRetryPolicy.skillsUploadPipeline,
@@ -445,8 +448,49 @@ const processUploadSkill = async ({
     async () =>
       await (deps.syncSkillTags ?? syncSkillTags)({
         skillId,
-        tags: normalizeSkillTags(skill.tags ?? []),
+        tags: skillTags,
       }),
+  );
+
+  const skillMdFile = findSkillMdFile(skill);
+  await step.do(
+    `replace-upload-skill-search-document-${skillIndex}`,
+    workflowStepRetryPolicy.skillsUploadPipeline,
+    async () => {
+      if (!skillMdFile) {
+        console.warn("[skills-upload] fts-search skipped: entry file not found", {
+          entryPath: skill.entryPath,
+          filePaths: skill.initialSnapshot.files.map((file) => file.path),
+          skillId,
+          skillIndex,
+        });
+        return null;
+      }
+
+      try {
+        return await (deps.replaceSkillSearchDocument ?? replaceSkillSearchDocument)({
+          authorHandle,
+          body: skillMdFile.content,
+          contentHash: effectiveSkillContentHash ?? skill.snapshotHash,
+          description: skill.description,
+          isPublic: true,
+          repository: repoName,
+          skillId: asSkillId(skillId),
+          slug,
+          snapshotId: asSnapshotId(snapshotId),
+          tags: skillTags,
+          title: skill.title,
+          updatedAt: syncTime,
+        });
+      } catch (error) {
+        console.warn("[skills-upload] fts-search document update failed", {
+          error: formatErrorMessage(error),
+          skillId,
+          skillIndex,
+        });
+        return null;
+      }
+    },
   );
 
   await step.do(
@@ -459,7 +503,6 @@ const processUploadSkill = async ({
       }),
   );
 
-  const skillMdFile = findSkillMdFile(skill);
   if (deps.aiSearchItems && skillMdFile && deps.reserveAiSearchUploadSlot) {
     await waitForAiSearchUploadSlot({ deps, skillIndex, step });
   }

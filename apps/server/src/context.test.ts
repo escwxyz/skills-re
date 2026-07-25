@@ -37,6 +37,30 @@ describe("createServerContextFromBase", () => {
     expect(context.workflowSchedulers).toBeUndefined();
   });
 
+  test("preserves injected keyword search rollout config", () => {
+    const context = createServerContextFromBase(
+      {
+        auth: null,
+        session: null,
+      },
+      {
+        features: {
+          skillKeywordSearch: {
+            authoritativeEngine: "fts5",
+            shadowCompareFts5: false,
+            strategy: "fts5",
+          },
+        },
+      },
+    );
+
+    expect(context.features?.skillKeywordSearch).toEqual({
+      authoritativeEngine: "fts5",
+      shadowCompareFts5: false,
+      strategy: "fts5",
+    });
+  });
+
   test("preserves injected ai search runtime", () => {
     const context = createServerContextFromBase(
       {

@@ -36,7 +36,6 @@ import {
   getBySkillAndVersion,
   getSkillByPath,
   getSkillsHistoryInfo,
-  hydratePagefindHits,
   getSnapshotDownloadManifest,
   getSnapshotFileSignedUrl,
   getSnapshotTreeEntries,
@@ -739,9 +738,6 @@ export const appRouter = {
     getSkillsHistoryInfo: publicProcedure.skills.getSkillsHistoryInfo.handler(({ input }) =>
       getSkillsHistoryInfo(input as { skillIds: string[] }),
     ),
-    hydratePagefindHits: publicProcedure.skills.hydratePagefindHits.handler(({ input }) =>
-      hydratePagefindHits(input),
-    ),
     list: publicProcedure.skills.list.handler(({ input }) => listSkills(input)),
     countAuthors: publicProcedure.skills.countAuthors.handler(() => countAuthors()),
     listAuthors: publicProcedure.skills.listAuthors.handler(({ input }) => listAuthors(input)),
@@ -773,7 +769,14 @@ export const appRouter = {
       aiSearch(input, context.aiSearch),
     ),
     search: publicProcedure.skills.search.handler(({ input, context }) =>
-      searchSkills(input, context.aiSearch),
+      searchSkills(input, context.aiSearch, context.features?.skillKeywordSearch, {
+        recordQueryFailure: (event) => {
+          context.workerLogger?.warn("skills.search.keyword_query_failure", { ...event });
+        },
+        recordShadowComparison: (event) => {
+          context.workerLogger?.info("skills.search.keyword_shadow_comparison", { ...event });
+        },
+      }),
     ),
     resolvePathBySlug: publicProcedure.skills.resolvePathBySlug.handler(({ input }) =>
       resolvePathBySlug(input),

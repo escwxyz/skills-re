@@ -10,7 +10,6 @@ export const env = createEnv({
     VITE_SITE_URL: z.url(),
     VITE_CLARITY_PROJECT_ID: z.string(),
     VITE_GA_MEASURE_ID: z.string(),
-    VITE_PAGEFIND_SEARCH_ENABLED: z.enum(["true", "false"]).optional(),
   },
   // oxlint-disable-next-line typescript/no-explicit-any
   runtimeEnv: (import.meta as any).env,
