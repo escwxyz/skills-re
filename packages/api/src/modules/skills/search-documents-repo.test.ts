@@ -142,9 +142,9 @@ const createCapacityDb = (input: {
   const db = {
     get() {
       getCount += 1;
-      return Promise.resolve({
-        value: getCount === 1 ? input.pageSize : input.pageCount,
-      });
+      return Promise.resolve(
+        getCount === 1 ? { page_size: input.pageSize } : { page_count: input.pageCount },
+      );
     },
     run() {
       return Promise.resolve();
@@ -261,6 +261,52 @@ describe("skill search document diagnostics repository", () => {
       page: [rows[0]],
     });
     expect(db.calls).toContain("limit:2");
+  });
+
+  test("uses the fetched row count to detect more backfill pages after filtering", async () => {
+    const rows = [
+      {
+        authorHandle: "acme",
+        description: "Widget skill",
+        documentContentHash: null,
+        documentIndexingStatus: null,
+        documentSnapshotId: null,
+        entryFileHash: "file-hash-1",
+        entryPath: "skills/widget/SKILL.md",
+        entryR2Key: "snapshots/snapshot-1/SKILL.md",
+        repoName: "skills",
+        skillContentHash: "content-hash-1",
+        skillId: "skill-1",
+        skillSlug: "widget",
+        snapshotId: "snapshot-1",
+        title: "Widget",
+        updatedAt: 100,
+      },
+      {
+        authorHandle: "acme",
+        description: "Filtered probe row",
+        documentContentHash: null,
+        documentIndexingStatus: null,
+        documentSnapshotId: null,
+        entryFileHash: "file-hash-2",
+        entryPath: "skills/probe/SKILL.md",
+        entryR2Key: null,
+        repoName: "skills",
+        skillContentHash: "content-hash-2",
+        skillId: "skill-2",
+        skillSlug: "probe",
+        snapshotId: "snapshot-2",
+        title: "Probe",
+        updatedAt: 200,
+      },
+    ];
+    const db = createBackfillDb(rows);
+
+    await expect(listEligibleSkillSearchBackfillPage({ limit: 1 }, db as never)).resolves.toEqual({
+      continueCursor: expect.any(String),
+      isDone: false,
+      page: [rows[0]],
+    });
   });
 
   test("treats an absent backfill cursor as the first page", async () => {

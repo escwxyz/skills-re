@@ -165,8 +165,8 @@ export const getSkillSearchDatabaseCapacityReport = async (
   const safetyThresholdBytes = Math.floor(internalCeilingBytes * headroomRatio);
 
   const [pageSize, pageCount, [documentStats]] = await Promise.all([
-    database.get<{ value: number }>(sql`PRAGMA page_size`),
-    database.get<{ value: number }>(sql`PRAGMA page_count`),
+    database.get<{ page_size: number }>(sql`PRAGMA page_size`),
+    database.get<{ page_count: number }>(sql`PRAGMA page_count`),
     database
       .select({
         documentCount: sql<number>`count(*)`,
@@ -176,7 +176,7 @@ export const getSkillSearchDatabaseCapacityReport = async (
       .where(sql`1 = 1`),
   ]);
 
-  const actualDatabaseBytes = toCount(pageSize?.value) * toCount(pageCount?.value);
+  const actualDatabaseBytes = toCount(pageSize?.page_size) * toCount(pageCount?.page_count);
   const documentCount = toCount(documentStats?.documentCount);
   const indexedBodyBytes = toCount(documentStats?.indexedBodyBytes);
   const measuredSearchBytes = Math.max(0, actualDatabaseBytes - baseDatabaseBytes);
@@ -294,17 +294,18 @@ const listSkillSearchBackfillPage = async (
   const typedRows: SkillSearchBackfillRow[] = rows.filter(hasEntryR2Key);
   const page = typedRows.slice(0, limit);
   const next = page.at(-1) ?? null;
+  const hasMoreRows = rows.length > limit;
 
   return {
     continueCursor: encodeSkillSearchBackfillCursor(
-      typedRows.length > limit && next
+      hasMoreRows && next
         ? {
             id: next.skillId,
             updatedAt: next.updatedAt,
           }
         : null,
     ),
-    isDone: typedRows.length <= limit,
+    isDone: !hasMoreRows,
     page,
   };
 };
