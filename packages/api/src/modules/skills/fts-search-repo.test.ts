@@ -65,6 +65,13 @@ const createDatabase = async () => {
       id TEXT PRIMARY KEY NOT NULL
     );
 
+    CREATE TABLE static_audits (
+      id TEXT PRIMARY KEY NOT NULL,
+      snapshot_id TEXT NOT NULL,
+      overall_score INTEGER NOT NULL,
+      sync_time INTEGER NOT NULL
+    );
+
     CREATE TABLE tags (
       id TEXT PRIMARY KEY NOT NULL,
       slug TEXT NOT NULL
@@ -99,6 +106,15 @@ const insertRepo = (database: Database, id: string, ownerHandle: string, name: s
 
 const insertSnapshot = (database: Database, id: string) => {
   database.prepare("INSERT INTO snapshots (id) VALUES (?)").run(id);
+};
+
+const insertStaticAudit = (database: Database, snapshotId: string, overallScore: number) => {
+  database
+    .prepare(`
+      INSERT INTO static_audits (id, snapshot_id, overall_score, sync_time)
+      VALUES (?, ?, ?, ?)
+    `)
+    .run(`audit-${snapshotId}-${overallScore}`, snapshotId, overallScore, overallScore);
 };
 
 const insertSkill = (
@@ -402,6 +418,7 @@ describe("searchSkillsPageByFts", () => {
       tags: "automation search",
       title: "Zephyr Builder",
     });
+    insertStaticAudit(database, "snapshot-title", 95);
     insertTag(database, "skill-title", "tag-automation", "automation");
     insertTag(database, "skill-title", "tag-search", "search");
 
@@ -423,6 +440,7 @@ describe("searchSkillsPageByFts", () => {
       tags: "automation",
       title: "Workflow Notes",
     });
+    insertStaticAudit(database, "snapshot-body", 60);
     insertTag(database, "skill-body", "tag-automation", "automation");
 
     insertSkill(database, {
@@ -480,6 +498,7 @@ describe("searchSkillsPageByFts", () => {
       tags: "design",
       title: "Beta Design",
     });
+    insertStaticAudit(database, "snapshot-beta", 85);
     insertTag(database, "skill-beta", "tag-design", "design");
 
     const ranked = await searchSkillsPageByFts(
@@ -544,6 +563,20 @@ describe("searchSkillsPageByFts", () => {
       continueCursor: "",
       isDone: true,
       page: [],
+    });
+
+    await expect(
+      searchSkillsPageByFts(
+        {
+          minAuditScore: 90,
+          minScore: 70,
+          query: "zephyr",
+        },
+        ftsDb,
+      ),
+    ).resolves.toMatchObject({
+      isDone: true,
+      page: [{ id: "skill-title" }],
     });
   });
 

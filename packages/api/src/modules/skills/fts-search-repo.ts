@@ -19,6 +19,8 @@ export interface SearchSkillsByFtsInput {
   categories?: string[];
   cursor?: string;
   limit?: number;
+  minAuditScore?: number;
+  minScore?: number;
   query?: string;
   repoName?: string;
   sort?: SearchSort;
@@ -97,6 +99,17 @@ const inList = (values: string[]) =>
     sql`, `,
   );
 
+const isValidMinimumScore = (value: number | undefined): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const latestAuditScoreSql = sql`(
+  SELECT static_audits.overall_score
+  FROM static_audits
+  WHERE static_audits.snapshot_id = s.latest_snapshot_id
+  ORDER BY static_audits.sync_time DESC
+  LIMIT 1
+)`;
+
 const getBrowseSortSql = (sort: SearchSort | undefined) => {
   switch (sort) {
     case "downloads-all-time": {
@@ -136,6 +149,12 @@ const getFilterSql = (input: SearchSkillsByFtsInput) => {
   }
   if (categories.length > 0) {
     filters.push(sql`s.primary_category IN (${inList(categories)})`);
+  }
+  if (isValidMinimumScore(input.minAuditScore)) {
+    filters.push(sql`${latestAuditScoreSql} >= ${input.minAuditScore}`);
+  }
+  if (isValidMinimumScore(input.minScore)) {
+    filters.push(sql`${latestAuditScoreSql} >= ${input.minScore}`);
   }
   if (tags.length > 0) {
     filters.push(sql`EXISTS (
