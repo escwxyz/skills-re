@@ -12,6 +12,9 @@ const toHex = (bytes: ArrayBuffer) =>
 const hashText = async (value: string) =>
   toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
 
+const refreshSkillSearchDocumentMetadataNoop = () =>
+  Promise.resolve({ status: "refreshed" as const });
+
 const createRow = async (overrides: Partial<SkillSearchBackfillRow> = {}) => ({
   authorHandle: "acme",
   description: "Widget skill",
@@ -34,6 +37,7 @@ const createRow = async (overrides: Partial<SkillSearchBackfillRow> = {}) => ({
 describe("runSkillSearchBackfillWorkflow", () => {
   test("indexes a verified snapshot object and schedules continuation", async () => {
     const indexed: unknown[] = [];
+    const refreshed: unknown[] = [];
     const scheduled: unknown[] = [];
     const row = await createRow();
 
@@ -53,6 +57,10 @@ describe("runSkillSearchBackfillWorkflow", () => {
             isDone: false,
             page: [row],
           });
+        },
+        refreshSkillSearchDocumentMetadata: (skillId) => {
+          refreshed.push(skillId);
+          return Promise.resolve({ status: "refreshed" as const });
         },
         replaceSkillSearchDocument: (input) => {
           indexed.push(input);
@@ -84,6 +92,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
         snapshotId: "snapshot-1",
       }),
     ]);
+    expect(refreshed).toEqual(["skill-1"]);
     expect(scheduled).toEqual([
       {
         options: { delaySeconds: 60 },
@@ -97,6 +106,8 @@ describe("runSkillSearchBackfillWorkflow", () => {
       hashMismatchCount: 0,
       indexedCount: 1,
       isDone: false,
+      metadataDeletedCount: 0,
+      metadataRefreshedCount: 1,
       missingObjectCount: 0,
       oversizedCount: 0,
       skippedCount: 0,
@@ -136,6 +147,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
             isDone: true,
             page: rows,
           }),
+        refreshSkillSearchDocumentMetadata: refreshSkillSearchDocumentMetadataNoop,
         replaceSkillSearchDocument: (input) =>
           Promise.resolve(
             input.skillId === "skill-stale"
@@ -173,6 +185,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
       await createRow({ skillId: "skill-deleted" }),
       await createRow({ skillId: "skill-indexed" }),
     ];
+    const refreshed: unknown[] = [];
 
     const result = await runSkillSearchBackfillWorkflow(
       {
@@ -186,6 +199,10 @@ describe("runSkillSearchBackfillWorkflow", () => {
             isDone: true,
             page: rows,
           }),
+        refreshSkillSearchDocumentMetadata: (skillId) => {
+          refreshed.push(skillId);
+          return Promise.resolve({ status: "deleted" as const });
+        },
         replaceSkillSearchDocument: (input) =>
           Promise.resolve(
             input.skillId === "skill-deleted"
@@ -201,9 +218,12 @@ describe("runSkillSearchBackfillWorkflow", () => {
       },
     );
 
+    expect(refreshed).toEqual(["skill-indexed"]);
     expect(result).toMatchObject({
       deletedCount: 1,
       indexedCount: 1,
+      metadataDeletedCount: 1,
+      metadataRefreshedCount: 0,
       processedCount: 2,
       skippedCount: 0,
     });
@@ -236,6 +256,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
             page: [row],
           });
         },
+        refreshSkillSearchDocumentMetadata: refreshSkillSearchDocumentMetadataNoop,
         replaceSkillSearchDocument: () =>
           Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const }),
         scheduleContinuation: {
@@ -287,6 +308,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
             isDone: true,
             page: [row, row],
           }),
+        refreshSkillSearchDocumentMetadata: refreshSkillSearchDocumentMetadataNoop,
         replaceSkillSearchDocument: (input) => {
           replacedSkillIds.push(input.skillId);
           return Promise.resolve({
@@ -331,6 +353,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
             isDone: true,
             page: rows,
           }),
+        refreshSkillSearchDocumentMetadata: refreshSkillSearchDocumentMetadataNoop,
         replaceSkillSearchDocument: () =>
           Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const }),
         snapshotStorage: {
@@ -353,6 +376,8 @@ describe("runSkillSearchBackfillWorkflow", () => {
       hashMismatchCount: 0,
       indexedCount: 1,
       isDone: true,
+      metadataDeletedCount: 0,
+      metadataRefreshedCount: 1,
       missingObjectCount: 0,
       oversizedCount: 0,
       processedCount: 2,

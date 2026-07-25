@@ -5,7 +5,10 @@ import type {
   listEligibleSkillSearchBackfillPage,
   listRepairableSkillSearchBackfillPage,
 } from "@skills-re/api/modules/skills/search-documents-repo";
-import type { replaceSkillSearchDocument } from "@skills-re/api/modules/skills/search-document-service";
+import type {
+  refreshSkillSearchDocumentMetadata,
+  replaceSkillSearchDocument,
+} from "@skills-re/api/modules/skills/search-document-service";
 import { asSkillId, asSnapshotId } from "@skills-re/db/utils";
 import type {
   SkillSearchBackfillWorkflowPayload,
@@ -27,6 +30,7 @@ export interface WorkflowStep {
 export interface SkillSearchBackfillWorkflowDeps {
   listEligibleSkillSearchBackfillPage: typeof listEligibleSkillSearchBackfillPage;
   listRepairableSkillSearchBackfillPage?: typeof listRepairableSkillSearchBackfillPage;
+  refreshSkillSearchDocumentMetadata: typeof refreshSkillSearchDocumentMetadata;
   replaceSkillSearchDocument: typeof replaceSkillSearchDocument;
   scheduleContinuation?: SkillSearchBackfillWorkflowScheduler | null;
   snapshotStorage: SnapshotStorageRuntime;
@@ -48,6 +52,8 @@ const createInitialCounts = () => ({
   failedCount: 0,
   hashMismatchCount: 0,
   indexedCount: 0,
+  metadataDeletedCount: 0,
+  metadataRefreshedCount: 0,
   missingObjectCount: 0,
   oversizedCount: 0,
   skippedCount: 0,
@@ -92,8 +98,11 @@ const backfillSkillSearchDocument = async (
     return { status: "deleted" as const };
   }
 
+  const metadataResult = await deps.refreshSkillSearchDocumentMetadata(asSkillId(row.skillId));
+
   return {
     indexingStatus: result.status === "replaced" ? result.indexingStatus : null,
+    metadataStatus: metadataResult.status,
     status: "indexed" as const,
   };
 };
@@ -143,6 +152,11 @@ export const runSkillSearchBackfillWorkflow = async (
         counts.deletedCount += 1;
       } else {
         counts.indexedCount += 1;
+        if (result.metadataStatus === "deleted") {
+          counts.metadataDeletedCount += 1;
+        } else {
+          counts.metadataRefreshedCount += 1;
+        }
         if (result.indexingStatus === "truncated") {
           counts.oversizedCount += 1;
         }
