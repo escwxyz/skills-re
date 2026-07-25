@@ -187,6 +187,10 @@ const aiSearchBackfillWorkflowQueue = await Queue("AI_SEARCH_BACKFILL_WORKFLOW_Q
   name: "skills-re-v1-ai-search-backfill-workflow",
 });
 
+const skillSearchBackfillWorkflowQueue = await Queue("SKILL_SEARCH_BACKFILL_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-skill-search-backfill-workflow",
+});
+
 const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-skills-tagging-workflow",
 });
@@ -301,6 +305,13 @@ const workflowQueueEventSources = [
     },
   },
   {
+    queue: skillSearchBackfillWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 2000,
+    },
+  },
+  {
     queue: snapshotUploadWorkflowQueue0,
     settings: {
       batchSize: 1,
@@ -334,6 +345,10 @@ const workflowBindings = {
   AI_SEARCH_BACKFILL_WORKFLOW: Workflow("AI_SEARCH_BACKFILL_WORKFLOW", {
     className: "AiSearchBackfillWorkflow",
     workflowName: "skills-re-v1-ai-search-backfill",
+  }),
+  SKILL_SEARCH_BACKFILL_WORKFLOW: Workflow("SKILL_SEARCH_BACKFILL_WORKFLOW", {
+    className: "SkillSearchBackfillWorkflow",
+    workflowName: "skills-re-v1-skill-search-backfill",
   }),
   REPO_SNAPSHOT_SYNC_WORKFLOW: Workflow("REPO_SNAPSHOT_SYNC_WORKFLOW", {
     className: "RepoSnapshotSyncWorkflow",
@@ -396,6 +411,7 @@ const workflowQueueBindings = {
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
   SKILL_EVAL_RUN_WORKFLOW_QUEUE: skillEvalRunWorkflowQueue,
   AI_SEARCH_BACKFILL_WORKFLOW_QUEUE: aiSearchBackfillWorkflowQueue,
+  SKILL_SEARCH_BACKFILL_WORKFLOW_QUEUE: skillSearchBackfillWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2: snapshotUploadWorkflowQueue2,
@@ -447,6 +463,7 @@ export const server = await Worker("server", {
     SKILL_EVAL_SANDBOX_ENABLED: alchemy.env.SKILL_EVAL_SANDBOX_ENABLED!,
     SKILL_EVAL_OPENCODE_API_KEY: alchemy.secret.env.SKILL_EVAL_OPENCODE_API_KEY!,
     SKILL_EVAL_OPENCODE_MODEL: alchemy.env.SKILL_EVAL_OPENCODE_MODEL!,
+    SKILL_KEYWORD_SEARCH_STRATEGY: alchemy.env.SKILL_KEYWORD_SEARCH_STRATEGY ?? "like",
     AUTH_COOKIE_DOMAIN: alchemy.env.AUTH_COOKIE_DOMAIN ?? "",
     R2_PUBLIC_BASE_URL: alchemy.env.R2_PUBLIC_BASE_URL!,
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
