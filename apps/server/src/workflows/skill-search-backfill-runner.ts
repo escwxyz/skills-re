@@ -44,6 +44,7 @@ const formatErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
 const createInitialCounts = () => ({
+  deletedCount: 0,
   failedCount: 0,
   hashMismatchCount: 0,
   indexedCount: 0,
@@ -85,6 +86,10 @@ const backfillSkillSearchDocument = async (
 
   if (result.status === "skipped-stale") {
     return { status: "skipped-stale" as const };
+  }
+
+  if (result.status === "deleted") {
+    return { status: "deleted" as const };
   }
 
   return {
@@ -134,6 +139,8 @@ export const runSkillSearchBackfillWorkflow = async (
       } else if (result.status === "skipped-stale") {
         counts.skippedStaleCount += 1;
         counts.skippedCount += 1;
+      } else if (result.status === "deleted") {
+        counts.deletedCount += 1;
       } else {
         counts.indexedCount += 1;
         if (result.indexingStatus === "truncated") {

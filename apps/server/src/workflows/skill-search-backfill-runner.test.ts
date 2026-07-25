@@ -92,6 +92,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
     ]);
     expect(result).toEqual({
       continueCursor: "cursor-2",
+      deletedCount: 0,
       failedCount: 0,
       hashMismatchCount: 0,
       indexedCount: 1,
@@ -155,6 +156,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
     );
 
     expect(result).toMatchObject({
+      deletedCount: 0,
       failedCount: 0,
       hashMismatchCount: 1,
       indexedCount: 1,
@@ -163,6 +165,47 @@ describe("runSkillSearchBackfillWorkflow", () => {
       processedCount: 4,
       skippedCount: 3,
       skippedStaleCount: 1,
+    });
+  });
+
+  test("counts deleted search documents without treating them as indexed", async () => {
+    const rows = [
+      await createRow({ skillId: "skill-deleted" }),
+      await createRow({ skillId: "skill-indexed" }),
+    ];
+
+    const result = await runSkillSearchBackfillWorkflow(
+      {
+        payload: {},
+      },
+      createWorkflowStepStub() as never,
+      {
+        listEligibleSkillSearchBackfillPage: () =>
+          Promise.resolve({
+            continueCursor: "",
+            isDone: true,
+            page: rows,
+          }),
+        replaceSkillSearchDocument: (input) =>
+          Promise.resolve(
+            input.skillId === "skill-deleted"
+              ? { status: "deleted" as const }
+              : { indexingStatus: "indexed" as const, status: "replaced" as const },
+          ),
+        snapshotStorage: {
+          getSnapshotFileObject: () =>
+            Promise.resolve({
+              arrayBuffer: () => Promise.resolve(new TextEncoder().encode("body").buffer),
+            }),
+        } as never,
+      },
+    );
+
+    expect(result).toMatchObject({
+      deletedCount: 1,
+      indexedCount: 1,
+      processedCount: 2,
+      skippedCount: 0,
     });
   });
 
@@ -305,6 +348,7 @@ describe("runSkillSearchBackfillWorkflow", () => {
 
     expect(result).toEqual({
       continueCursor: "",
+      deletedCount: 0,
       failedCount: 1,
       hashMismatchCount: 0,
       indexedCount: 1,
