@@ -213,6 +213,9 @@ const insertTag = (database: Database, skillId: string, tagId: string, slug: str
   database.prepare("INSERT INTO skills_tags (skill_id, tag_id) VALUES (?, ?)").run(skillId, tagId);
 };
 
+const encodeFtsCursor = (offset: number) =>
+  btoa(JSON.stringify({ offset })).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+
 afterEach(() => {
   for (const database of databases.splice(0)) {
     database.close();
@@ -333,6 +336,36 @@ describe("searchSkillsPageByFts", () => {
       ],
     });
     expect(calls).toHaveLength(1);
+  });
+
+  test("clamps oversized FTS pagination inputs before rendering SQL", async () => {
+    const dialect = new SQLiteSyncDialect();
+    const calls: ReturnType<SQLiteSyncDialect["sqlToQuery"]>[] = [];
+    const db = {
+      all(query: SQL) {
+        calls.push(dialect.sqlToQuery(query));
+        return Promise.resolve([]);
+      },
+    };
+
+    await expect(
+      searchSkillsPageByFts(
+        {
+          cursor: encodeFtsCursor(1_000_000),
+          limit: 500,
+          query: "workflow",
+        },
+        db,
+      ),
+    ).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [],
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.params).toContain(101);
+    expect(calls[0]?.params).toContain(10_000);
   });
 
   test("searches a migrated SQLite FTS table with ranking, exclusion, filters, pagination, and zero-match behavior", async () => {

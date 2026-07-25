@@ -39,6 +39,8 @@ interface FtsSearchDb {
 }
 
 const defaultFtsSearchDb = db as FtsSearchDb;
+const MAX_FTS_SEARCH_LIMIT = 100;
+const MAX_FTS_SEARCH_OFFSET = 10_000;
 
 const encodeFtsSearchCursor = (cursor: FtsSearchCursor | null) => {
   if (!cursor) {
@@ -74,6 +76,17 @@ const decodeFtsSearchCursor = (cursor: string | undefined) => {
 
   return 0;
 };
+
+const normalizeFtsSearchLimit = (limit: number | undefined) => {
+  if (typeof limit !== "number" || !Number.isInteger(limit) || limit <= 0) {
+    return defaultLimit;
+  }
+
+  return Math.min(limit, MAX_FTS_SEARCH_LIMIT);
+};
+
+const normalizeFtsSearchOffset = (cursor: string | undefined) =>
+  Math.min(decodeFtsSearchCursor(cursor), MAX_FTS_SEARCH_OFFSET);
 
 const cleanStringList = (values: string[] | undefined) =>
   (values ?? []).map((value) => value.trim()).filter(Boolean);
@@ -154,8 +167,8 @@ export const searchSkillsPageByFts = async (
     return null;
   }
 
-  const limit = input.limit ?? defaultLimit;
-  const offset = decodeFtsSearchCursor(input.cursor);
+  const limit = normalizeFtsSearchLimit(input.limit);
+  const offset = normalizeFtsSearchOffset(input.cursor);
   const rows = await database.all<FtsSearchRow>(sql`
     SELECT
       r.owner_handle AS authorHandle,
