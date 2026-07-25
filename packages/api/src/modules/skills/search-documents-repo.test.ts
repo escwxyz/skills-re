@@ -132,6 +132,9 @@ const createCapacityDb = (input: {
   return db;
 };
 
+const encodeBackfillCursorPayload = (payload: unknown) =>
+  Buffer.from(JSON.stringify(payload), "utf-8").toString("base64url");
+
 describe("skill search document diagnostics repository", () => {
   test("maps diagnostic count rows into named operational counters", async () => {
     const db = createDiagnosticsDb([
@@ -210,6 +213,42 @@ describe("skill search document diagnostics repository", () => {
       page: [rows[0]],
     });
     expect(db.calls).toContain("limit:2");
+  });
+
+  test("treats an absent backfill cursor as the first page", async () => {
+    const db = createBackfillDb([]);
+
+    await expect(listEligibleSkillSearchBackfillPage({}, db as never)).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [],
+    });
+    expect(db.calls).toContain("where");
+  });
+
+  test("throws on malformed backfill cursors instead of restarting from the first page", async () => {
+    const db = createBackfillDb([]);
+
+    await expect(
+      listEligibleSkillSearchBackfillPage({ cursor: "not-json" }, db as never),
+    ).rejects.toThrow("Invalid skill search backfill cursor: malformed token.");
+    expect(db.calls).toEqual([]);
+  });
+
+  test("throws on structurally invalid backfill cursors", async () => {
+    const db = createBackfillDb([]);
+
+    await expect(
+      listEligibleSkillSearchBackfillPage(
+        {
+          cursor: encodeBackfillCursorPayload({ id: 123, updatedAt: "later" }),
+        },
+        db as never,
+      ),
+    ).rejects.toThrow(
+      "Invalid skill search backfill cursor: expected string id and numeric updatedAt.",
+    );
+    expect(db.calls).toEqual([]);
   });
 
   test("lists only repairable skill documents for reconciliation backfill", async () => {

@@ -57,20 +57,25 @@ const decodeSkillSearchBackfillCursor = (value?: string): SkillSearchBackfillCur
     return null;
   }
 
+  let parsed: Partial<SkillSearchBackfillCursor>;
   try {
-    const parsed = JSON.parse(
+    parsed = JSON.parse(
       Buffer.from(value, "base64url").toString("utf-8"),
     ) as Partial<SkillSearchBackfillCursor>;
-    if (typeof parsed.id === "string" && typeof parsed.updatedAt === "number") {
-      return {
-        id: parsed.id,
-        updatedAt: parsed.updatedAt,
-      };
-    }
-  } catch {
-    return null;
+  } catch (error) {
+    throw new Error("Invalid skill search backfill cursor: malformed token.", { cause: error });
   }
-  return null;
+
+  if (typeof parsed.id !== "string" || typeof parsed.updatedAt !== "number") {
+    throw new TypeError(
+      "Invalid skill search backfill cursor: expected string id and numeric updatedAt.",
+    );
+  }
+
+  return {
+    id: parsed.id,
+    updatedAt: parsed.updatedAt,
+  };
 };
 
 const hasEntryR2Key = <TRow extends { entryR2Key: string | null }>(
