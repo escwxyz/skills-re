@@ -1,4 +1,5 @@
 import type { AiTaskRuntime } from "./modules/ai/runtime";
+import type { SkillKeywordSearchStrategyConfig } from "./modules/skills/search-strategy";
 
 export type { AiTaskRuntime, AiTaskType } from "./modules/ai/runtime";
 
@@ -295,7 +296,9 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  waitUntil?: (promise: Promise<unknown>) => void;
   features?: {
+    skillKeywordSearch?: SkillKeywordSearchStrategyConfig;
     skillEvalSandboxEnabled?: boolean;
   };
   revokeSession?: () => Promise<void>;

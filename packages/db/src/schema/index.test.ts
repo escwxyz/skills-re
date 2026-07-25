@@ -27,6 +27,8 @@ import {
   newsletterTable,
   sessionsRelations,
   sessionsTable,
+  skillSearchDocumentsRelations,
+  skillSearchDocumentsTable,
   usersRelations,
   usersTable,
   verificationsTable,
@@ -50,6 +52,11 @@ describe("database schema registry", () => {
     expect(snapshotFilesTable).toBeDefined();
     expect(snapshotsRelations).toBeDefined();
     expect(snapshotFilesRelations).toBeDefined();
+  });
+
+  test("exports the skill search document table and relations", () => {
+    expect(skillSearchDocumentsTable).toBeDefined();
+    expect(skillSearchDocumentsRelations).toBeDefined();
   });
 
   test("exports the auth tables and relations", () => {

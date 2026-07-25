@@ -10,8 +10,16 @@ import type {
 import { buildAiSearchResult } from "../ai-search";
 import type { AiSearchResult } from "../ai-search";
 import { findSnapshotByContentHashes } from "../snapshots/repo";
+import type { SearchSkillRow } from "../shared/search-skill";
 import { toSearchSkillItem, toValidSearchSkillItem } from "../shared/search-skill";
 import { normalizeDirectoryPath } from "../repos/directory-path";
+import type {
+  SkillKeywordSearchQueryFailure,
+  SkillKeywordSearchShadowComparison,
+  SkillKeywordSearchStrategyConfig,
+  SkillKeywordSearchTelemetry,
+} from "./search-strategy";
+import { getSkillKeywordSearchStrategyConfig } from "./search-strategy";
 
 interface SkillListRow {
   description: string;
@@ -99,6 +107,8 @@ interface SubmitGithubRepoPublicResult {
   workflowId?: string;
 }
 
+const SHADOW_TOP_RESULT_LIMIT = 5;
+
 const getSelectedSkillRootPathSet = (skillRootPaths?: string[]) =>
   new Set((skillRootPaths ?? []).map((path) => normalizeDirectoryPath(path)));
 
@@ -133,29 +143,6 @@ const filterNewSkillsByContent = async (
 
   return filteredSkills.filter((skill): skill is NonNullable<typeof skill> => skill !== null);
 };
-
-interface SearchSkillRow {
-  authorHandle: string;
-  createdAt: number;
-  description: string;
-  downloadsAllTime: number;
-  downloadsTrending: number;
-  forkCount: number;
-  id: string;
-  isVerified: boolean;
-  latestVersion: string | null;
-  license: string | null;
-  ownerAvatarUrl: string | null;
-  primaryCategory: string | null;
-  repoName: string;
-  repoUrl: string | null;
-  slug: string;
-  stargazerCount: number;
-  syncTime: number;
-  title: string;
-  updatedAt: number;
-  viewsAllTime: number;
-}
 
 interface SearchSkillsPageInput {
   authorHandle?: string;
@@ -208,12 +195,16 @@ export interface SkillsServiceDeps {
     sort?: "alphabetical" | "popular";
   }) => Promise<AuthorListPageRow>;
   listSkillsHistoryInfoByIds: (skillIds: string[]) => Promise<SkillHistoryInfoRow[]>;
-  listPublicSkillsByIds: (skillIds: string[]) => Promise<SearchSkillRow[]>;
   searchSkillsPageByFilters: (input?: SearchSkillsPageInput) => Promise<{
     continueCursor: string;
     isDone: boolean;
     page: SearchSkillRow[];
   }>;
+  searchSkillsPageByFts: (input: SearchSkillsPageInput) => Promise<{
+    continueCursor: string;
+    isDone: boolean;
+    page: SearchSkillRow[];
+  } | null>;
   listReposPageBySyncTime: (input?: { cursor?: string; limit?: number }) => Promise<{
     continueCursor: string;
     isDone: boolean;
@@ -309,13 +300,13 @@ const defaultDeps: SkillsServiceDeps = {
     const { listSkillsHistoryInfoByIds } = await import("./repo");
     return await listSkillsHistoryInfoByIds(skillIds);
   },
-  listPublicSkillsByIds: async (skillIds) => {
-    const { listPublicSkillsByIds } = await import("./repo");
-    return await listPublicSkillsByIds(skillIds);
-  },
   searchSkillsPageByFilters: async (input) => {
     const { searchSkillsPageByFilters } = await import("./repo");
     return await searchSkillsPageByFilters(input);
+  },
+  searchSkillsPageByFts: async (input) => {
+    const { searchSkillsPageByFts } = await import("./fts-search-repo");
+    return await searchSkillsPageByFts(input);
   },
   listReposPageBySyncTime: async (input) => {
     const { listReposPageBySyncTime } = await import("./repo");
@@ -345,6 +336,75 @@ const toAuthor = (row: AuthorRow) => ({
   repoCount: row.repoCount,
   skillCount: row.skillCount,
 });
+
+const getTopResultOverlap = (
+  authoritativeRows: { id: string }[],
+  candidateRows: { id: string }[],
+) => {
+  const authoritativeIds = authoritativeRows.slice(0, SHADOW_TOP_RESULT_LIMIT).map((row) => row.id);
+  const candidateIds = new Set(
+    candidateRows.slice(0, SHADOW_TOP_RESULT_LIMIT).map((row) => row.id),
+  );
+  const sampleSize = Math.min(authoritativeIds.length, SHADOW_TOP_RESULT_LIMIT);
+  if (sampleSize === 0) {
+    return {
+      topResultOverlap: 0,
+      topResultSampleSize: 0,
+    };
+  }
+
+  const overlapCount = authoritativeIds.filter((id) => candidateIds.has(id)).length;
+  return {
+    topResultOverlap: overlapCount / sampleSize,
+    topResultSampleSize: sampleSize,
+  };
+};
+
+const recordShadowComparison = async (
+  telemetry: SkillKeywordSearchTelemetry | undefined,
+  input: SkillKeywordSearchShadowComparison,
+) => {
+  try {
+    await telemetry?.recordShadowComparison(input);
+  } catch {
+    // Telemetry must not affect search responses.
+  }
+};
+
+const recordQueryFailure = async (
+  telemetry: SkillKeywordSearchTelemetry | undefined,
+  input: SkillKeywordSearchQueryFailure,
+) => {
+  try {
+    await telemetry?.recordQueryFailure?.(input);
+  } catch {
+    // Telemetry must not affect search responses.
+  }
+};
+
+const observeShadowComparison = (
+  telemetry: SkillKeywordSearchTelemetry | undefined,
+  observation: Promise<unknown>,
+) => {
+  const guardedObservation = (async () => {
+    try {
+      await observation;
+    } catch {
+      // Shadow comparisons must not affect search responses.
+    }
+  })();
+
+  if (telemetry?.waitUntil) {
+    try {
+      telemetry.waitUntil(guardedObservation);
+      return;
+    } catch {
+      // Fall through to detached observation if the request context rejects it.
+    }
+  }
+
+  void guardedObservation;
+};
 
 export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) => {
   const deps = {
@@ -486,16 +546,11 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
       }));
     },
 
-    async hydratePagefindHits(input: { skillIds: string[] }) {
-      const rows = await deps.listPublicSkillsByIds(input.skillIds);
-      return rows
-        .map(toValidSearchSkillItem)
-        .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null);
-    },
-
     async search(
       input: SearchSkillsPageInput,
       aiSearchRuntime?: AiSearchRuntime,
+      keywordSearchConfig: SkillKeywordSearchStrategyConfig = getSkillKeywordSearchStrategyConfig(),
+      keywordSearchTelemetry?: SkillKeywordSearchTelemetry,
     ): Promise<
       | { continueCursor: string; isDone: boolean; page: ReturnType<typeof toSearchSkillItem>[] }
       | AiSearchResult
@@ -510,12 +565,111 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
         };
       };
 
+      const keywordSearch = async () => {
+        if (keywordSearchConfig.authoritativeEngine !== "fts5") {
+          const startedAt = Date.now();
+          const authoritativeResultPromise = browseSearch();
+          const candidateResultPromise = keywordSearchConfig.shadowCompareFts5
+            ? (async () => {
+                try {
+                  const result = await deps.searchSkillsPageByFts(input);
+                  return { result, status: "fulfilled" as const };
+                } catch {
+                  return { status: "rejected" as const };
+                }
+              })()
+            : null;
+          const authoritativeResult = await authoritativeResultPromise;
+          if (candidateResultPromise) {
+            observeShadowComparison(
+              keywordSearchTelemetry,
+              (async () => {
+                const candidateResult = await candidateResultPromise;
+                if (candidateResult.status === "fulfilled") {
+                  if (candidateResult.result) {
+                    const candidatePage = candidateResult.result.page
+                      .map(toValidSearchSkillItem)
+                      .filter(
+                        (item): item is ReturnType<typeof toSearchSkillItem> => item !== null,
+                      );
+                    const { topResultOverlap, topResultSampleSize } = getTopResultOverlap(
+                      authoritativeResult.page,
+                      candidatePage,
+                    );
+                    await recordShadowComparison(keywordSearchTelemetry, {
+                      authoritativeEngine: "like",
+                      authoritativeResultCount: authoritativeResult.page.length,
+                      candidateEngine: "fts5",
+                      candidateResultCount: candidatePage.length,
+                      failed: false,
+                      latencyMs: Date.now() - startedAt,
+                      topResultOverlap,
+                      topResultSampleSize,
+                      zeroResultChanged:
+                        (authoritativeResult.page.length === 0) !== (candidatePage.length === 0),
+                    });
+                  }
+                  return;
+                }
+
+                await recordQueryFailure(keywordSearchTelemetry, {
+                  engine: "fts5",
+                  fallbackApplied: true,
+                  latencyMs: Date.now() - startedAt,
+                  phase: "shadow",
+                  strategy: keywordSearchConfig.strategy,
+                });
+                await recordShadowComparison(keywordSearchTelemetry, {
+                  authoritativeEngine: "like",
+                  authoritativeResultCount: authoritativeResult.page.length,
+                  candidateEngine: "fts5",
+                  candidateResultCount: 0,
+                  failed: true,
+                  latencyMs: Date.now() - startedAt,
+                  topResultOverlap: 0,
+                  topResultSampleSize: 0,
+                  zeroResultChanged: authoritativeResult.page.length > 0,
+                });
+              })(),
+            );
+          }
+
+          return authoritativeResult;
+        }
+
+        const startedAt = Date.now();
+        let result: Awaited<ReturnType<SkillsServiceDeps["searchSkillsPageByFts"]>>;
+        try {
+          result = await deps.searchSkillsPageByFts(input);
+        } catch {
+          await recordQueryFailure(keywordSearchTelemetry, {
+            engine: "fts5",
+            fallbackApplied: false,
+            latencyMs: Date.now() - startedAt,
+            phase: "authoritative",
+            strategy: keywordSearchConfig.strategy,
+          });
+          throw new Error("FTS keyword search failed.");
+        }
+
+        if (!result) {
+          return await browseSearch();
+        }
+
+        return {
+          ...result,
+          page: result.page
+            .map(toValidSearchSkillItem)
+            .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
+        };
+      };
+
       if (!input.query) {
         return await browseSearch();
       }
 
       if (input.searchMode === "keyword") {
-        return await browseSearch();
+        return await keywordSearch();
       }
 
       const runtime = aiSearchRuntime;
@@ -571,10 +725,6 @@ export async function checkExistingSkill(input: { slug: string }) {
   return await skillsService.checkExisting(input);
 }
 
-export async function hydratePagefindHits(input: { skillIds: string[] }) {
-  return await skillsService.hydratePagefindHits(input);
-}
-
 export async function checkExistingRepository(input: { repoOwner: string }) {
   return await skillsService.checkExistingRepository(input);
 }
@@ -626,8 +776,15 @@ export async function getSkillsHistoryInfo(input: { skillIds: string[] }) {
 export async function searchSkills(
   input: SearchSkillsPageInput,
   aiSearchRuntime?: AiSearchRuntime,
+  keywordSearchConfig?: SkillKeywordSearchStrategyConfig,
+  keywordSearchTelemetry?: SkillKeywordSearchTelemetry,
 ) {
-  return await skillsService.search(input, aiSearchRuntime);
+  return await skillsService.search(
+    input,
+    aiSearchRuntime,
+    keywordSearchConfig,
+    keywordSearchTelemetry,
+  );
 }
 
 export async function aiSearch(

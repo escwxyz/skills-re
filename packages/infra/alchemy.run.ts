@@ -73,14 +73,6 @@ const skillEvalArtifactsBucket = await R2Bucket("skills-re-skill-eval-artifacts"
   },
 });
 
-const pagefindIndexBucket = await R2Bucket("skills-re-pagefind-index", {
-  name: "skills-re-pagefind-index",
-  adopt: true,
-  dev: {
-    remote: true,
-  },
-});
-
 const downloadEventsDataset = AnalyticsEngineDataset("DOWNLOAD_EVENTS", {
   dataset: "skills-re-download-events",
 });
@@ -193,6 +185,10 @@ const skillsUploadWorkflowQueue = await Queue("SKILLS_UPLOAD_WORKFLOW_QUEUE_V1",
 
 const aiSearchBackfillWorkflowQueue = await Queue("AI_SEARCH_BACKFILL_WORKFLOW_QUEUE_V1", {
   name: "skills-re-v1-ai-search-backfill-workflow",
+});
+
+const skillSearchBackfillWorkflowQueue = await Queue("SKILL_SEARCH_BACKFILL_WORKFLOW_QUEUE_V1", {
+  name: "skills-re-v1-skill-search-backfill-workflow",
 });
 
 const skillsTaggingWorkflowQueue = await Queue("SKILLS_TAGGING_WORKFLOW_QUEUE_V1", {
@@ -309,6 +305,13 @@ const workflowQueueEventSources = [
     },
   },
   {
+    queue: skillSearchBackfillWorkflowQueue,
+    settings: {
+      batchSize: 1,
+      maxWaitTimeMs: 2000,
+    },
+  },
+  {
     queue: snapshotUploadWorkflowQueue0,
     settings: {
       batchSize: 1,
@@ -342,6 +345,10 @@ const workflowBindings = {
   AI_SEARCH_BACKFILL_WORKFLOW: Workflow("AI_SEARCH_BACKFILL_WORKFLOW", {
     className: "AiSearchBackfillWorkflow",
     workflowName: "skills-re-v1-ai-search-backfill",
+  }),
+  SKILL_SEARCH_BACKFILL_WORKFLOW: Workflow("SKILL_SEARCH_BACKFILL_WORKFLOW", {
+    className: "SkillSearchBackfillWorkflow",
+    workflowName: "skills-re-v1-skill-search-backfill",
   }),
   REPO_SNAPSHOT_SYNC_WORKFLOW: Workflow("REPO_SNAPSHOT_SYNC_WORKFLOW", {
     className: "RepoSnapshotSyncWorkflow",
@@ -404,6 +411,7 @@ const workflowQueueBindings = {
   SKILLS_UPLOAD_WORKFLOW_QUEUE: skillsUploadWorkflowQueue,
   SKILL_EVAL_RUN_WORKFLOW_QUEUE: skillEvalRunWorkflowQueue,
   AI_SEARCH_BACKFILL_WORKFLOW_QUEUE: aiSearchBackfillWorkflowQueue,
+  SKILL_SEARCH_BACKFILL_WORKFLOW_QUEUE: skillSearchBackfillWorkflowQueue,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_0: snapshotUploadWorkflowQueue0,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_1: snapshotUploadWorkflowQueue1,
   SNAPSHOT_UPLOAD_WORKFLOW_QUEUE_2: snapshotUploadWorkflowQueue2,
@@ -445,7 +453,6 @@ export const server = await Worker("server", {
     RESEND_API_KEY: alchemy.secret.env.RESEND_API_KEY!,
     METRICS_CACHE: metricsCache,
     SNAPSHOT_FILES: snapshotFilesBucket,
-    PAGEFIND_INDEX: pagefindIndexBucket,
     CLOUDFLARE_ACCOUNT_ID: alchemy.env.CLOUDFLARE_ACCOUNT_ID!,
     CLOUDFLARE_AI_GATEWAY_API_TOKEN: alchemy.secret.env.CLOUDFLARE_AI_GATEWAY_API_TOKEN!,
     CLOUDFLARE_GATEWAY: alchemy.env.CLOUDFLARE_GATEWAY!,
@@ -456,6 +463,7 @@ export const server = await Worker("server", {
     SKILL_EVAL_SANDBOX_ENABLED: alchemy.env.SKILL_EVAL_SANDBOX_ENABLED!,
     SKILL_EVAL_OPENCODE_API_KEY: alchemy.secret.env.SKILL_EVAL_OPENCODE_API_KEY!,
     SKILL_EVAL_OPENCODE_MODEL: alchemy.env.SKILL_EVAL_OPENCODE_MODEL!,
+    SKILL_KEYWORD_SEARCH_STRATEGY: alchemy.env.SKILL_KEYWORD_SEARCH_STRATEGY ?? "like",
     AUTH_COOKIE_DOMAIN: alchemy.env.AUTH_COOKIE_DOMAIN ?? "",
     R2_PUBLIC_BASE_URL: alchemy.env.R2_PUBLIC_BASE_URL!,
     R2_ARCHIVE_PUBLIC_BASE_URL: alchemy.env.R2_ARCHIVE_PUBLIC_BASE_URL!,
@@ -500,7 +508,6 @@ export const start = await TanStackStart("start", {
     VITE_SITE_URL: alchemy.env.PUBLIC_SITE_URL!,
     VITE_CLARITY_PROJECT_ID: alchemy.env.CLARITY_PROJECT_ID!,
     VITE_GA_MEASURE_ID: alchemy.env.GA_MEASURE_ID!,
-    VITE_PAGEFIND_SEARCH_ENABLED: alchemy.env.PAGEFIND_SEARCH_ENABLED ?? "false",
   },
 });
 

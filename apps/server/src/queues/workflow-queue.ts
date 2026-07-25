@@ -8,6 +8,7 @@ import type {
 import type { SnapshotArchiveUploadWorkflowPayload } from "../workflows/snapshots-archive-upload";
 import type { SnapshotUploadWorkflowPayload } from "../workflows/snapshot-upload";
 import type { AiSearchBackfillWorkflowPayload } from "../workflows/ai-search-backfill";
+import type { SkillSearchBackfillWorkflowPayload } from "../workflows/skill-search-backfill";
 import type { WorkerLogger } from "../worker-logger";
 import { createWorkflowQueueLogger } from "../logging";
 import { CLOUDFLARE_QUEUE_MAX_DELAY_SECONDS } from "../lib/cloudflare/queues";
@@ -115,6 +116,12 @@ export type WorkflowQueueMessage =
       workflowId: string;
     }
   | {
+      kind: "skill-search-backfill";
+      notBeforeMs?: number;
+      payload: SkillSearchBackfillWorkflowPayload;
+      workflowId: string;
+    }
+  | {
       kind: "skills-categorization";
       notBeforeMs?: number;
       payload: SkillsCategorizationWorkflowPayload;
@@ -143,6 +150,7 @@ export type WorkflowQueueEnv = Env & {
   REPO_STATS_SYNC_WORKFLOW?: WorkflowCreateBinding<RepoStatsSyncWorkflowPayload>;
   SNAPSHOTS_ARCHIVE_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotArchiveUploadWorkflowPayload>;
   SNAPSHOT_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SnapshotUploadWorkflowPayload>;
+  SKILL_SEARCH_BACKFILL_WORKFLOW?: WorkflowCreateBinding<SkillSearchBackfillWorkflowPayload>;
   SKILLS_CATEGORIZATION_WORKFLOW?: WorkflowCreateBinding<SkillsCategorizationWorkflowPayload>;
   SKILLS_TAGGING_WORKFLOW?: WorkflowCreateBinding<SkillsTaggingWorkflowPayload>;
   SKILLS_UPLOAD_WORKFLOW?: WorkflowCreateBinding<SkillsUploadWorkflowPayload>;
@@ -205,6 +213,14 @@ const isWorkflowQueueMessage = (value: unknown): value is WorkflowQueueMessage =
     return (
       (payload.batchSize === undefined || typeof payload.batchSize === "number") &&
       (payload.lastSeenId === undefined || typeof payload.lastSeenId === "string")
+    );
+  }
+  if (value.kind === "skill-search-backfill") {
+    const payload = value.payload as Record<string, unknown>;
+    return (
+      (payload.batchSize === undefined || typeof payload.batchSize === "number") &&
+      (payload.cursor === undefined || typeof payload.cursor === "string") &&
+      (payload.mode === undefined || payload.mode === "backfill" || payload.mode === "repair")
     );
   }
   if (value.kind === "repo-skill-import") {
@@ -285,6 +301,9 @@ const getWorkflowNameForQueueKind = (kind: WorkflowQueueMessage["kind"]) => {
     }
     case "snapshot-upload": {
       return "skills-re-v1-snapshot-upload";
+    }
+    case "skill-search-backfill": {
+      return "skills-re-v1-skill-search-backfill";
     }
     case "skills-categorization": {
       return "skills-re-v1-skills-categorization";
@@ -407,6 +426,16 @@ const startWorkflowFromQueueMessage = async (
       await getWorkflowBinding<SnapshotUploadWorkflowPayload>(
         env,
         "SNAPSHOT_UPLOAD_WORKFLOW",
+      ).create({
+        id: message.workflowId,
+        params: message.payload,
+      });
+      return;
+    }
+    case "skill-search-backfill": {
+      await getWorkflowBinding<SkillSearchBackfillWorkflowPayload>(
+        env,
+        "SKILL_SEARCH_BACKFILL_WORKFLOW",
       ).create({
         id: message.workflowId,
         params: message.payload,

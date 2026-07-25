@@ -32,7 +32,6 @@ import { isRateLimitedSearchError } from "@/utils/is-rate-limited-search-error";
 import { BrowseToolbar } from "@/components/browse-toolbar";
 import { openLoginDialog } from "@/utils/login-dialog";
 import type { SkillsSearchMode } from "@/components/skills-search-field";
-import { isPagefindSearchEnabled, pagefindSearchAdapter } from "@/lib/pagefind-search.browser";
 import { executeSkillSearch } from "@/lib/skill-search-strategy";
 
 const browseSortValues = [
@@ -56,7 +55,7 @@ const filterSchema = z.object({
 
 type SemanticSearchData = Extract<FetchSkillsSearchResult, { status: "ok" }>["data"];
 
-const getPagefindCategories = (activeClass: string) =>
+const getKeywordSearchCategories = (activeClass: string) =>
   activeClass === "all" ? undefined : [activeClass];
 
 const getSearchMeta = (mode: SkillsSearchMode, data?: SemanticSearchData) =>
@@ -122,7 +121,7 @@ function RouteComponent() {
     [search.category, search.q, search.sort, search.tag?.join("|"), search.tags?.join("|")],
   );
 
-  const skillsSearchQuery = useQuery<SemanticSearchData & { degraded?: boolean }, Error>({
+  const skillsSearchQuery = useQuery<SemanticSearchData, Error>({
     enabled: isSearchMode && searchQueryText.length > 0 && !isSearchInputLocked,
     queryFn: async () => {
       const serverSearch = async (searchMode: SkillsSearchMode) => {
@@ -130,7 +129,7 @@ function RouteComponent() {
           data: {
             categories:
               searchMode === "keyword"
-                ? getPagefindCategories(browseFilters.activeClass)
+                ? getKeywordSearchCategories(browseFilters.activeClass)
                 : undefined,
             limit: 24,
             query: searchQueryText,
@@ -148,14 +147,6 @@ function RouteComponent() {
       };
 
       return await executeSkillSearch({
-        pagefindEnabled: isPagefindSearchEnabled && search.sort === undefined,
-        pagefindSearch: async () =>
-          (await pagefindSearchAdapter.search({
-            categories: getPagefindCategories(browseFilters.activeClass),
-            limit: 24,
-            query: searchQueryText,
-            tags: browseFilters.tags,
-          })) as SemanticSearchData,
         query: searchQueryText,
         searchMode: selectedSearchMode,
         serverSearch,
@@ -168,7 +159,6 @@ function RouteComponent() {
       browseFilters.activeClass,
       browseFilters.tags,
       search.sort,
-      isPagefindSearchEnabled,
     ],
     retry: false,
   });
@@ -356,7 +346,6 @@ function RouteComponent() {
 
             {isSearchMode ? (
               <SemanticSearchResults
-                degraded={skillsSearchQuery.data?.degraded}
                 error={skillsSearchQuery.error}
                 isLoading={skillsSearchQuery.isFetching}
                 items={searchItems}

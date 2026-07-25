@@ -4,6 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { SkillsUploadContentPayload } from "../../types";
 import { encodeRepoCursor } from "../repos/cursor";
+import type { SearchSkillRow } from "../shared/search-skill";
 import {
   aiSearch,
   createSkillsService,
@@ -12,75 +13,18 @@ import {
   uploadSkills,
 } from "./service";
 
-describe("skills service", () => {
-  test("hydrates Pagefind hits in requested order and omits unavailable skills", async () => {
-    const calls: string[][] = [];
-    const rows = {
-      "skill-1": {
-        authorHandle: "acme",
-        createdAt: 1,
-        description: "First skill",
-        downloadsAllTime: 2,
-        downloadsTrending: 1,
-        forkCount: 0,
-        id: "skill-1",
-        isVerified: true,
-        latestVersion: "1.0.0",
-        license: "MIT",
-        ownerAvatarUrl: null,
-        primaryCategory: "tools",
-        repoName: "skills",
-        repoUrl: "https://github.com/acme/skills",
-        slug: "first",
-        stargazerCount: 3,
-        syncTime: 4,
-        title: "First",
-        updatedAt: 5,
-        viewsAllTime: 6,
-      },
-      "skill-2": {
-        authorHandle: "beta",
-        createdAt: 1,
-        description: "Second skill",
-        downloadsAllTime: 2,
-        downloadsTrending: 1,
-        forkCount: 0,
-        id: "skill-2",
-        isVerified: false,
-        latestVersion: null,
-        license: null,
-        ownerAvatarUrl: null,
-        primaryCategory: null,
-        repoName: "skills",
-        repoUrl: "https://github.com/beta/skills",
-        slug: "second",
-        stargazerCount: 3,
-        syncTime: 4,
-        title: "Second",
-        updatedAt: 5,
-        viewsAllTime: 6,
-      },
-    } as const;
-    const service = createSkillsService({
-      listPublicSkillsByIds: async (skillIds: string[]) => {
-        calls.push(skillIds);
-        return skillIds
-          .map((skillId) => rows[skillId as keyof typeof rows])
-          .filter((row): row is (typeof rows)[keyof typeof rows] => Boolean(row));
-      },
-    } as never);
-
-    await expect(
-      (
-        service as unknown as { hydratePagefindHits: (input: { skillIds: string[] }) => unknown }
-      ).hydratePagefindHits({ skillIds: ["skill-2", "missing", "skill-1"] }),
-    ).resolves.toMatchObject([
-      { id: "skill-2", title: "Second" },
-      { id: "skill-1", title: "First" },
-    ]);
-    expect(calls).toEqual([["skill-2", "missing", "skill-1"]]);
+const createDeferred = <T>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
   });
 
+  return { promise, reject, resolve };
+};
+
+describe("skills service", () => {
   test("returns paginated authors from the public authors list contract", async () => {
     const calls: { cursor?: string; limit?: number; sort?: "alphabetical" | "popular" }[] = [];
     const service = createSkillsService({
@@ -329,8 +273,13 @@ describe("skills service", () => {
 
   test("routes explicit keyword queries through the database search path", async () => {
     const filterCalls: Array<Record<string, unknown>> = [];
+    const ftsCalls: Array<Record<string, unknown>> = [];
     const aiCalls: unknown[] = [];
     const service = createSkillsService({
+      searchSkillsPageByFts: (input) => {
+        ftsCalls.push(input);
+        return Promise.resolve(null);
+      },
       searchSkillsPageByFilters: (input) => {
         filterCalls.push(input ?? {});
         return Promise.resolve({
@@ -397,15 +346,599 @@ describe("skills service", () => {
         searchMode: "keyword",
       },
     ]);
+    expect(ftsCalls).toEqual([]);
     expect(aiCalls).toEqual([]);
+  });
+
+  test("routes configured FTS5 keyword queries through the FTS repository", async () => {
+    const filterCalls: Array<Record<string, unknown>> = [];
+    const ftsCalls: Array<Record<string, unknown>> = [];
+    const aiCalls: unknown[] = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
+      searchSkillsPageByFts: (input) => {
+        ftsCalls.push(input);
+        return Promise.resolve({
+          continueCursor: "fts-cursor",
+          isDone: false,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "FTS workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-fts",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: "automation",
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "fts-workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              tags: ["search"],
+              title: "FTS Workflow",
+              updatedAt: 124,
+              viewsAllTime: 42,
+            },
+          ],
+        });
+      },
+    });
+
+    const result = await service.search(
+      {
+        authorHandle: "acme",
+        cursor: "cursor-1",
+        limit: 24,
+        minAuditScore: 80,
+        minScore: 70,
+        query: "workflow",
+        searchMode: "keyword",
+        tags: ["search"],
+      },
+      {
+        search(input) {
+          aiCalls.push(input);
+          return Promise.resolve({ data: [] });
+        },
+      },
+      {
+        authoritativeEngine: "fts5",
+        shadowCompareFts5: false,
+        strategy: "fts5",
+      },
+    );
+
+    expect(result).toMatchObject({
+      continueCursor: "fts-cursor",
+      isDone: false,
+      page: [
+        {
+          authorHandle: "acme",
+          repoName: "skills",
+          slug: "fts-workflow",
+          tags: ["search"],
+          title: "FTS Workflow",
+        },
+      ],
+    });
+    expect(ftsCalls).toEqual([
+      {
+        authorHandle: "acme",
+        cursor: "cursor-1",
+        limit: 24,
+        minAuditScore: 80,
+        minScore: 70,
+        query: "workflow",
+        searchMode: "keyword",
+        tags: ["search"],
+      },
+    ]);
+    expect(filterCalls).toEqual([]);
+    expect(aiCalls).toEqual([]);
+  });
+
+  test("falls back to the LIKE path when configured FTS5 cannot build a valid query", async () => {
+    const filterCalls: Array<Record<string, unknown>> = [];
+    const ftsCalls: Array<Record<string, unknown>> = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
+      searchSkillsPageByFts: (input) => {
+        ftsCalls.push(input);
+        return Promise.resolve(null);
+      },
+    });
+
+    await expect(
+      service.search(
+        {
+          query: "✨",
+          searchMode: "keyword",
+        },
+        undefined,
+        {
+          authoritativeEngine: "fts5",
+          shadowCompareFts5: false,
+          strategy: "fts5",
+        },
+      ),
+    ).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [],
+    });
+    expect(ftsCalls).toEqual([
+      {
+        query: "✨",
+        searchMode: "keyword",
+      },
+    ]);
+    expect(filterCalls).toEqual([
+      {
+        query: "✨",
+        searchMode: "keyword",
+      },
+    ]);
+  });
+
+  test("records shadow comparison metrics without changing the authoritative LIKE response", async () => {
+    const metrics: unknown[] = [];
+    const waitUntilPromises: Promise<unknown>[] = [];
+    const ftsResult = createDeferred<{
+      continueCursor: string;
+      isDone: boolean;
+      page: SearchSkillRow[];
+    }>();
+    let ftsStarted = false;
+    const service = createSkillsService({
+      searchSkillsPageByFilters: () =>
+        Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "LIKE workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-like-1",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: "automation",
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "like-workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "LIKE Workflow",
+              updatedAt: 124,
+              viewsAllTime: 42,
+            },
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "Shared workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-shared",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: "automation",
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "shared-workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "Shared Workflow",
+              updatedAt: 124,
+              viewsAllTime: 42,
+            },
+          ],
+        }),
+      searchSkillsPageByFts: () => {
+        ftsStarted = true;
+        return ftsResult.promise;
+      },
+    });
+
+    const searchPromise = service.search(
+      {
+        query: "workflow",
+        searchMode: "keyword",
+      },
+      undefined,
+      {
+        authoritativeEngine: "like",
+        shadowCompareFts5: true,
+        strategy: "shadow",
+      },
+      {
+        recordShadowComparison: (metric) => {
+          metrics.push(metric);
+          throw new Error("telemetry unavailable");
+        },
+        waitUntil: (promise) => {
+          waitUntilPromises.push(promise);
+        },
+      },
+    );
+    await Promise.resolve();
+
+    expect(ftsStarted).toBe(true);
+
+    const result = await searchPromise;
+
+    expect(result).toMatchObject({
+      page: [
+        {
+          id: "skill-like-1",
+          slug: "like-workflow",
+        },
+        {
+          id: "skill-shared",
+          slug: "shared-workflow",
+        },
+      ],
+    });
+    expect(metrics).toEqual([]);
+    expect(waitUntilPromises).toHaveLength(1);
+
+    ftsResult.resolve({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          createdAt: 123,
+          description: "Shared workflow skill",
+          downloadsAllTime: 10,
+          downloadsTrending: 1,
+          forkCount: 0,
+          id: "skill-shared",
+          isVerified: true,
+          latestVersion: "1.0.0",
+          license: "MIT",
+          ownerAvatarUrl: null,
+          primaryCategory: "automation",
+          repoName: "skills",
+          repoUrl: "https://github.com/acme/skills",
+          slug: "shared-workflow",
+          stargazerCount: 5,
+          syncTime: 123,
+          title: "Shared Workflow",
+          updatedAt: 124,
+          viewsAllTime: 42,
+        },
+        {
+          authorHandle: "acme",
+          createdAt: 123,
+          description: "Invalid candidate row",
+          downloadsAllTime: 10,
+          downloadsTrending: 1,
+          forkCount: 0,
+          id: "skill-invalid",
+          isVerified: true,
+          latestVersion: "1.0.0",
+          license: "MIT",
+          ownerAvatarUrl: null,
+          primaryCategory: "automation",
+          repoName: "skills",
+          repoUrl: "https://github.com/acme/skills",
+          slug: "Invalid Slug",
+          stargazerCount: 5,
+          syncTime: 123,
+          title: "Invalid Candidate",
+          updatedAt: 124,
+          viewsAllTime: 42,
+        },
+      ],
+    });
+    await Promise.all(waitUntilPromises);
+
+    expect(metrics).toEqual([
+      expect.objectContaining({
+        authoritativeEngine: "like",
+        authoritativeResultCount: 2,
+        candidateEngine: "fts5",
+        candidateResultCount: 1,
+        failed: false,
+        topResultOverlap: 0.5,
+        topResultSampleSize: 2,
+        zeroResultChanged: false,
+      }),
+    ]);
+  });
+
+  test("records bounded shadow failure metrics and keeps LIKE results authoritative", async () => {
+    const metrics: unknown[] = [];
+    const failures: unknown[] = [];
+    const waitUntilPromises: Promise<unknown>[] = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: () =>
+        Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "LIKE workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-like",
+              isVerified: true,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: null,
+              primaryCategory: "automation",
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "like-workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              title: "LIKE Workflow",
+              updatedAt: 124,
+              viewsAllTime: 42,
+            },
+          ],
+        }),
+      searchSkillsPageByFts: () => Promise.reject(new Error("fts unavailable")),
+    });
+
+    await expect(
+      service.search(
+        {
+          query: "workflow",
+          searchMode: "keyword",
+        },
+        undefined,
+        {
+          authoritativeEngine: "like",
+          shadowCompareFts5: true,
+          strategy: "shadow",
+        },
+        {
+          recordQueryFailure: (failure) => {
+            failures.push(failure);
+            return Promise.reject(new Error("failure telemetry unavailable"));
+          },
+          recordShadowComparison: (metric) => {
+            metrics.push(metric);
+            return Promise.reject(new Error("comparison telemetry unavailable"));
+          },
+          waitUntil: (promise) => {
+            waitUntilPromises.push(promise);
+          },
+        },
+      ),
+    ).resolves.toMatchObject({
+      page: [
+        {
+          id: "skill-like",
+          slug: "like-workflow",
+        },
+      ],
+    });
+    await Promise.all(waitUntilPromises);
+
+    expect(metrics).toEqual([
+      expect.objectContaining({
+        authoritativeEngine: "like",
+        authoritativeResultCount: 1,
+        candidateEngine: "fts5",
+        candidateResultCount: 0,
+        failed: true,
+        topResultOverlap: 0,
+        topResultSampleSize: 0,
+        zeroResultChanged: true,
+      }),
+    ]);
+    expect(failures).toEqual([
+      expect.objectContaining({
+        engine: "fts5",
+        fallbackApplied: true,
+        phase: "shadow",
+        strategy: "shadow",
+      }),
+    ]);
+  });
+
+  test("records authoritative FTS failures without falling back to LIKE", async () => {
+    const failures: unknown[] = [];
+    const filterCalls: unknown[] = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input);
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
+      searchSkillsPageByFts: () => Promise.reject(new Error("fts unavailable")),
+    });
+
+    await expect(
+      service.search(
+        {
+          query: "workflow",
+          searchMode: "keyword",
+        },
+        undefined,
+        {
+          authoritativeEngine: "fts5",
+          shadowCompareFts5: false,
+          strategy: "fts5",
+        },
+        {
+          recordQueryFailure: (failure) => {
+            failures.push(failure);
+          },
+          recordShadowComparison: () => undefined,
+        },
+      ),
+    ).rejects.toThrow("FTS keyword search failed.");
+
+    expect(filterCalls).toEqual([]);
+    expect(failures).toEqual([
+      expect.objectContaining({
+        engine: "fts5",
+        fallbackApplied: false,
+        phase: "authoritative",
+        strategy: "fts5",
+      }),
+    ]);
+  });
+
+  test("preserves keyword search filters, pagination, and result-card shape through database search", async () => {
+    const filterCalls: Array<Record<string, unknown>> = [];
+    const service = createSkillsService({
+      searchSkillsPageByFilters: (input) => {
+        filterCalls.push(input ?? {});
+        return Promise.resolve({
+          continueCursor: "cursor-next",
+          isDone: false,
+          page: [
+            {
+              authorHandle: "acme",
+              createdAt: 123,
+              description: "Workflow skill",
+              downloadsAllTime: 10,
+              downloadsTrending: 1,
+              forkCount: 0,
+              id: "skill-1",
+              isVerified: true,
+              latestAuditScore: 92,
+              latestSnapshotId: "snapshot-1",
+              latestSnapshotTotalBytes: 2048,
+              latestVersion: "1.0.0",
+              license: "MIT",
+              ownerAvatarUrl: "https://example.com/avatar.png",
+              primaryCategory: "automation",
+              repoName: "skills",
+              repoUrl: "https://github.com/acme/skills",
+              slug: "workflow",
+              stargazerCount: 5,
+              syncTime: 123,
+              tags: ["automation", "search"],
+              title: "Workflow",
+              updatedAt: 124,
+              viewsAllTime: 42,
+            },
+          ],
+        });
+      },
+    });
+
+    await expect(
+      service.search({
+        authorHandle: "acme",
+        categories: ["automation"],
+        cursor: "cursor-1",
+        limit: 24,
+        minAuditScore: 80,
+        minScore: 70,
+        query: "workflow",
+        repoName: "skills",
+        searchMode: "keyword",
+        sort: "downloads-all-time",
+        tags: ["search"],
+      }),
+    ).resolves.toEqual({
+      continueCursor: "cursor-next",
+      isDone: false,
+      page: [
+        {
+          author: {
+            avatarUrl: "https://example.com/avatar.png",
+            githubUrl: "https://github.com/acme",
+            handle: "acme",
+          },
+          authorHandle: "acme",
+          createdAt: 123,
+          description: "Workflow skill",
+          downloadsAllTime: 10,
+          downloadsTrending: 1,
+          forkCount: 0,
+          id: "skill-1",
+          isVerified: true,
+          latestAuditScore: 92,
+          latestSnapshotId: "snapshot-1",
+          latestSnapshotTotalBytes: 2048,
+          latestVersion: "1.0.0",
+          license: "MIT",
+          primaryCategory: "automation",
+          repoName: "skills",
+          repoUrl: "https://github.com/acme/skills",
+          slug: "workflow",
+          stargazerCount: 5,
+          syncTime: 123,
+          tags: ["automation", "search"],
+          title: "Workflow",
+          updatedAt: 124,
+          viewsAllTime: 42,
+        },
+      ],
+    });
+    expect(filterCalls).toEqual([
+      {
+        authorHandle: "acme",
+        categories: ["automation"],
+        cursor: "cursor-1",
+        limit: 24,
+        minAuditScore: 80,
+        minScore: 70,
+        query: "workflow",
+        repoName: "skills",
+        searchMode: "keyword",
+        sort: "downloads-all-time",
+        tags: ["search"],
+      },
+    ]);
   });
 
   test("routes explicit semantic queries through AI Search", async () => {
     const filterCalls: unknown[] = [];
+    const ftsCalls: unknown[] = [];
     const aiCalls: unknown[] = [];
     const service = createSkillsService({
       findSkillByPath: () => Promise.resolve(null),
       findSkillBySlug: () => Promise.resolve(null),
+      searchSkillsPageByFts: (input) => {
+        ftsCalls.push(input);
+        return Promise.resolve({
+          continueCursor: "",
+          isDone: true,
+          page: [],
+        });
+      },
       searchSkillsPageByFilters: (input) => {
         filterCalls.push(input);
         return Promise.resolve({
@@ -432,6 +965,11 @@ describe("skills service", () => {
           });
         },
       },
+      {
+        authoritativeEngine: "fts5",
+        shadowCompareFts5: false,
+        strategy: "fts5",
+      },
     );
 
     expect(result).toMatchObject({
@@ -449,6 +987,7 @@ describe("skills service", () => {
         rewriteQuery: false,
       },
     ]);
+    expect(ftsCalls).toEqual([]);
     expect(filterCalls).toEqual([]);
   });
 

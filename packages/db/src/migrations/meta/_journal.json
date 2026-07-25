@@ -169,6 +169,13 @@
       "when": 1780238400000,
       "tag": "0022_scope_skill_eval_run_idempotency_by_user",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1784969625000,
+      "tag": "0023_fts5_skill_search",
+      "breakpoints": true
     }
   ]
 }

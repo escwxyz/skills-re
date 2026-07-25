@@ -1,0 +1,11 @@
+{
+  "name": "skills-re-fts5-smoke",
+  "compatibility_date": "2026-03-10",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "skills-re-fts5-smoke",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+    },
+  ],
+}

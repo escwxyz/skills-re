@@ -10,6 +10,8 @@ describe("runRepoSkillSnapshotSyncWorkflow", () => {
     const calls = {
       createSnapshot: [] as unknown[],
       deprecateSnapshotsBeyondLimit: [] as unknown[],
+      refreshSkillSearchDocumentMetadata: [] as unknown[],
+      replaceSkillSearchDocument: [] as unknown[],
       setSkillLatestSnapshot: [] as unknown[],
       uploadSnapshotFiles: [] as unknown[],
     };
@@ -84,6 +86,17 @@ describe("runRepoSkillSnapshotSyncWorkflow", () => {
               slug: "existing",
             },
           ]),
+        refreshSkillSearchDocumentMetadata: (skillId) => {
+          calls.refreshSkillSearchDocumentMetadata.push(skillId);
+          return Promise.resolve({ status: "refreshed" as const });
+        },
+        replaceSkillSearchDocument: (input) => {
+          calls.replaceSkillSearchDocument.push(input);
+          return Promise.resolve({
+            indexingStatus: "indexed" as const,
+            status: "replaced" as const,
+          });
+        },
         setSkillLatestSnapshot: (input) => {
           calls.setSkillLatestSnapshot.push(input);
           return Promise.resolve();
@@ -135,6 +148,22 @@ describe("runRepoSkillSnapshotSyncWorkflow", () => {
         version: "1.0.1",
       },
     ]);
+    expect(calls.replaceSkillSearchDocument).toEqual([
+      {
+        authorHandle: "acme",
+        body: "---\nname: existing\ndescription: Existing skill\n---\n# Existing v2",
+        contentHash: expect.any(String),
+        description: "Existing skill",
+        isPublic: true,
+        repository: "skills",
+        skillId: "skill-1",
+        slug: "existing",
+        snapshotId: "snapshot-2",
+        title: "existing",
+        updatedAt: Date.parse("2026-05-16T10:00:00.000Z"),
+      },
+    ]);
+    expect(calls.refreshSkillSearchDocumentMetadata).toEqual(["skill-1"]);
     expect(calls.deprecateSnapshotsBeyondLimit).toEqual([
       {
         keepLatest: 3,

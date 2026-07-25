@@ -251,6 +251,65 @@ describe("processWorkflowQueueBatch", () => {
     ]);
   });
 
+  test("starts skill search backfill workflows from queue messages", async () => {
+    const created: { binding: string; id: string; params: unknown }[] = [];
+    const acked: string[] = [];
+
+    await processWorkflowQueueBatch(
+      {
+        messages: [
+          {
+            ack() {
+              acked.push("skill-search-backfill");
+            },
+            body: {
+              kind: "skill-search-backfill",
+              payload: {
+                batchSize: 25,
+                cursor: "cursor-001",
+                mode: "repair",
+              },
+              workflowId: "skill-search-backfill-1",
+            },
+            retry() {
+              throw new Error("should not retry skill search backfill");
+            },
+          },
+        ],
+      } as never,
+      {
+        SKILL_SEARCH_BACKFILL_WORKFLOW: {
+          create({ id, params }: { id: string; params: unknown }) {
+            created.push({ binding: "skill-search-backfill", id, params });
+            return Promise.resolve({ id });
+          },
+        },
+      } as never,
+      {
+        error() {},
+        info() {},
+        warn() {},
+        debug() {},
+        child() {
+          return this;
+        },
+      } as never,
+    );
+
+    expect(acked).toEqual(["skill-search-backfill"]);
+    expect(created).toEqual([
+      {
+        binding: "skill-search-backfill",
+        id: "skill-search-backfill-1",
+        params: {
+          batchSize: 25,
+          cursor: "cursor-001",
+          mode: "repair",
+        },
+      },
+    ]);
+  });
+
   test("rejects legacy inline skills-upload queue messages", async () => {
     let acked = false;
     let createCalled = false;

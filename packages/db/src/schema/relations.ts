@@ -17,6 +17,7 @@ import { collectionsTable, collectionsSkillsTable } from "./collections";
 import { reposTable } from "./repos";
 import { sandboxAgentsTable } from "./sandbox-agents";
 import { savedSkillsTable } from "./saved-skills";
+import { skillSearchDocumentsTable } from "./search-documents";
 import { skillUsageEventsTable } from "./skill-usage-events";
 import { reviewsTable } from "./reviews";
 import { skillsTable, skillsTagsTable } from "./skills";
@@ -184,6 +185,7 @@ export const skillsRelations = relations(skillsTable, ({ one, many }) => ({
   }),
   skillsTags: many(skillsTagsTable),
   savedSkills: many(savedSkillsTable),
+  searchDocuments: many(skillSearchDocumentsTable),
   skillEvalSuites: many(skillEvalSuitesTable),
   skillEvalCases: many(skillEvalCasesTable),
   skillEvalRuns: many(skillEvalRunsTable),
@@ -210,11 +212,23 @@ export const snapshotsRelations = relations(snapshotsTable, ({ many, one }) => (
   skillEvalSuites: many(skillEvalSuitesTable),
   skillEvalCases: many(skillEvalCasesTable),
   skillEvalRuns: many(skillEvalRunsTable),
+  searchDocuments: many(skillSearchDocumentsTable),
 }));
 
 export const snapshotFilesRelations = relations(snapshotFilesTable, ({ one }) => ({
   snapshot: one(snapshotsTable, {
     fields: [snapshotFilesTable.snapshotId],
+    references: [snapshotsTable.id],
+  }),
+}));
+
+export const skillSearchDocumentsRelations = relations(skillSearchDocumentsTable, ({ one }) => ({
+  skill: one(skillsTable, {
+    fields: [skillSearchDocumentsTable.skillId],
+    references: [skillsTable.id],
+  }),
+  snapshot: one(snapshotsTable, {
+    fields: [skillSearchDocumentsTable.snapshotId],
     references: [snapshotsTable.id],
   }),
 }));

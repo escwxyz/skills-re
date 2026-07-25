@@ -19,6 +19,7 @@ import { getSkillsTaggingWorkflowScheduler } from "./workflows/skills-tagging-sc
 import { getSkillsUploadWorkflowScheduler } from "./workflows/skills-upload-scheduler";
 import type { WorkerLogger } from "./worker-logger";
 import { createHistoricalSnapshotRunner } from "@skills-re/api/modules/snapshots/service";
+import { getSkillKeywordSearchStrategyConfig } from "@skills-re/api/modules/skills/search-strategy";
 import { getSnapshotBySkillAndCommit } from "@skills-re/api/modules/skills/repo";
 import { isSkillEvalSandboxEnabled } from "./skill-eval-sandbox/runtime";
 
@@ -52,6 +53,11 @@ interface CreateServerRuntimeOptions {
   logger?: WorkerLogger;
 }
 
+const getSkillKeywordSearchStrategyEnv = (env: Env) => ({
+  SKILL_KEYWORD_SEARCH_STRATEGY: (env as { SKILL_KEYWORD_SEARCH_STRATEGY?: string | null })
+    .SKILL_KEYWORD_SEARCH_STRATEGY,
+});
+
 export function createServerContextFromBase(
   baseContext: {
     auth: null;
@@ -59,6 +65,7 @@ export function createServerContextFromBase(
   },
   runtimeDeps: CreateServerRuntimeDeps = {},
   workerLogger?: ApiContext["workerLogger"],
+  waitUntil?: ApiContext["waitUntil"],
 ): ApiContext {
   return {
     ...baseContext,
@@ -73,6 +80,7 @@ export function createServerContextFromBase(
     metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
     snapshotStorage: runtimeDeps.snapshotStorage,
+    waitUntil,
     workerLogger,
     workflowSchedulers: runtimeDeps.workflowSchedulers,
   };
@@ -123,6 +131,9 @@ async function createServerRuntime(
     githubStats,
     githubSubmit,
     features: {
+      skillKeywordSearch: getSkillKeywordSearchStrategyConfig(
+        getSkillKeywordSearchStrategyEnv(env),
+      ),
       skillEvalSandboxEnabled: isSkillEvalSandboxEnabled(env),
     },
     metrics: {
@@ -154,5 +165,7 @@ export async function createServerContext({ context }: CreateServerContextOption
   const baseContext = await createApiContext({ context });
   const logger = context.get("workerLogger");
   const runtimeDeps = await createServerRuntime(context.env, { logger });
-  return createServerContextFromBase(baseContext, runtimeDeps, logger);
+  return createServerContextFromBase(baseContext, runtimeDeps, logger, (promise) => {
+    context.executionCtx.waitUntil(promise);
+  });
 }

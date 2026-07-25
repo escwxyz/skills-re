@@ -4,6 +4,10 @@ import {
   deprecateSnapshotsBeyondLimit,
   setSkillLatestSnapshot,
 } from "@skills-re/api/modules/snapshots/repo";
+import {
+  refreshSkillSearchDocumentMetadata,
+  replaceSkillSearchDocument,
+} from "@skills-re/api/modules/skills/search-document-service";
 import { findRepoByNameWithOwner } from "@skills-re/api/modules/repos/repo";
 import { listRepoSkillSnapshotHeadsByRepoId } from "@skills-re/api/modules/skills/repo";
 import {
@@ -88,6 +92,8 @@ export interface RepoSkillSnapshotSyncWorkflowDeps {
   }) => Promise<{ path: string; sha: string; size?: number; type: "blob" | "tree" }[]>;
   findRepoByNameWithOwner: (nameWithOwner: string) => Promise<RepoLookup>;
   listRepoSkillSnapshotHeadsByRepoId: (repoId: string) => Promise<RepoSkillSnapshotHead[]>;
+  refreshSkillSearchDocumentMetadata: typeof refreshSkillSearchDocumentMetadata;
+  replaceSkillSearchDocument: typeof replaceSkillSearchDocument;
   setSkillLatestSnapshot: (input: {
     latestCommitDate?: number | null;
     latestCommitMessage?: string | null;
@@ -115,6 +121,8 @@ const defaultDeps: RepoSkillSnapshotSyncWorkflowDeps = {
   findRepoByNameWithOwner,
   listRepoSkillSnapshotHeadsByRepoId: async (repoId) =>
     await listRepoSkillSnapshotHeadsByRepoId(asRepoId(repoId)),
+  refreshSkillSearchDocumentMetadata,
+  replaceSkillSearchDocument,
   setSkillLatestSnapshot: async (input) =>
     await setSkillLatestSnapshot({
       ...input,
@@ -137,6 +145,9 @@ const deriveNextSnapshotVersion = (latestVersion: string) => {
 
   return `${major}.${minor}.${patch + 1}`;
 };
+
+const formatErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 export const runRepoSkillSnapshotSyncWorkflow = async (
   event: Readonly<WorkflowEvent<RepoSkillSnapshotSyncWorkflowPayload>>,
@@ -274,6 +285,46 @@ export const runRepoSkillSnapshotSyncWorkflow = async (
         snapshotId,
         version: nextVersion,
       }),
+  );
+
+  await step.do(
+    "replace-skill-search-document",
+    workflowStepRetryPolicy.repoSkillSnapshotSync,
+    async () => {
+      if (!skillMdFile) {
+        console.warn("[repo-skill-snapshot-sync] fts-search skipped: entry file not found", {
+          entryPath: skill.entryPath,
+          filePaths: filesResponse.files.map((file) => file.path),
+          skillId,
+        });
+        return null;
+      }
+
+      try {
+        const result = await activeDeps.replaceSkillSearchDocument({
+          authorHandle: repoOwner,
+          body: skillMdFile.content,
+          contentHash: fingerprint?.skillContentHash ?? nextHash,
+          description: skill.latestDescription,
+          isPublic: true,
+          repository: repoName,
+          skillId: asSkillId(skillId),
+          slug: skill.slug,
+          snapshotId: asSnapshotId(snapshotId),
+          title: skill.latestName,
+          updatedAt: committedDate ?? Date.now(),
+        });
+        await activeDeps.refreshSkillSearchDocumentMetadata(asSkillId(skillId));
+        return result;
+      } catch (error) {
+        console.warn("[repo-skill-snapshot-sync] fts-search document update failed", {
+          error: formatErrorMessage(error),
+          skillId,
+          snapshotId,
+        });
+        return null;
+      }
+    },
   );
 
   await step.do(

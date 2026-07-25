@@ -179,8 +179,4 @@ describe("skills contract", () => {
   test("exposes the snapshot-backed skill history route", () => {
     expect(skillsContract.getSkillsHistoryInfo).toBeDefined();
   });
-
-  test("exposes the Pagefind hydration route", () => {
-    expect((skillsContract as Record<string, unknown>).hydratePagefindHits).toBeDefined();
-  });
 });
