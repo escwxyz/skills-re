@@ -339,11 +339,11 @@ export const reconcileSkillSearchDocuments = async (
   database: SearchDocumentDiagnosticsDb = defaultDiagnosticsDb,
 ) => {
   await deleteOrphanedSkillSearchDocuments(database);
-  if (input.runIntegrityCheck) {
-    await runSkillSearchFtsIntegrityCheck(database);
-  }
   if (input.rebuildFts) {
     await rebuildSkillSearchFtsIndex(database);
+  }
+  if (input.runIntegrityCheck) {
+    await runSkillSearchFtsIntegrityCheck(database);
   }
   return await getSkillSearchDocumentDiagnostics(database);
 };

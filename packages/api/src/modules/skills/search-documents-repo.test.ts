@@ -21,12 +21,13 @@ type QueryResult = Array<{ value: number }>;
 
 const createDiagnosticsDb = (results: QueryResult[]) => {
   const calls: string[] = [];
+  const dialect = new SQLiteSyncDialect();
   const db = {
     get runCalls() {
       return calls;
     },
-    run(query: unknown) {
-      calls.push(String(query));
+    run(query: SQL) {
+      calls.push(dialect.sqlToQuery(query).sql);
       return Promise.resolve();
     },
     select() {
@@ -399,6 +400,8 @@ describe("skill search document diagnostics repository", () => {
     });
 
     expect(db.runCalls).toHaveLength(3);
+    expect(db.runCalls[1]).toContain("rebuild");
+    expect(db.runCalls[2]).toContain("integrity-check");
 
     const cleanupOnlyDb = createDiagnosticsDb([]);
     await deleteOrphanedSkillSearchDocuments(cleanupOnlyDb as never);
