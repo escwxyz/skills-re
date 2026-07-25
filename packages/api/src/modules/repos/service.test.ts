@@ -582,6 +582,8 @@ describe("repos service", () => {
     }[] = [];
     const uploaded: { files: { content: string; path: string }[]; snapshotId: string }[] = [];
     const fetchedRoots: string[] = [];
+    const refreshedSearchDocuments: string[] = [];
+    const replacedSearchDocuments: unknown[] = [];
     const latestUpdates: {
       latestCommitDate?: number | null;
       latestCommitMessage?: string | null;
@@ -649,6 +651,14 @@ describe("repos service", () => {
           slug: "widget",
         },
       ],
+      refreshSkillSearchDocumentMetadata: (skillId) => {
+        refreshedSearchDocuments.push(skillId);
+        return Promise.resolve({ status: "refreshed" as const });
+      },
+      replaceSkillSearchDocument: (input) => {
+        replacedSearchDocuments.push(input);
+        return Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const });
+      },
       setSkillLatestSnapshot: (input) => {
         latestUpdates.push(input);
       },
@@ -711,6 +721,22 @@ describe("repos service", () => {
         version: "1.2.4",
       },
     ]);
+    expect(replacedSearchDocuments).toEqual([
+      {
+        authorHandle: "acme",
+        body: "---\nname: widget\n---\n# widget\n",
+        contentHash: expect.any(String),
+        description: "Widget skill snapshot",
+        isPublic: true,
+        repository: "widget",
+        skillId: "skill-1",
+        slug: "widget",
+        snapshotId: "snapshot-1",
+        title: "widget",
+        updatedAt: Date.parse("2026-04-18T12:00:00.000Z"),
+      },
+    ]);
+    expect(refreshedSearchDocuments).toEqual(["skill-1"]);
     expect(deprecated).toEqual([
       {
         keepLatest: 3,

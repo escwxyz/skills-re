@@ -51,6 +51,7 @@ export { RepoStatsSyncWorkflow } from "./workflows/repo-stats-sync";
 export { SnapshotRawFilesBackfillWorkflow } from "./workflows/snapshot-raw-files-backfill-workflow";
 export { SnapshotUploadWorkflow } from "./workflows/snapshot-upload-workflow";
 export { SnapshotsArchiveUploadWorkflow } from "./workflows/snapshots-archive-upload-workflow";
+export { SkillSearchBackfillWorkflow } from "./workflows/skill-search-backfill-workflow";
 export { SkillsCategorizationWorkflow } from "./workflows/skills-categorization";
 export { SkillsTaggingWorkflow } from "./workflows/skills-tagging";
 export { SkillsUploadWorkflow } from "./workflows/skills-upload-workflow";

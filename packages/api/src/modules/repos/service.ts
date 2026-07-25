@@ -3,6 +3,10 @@ import { z } from "zod/v4";
 import { asRepoId, asSkillId, asSnapshotId } from "@skills-re/db/utils";
 
 import { normalizeDirectoryPath } from "./directory-path";
+import type {
+  refreshSkillSearchDocumentMetadata,
+  replaceSkillSearchDocument,
+} from "../skills/search-document-service";
 
 const repoStatsQueryResultSchema = z.object({
   repository: z
@@ -149,6 +153,8 @@ export interface ReposServiceDeps {
     repo: string;
   }) => Promise<{ path: string; sha: string; size?: number; type: "blob" | "tree" }[]>;
   refreshRepoSkillSearchDocumentMetadata: (nameWithOwner: string) => Promise<unknown>;
+  refreshSkillSearchDocumentMetadata: typeof refreshSkillSearchDocumentMetadata;
+  replaceSkillSearchDocument: typeof replaceSkillSearchDocument;
   createSnapshot: (input: {
     description: string;
     directoryPath: string;
@@ -251,6 +257,8 @@ const truncateCommitMessage = (value?: string | null) => {
   return `${normalized.slice(0, maxLength - 1)}…`;
 };
 
+const parseCommitDate = (value?: string | null) => (value ? Date.parse(value) : null);
+
 const deriveNextSnapshotVersion = (latestVersion: string) => {
   const segments = latestVersion.split(".").map((segment) => Number.parseInt(segment, 10));
   const major = segments[0] ?? 0;
@@ -262,6 +270,74 @@ const deriveNextSnapshotVersion = (latestVersion: string) => {
   }
 
   return `${major}.${minor}.${patch + 1}`;
+};
+
+const formatErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const isSkillEntryPath = (value: string) => value.split("/").at(-1)?.toLowerCase() === "skill.md";
+
+const findSkillMdFile = (
+  skill: {
+    entryPath: string;
+  },
+  files: { content: string; path: string }[],
+) =>
+  files.find((file) => file.path === skill.entryPath) ??
+  files.find((file) => isSkillEntryPath(file.path));
+
+const replaceSnapshotSkillSearchDocument = async (input: {
+  deps: Pick<ReposServiceDeps, "refreshSkillSearchDocumentMetadata" | "replaceSkillSearchDocument">;
+  filesForSkill: { content: string; path: string }[];
+  repoName: string;
+  repoOwner: string;
+  skill: {
+    entryPath: string;
+    latestDescription: string;
+    latestName: string;
+    skillId: string;
+    slug: string;
+  };
+  snapshotHash: string;
+  snapshotId: string;
+  updatedAt: number;
+}) => {
+  const skillMdFile = findSkillMdFile(input.skill, input.filesForSkill);
+  if (!skillMdFile) {
+    console.warn("[repos] search document snapshot refresh skipped: entry file not found", {
+      entryPath: input.skill.entryPath,
+      filePaths: input.filesForSkill.map((file) => file.path),
+      skillId: input.skill.skillId,
+      snapshotId: input.snapshotId,
+    });
+    return null;
+  }
+
+  try {
+    const skillId = asSkillId(input.skill.skillId);
+    const result = await input.deps.replaceSkillSearchDocument({
+      authorHandle: input.repoOwner,
+      body: skillMdFile.content,
+      contentHash: input.snapshotHash,
+      description: input.skill.latestDescription,
+      isPublic: true,
+      repository: input.repoName,
+      skillId,
+      slug: input.skill.slug,
+      snapshotId: asSnapshotId(input.snapshotId),
+      title: input.skill.latestName,
+      updatedAt: input.updatedAt,
+    });
+    await input.deps.refreshSkillSearchDocumentMetadata(skillId);
+    return result;
+  } catch (error) {
+    console.warn("[repos] search document snapshot refresh failed", {
+      error: formatErrorMessage(error),
+      skillId: input.skill.skillId,
+      snapshotId: input.snapshotId,
+    });
+    return null;
+  }
 };
 
 const hashSnapshotFiles = async (files: { content: string; path: string }[]) => {
@@ -350,6 +426,15 @@ const defaultDeps: ReposServiceDeps = {
     const { refreshRepoSkillSearchDocumentMetadata } =
       await import("../skills/search-document-service");
     return await refreshRepoSkillSearchDocumentMetadata(nameWithOwner);
+  },
+  refreshSkillSearchDocumentMetadata: async (skillId) => {
+    const { refreshSkillSearchDocumentMetadata } =
+      await import("../skills/search-document-service");
+    return await refreshSkillSearchDocumentMetadata(skillId);
+  },
+  replaceSkillSearchDocument: async (input) => {
+    const { replaceSkillSearchDocument } = await import("../skills/search-document-service");
+    return await replaceSkillSearchDocument(input);
   },
 };
 
@@ -583,6 +668,8 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           | "fetchSkillFilesForRoot"
           | "fetchTree"
           | "listRepoSkillSnapshotHeadsByRepoId"
+          | "refreshSkillSearchDocumentMetadata"
+          | "replaceSkillSearchDocument"
           | "setSkillLatestSnapshot"
           | "uploadSnapshotFiles"
         >
@@ -693,9 +780,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           continue;
         }
 
-        const committedDate = headCommit.committedDate
-          ? Date.parse(headCommit.committedDate)
-          : null;
+        const committedDate = parseCommitDate(headCommit.committedDate);
         const commitMessage = truncateCommitMessage(headCommit.message);
         const nextVersion = deriveNextSnapshotVersion(skill.latestVersion);
         const snapshotId = await activeDeps.createSnapshot({
@@ -725,6 +810,16 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           skillId: skill.skillId,
           snapshotId,
           version: nextVersion,
+        });
+        await replaceSnapshotSkillSearchDocument({
+          deps: activeDeps,
+          filesForSkill,
+          repoName: input.repoName,
+          repoOwner: input.repoOwner,
+          skill,
+          snapshotHash: nextHash,
+          snapshotId,
+          updatedAt: committedDate ?? Date.now(),
         });
         await activeDeps.deprecateSnapshotsBeyondLimit({
           keepLatest: 3,
@@ -810,6 +905,8 @@ export const syncRepoSnapshots = (
       | "fetchSkillFilesForRoot"
       | "fetchTree"
       | "listRepoSkillSnapshotHeadsByRepoId"
+      | "refreshSkillSearchDocumentMetadata"
+      | "replaceSkillSearchDocument"
       | "setSkillLatestSnapshot"
       | "uploadSnapshotFiles"
     >
