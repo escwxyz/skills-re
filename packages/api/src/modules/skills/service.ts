@@ -364,14 +364,22 @@ const recordShadowComparison = async (
   telemetry: SkillKeywordSearchTelemetry | undefined,
   input: SkillKeywordSearchShadowComparison,
 ) => {
-  await telemetry?.recordShadowComparison(input);
+  try {
+    await telemetry?.recordShadowComparison(input);
+  } catch {
+    // Telemetry must not affect search responses.
+  }
 };
 
 const recordQueryFailure = async (
   telemetry: SkillKeywordSearchTelemetry | undefined,
   input: SkillKeywordSearchQueryFailure,
 ) => {
-  await telemetry?.recordQueryFailure?.(input);
+  try {
+    await telemetry?.recordQueryFailure?.(input);
+  } catch {
+    // Telemetry must not affect search responses.
+  }
 };
 
 export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) => {

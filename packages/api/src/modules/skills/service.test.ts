@@ -587,6 +587,7 @@ describe("skills service", () => {
       {
         recordShadowComparison: (metric) => {
           metrics.push(metric);
+          throw new Error("telemetry unavailable");
         },
       },
     );
@@ -668,9 +669,11 @@ describe("skills service", () => {
         {
           recordQueryFailure: (failure) => {
             failures.push(failure);
+            return Promise.reject(new Error("failure telemetry unavailable"));
           },
           recordShadowComparison: (metric) => {
             metrics.push(metric);
+            return Promise.reject(new Error("comparison telemetry unavailable"));
           },
         },
       ),
