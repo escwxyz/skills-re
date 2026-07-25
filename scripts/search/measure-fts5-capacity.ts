@@ -511,6 +511,11 @@ const main = async () => {
   const corpus = await loadCorpus(options.sqlExportPath);
   const sizes = corpus.entryDocuments.map((document) => document.size);
   const sampledDocuments = corpus.entryDocuments.slice(0, options.sampleSize);
+  if (sampledDocuments.length === 0) {
+    throw new Error(
+      `No public skills with an entry file were found in ${options.sqlExportPath}; cannot measure FTS5 capacity.`,
+    );
+  }
   const safeCeilingBytes = options.headroomRatio * DEFAULT_INTERNAL_CEILING_BYTES;
 
   const candidateResults = CANDIDATE_BODY_LIMITS.map((bodyLimit) => {
