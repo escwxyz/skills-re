@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNotNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 
 import {
   reposTable,
@@ -110,7 +110,12 @@ export const getSkillSearchDocumentDiagnostics = async (
       .select({ value: sql<number>`count(*)` })
       .from(skillSearchDocumentsTable)
       .innerJoin(skillsTable, eq(skillsTable.id, skillSearchDocumentsTable.skillId))
-      .where(ne(skillSearchDocumentsTable.snapshotId, skillsTable.latestSnapshotId)),
+      .where(
+        or(
+          isNull(skillsTable.latestSnapshotId),
+          ne(skillSearchDocumentsTable.snapshotId, skillsTable.latestSnapshotId),
+        ),
+      ),
     database
       .select({ value: sql<number>`count(*)` })
       .from(skillSearchDocumentsTable)

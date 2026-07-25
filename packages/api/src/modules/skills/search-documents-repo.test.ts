@@ -1,6 +1,8 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
+import type { SQL } from "drizzle-orm";
+import { SQLiteSyncDialect } from "drizzle-orm/sqlite-core";
 
 import {
   deleteOrphanedSkillSearchDocuments,
@@ -40,6 +42,41 @@ const createDiagnosticsDb = (results: QueryResult[]) => {
         },
         where() {
           return Promise.resolve(results.shift() ?? []);
+        },
+      };
+      return builder;
+    },
+  };
+
+  return db;
+};
+
+const createDiagnosticsSqlCaptureDb = () => {
+  const dialect = new SQLiteSyncDialect();
+  const whereSql: string[] = [];
+  let queryIndex = 0;
+  const db = {
+    get whereSql() {
+      return whereSql;
+    },
+    run() {
+      return Promise.resolve();
+    },
+    select() {
+      const builder = {
+        from() {
+          return builder;
+        },
+        innerJoin() {
+          return builder;
+        },
+        leftJoin() {
+          return builder;
+        },
+        where(query: SQL) {
+          queryIndex += 1;
+          whereSql.push(dialect.sqlToQuery(query).sql);
+          return Promise.resolve([{ value: queryIndex }]);
         },
       };
       return builder;
@@ -154,6 +191,17 @@ describe("skill search document diagnostics repository", () => {
       oversizedDocumentCount: 4,
       staleSnapshotCount: 1,
     });
+  });
+
+  test("counts stale documents when the skill latest snapshot is null", async () => {
+    const db = createDiagnosticsSqlCaptureDb();
+
+    await expect(getSkillSearchDocumentDiagnostics(db as never)).resolves.toMatchObject({
+      staleSnapshotCount: 3,
+    });
+
+    expect(db.whereSql[2]).toContain('"skills"."latest_snapshot_id" is null');
+    expect(db.whereSql[2]).toContain('"skill_search_documents"."snapshot_id" <>');
   });
 
   test("exposes explicit FTS integrity and rebuild commands", async () => {
