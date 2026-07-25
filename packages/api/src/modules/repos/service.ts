@@ -161,6 +161,7 @@ export interface ReposServiceDeps {
     entryPath: string;
     hash: string;
     name: string;
+    skillContentHash?: string | null;
     skillId: string;
     sourceCommitDate?: number;
     sourceCommitMessage?: string | null;
@@ -277,6 +278,22 @@ const formatErrorMessage = (error: unknown) =>
 
 const isSkillEntryPath = (value: string) => value.split("/").at(-1)?.toLowerCase() === "skill.md";
 
+const hasFrontmatterBlock = (content: string) =>
+  /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(content);
+
+const hashTextSha256 = async (value: string) => {
+  const encoded = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+const buildSkillDuplicateFingerprintFromSkillMd = async (skillMdContent: string) =>
+  hasFrontmatterBlock(skillMdContent)
+    ? {
+        skillContentHash: await hashTextSha256(skillMdContent),
+      }
+    : null;
+
 const findSkillMdFile = (
   skill: {
     entryPath: string;
@@ -285,6 +302,25 @@ const findSkillMdFile = (
 ) =>
   files.find((file) => file.path === skill.entryPath) ??
   files.find((file) => isSkillEntryPath(file.path));
+
+const buildSkillSearchContentHash = async (
+  skill: {
+    entryPath: string;
+  },
+  filesForSkill: { content: string; path: string }[],
+  snapshotHash: string,
+) => {
+  const skillMdFile = findSkillMdFile(skill, filesForSkill);
+  const fingerprint = skillMdFile
+    ? await buildSkillDuplicateFingerprintFromSkillMd(skillMdFile.content)
+    : null;
+  const skillContentHash = fingerprint?.skillContentHash ?? null;
+
+  return {
+    contentHash: skillContentHash ?? snapshotHash,
+    skillContentHash,
+  };
+};
 
 const replaceSnapshotSkillSearchDocument = async (input: {
   deps: Pick<ReposServiceDeps, "refreshSkillSearchDocumentMetadata" | "replaceSkillSearchDocument">;
@@ -780,6 +816,11 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           continue;
         }
 
+        const { contentHash, skillContentHash } = await buildSkillSearchContentHash(
+          skill,
+          filesForSkill,
+          nextHash,
+        );
         const committedDate = parseCommitDate(headCommit.committedDate);
         const commitMessage = truncateCommitMessage(headCommit.message);
         const nextVersion = deriveNextSnapshotVersion(skill.latestVersion);
@@ -789,6 +830,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           entryPath: skill.entryPath,
           hash: nextHash,
           name: skill.latestName,
+          skillContentHash,
           skillId: skill.skillId,
           sourceCommitDate: committedDate ?? undefined,
           sourceCommitMessage: commitMessage,
@@ -817,7 +859,7 @@ export const createReposService = (overrides: Partial<ReposServiceDeps> = {}) =>
           repoName: input.repoName,
           repoOwner: input.repoOwner,
           skill,
-          snapshotHash: nextHash,
+          snapshotHash: contentHash,
           snapshotId,
           updatedAt: committedDate ?? Date.now(),
         });

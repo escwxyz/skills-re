@@ -572,6 +572,7 @@ describe("repos service", () => {
       entryPath: string;
       hash: string;
       name: string;
+      skillContentHash?: string | null;
       skillId: string;
       sourceCommitDate?: number;
       sourceCommitMessage?: string | null;
@@ -698,6 +699,7 @@ describe("repos service", () => {
       version: "1.2.4",
     });
     expect(typeof createSnapshotCalls[0]?.hash).toBe("string");
+    expect(createSnapshotCalls[0]?.skillContentHash).toEqual(expect.any(String));
     expect(uploaded).toEqual([
       {
         files: [
@@ -725,7 +727,7 @@ describe("repos service", () => {
       {
         authorHandle: "acme",
         body: "---\nname: widget\n---\n# widget\n",
-        contentHash: expect.any(String),
+        contentHash: createSnapshotCalls[0]?.skillContentHash,
         description: "Widget skill snapshot",
         isPublic: true,
         repository: "widget",
@@ -743,5 +745,73 @@ describe("repos service", () => {
         skillId: "skill-1",
       },
     ]);
+  });
+
+  test("preserves null skill content hash when snapshot sync cannot fingerprint skill markdown", async () => {
+    const createSnapshotCalls: {
+      hash: string;
+      skillContentHash?: string | null;
+    }[] = [];
+    const replacedSearchDocuments: { contentHash: string }[] = [];
+
+    const service = createReposService({
+      createSnapshot: (input) => {
+        createSnapshotCalls.push(input);
+        return "snapshot-1";
+      },
+      deprecateSnapshotsBeyondLimit: () => undefined,
+      fetchRepoOverview: () => ({
+        commits: [{ sha: "sha-1" }],
+        headSha: "sha-1",
+      }),
+      fetchSkillFilesForRoot: (input) => ({
+        files: [
+          {
+            content: "# widget\n",
+            path: `${input.skillRootPath}/skill.md`,
+          },
+        ],
+      }),
+      fetchTree: () => [{ path: "skills/widget/skill.md", sha: "blob-1", type: "blob" }],
+      findRepoByNameWithOwner: () => ({
+        id: "repo-1",
+        updatedAt: 200,
+      }),
+      githubConfigured: () => true,
+      listRepoSkillSnapshotHeadsByRepoId: () => [
+        {
+          directoryPath: "skills/widget/",
+          entryPath: "skills/widget/skill.md",
+          latestDescription: "Widget skill snapshot",
+          latestHash: "old-hash",
+          latestName: "widget",
+          latestSnapshotId: "snapshot-old",
+          latestSourceCommitSha: null,
+          latestVersion: "1.0.0",
+          skillId: "skill-1",
+          slug: "widget",
+        },
+      ],
+      refreshSkillSearchDocumentMetadata: () => Promise.resolve({ status: "refreshed" as const }),
+      replaceSkillSearchDocument: (input) => {
+        replacedSearchDocuments.push({ contentHash: input.contentHash });
+        return Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const });
+      },
+      setSkillLatestSnapshot: () => undefined,
+      uploadSnapshotFiles: () => ({ workId: "work-1" }),
+    });
+
+    await expect(
+      service.syncRepoSnapshots({
+        repoName: "widget",
+        repoOwner: "acme",
+      }),
+    ).resolves.toMatchObject({
+      createdSnapshots: 1,
+      status: "completed",
+    });
+
+    expect(createSnapshotCalls[0]?.skillContentHash).toBeNull();
+    expect(replacedSearchDocuments).toEqual([{ contentHash: createSnapshotCalls[0]?.hash }]);
   });
 });
