@@ -61,6 +61,26 @@ describe("createServerContextFromBase", () => {
     });
   });
 
+  test("preserves injected request waitUntil", () => {
+    const waitUntilPromises: Promise<unknown>[] = [];
+    const context = createServerContextFromBase(
+      {
+        auth: null,
+        session: null,
+      },
+      {},
+      undefined,
+      (promise) => {
+        waitUntilPromises.push(promise);
+      },
+    );
+    const promise = Promise.resolve();
+
+    context.waitUntil?.(promise);
+
+    expect(waitUntilPromises).toEqual([promise]);
+  });
+
   test("preserves injected ai search runtime", () => {
     const context = createServerContextFromBase(
       {

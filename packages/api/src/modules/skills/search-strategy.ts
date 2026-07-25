@@ -29,6 +29,7 @@ export interface SkillKeywordSearchQueryFailure {
 export interface SkillKeywordSearchTelemetry {
   recordQueryFailure?(input: SkillKeywordSearchQueryFailure): Promise<void> | void;
   recordShadowComparison(input: SkillKeywordSearchShadowComparison): Promise<void> | void;
+  waitUntil?(promise: Promise<unknown>): void;
 }
 
 export interface SkillKeywordSearchStrategyEnv {

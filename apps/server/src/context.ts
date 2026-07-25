@@ -65,6 +65,7 @@ export function createServerContextFromBase(
   },
   runtimeDeps: CreateServerRuntimeDeps = {},
   workerLogger?: ApiContext["workerLogger"],
+  waitUntil?: ApiContext["waitUntil"],
 ): ApiContext {
   return {
     ...baseContext,
@@ -79,6 +80,7 @@ export function createServerContextFromBase(
     metrics: runtimeDeps.metrics,
     snapshotHistory: runtimeDeps.snapshotHistory,
     snapshotStorage: runtimeDeps.snapshotStorage,
+    waitUntil,
     workerLogger,
     workflowSchedulers: runtimeDeps.workflowSchedulers,
   };
@@ -163,5 +165,7 @@ export async function createServerContext({ context }: CreateServerContextOption
   const baseContext = await createApiContext({ context });
   const logger = context.get("workerLogger");
   const runtimeDeps = await createServerRuntime(context.env, { logger });
-  return createServerContextFromBase(baseContext, runtimeDeps, logger);
+  return createServerContextFromBase(baseContext, runtimeDeps, logger, (promise) => {
+    context.executionCtx.waitUntil(promise);
+  });
 }

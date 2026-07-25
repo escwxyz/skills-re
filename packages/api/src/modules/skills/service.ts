@@ -382,6 +382,30 @@ const recordQueryFailure = async (
   }
 };
 
+const observeShadowComparison = (
+  telemetry: SkillKeywordSearchTelemetry | undefined,
+  observation: Promise<unknown>,
+) => {
+  const guardedObservation = (async () => {
+    try {
+      await observation;
+    } catch {
+      // Shadow comparisons must not affect search responses.
+    }
+  })();
+
+  if (telemetry?.waitUntil) {
+    try {
+      telemetry.waitUntil(guardedObservation);
+      return;
+    } catch {
+      // Fall through to detached observation if the request context rejects it.
+    }
+  }
+
+  void guardedObservation;
+};
+
 export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) => {
   const deps = {
     ...defaultDeps,
@@ -543,51 +567,71 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
 
       const keywordSearch = async () => {
         if (keywordSearchConfig.authoritativeEngine !== "fts5") {
-          const authoritativeResult = await browseSearch();
-          if (!keywordSearchConfig.shadowCompareFts5) {
-            return authoritativeResult;
-          }
-
           const startedAt = Date.now();
-          try {
-            const candidateResult = await deps.searchSkillsPageByFts(input);
-            if (candidateResult) {
-              const { topResultOverlap, topResultSampleSize } = getTopResultOverlap(
-                authoritativeResult.page,
-                candidateResult.page,
-              );
-              await recordShadowComparison(keywordSearchTelemetry, {
-                authoritativeEngine: "like",
-                authoritativeResultCount: authoritativeResult.page.length,
-                candidateEngine: "fts5",
-                candidateResultCount: candidateResult.page.length,
-                failed: false,
-                latencyMs: Date.now() - startedAt,
-                topResultOverlap,
-                topResultSampleSize,
-                zeroResultChanged:
-                  (authoritativeResult.page.length === 0) !== (candidateResult.page.length === 0),
-              });
-            }
-          } catch {
-            await recordQueryFailure(keywordSearchTelemetry, {
-              engine: "fts5",
-              fallbackApplied: true,
-              latencyMs: Date.now() - startedAt,
-              phase: "shadow",
-              strategy: keywordSearchConfig.strategy,
-            });
-            await recordShadowComparison(keywordSearchTelemetry, {
-              authoritativeEngine: "like",
-              authoritativeResultCount: authoritativeResult.page.length,
-              candidateEngine: "fts5",
-              candidateResultCount: 0,
-              failed: true,
-              latencyMs: Date.now() - startedAt,
-              topResultOverlap: 0,
-              topResultSampleSize: 0,
-              zeroResultChanged: authoritativeResult.page.length > 0,
-            });
+          const authoritativeResultPromise = browseSearch();
+          const candidateResultPromise = keywordSearchConfig.shadowCompareFts5
+            ? (async () => {
+                try {
+                  const result = await deps.searchSkillsPageByFts(input);
+                  return { result, status: "fulfilled" as const };
+                } catch {
+                  return { status: "rejected" as const };
+                }
+              })()
+            : null;
+          const authoritativeResult = await authoritativeResultPromise;
+          if (candidateResultPromise) {
+            observeShadowComparison(
+              keywordSearchTelemetry,
+              (async () => {
+                const candidateResult = await candidateResultPromise;
+                if (candidateResult.status === "fulfilled") {
+                  if (candidateResult.result) {
+                    const candidatePage = candidateResult.result.page
+                      .map(toValidSearchSkillItem)
+                      .filter(
+                        (item): item is ReturnType<typeof toSearchSkillItem> => item !== null,
+                      );
+                    const { topResultOverlap, topResultSampleSize } = getTopResultOverlap(
+                      authoritativeResult.page,
+                      candidatePage,
+                    );
+                    await recordShadowComparison(keywordSearchTelemetry, {
+                      authoritativeEngine: "like",
+                      authoritativeResultCount: authoritativeResult.page.length,
+                      candidateEngine: "fts5",
+                      candidateResultCount: candidatePage.length,
+                      failed: false,
+                      latencyMs: Date.now() - startedAt,
+                      topResultOverlap,
+                      topResultSampleSize,
+                      zeroResultChanged:
+                        (authoritativeResult.page.length === 0) !== (candidatePage.length === 0),
+                    });
+                  }
+                  return;
+                }
+
+                await recordQueryFailure(keywordSearchTelemetry, {
+                  engine: "fts5",
+                  fallbackApplied: true,
+                  latencyMs: Date.now() - startedAt,
+                  phase: "shadow",
+                  strategy: keywordSearchConfig.strategy,
+                });
+                await recordShadowComparison(keywordSearchTelemetry, {
+                  authoritativeEngine: "like",
+                  authoritativeResultCount: authoritativeResult.page.length,
+                  candidateEngine: "fts5",
+                  candidateResultCount: 0,
+                  failed: true,
+                  latencyMs: Date.now() - startedAt,
+                  topResultOverlap: 0,
+                  topResultSampleSize: 0,
+                  zeroResultChanged: authoritativeResult.page.length > 0,
+                });
+              })(),
+            );
           }
 
           return authoritativeResult;

@@ -296,6 +296,7 @@ export interface GithubSnapshotHistoryHelpers {
 export interface Context {
   auth: null;
   requestHeaders?: Headers;
+  waitUntil?: (promise: Promise<unknown>) => void;
   features?: {
     skillKeywordSearch?: SkillKeywordSearchStrategyConfig;
     skillEvalSandboxEnabled?: boolean;

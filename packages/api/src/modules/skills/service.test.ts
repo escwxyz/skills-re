@@ -4,6 +4,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { SkillsUploadContentPayload } from "../../types";
 import { encodeRepoCursor } from "../repos/cursor";
+import type { SearchSkillRow } from "../shared/search-skill";
 import {
   aiSearch,
   createSkillsService,
@@ -11,6 +12,17 @@ import {
   submitGithubRepoPublic,
   uploadSkills,
 } from "./service";
+
+const createDeferred = <T>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, reject, resolve };
+};
 
 describe("skills service", () => {
   test("returns paginated authors from the public authors list contract", async () => {
@@ -490,6 +502,13 @@ describe("skills service", () => {
 
   test("records shadow comparison metrics without changing the authoritative LIKE response", async () => {
     const metrics: unknown[] = [];
+    const waitUntilPromises: Promise<unknown>[] = [];
+    const ftsResult = createDeferred<{
+      continueCursor: string;
+      isDone: boolean;
+      page: SearchSkillRow[];
+    }>();
+    let ftsStarted = false;
     const service = createSkillsService({
       searchSkillsPageByFilters: () =>
         Promise.resolve({
@@ -542,38 +561,13 @@ describe("skills service", () => {
             },
           ],
         }),
-      searchSkillsPageByFts: () =>
-        Promise.resolve({
-          continueCursor: "",
-          isDone: true,
-          page: [
-            {
-              authorHandle: "acme",
-              createdAt: 123,
-              description: "Shared workflow skill",
-              downloadsAllTime: 10,
-              downloadsTrending: 1,
-              forkCount: 0,
-              id: "skill-shared",
-              isVerified: true,
-              latestVersion: "1.0.0",
-              license: "MIT",
-              ownerAvatarUrl: null,
-              primaryCategory: "automation",
-              repoName: "skills",
-              repoUrl: "https://github.com/acme/skills",
-              slug: "shared-workflow",
-              stargazerCount: 5,
-              syncTime: 123,
-              title: "Shared Workflow",
-              updatedAt: 124,
-              viewsAllTime: 42,
-            },
-          ],
-        }),
+      searchSkillsPageByFts: () => {
+        ftsStarted = true;
+        return ftsResult.promise;
+      },
     });
 
-    const result = await service.search(
+    const searchPromise = service.search(
       {
         query: "workflow",
         searchMode: "keyword",
@@ -589,8 +583,16 @@ describe("skills service", () => {
           metrics.push(metric);
           throw new Error("telemetry unavailable");
         },
+        waitUntil: (promise) => {
+          waitUntilPromises.push(promise);
+        },
       },
     );
+    await Promise.resolve();
+
+    expect(ftsStarted).toBe(true);
+
+    const result = await searchPromise;
 
     expect(result).toMatchObject({
       page: [
@@ -604,6 +606,61 @@ describe("skills service", () => {
         },
       ],
     });
+    expect(metrics).toEqual([]);
+    expect(waitUntilPromises).toHaveLength(1);
+
+    ftsResult.resolve({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          createdAt: 123,
+          description: "Shared workflow skill",
+          downloadsAllTime: 10,
+          downloadsTrending: 1,
+          forkCount: 0,
+          id: "skill-shared",
+          isVerified: true,
+          latestVersion: "1.0.0",
+          license: "MIT",
+          ownerAvatarUrl: null,
+          primaryCategory: "automation",
+          repoName: "skills",
+          repoUrl: "https://github.com/acme/skills",
+          slug: "shared-workflow",
+          stargazerCount: 5,
+          syncTime: 123,
+          title: "Shared Workflow",
+          updatedAt: 124,
+          viewsAllTime: 42,
+        },
+        {
+          authorHandle: "acme",
+          createdAt: 123,
+          description: "Invalid candidate row",
+          downloadsAllTime: 10,
+          downloadsTrending: 1,
+          forkCount: 0,
+          id: "skill-invalid",
+          isVerified: true,
+          latestVersion: "1.0.0",
+          license: "MIT",
+          ownerAvatarUrl: null,
+          primaryCategory: "automation",
+          repoName: "skills",
+          repoUrl: "https://github.com/acme/skills",
+          slug: "Invalid Slug",
+          stargazerCount: 5,
+          syncTime: 123,
+          title: "Invalid Candidate",
+          updatedAt: 124,
+          viewsAllTime: 42,
+        },
+      ],
+    });
+    await Promise.all(waitUntilPromises);
+
     expect(metrics).toEqual([
       expect.objectContaining({
         authoritativeEngine: "like",
@@ -621,6 +678,7 @@ describe("skills service", () => {
   test("records bounded shadow failure metrics and keeps LIKE results authoritative", async () => {
     const metrics: unknown[] = [];
     const failures: unknown[] = [];
+    const waitUntilPromises: Promise<unknown>[] = [];
     const service = createSkillsService({
       searchSkillsPageByFilters: () =>
         Promise.resolve({
@@ -675,6 +733,9 @@ describe("skills service", () => {
             metrics.push(metric);
             return Promise.reject(new Error("comparison telemetry unavailable"));
           },
+          waitUntil: (promise) => {
+            waitUntilPromises.push(promise);
+          },
         },
       ),
     ).resolves.toMatchObject({
@@ -685,6 +746,7 @@ describe("skills service", () => {
         },
       ],
     });
+    await Promise.all(waitUntilPromises);
 
     expect(metrics).toEqual([
       expect.objectContaining({

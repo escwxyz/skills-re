@@ -776,6 +776,7 @@ export const appRouter = {
         recordShadowComparison: (event) => {
           context.workerLogger?.info("skills.search.keyword_shadow_comparison", { ...event });
         },
+        waitUntil: context.waitUntil,
       }),
     ),
     resolvePathBySlug: publicProcedure.skills.resolvePathBySlug.handler(({ input }) =>
