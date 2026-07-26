@@ -32,10 +32,23 @@ describe("shouldApplySearchRateLimit", () => {
     );
   });
 
-  test("applies rate limiting for empty or non-string keyword queries", async () => {
+  test("bypasses rate limiting for browse and load-more requests without a query", async () => {
     await expect(
       shouldApplySearchRateLimit(jsonRequest({ query: "", searchMode: "keyword" })),
-    ).resolves.toBe(true);
+    ).resolves.toBe(false);
+    await expect(
+      shouldApplySearchRateLimit(
+        jsonRequest({
+          cursor: "next",
+          limit: 25,
+          searchMode: "keyword",
+          sort: "downloads-all-time",
+        }),
+      ),
+    ).resolves.toBe(false);
+  });
+
+  test("applies rate limiting for non-string keyword queries", async () => {
     await expect(
       shouldApplySearchRateLimit(jsonRequest({ query: 0, searchMode: "keyword" })),
     ).resolves.toBe(true);
