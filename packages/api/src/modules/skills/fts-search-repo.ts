@@ -31,7 +31,8 @@ interface FtsSearchCursor {
   offset: number;
 }
 
-interface FtsSearchRow extends SearchSkillRow {
+interface FtsSearchRow extends Omit<SearchSkillRow, "isVerified"> {
+  isVerified: boolean | number;
   rank: number;
   tagsCsv: string | null;
 }
@@ -173,6 +174,7 @@ const toSearchSkillRow = (row: FtsSearchRow): SearchSkillRow => {
   const { rank: _rank, tagsCsv, ...searchRow } = row;
   return {
     ...searchRow,
+    isVerified: searchRow.isVerified === true || searchRow.isVerified === 1,
     tags: tagsCsv ? tagsCsv.split(",").filter(Boolean) : undefined,
   };
 };

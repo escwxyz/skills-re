@@ -5,6 +5,7 @@ import { Database } from "bun:sqlite";
 import type { SQL } from "drizzle-orm";
 import { SQLiteSyncDialect } from "drizzle-orm/sqlite-core";
 
+import { toValidSearchSkillItem } from "../shared/search-skill";
 import { ftsRelevanceCases, ftsRelevanceDocuments } from "./fts-relevance-fixtures";
 import { searchSkillsPageByFts } from "./fts-search-repo";
 
@@ -509,6 +510,10 @@ describe("searchSkillsPageByFts", () => {
       ftsDb,
     );
     expect(ranked?.page.map((row) => row.id)).toEqual(["skill-title", "skill-beta", "skill-body"]);
+    expect(ranked?.page[0]?.isVerified).toBe(true);
+    expect(ranked?.page[0] ? toValidSearchSkillItem(ranked.page[0]) : null).toMatchObject({
+      id: "skill-title",
+    });
     expect(ranked?.page.map((row) => row.id)).not.toContain("skill-stale");
     expect(ranked?.page.map((row) => row.id)).not.toContain("skill-private");
 
