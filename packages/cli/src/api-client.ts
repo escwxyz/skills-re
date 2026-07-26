@@ -80,6 +80,7 @@ export class ApiClient {
     limit?: number;
     query?: string;
     rewriteQuery?: boolean;
+    searchMode?: "keyword" | "semantic";
     sort?: string;
     tags?: string[];
   }) {

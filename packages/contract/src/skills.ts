@@ -305,7 +305,7 @@ export const skillsContract = {
     .output(z.array(skillHistoryInfoItemSchema)),
   search: baseContract
     .route({
-      description: "Searches public skills using semantic AI search.",
+      description: "Searches public skills using keyword or semantic search.",
       method: "POST",
       path: "/skills/search",
       tags: ["Skills"],

@@ -134,6 +134,32 @@ describe("commands", () => {
     restore();
   });
 
+  test("search uses keyword mode", async () => {
+    let requestBody: unknown;
+    const restore = mockFetch(async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body));
+      return Response.json({
+        continueCursor: "",
+        isDone: true,
+        page: [],
+      });
+    });
+    const cwd = await createTempDir();
+    const io = createCommandContext(cwd);
+
+    try {
+      await run(["search", "workflow", "--json"], io.context);
+
+      expect(requestBody).toEqual({
+        limit: 20,
+        query: "workflow",
+        searchMode: "keyword",
+      });
+    } finally {
+      restore();
+    }
+  });
+
   test("show reports missing skills", async () => {
     const restore = mockFetch(() => Response.json(null));
     const cwd = await createTempDir();

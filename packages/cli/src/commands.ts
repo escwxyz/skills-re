@@ -147,7 +147,7 @@ export const runSearchCommand = async (
       cursor: getFlag(args, "cursor"),
       limit: parseLimit(getFlag(args, "limit"), 20),
       query: query || undefined,
-      rewriteQuery: !hasFlag(args, "no-rewrite-query"),
+      searchMode: "keyword",
       sort: getFlag(args, "sort"),
       tags: splitCsv(getFlag(args, "tag")),
     });

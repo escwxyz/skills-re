@@ -2,7 +2,7 @@ export const helpText = `skills-re
 
 Usage:
   skills-re search <query> [--json]
-      Search the public registry for skills matching your query.
+      Search the public registry by keyword.
 
   skills-re show <slug-or-path> [--json]
       Show details for a single skill by slug or GitHub path.
