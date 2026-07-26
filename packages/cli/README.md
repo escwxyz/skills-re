@@ -34,6 +34,8 @@ skills-re auth logout
 skills-re mcp [--remote-config]
 ```
 
+The `search` command uses the registry's keyword index.
+
 ## Configuration
 
 | Flag         | Description                                       |
