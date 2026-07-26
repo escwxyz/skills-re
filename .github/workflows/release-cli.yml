@@ -11,6 +11,11 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  id-token: write # Required for OIDC
+  contents: write
+  pull-requests: write # Required for creating a release pull request
+
 jobs:
   release:
     name: Release
@@ -39,7 +44,7 @@ jobs:
           publish: bun run cli:release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Get latest tag
         id: get_tag
