@@ -147,14 +147,17 @@ describe("commands", () => {
     const cwd = await createTempDir();
     const io = createCommandContext(cwd);
 
-    await run(["search", "workflow", "--json"], io.context);
+    try {
+      await run(["search", "workflow", "--json"], io.context);
 
-    expect(requestBody).toEqual({
-      limit: 20,
-      query: "workflow",
-      searchMode: "keyword",
-    });
-    restore();
+      expect(requestBody).toEqual({
+        limit: 20,
+        query: "workflow",
+        searchMode: "keyword",
+      });
+    } finally {
+      restore();
+    }
   });
 
   test("show reports missing skills", async () => {

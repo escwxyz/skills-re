@@ -2,8 +2,29 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { keywordSearchMetadataFields, normalizeSkillCanonicalSlug } from "./repo";
+import {
+  buildSearchWhereClauses,
+  keywordSearchMetadataFields,
+  normalizeSkillCanonicalSlug,
+} from "./repo";
 import { normalizeSkillSlug } from "@skills-re/contract/common/slugs";
+
+const createSearchDbStub = () => {
+  const builder = {
+    from() {
+      return builder;
+    },
+    where() {
+      return builder;
+    },
+  };
+
+  return {
+    select() {
+      return builder;
+    },
+  };
+};
 
 describe("skills repo helpers", () => {
   test("documents the metadata fields used by keyword search", () => {
@@ -16,6 +37,12 @@ describe("skills repo helpers", () => {
       "author-name",
       "author-github",
     ]);
+  });
+
+  test("uses one OR keyword predicate instead of requiring author identity and skill metadata matches", () => {
+    expect(
+      buildSearchWhereClauses({ query: "workflow" }, createSearchDbStub() as never),
+    ).toHaveLength(2);
   });
 
   test("normalizes empty canonical slugs to null", () => {

@@ -732,21 +732,21 @@ const getSearchSortExpression = (sort: NonNullable<SearchSkillsPageInput["sort"]
   }
 };
 
-function buildSearchWhereClauses(input: SearchSkillsPageInput) {
+type SearchDatabase = Pick<typeof db, "select">;
+
+export function buildSearchWhereClauses(
+  input: SearchSkillsPageInput,
+  database: SearchDatabase = db,
+) {
   const trimmedAuthorHandle = input.authorHandle?.trim();
   const trimmedRepoName = input.repoName?.trim();
   const categories = (input.categories ?? []).map((v) => v.trim()).filter(Boolean);
   const tags = (input.tags ?? []).map((v) => v.trim()).filter(Boolean);
   const queryPattern = input.query?.trim() ? `%${input.query.trim().toLowerCase()}%` : null;
-
-  return [
-    eq(skillsTable.visibility, "public"),
-    trimmedAuthorHandle ? eq(reposTable.ownerHandle, trimmedAuthorHandle) : null,
-    trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
-    categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
-    queryPattern
-      ? exists(
-          db
+  const queryClause = queryPattern
+    ? or(
+        exists(
+          database
             .select({ one: sql`1` })
             .from(usersTable)
             .where(
@@ -758,17 +758,23 @@ function buildSearchWhereClauses(input: SearchSkillsPageInput) {
                 ),
               ),
             ),
-        )
-      : null,
-    queryPattern
-      ? sql`(
+        ),
+        sql`(
           lower(${skillsTable.title}) like ${queryPattern}
           or lower(${skillsTable.description}) like ${queryPattern}
           or lower(${skillsTable.slug}) like ${queryPattern}
           or lower(${reposTable.name}) like ${queryPattern}
           or lower(${reposTable.ownerHandle}) like ${queryPattern}
-        )`
-      : null,
+        )`,
+      )
+    : null;
+
+  return [
+    eq(skillsTable.visibility, "public"),
+    trimmedAuthorHandle ? eq(reposTable.ownerHandle, trimmedAuthorHandle) : null,
+    trimmedRepoName ? eq(reposTable.name, trimmedRepoName) : null,
+    categories.length > 0 ? inArray(skillsTable.primaryCategory, categories) : null,
+    queryClause,
     tags.length > 0
       ? inArray(
           skillsTable.id,
