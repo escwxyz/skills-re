@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 
 import {
   reposTable,
@@ -7,7 +7,7 @@ import {
   snapshotFilesTable,
   snapshotsTable,
 } from "@skills-re/db/schema";
-import type { SkillId } from "@skills-re/db/utils";
+import type { SkillId, SnapshotId } from "@skills-re/db/utils";
 
 import { db } from "../shared/db";
 
@@ -49,6 +49,15 @@ export interface SkillSearchBackfillRow {
   updatedAt: number;
 }
 
+type SkillSearchBackfillBaseRow = Omit<SkillSearchBackfillRow, "entryFileHash" | "entryR2Key">;
+
+interface EntryFileCandidateRow {
+  fileHash: string;
+  path: string;
+  r2Key: string;
+  snapshotId: string;
+}
+
 const encodeSkillSearchBackfillCursor = (cursor: SkillSearchBackfillCursor | null) =>
   cursor ? Buffer.from(JSON.stringify(cursor), "utf-8").toString("base64url") : "";
 
@@ -77,10 +86,6 @@ const decodeSkillSearchBackfillCursor = (value?: string): SkillSearchBackfillCur
     updatedAt: parsed.updatedAt,
   };
 };
-
-const hasEntryR2Key = <TRow extends { entryR2Key: string | null }>(
-  row: TRow,
-): row is TRow & { entryR2Key: string } => row.entryR2Key !== null;
 
 export const SKILL_SEARCH_FTS_INTEGRITY_CHECK_SQL =
   "INSERT INTO skills_fts(skills_fts) VALUES('integrity-check')";
@@ -220,6 +225,95 @@ export const rebuildSkillSearchFtsIndex = async (
   await database.run(sql.raw(SKILL_SEARCH_FTS_REBUILD_SQL));
 };
 
+const toLowerPath = (value: string) => value.toLowerCase();
+
+const entryFileMatches = (entryPath: string, filePath: string) => {
+  const normalizedEntryPath = toLowerPath(entryPath);
+  const normalizedFilePath = toLowerPath(filePath);
+  return (
+    normalizedFilePath === normalizedEntryPath ||
+    normalizedFilePath.endsWith(`/${normalizedEntryPath}`) ||
+    normalizedEntryPath.endsWith(`/${normalizedFilePath}`)
+  );
+};
+
+const selectEntryFile = (
+  row: SkillSearchBackfillBaseRow,
+  candidates: EntryFileCandidateRow[],
+): EntryFileCandidateRow | null => {
+  const exact = candidates.find(
+    (candidate) =>
+      candidate.snapshotId === row.snapshotId &&
+      toLowerPath(candidate.path) === toLowerPath(row.entryPath),
+  );
+  if (exact) {
+    return exact;
+  }
+
+  return (
+    candidates
+      .filter(
+        (candidate) =>
+          candidate.snapshotId === row.snapshotId &&
+          entryFileMatches(row.entryPath, candidate.path),
+      )
+      .toSorted((left, right) => left.path.localeCompare(right.path))[0] ?? null
+  );
+};
+
+const attachEntryFiles = async (
+  rows: SkillSearchBackfillBaseRow[],
+  database: SearchDocumentDiagnosticsDb,
+): Promise<SkillSearchBackfillRow[]> => {
+  const snapshotIds = [...new Set(rows.map((row) => row.snapshotId as SnapshotId))];
+  if (snapshotIds.length === 0) {
+    return [];
+  }
+
+  const candidateRows = await database
+    .select({
+      fileHash: snapshotFilesTable.fileHash,
+      path: snapshotFilesTable.path,
+      r2Key: snapshotFilesTable.r2Key,
+      snapshotId: snapshotFilesTable.snapshotId,
+    })
+    .from(snapshotFilesTable)
+    .where(
+      and(inArray(snapshotFilesTable.snapshotId, snapshotIds), isNotNull(snapshotFilesTable.r2Key)),
+    )
+    .orderBy(snapshotFilesTable.snapshotId, snapshotFilesTable.path);
+
+  const candidates: EntryFileCandidateRow[] = [];
+  for (const candidate of candidateRows) {
+    if (candidate.r2Key === null) {
+      continue;
+    }
+
+    candidates.push({
+      fileHash: candidate.fileHash,
+      path: candidate.path,
+      r2Key: candidate.r2Key,
+      snapshotId: candidate.snapshotId,
+    });
+  }
+
+  const page: SkillSearchBackfillRow[] = [];
+  for (const row of rows) {
+    const entryFile = selectEntryFile(row, candidates);
+    if (!entryFile) {
+      continue;
+    }
+
+    page.push({
+      ...row,
+      entryFileHash: entryFile.fileHash,
+      entryR2Key: entryFile.r2Key,
+    });
+  }
+
+  return page;
+};
+
 const listSkillSearchBackfillPage = async (
   input: {
     cursor?: string;
@@ -247,16 +341,14 @@ const listSkillSearchBackfillPage = async (
       )
     : undefined;
 
-  const rows = await database
+  const rows: SkillSearchBackfillBaseRow[] = await database
     .select({
       authorHandle: reposTable.ownerHandle,
       description: skillsTable.description,
       documentContentHash: skillSearchDocumentsTable.contentHash,
       documentIndexingStatus: skillSearchDocumentsTable.indexingStatus,
       documentSnapshotId: skillSearchDocumentsTable.snapshotId,
-      entryFileHash: snapshotFilesTable.fileHash,
       entryPath: snapshotsTable.entryPath,
-      entryR2Key: snapshotFilesTable.r2Key,
       repoName: reposTable.name,
       skillContentHash: snapshotsTable.skillContentHash,
       skillId: skillsTable.id,
@@ -268,17 +360,6 @@ const listSkillSearchBackfillPage = async (
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId))
     .innerJoin(snapshotsTable, eq(snapshotsTable.id, skillsTable.latestSnapshotId))
-    .innerJoin(
-      snapshotFilesTable,
-      and(
-        eq(snapshotFilesTable.snapshotId, snapshotsTable.id),
-        isNotNull(snapshotFilesTable.r2Key),
-        or(
-          sql`lower(${snapshotFilesTable.path}) = lower(${snapshotsTable.entryPath})`,
-          sql`lower(${snapshotsTable.entryPath}) like '%/' || lower(${snapshotFilesTable.path})`,
-        ),
-      ),
-    )
     .leftJoin(skillSearchDocumentsTable, eq(skillSearchDocumentsTable.skillId, skillsTable.id))
     .where(
       and(
@@ -291,9 +372,9 @@ const listSkillSearchBackfillPage = async (
     .orderBy(asc(skillsTable.updatedAt), asc(skillsTable.id))
     .limit(limit + 1);
 
-  const typedRows: SkillSearchBackfillRow[] = rows.filter(hasEntryR2Key);
-  const page = typedRows.slice(0, limit);
-  const next = page.at(-1) ?? null;
+  const pageRows = rows.slice(0, limit);
+  const page = await attachEntryFiles(pageRows, database);
+  const next = pageRows.at(-1) ?? null;
   const hasMoreRows = rows.length > limit;
 
   return {

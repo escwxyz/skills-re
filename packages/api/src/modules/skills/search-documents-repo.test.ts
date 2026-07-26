@@ -89,6 +89,7 @@ const createDiagnosticsSqlCaptureDb = () => {
 
 const createBackfillDb = (rows: unknown[]) => {
   const calls: string[] = [];
+  let selectCount = 0;
   const db = {
     get calls() {
       return calls;
@@ -100,6 +101,33 @@ const createBackfillDb = (rows: unknown[]) => {
       return Promise.resolve();
     },
     select() {
+      selectCount += 1;
+      const selectedRows =
+        selectCount % 2 === 0
+          ? rows.map((row) => {
+              const record = row as {
+                entryFileHash?: string | null;
+                entryFilePath?: string;
+                entryPath?: string;
+                entryR2Key?: string | null;
+                snapshotId?: string;
+              };
+              return {
+                fileHash: record.entryFileHash ?? "",
+                path: record.entryFilePath ?? record.entryPath ?? "",
+                r2Key: record.entryR2Key ?? null,
+                snapshotId: record.snapshotId ?? "",
+              };
+            })
+          : rows.map((row) => {
+              const record = row as Record<string, unknown>;
+              const {
+                entryFileHash: _entryFileHash,
+                entryFilePath: _entryFilePath,
+                ...baseRow
+              } = record;
+              return baseRow;
+            });
       const builder = {
         from() {
           calls.push("from");
@@ -115,11 +143,11 @@ const createBackfillDb = (rows: unknown[]) => {
         },
         limit(limit: number) {
           calls.push(`limit:${limit}`);
-          return Promise.resolve(rows);
+          return Promise.resolve(selectedRows);
         },
         orderBy() {
           calls.push("orderBy");
-          return builder;
+          return selectCount % 2 === 0 ? Promise.resolve(selectedRows) : builder;
         },
         where() {
           calls.push("where");
@@ -307,6 +335,54 @@ describe("skill search document diagnostics repository", () => {
       continueCursor: expect.any(String),
       isDone: false,
       page: [rows[0]],
+    });
+  });
+
+  test("matches entry files when the stored file path has a longer prefix", async () => {
+    const rows = [
+      {
+        authorHandle: "acme",
+        description: "Nested skill",
+        documentContentHash: null,
+        documentIndexingStatus: null,
+        documentSnapshotId: null,
+        entryFileHash: "file-hash-1",
+        entryFilePath: "plugins/caveman/skills/cavecrew/SKILL.md",
+        entryPath: "skills/cavecrew/SKILL.md",
+        entryR2Key: "snapshots/snapshot-1/SKILL.md",
+        repoName: "skills",
+        skillContentHash: "content-hash-1",
+        skillId: "skill-1",
+        skillSlug: "cavecrew",
+        snapshotId: "snapshot-1",
+        title: "Cavecrew",
+        updatedAt: 100,
+      },
+    ];
+    const db = createBackfillDb(rows);
+
+    await expect(listEligibleSkillSearchBackfillPage({ limit: 1 }, db as never)).resolves.toEqual({
+      continueCursor: "",
+      isDone: true,
+      page: [
+        {
+          authorHandle: "acme",
+          description: "Nested skill",
+          documentContentHash: null,
+          documentIndexingStatus: null,
+          documentSnapshotId: null,
+          entryFileHash: "file-hash-1",
+          entryPath: "skills/cavecrew/SKILL.md",
+          entryR2Key: "snapshots/snapshot-1/SKILL.md",
+          repoName: "skills",
+          skillContentHash: "content-hash-1",
+          skillId: "skill-1",
+          skillSlug: "cavecrew",
+          snapshotId: "snapshot-1",
+          title: "Cavecrew",
+          updatedAt: 100,
+        },
+      ],
     });
   });
 
