@@ -773,6 +773,11 @@ export const appRouter = {
         recordQueryFailure: (event) => {
           context.workerLogger?.warn("skills.search.keyword_query_failure", { ...event });
         },
+        recordQueryResult: (event) => {
+          if (context.features?.skillKeywordSearchDebugLogsEnabled) {
+            context.workerLogger?.info("skills.search.keyword_query_result", { ...event });
+          }
+        },
         recordShadowComparison: (event) => {
           context.workerLogger?.info("skills.search.keyword_shadow_comparison", { ...event });
         },

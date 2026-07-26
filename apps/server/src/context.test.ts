@@ -61,6 +61,22 @@ describe("createServerContextFromBase", () => {
     });
   });
 
+  test("preserves injected keyword search debug log flag", () => {
+    const context = createServerContextFromBase(
+      {
+        auth: null,
+        session: null,
+      },
+      {
+        features: {
+          skillKeywordSearchDebugLogsEnabled: true,
+        },
+      },
+    );
+
+    expect(context.features?.skillKeywordSearchDebugLogsEnabled).toBe(true);
+  });
+
   test("preserves injected request waitUntil", () => {
     const waitUntilPromises: Promise<unknown>[] = [];
     const context = createServerContextFromBase(

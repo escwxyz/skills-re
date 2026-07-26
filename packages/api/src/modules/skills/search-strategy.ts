@@ -26,8 +26,27 @@ export interface SkillKeywordSearchQueryFailure {
   strategy: SkillKeywordSearchStrategy;
 }
 
+export interface SkillKeywordSearchQueryResult {
+  categoryCount: number;
+  engine: "fts5" | "like";
+  fallbackApplied: boolean;
+  hasCursor: boolean;
+  isDone: boolean;
+  latencyMs: number;
+  phase: "authoritative" | "fallback";
+  query: string;
+  rawResultCount: number;
+  resultCount: number;
+  searchMode: "keyword" | "semantic" | "unspecified";
+  sort: string;
+  strategy: SkillKeywordSearchStrategy;
+  tagCount: number;
+  validResultCount: number;
+}
+
 export interface SkillKeywordSearchTelemetry {
   recordQueryFailure?(input: SkillKeywordSearchQueryFailure): Promise<void> | void;
+  recordQueryResult?(input: SkillKeywordSearchQueryResult): Promise<void> | void;
   recordShadowComparison(input: SkillKeywordSearchShadowComparison): Promise<void> | void;
   waitUntil?(promise: Promise<unknown>): void;
 }

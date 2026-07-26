@@ -299,6 +299,7 @@ export interface Context {
   waitUntil?: (promise: Promise<unknown>) => void;
   features?: {
     skillKeywordSearch?: SkillKeywordSearchStrategyConfig;
+    skillKeywordSearchDebugLogsEnabled?: boolean;
     skillEvalSandboxEnabled?: boolean;
   };
   revokeSession?: () => Promise<void>;

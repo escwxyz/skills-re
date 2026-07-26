@@ -58,6 +58,16 @@ const getSkillKeywordSearchStrategyEnv = (env: Env) => ({
     .SKILL_KEYWORD_SEARCH_STRATEGY,
 });
 
+const isEnabledEnvValue = (value: string | null | undefined): boolean =>
+  value?.trim() === "1" ||
+  value?.trim().toLowerCase() === "true" ||
+  value?.trim().toLowerCase() === "yes";
+
+const isSkillKeywordSearchDebugLogsEnabled = (env: Env): boolean =>
+  isEnabledEnvValue(
+    (env as { SKILL_KEYWORD_SEARCH_DEBUG_LOGS?: string | null }).SKILL_KEYWORD_SEARCH_DEBUG_LOGS,
+  );
+
 export function createServerContextFromBase(
   baseContext: {
     auth: null;
@@ -134,6 +144,7 @@ async function createServerRuntime(
       skillKeywordSearch: getSkillKeywordSearchStrategyConfig(
         getSkillKeywordSearchStrategyEnv(env),
       ),
+      skillKeywordSearchDebugLogsEnabled: isSkillKeywordSearchDebugLogsEnabled(env),
       skillEvalSandboxEnabled: isSkillEvalSandboxEnabled(env),
     },
     metrics: {

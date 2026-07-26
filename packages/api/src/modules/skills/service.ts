@@ -15,6 +15,7 @@ import { toSearchSkillItem, toValidSearchSkillItem } from "../shared/search-skil
 import { normalizeDirectoryPath } from "../repos/directory-path";
 import type {
   SkillKeywordSearchQueryFailure,
+  SkillKeywordSearchQueryResult,
   SkillKeywordSearchShadowComparison,
   SkillKeywordSearchStrategyConfig,
   SkillKeywordSearchTelemetry,
@@ -382,6 +383,33 @@ const recordQueryFailure = async (
   }
 };
 
+const recordQueryResult = async (
+  telemetry: SkillKeywordSearchTelemetry | undefined,
+  input: SkillKeywordSearchQueryResult,
+) => {
+  try {
+    await telemetry?.recordQueryResult?.(input);
+  } catch {
+    // Telemetry must not affect search responses.
+  }
+};
+
+const buildKeywordSearchResultTelemetry = (
+  input: SearchSkillsPageInput,
+  fields: Omit<
+    SkillKeywordSearchQueryResult,
+    "categoryCount" | "hasCursor" | "query" | "searchMode" | "sort" | "tagCount"
+  >,
+): SkillKeywordSearchQueryResult => ({
+  ...fields,
+  categoryCount: input.categories?.length ?? 0,
+  hasCursor: Boolean(input.cursor),
+  query: input.query?.trim().slice(0, 128) ?? "",
+  searchMode: input.searchMode ?? "unspecified",
+  sort: input.sort ?? "default",
+  tagCount: input.tags?.length ?? 0,
+});
+
 const observeShadowComparison = (
   telemetry: SkillKeywordSearchTelemetry | undefined,
   observation: Promise<unknown>,
@@ -580,6 +608,20 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
               })()
             : null;
           const authoritativeResult = await authoritativeResultPromise;
+          await recordQueryResult(
+            keywordSearchTelemetry,
+            buildKeywordSearchResultTelemetry(input, {
+              engine: "like",
+              fallbackApplied: false,
+              isDone: authoritativeResult.isDone,
+              latencyMs: Date.now() - startedAt,
+              phase: "authoritative",
+              rawResultCount: authoritativeResult.page.length,
+              resultCount: authoritativeResult.page.length,
+              strategy: keywordSearchConfig.strategy,
+              validResultCount: authoritativeResult.page.length,
+            }),
+          );
           if (candidateResultPromise) {
             observeShadowComparison(
               keywordSearchTelemetry,
@@ -653,14 +695,45 @@ export const createSkillsService = (overrides: Partial<SkillsServiceDeps> = {}) 
         }
 
         if (!result) {
-          return await browseSearch();
+          const fallbackResult = await browseSearch();
+          await recordQueryResult(
+            keywordSearchTelemetry,
+            buildKeywordSearchResultTelemetry(input, {
+              engine: "fts5",
+              fallbackApplied: true,
+              isDone: fallbackResult.isDone,
+              latencyMs: Date.now() - startedAt,
+              phase: "fallback",
+              rawResultCount: fallbackResult.page.length,
+              resultCount: fallbackResult.page.length,
+              strategy: keywordSearchConfig.strategy,
+              validResultCount: fallbackResult.page.length,
+            }),
+          );
+          return fallbackResult;
         }
+
+        const page = result.page
+          .map(toValidSearchSkillItem)
+          .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null);
+        await recordQueryResult(
+          keywordSearchTelemetry,
+          buildKeywordSearchResultTelemetry(input, {
+            engine: "fts5",
+            fallbackApplied: false,
+            isDone: result.isDone,
+            latencyMs: Date.now() - startedAt,
+            phase: "authoritative",
+            rawResultCount: result.page.length,
+            resultCount: page.length,
+            strategy: keywordSearchConfig.strategy,
+            validResultCount: page.length,
+          }),
+        );
 
         return {
           ...result,
-          page: result.page
-            .map(toValidSearchSkillItem)
-            .filter((item): item is ReturnType<typeof toSearchSkillItem> => item !== null),
+          page,
         };
       };
 
