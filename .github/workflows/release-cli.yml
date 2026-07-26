@@ -13,7 +13,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   id-token: write # Required for OIDC
-  contents: read
+  contents: write
+  pull-requests: write # Required for creating a release pull request
 
 jobs:
   release:
