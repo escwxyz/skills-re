@@ -201,6 +201,67 @@ describe("buildAiSearchResult", () => {
     });
   });
 
+  test("uses nested item keys when top-level provider keys are invalid", async () => {
+    const pathCandidates: {
+      authorHandle: string;
+      repoName?: string;
+      skillSlug: string;
+    }[] = [];
+
+    const result = await buildAiSearchResult({
+      raw: {
+        chunks: [
+          {
+            id: "empty-key-chunk",
+            item: {
+              key: "acme/skills/skills/widget/skill.md",
+              metadata: {},
+              timestamp: 1,
+            },
+            key: "",
+            score: 0.8,
+            text: "Widget docs from empty top-level key",
+            type: "text",
+          },
+          {
+            id: "non-string-key-chunk",
+            item: {
+              key: "ignored/skills/skills/other-widget/skill.md",
+              metadata: {},
+              timestamp: 2,
+            },
+            key: { path: "invalid" },
+            score: 0.7,
+            text: "Other widget docs from non-string top-level key",
+            type: "text",
+          },
+        ],
+      },
+      resolveSkillByPath: async (candidate) => {
+        pathCandidates.push(candidate);
+        return candidate.skillSlug === "widget" ? resolvedSkill : null;
+      },
+      resolveSkillBySlug: async () => null,
+    });
+
+    expect(pathCandidates).toContainEqual({
+      authorHandle: "acme",
+      repoName: "skills",
+      skillSlug: "widget",
+    });
+    expect(pathCandidates).toContainEqual({
+      authorHandle: "ignored",
+      repoName: "skills",
+      skillSlug: "other-widget",
+    });
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0]?.aiMatch).toMatchObject({
+      itemKey: "acme/skills/skills/widget/skill.md",
+      score: 0.8,
+      snippet: "Widget docs from empty top-level key",
+    });
+  });
+
   test("matches native chunks by skill ID when repositories share a slug", async () => {
     const firstSkill: SearchSkillRow = {
       ...resolvedSkill,

@@ -154,10 +154,11 @@ const coerceFiniteNumber = (value: unknown) => {
 
 const normalizeAiSearchProviderRow = (row: unknown): AiSearchProviderRow => {
   const item = row as AiSearchProviderRow;
+  const key = coerceNonEmptyString(item.key) ?? coerceNonEmptyString(item.item?.key);
 
   return {
     ...item,
-    key: item.key ?? item.item?.key,
+    key,
     metadata: {
       ...item.item?.metadata,
       ...item.metadata,
