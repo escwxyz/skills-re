@@ -28,6 +28,38 @@ interface AiSearchRow {
   version: string | null;
 }
 
+interface AiSearchProviderMetadata {
+  filename?: unknown;
+  folder?: unknown;
+  path?: unknown;
+  skillId?: unknown;
+  skill_id?: unknown;
+  skillSlug?: unknown;
+  skill_slug?: unknown;
+  slug?: unknown;
+}
+
+interface AiSearchProviderRow {
+  attributes?: {
+    folder?: unknown;
+  };
+  content?: unknown;
+  filename?: unknown;
+  id?: unknown;
+  item?: {
+    key?: unknown;
+    metadata?: AiSearchProviderMetadata;
+  };
+  itemKey?: unknown;
+  item_key?: unknown;
+  key?: unknown;
+  metadata?: AiSearchProviderMetadata;
+  score?: unknown;
+  slug?: unknown;
+  source?: unknown;
+  text?: unknown;
+}
+
 interface AiSearchBasicSkillRow {
   description: string;
   id: string;
@@ -118,6 +150,19 @@ const coerceFiniteNumber = (value: unknown) => {
   }
 
   return value;
+};
+
+const normalizeAiSearchProviderRow = (row: unknown): AiSearchProviderRow => {
+  const item = row as AiSearchProviderRow;
+
+  return {
+    ...item,
+    key: item.key ?? item.item?.key,
+    metadata: {
+      ...item.item?.metadata,
+      ...item.metadata,
+    },
+  };
 };
 
 // Extracts the skill slug from a SKILL.md frontmatter block embedded in chunk text.
@@ -352,28 +397,7 @@ const collectSkillResolutionCandidates = (raw: unknown): SkillResolutionCandidat
   };
 
   for (const row of getRawRows(raw)) {
-    const item = row as {
-      attributes?: {
-        folder?: unknown;
-      };
-      content?: unknown;
-      filename?: unknown;
-      id?: unknown;
-      itemKey?: unknown;
-      item_key?: unknown;
-      key?: unknown;
-      metadata?: {
-        folder?: unknown;
-        filename?: unknown;
-        path?: unknown;
-        skillSlug?: unknown;
-        skill_slug?: unknown;
-        slug?: unknown;
-      };
-      slug?: unknown;
-      source?: unknown;
-      text?: unknown;
-    };
+    const item = normalizeAiSearchProviderRow(row);
 
     fromPath(item.key);
     fromPath(item.item_key);
@@ -410,14 +434,7 @@ const getSkillIdFromSourceFilename = (source: unknown): string | null => {
   return id.length > 0 ? id : null;
 };
 
-const getAiRowKey = (item: {
-  filename?: unknown;
-  id?: unknown;
-  itemKey?: unknown;
-  item_key?: unknown;
-  key?: unknown;
-  source?: unknown;
-}) =>
+const getAiRowKey = (item: AiSearchProviderRow) =>
   coerceNonEmptyString(item.key) ??
   coerceNonEmptyString(item.item_key) ??
   coerceNonEmptyString(item.itemKey) ??
@@ -426,16 +443,7 @@ const getAiRowKey = (item: {
   coerceNonEmptyString(item.id) ??
   null;
 
-const getAiRowDirectPathDetails = (item: {
-  attributes?: {
-    folder?: unknown;
-  };
-  filename?: unknown;
-  id?: unknown;
-  itemKey?: unknown;
-  item_key?: unknown;
-  key?: unknown;
-}) =>
+const getAiRowDirectPathDetails = (item: AiSearchProviderRow) =>
   parseSkillPathDetails(item.key) ??
   parseSkillPathDetails(item.item_key) ??
   parseSkillPathDetails(item.itemKey) ??
@@ -458,13 +466,7 @@ const getAiRowContent = (item: { content?: unknown; text?: unknown }) => {
 };
 
 const getAiRowSkillSlug = (
-  item: {
-    metadata?: {
-      skillSlug?: unknown;
-      skill_slug?: unknown;
-      slug?: unknown;
-    };
-  },
+  item: AiSearchProviderRow,
   directPathDetails: {
     skillSlug: string | null;
   } | null,
@@ -476,27 +478,7 @@ const getAiRowSkillSlug = (
   null;
 
 const extractAiRow = (row: unknown): AiSearchRow => {
-  const item = row as {
-    attributes?: {
-      folder?: unknown;
-    };
-    content?: unknown;
-    filename?: unknown;
-    id?: unknown;
-    itemKey?: unknown;
-    item_key?: unknown;
-    key?: unknown;
-    metadata?: {
-      skillId?: unknown;
-      skill_id?: unknown;
-      skillSlug?: unknown;
-      skill_slug?: unknown;
-      slug?: unknown;
-    };
-    score?: unknown;
-    source?: unknown;
-    text?: unknown;
-  };
+  const item = normalizeAiSearchProviderRow(row);
   const directPathDetails = getAiRowDirectPathDetails(item);
 
   return {

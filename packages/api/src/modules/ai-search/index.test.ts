@@ -152,14 +152,29 @@ describe("buildAiSearchResult", () => {
         chunks: [
           {
             id: "ac374870df0f57620412b476b7513bd6c5af857fffaf2eadfc76081e474d84bf",
-            source: "skill-1.md",
-            score: 0.984,
-            text: "Widget skill content",
-            metadata: {
-              skillId: "skill-1",
-              skillSlug: "widget",
-              authorHandle: "acme",
+            instance_id: "skills-re-ai-search",
+            item: {
+              key: "skill-1.md",
+              metadata: {
+                authorHandle: "acme",
+                repoName: "skills",
+                skillId: "skill-1",
+                skillSlug: "widget",
+                version: "1.0.0",
+              },
+              timestamp: 1,
             },
+            score: 0.984,
+            scoring_details: {
+              fusion_method: "rrf",
+              keyword_rank: 1,
+              keyword_score: 0.8,
+              reranking_score: 0.984,
+              vector_rank: 1,
+              vector_score: 0.9,
+            },
+            text: "Widget skill content",
+            type: "text",
           },
         ],
       },
@@ -175,7 +190,15 @@ describe("buildAiSearchResult", () => {
     expect(result.ai.resultCount).toBe(1);
     expect(result.ai.resolvedSkillsCount).toBe(1);
     expect(result.page).toHaveLength(1);
-    expect(result.page[0]).toMatchObject({ id: "skill-1", slug: "widget" });
+    expect(result.page[0]).toMatchObject({
+      aiMatch: {
+        itemKey: "skill-1.md",
+        score: 0.984,
+        snippet: "Widget skill content",
+      },
+      id: "skill-1",
+      slug: "widget",
+    });
   });
 
   test("resolves skills from chunks using source filename when metadata lacks skillId", async () => {
