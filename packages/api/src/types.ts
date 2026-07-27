@@ -20,6 +20,10 @@ export type AuthSession = {
   };
 } | null;
 
+export interface ApiKeyAuth {
+  userId: string;
+}
+
 export interface RepoStatsSyncScheduler {
   enqueue(input: {
     cursor?: string;
@@ -294,6 +298,7 @@ export interface GithubSnapshotHistoryHelpers {
 }
 
 export interface Context {
+  apiKey?: ApiKeyAuth | null;
   auth: null;
   requestHeaders?: Headers;
   waitUntil?: (promise: Promise<unknown>) => void;

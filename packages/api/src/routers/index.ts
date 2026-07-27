@@ -1,7 +1,12 @@
 import type { RouterClient } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
 
-import { adminProcedure, protectedProcedure, publicProcedure } from "../procedures";
+import {
+  adminProcedure,
+  apiUserProcedure,
+  protectedProcedure,
+  publicProcedure,
+} from "../procedures";
 import {
   checkDuplicatedRepo,
   resolveCliInstall,
@@ -672,15 +677,15 @@ export const appRouter = {
       checkExistingSkill(input),
     ),
     count: publicProcedure.skills.count.handler(() => countSkills()),
-    save: protectedProcedure.skills.save.handler(async ({ input, context }) => {
+    save: apiUserProcedure.skills.save.handler(async ({ input, context }) => {
       try {
         const result = await saveSkillToCollection(
           {
             skillSlug: input.slug,
           },
           {
-            isAdmin: context.session.user.role === "admin",
-            userId: context.session.user.id,
+            isAdmin: context.apiUser.isAdmin,
+            userId: context.apiUser.id,
           },
         );
 
@@ -694,7 +699,7 @@ export const appRouter = {
           error: normalizeErrorForLog(error),
           message,
           skillSlug: input.slug,
-          userId: anonymizeIdForLog(context.session.user.id),
+          userId: anonymizeIdForLog(context.apiUser.id),
         });
         if (message === "Skill not found.") {
           throw new ORPCError("NOT_FOUND", { message });
@@ -744,19 +749,19 @@ export const appRouter = {
     listMine: protectedProcedure.skills.listMine.handler(({ input, context }) =>
       listMineSkills({ limit: input?.limit, userId: context.session.user.id }),
     ),
-    listMineSaved: protectedProcedure.skills.listMineSaved.handler(({ input, context }) =>
+    listMineSaved: apiUserProcedure.skills.listMineSaved.handler(({ input, context }) =>
       listMineSavedSkills({
         cursor: input?.cursor,
         limit: input?.limit,
-        userId: context.session.user.id,
+        userId: context.apiUser.id,
       }),
     ),
-    checkSaved: protectedProcedure.skills.checkSaved.handler(({ input, context }) =>
-      checkSavedSkillByUser({ slug: input.slug, userId: context.session.user.id }),
+    checkSaved: apiUserProcedure.skills.checkSaved.handler(({ input, context }) =>
+      checkSavedSkillByUser({ slug: input.slug, userId: context.apiUser.id }),
     ),
-    unsave: protectedProcedure.skills.unsave.handler(async ({ input, context }) => {
+    unsave: apiUserProcedure.skills.unsave.handler(async ({ input, context }) => {
       try {
-        return await unsaveSkill({ slug: input.slug, userId: context.session.user.id });
+        return await unsaveSkill({ slug: input.slug, userId: context.apiUser.id });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unsave failed.";
         if (message === "Skill not found.") {
