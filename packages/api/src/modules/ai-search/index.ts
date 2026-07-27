@@ -507,6 +507,17 @@ const extractAiRows = (raw: unknown): AiSearchRow[] =>
 
 const rowRank = (row: AiSearchRow) => row.score ?? Number.NEGATIVE_INFINITY;
 
+const pickBestRowBySkillId = (rows: AiSearchRow[], skillId: string) => {
+  let best: AiSearchRow | null = null;
+  for (const row of rows) {
+    if (row.skillId === skillId && (!best || rowRank(row) > rowRank(best))) {
+      best = row;
+    }
+  }
+
+  return best;
+};
+
 const pickBestRowByPath = (
   rows: AiSearchRow[],
   candidate: {
@@ -581,12 +592,13 @@ const getRawRows = (raw: unknown): unknown[] => {
 const getAiSearchResultCount = (raw: unknown) => getRawRows(raw).length;
 
 const getAiMatch = (aiRows: AiSearchRow[], skill: AiSearchResolvedSkillRow) => {
+  const bestRowBySkillId = pickBestRowBySkillId(aiRows, skill.id);
   const bestRowByPath = pickBestRowByPath(aiRows, {
     authorHandle: "authorHandle" in skill ? skill.authorHandle : undefined,
     repoName: "repoName" in skill ? skill.repoName : undefined,
     skillSlug: skill.slug,
   });
-  const bestRow = bestRowByPath ?? pickBestRowBySlug(aiRows, skill.slug);
+  const bestRow = bestRowBySkillId ?? bestRowByPath ?? pickBestRowBySlug(aiRows, skill.slug);
   if (!bestRow) {
     return null;
   }

@@ -201,6 +201,85 @@ describe("buildAiSearchResult", () => {
     });
   });
 
+  test("matches native chunks by skill ID when repositories share a slug", async () => {
+    const firstSkill: SearchSkillRow = {
+      ...resolvedSkill,
+      authorHandle: "alpha",
+      id: "skill-1",
+      repoName: "alpha-skills",
+    };
+    const secondSkill: SearchSkillRow = {
+      ...resolvedSkill,
+      authorHandle: "beta",
+      id: "skill-2",
+      repoName: "beta-skills",
+    };
+    const skillsById = new Map([
+      [firstSkill.id, firstSkill],
+      [secondSkill.id, secondSkill],
+    ]);
+
+    const result = await buildAiSearchResult({
+      raw: {
+        chunks: [
+          {
+            id: "first-chunk",
+            item: {
+              key: "skill-1.md",
+              metadata: {
+                skillId: "skill-1",
+                skillSlug: "widget",
+              },
+              timestamp: 1,
+            },
+            score: 0.4,
+            text: "Alpha widget docs",
+            type: "text",
+          },
+          {
+            id: "second-chunk",
+            item: {
+              key: "skill-2.md",
+              metadata: {
+                skillId: "skill-2",
+                skillSlug: "widget",
+              },
+              timestamp: 2,
+            },
+            score: 0.9,
+            text: "Beta widget docs",
+            type: "text",
+          },
+        ],
+      },
+      resolveSkillById: async (id) => skillsById.get(id) ?? null,
+      resolveSkillByPath: async () => null,
+      resolveSkillBySlug: async () => null,
+    });
+
+    expect(
+      result.page.map((item) => ({
+        id: item.id,
+        itemKey: item.aiMatch?.itemKey,
+        score: item.aiMatch?.score,
+        snippet: item.aiMatch?.snippet,
+      })),
+    ).toEqual([
+      {
+        id: "skill-1",
+        itemKey: "skill-1.md",
+        score: 0.4,
+        snippet: "Alpha widget docs",
+      },
+      {
+        id: "skill-2",
+        itemKey: "skill-2.md",
+        score: 0.9,
+        snippet: "Beta widget docs",
+      },
+    ]);
+  });
+
   test("resolves skills from chunks using source filename when metadata lacks skillId", async () => {
     const idCandidates: string[] = [];
 
