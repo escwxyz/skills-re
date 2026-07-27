@@ -56,8 +56,11 @@ export interface AuthInstance {
       body: { expiresIn?: number; name?: string; prefix?: string; userId?: string };
     }) => Promise<{ expiresAt: Date | null; key: string } | null>;
     verifyApiKey: (input: {
-      body: { key: string };
-    }) => Promise<{ valid: boolean; key: { expiresAt: Date | null; referenceId: string } | null }>;
+      body: { key: string; permissions?: Record<string, string[]> };
+    }) => Promise<{
+      valid: boolean;
+      key: { expiresAt: Date | null; referenceId: string } | null;
+    }>;
     getAgentConfiguration: () => Promise<unknown>;
     getOAuthServerConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
     getOpenIdConfig: (input?: { headers?: HeadersInit }) => Promise<unknown>;
@@ -167,7 +170,13 @@ export function createAuth({ db, env }: CreateAuthOptions): AuthInstance {
     },
     plugins: [
       admin(),
-      apiKey(),
+      apiKey({
+        permissions: {
+          defaultPermissions: {
+            skills: ["read", "library"],
+          },
+        },
+      }),
       bearer(),
       jwt({
         jwt: {

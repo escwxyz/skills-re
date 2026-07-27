@@ -17,8 +17,26 @@ export async function createContext<
 >({ context }: CreateContextOptions<Variables>) {
   const auth = createRuntimeAuth();
   const { headers } = context.req.raw;
-  const session = await auth.api.getSession({ headers });
+  const apiKey = headers.get("x-api-key");
+  const [session, verifiedApiKey] = await Promise.all([
+    auth.api.getSession({ headers }),
+    apiKey
+      ? auth.api.verifyApiKey({
+          body: {
+            key: apiKey,
+            permissions: {
+              skills: ["read", "library"],
+            },
+          },
+        })
+      : null,
+  ]);
+
   return {
+    apiKey:
+      verifiedApiKey?.valid && verifiedApiKey.key
+        ? { userId: verifiedApiKey.key.referenceId }
+        : null,
     auth: null,
     requestHeaders: headers,
     revokeSession: async () => {
