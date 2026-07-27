@@ -152,14 +152,29 @@ describe("buildAiSearchResult", () => {
         chunks: [
           {
             id: "ac374870df0f57620412b476b7513bd6c5af857fffaf2eadfc76081e474d84bf",
-            source: "skill-1.md",
-            score: 0.984,
-            text: "Widget skill content",
-            metadata: {
-              skillId: "skill-1",
-              skillSlug: "widget",
-              authorHandle: "acme",
+            instance_id: "skills-re-ai-search",
+            item: {
+              key: "skill-1.md",
+              metadata: {
+                authorHandle: "acme",
+                repoName: "skills",
+                skillId: "skill-1",
+                skillSlug: "widget",
+                version: "1.0.0",
+              },
+              timestamp: 1,
             },
+            score: 0.984,
+            scoring_details: {
+              fusion_method: "rrf",
+              keyword_rank: 1,
+              keyword_score: 0.8,
+              reranking_score: 0.984,
+              vector_rank: 1,
+              vector_score: 0.9,
+            },
+            text: "Widget skill content",
+            type: "text",
           },
         ],
       },
@@ -175,7 +190,155 @@ describe("buildAiSearchResult", () => {
     expect(result.ai.resultCount).toBe(1);
     expect(result.ai.resolvedSkillsCount).toBe(1);
     expect(result.page).toHaveLength(1);
-    expect(result.page[0]).toMatchObject({ id: "skill-1", slug: "widget" });
+    expect(result.page[0]).toMatchObject({
+      aiMatch: {
+        itemKey: "skill-1.md",
+        score: 0.984,
+        snippet: "Widget skill content",
+      },
+      id: "skill-1",
+      slug: "widget",
+    });
+  });
+
+  test("uses nested item keys when top-level provider keys are invalid", async () => {
+    const pathCandidates: {
+      authorHandle: string;
+      repoName?: string;
+      skillSlug: string;
+    }[] = [];
+
+    const result = await buildAiSearchResult({
+      raw: {
+        chunks: [
+          {
+            id: "empty-key-chunk",
+            item: {
+              key: "acme/skills/skills/widget/skill.md",
+              metadata: {},
+              timestamp: 1,
+            },
+            key: "",
+            score: 0.8,
+            text: "Widget docs from empty top-level key",
+            type: "text",
+          },
+          {
+            id: "non-string-key-chunk",
+            item: {
+              key: "ignored/skills/skills/other-widget/skill.md",
+              metadata: {},
+              timestamp: 2,
+            },
+            key: { path: "invalid" },
+            score: 0.7,
+            text: "Other widget docs from non-string top-level key",
+            type: "text",
+          },
+        ],
+      },
+      resolveSkillByPath: async (candidate) => {
+        pathCandidates.push(candidate);
+        return candidate.skillSlug === "widget" ? resolvedSkill : null;
+      },
+      resolveSkillBySlug: async () => null,
+    });
+
+    expect(pathCandidates).toContainEqual({
+      authorHandle: "acme",
+      repoName: "skills",
+      skillSlug: "widget",
+    });
+    expect(pathCandidates).toContainEqual({
+      authorHandle: "ignored",
+      repoName: "skills",
+      skillSlug: "other-widget",
+    });
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0]?.aiMatch).toMatchObject({
+      itemKey: "acme/skills/skills/widget/skill.md",
+      score: 0.8,
+      snippet: "Widget docs from empty top-level key",
+    });
+  });
+
+  test("matches native chunks by skill ID when repositories share a slug", async () => {
+    const firstSkill: SearchSkillRow = {
+      ...resolvedSkill,
+      authorHandle: "alpha",
+      id: "skill-1",
+      repoName: "alpha-skills",
+    };
+    const secondSkill: SearchSkillRow = {
+      ...resolvedSkill,
+      authorHandle: "beta",
+      id: "skill-2",
+      repoName: "beta-skills",
+    };
+    const skillsById = new Map([
+      [firstSkill.id, firstSkill],
+      [secondSkill.id, secondSkill],
+    ]);
+
+    const result = await buildAiSearchResult({
+      raw: {
+        chunks: [
+          {
+            id: "first-chunk",
+            item: {
+              key: "skill-1.md",
+              metadata: {
+                skillId: "skill-1",
+                skillSlug: "widget",
+              },
+              timestamp: 1,
+            },
+            score: 0.4,
+            text: "Alpha widget docs",
+            type: "text",
+          },
+          {
+            id: "second-chunk",
+            item: {
+              key: "skill-2.md",
+              metadata: {
+                skillId: "skill-2",
+                skillSlug: "widget",
+              },
+              timestamp: 2,
+            },
+            score: 0.9,
+            text: "Beta widget docs",
+            type: "text",
+          },
+        ],
+      },
+      resolveSkillById: async (id) => skillsById.get(id) ?? null,
+      resolveSkillByPath: async () => null,
+      resolveSkillBySlug: async () => null,
+    });
+
+    expect(
+      result.page.map((item) => ({
+        id: item.id,
+        itemKey: item.aiMatch?.itemKey,
+        score: item.aiMatch?.score,
+        snippet: item.aiMatch?.snippet,
+      })),
+    ).toEqual([
+      {
+        id: "skill-1",
+        itemKey: "skill-1.md",
+        score: 0.4,
+        snippet: "Alpha widget docs",
+      },
+      {
+        id: "skill-2",
+        itemKey: "skill-2.md",
+        score: 0.9,
+        snippet: "Beta widget docs",
+      },
+    ]);
   });
 
   test("resolves skills from chunks using source filename when metadata lacks skillId", async () => {
