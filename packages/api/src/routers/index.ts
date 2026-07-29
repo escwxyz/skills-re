@@ -175,6 +175,32 @@ const isUniqueConstraintError = (error: unknown): boolean => {
   return isUniqueConstraintError(maybeError.cause);
 };
 
+type CreateReviewRecord = typeof createReviewRecord;
+
+export const createReviewProcedure = (createReview: CreateReviewRecord = createReviewRecord) =>
+  apiUserProcedure.reviews.create.handler(async ({ input, context }) => {
+    try {
+      return await createReview({
+        content: input.content,
+        rating: input.rating,
+        skillId: input.skillId,
+        title: input.title,
+        userId: context.apiUser.id,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Create review failed.";
+      if (message === DUPLICATE_REVIEW_MESSAGE || isUniqueConstraintError(error)) {
+        throw new ORPCError("CONFLICT", {
+          message: DUPLICATE_REVIEW_MESSAGE,
+        });
+      }
+
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Create review failed.",
+      });
+    }
+  });
+
 export const appRouter = {
   healthCheck: publicProcedure.healthCheck.handler(() => "OK"),
   categories: {
@@ -451,26 +477,7 @@ export const appRouter = {
     countMine: protectedProcedure.reviews.countMine.handler(({ context }) =>
       countMineReviews({ userId: context.session.user.id }),
     ),
-    create: protectedProcedure.reviews.create.handler(async ({ input, context }) => {
-      try {
-        return await createReviewRecord({
-          content: input.content,
-          rating: input.rating,
-          skillId: input.skillId,
-          title: input.title,
-          userId: context.session.user.id,
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Create review failed.";
-        if (message === DUPLICATE_REVIEW_MESSAGE || isUniqueConstraintError(error)) {
-          throw new ORPCError("CONFLICT", { message: DUPLICATE_REVIEW_MESSAGE });
-        }
-
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Create review failed.",
-        });
-      }
-    }),
+    create: createReviewProcedure(),
     getMineBySkill: protectedProcedure.reviews.getMineBySkill.handler(({ input, context }) =>
       getMyReviewBySkill({
         skillId: input.skillId,
