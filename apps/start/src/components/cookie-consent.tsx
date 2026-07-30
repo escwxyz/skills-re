@@ -12,11 +12,14 @@ import { clearCookieConsent, readCookieConsent, writeCookieConsent } from "@/lib
 import type { CookieConsentChoice } from "@/lib/cookie-consent";
 import {
   clearCookiePreferences,
+  clearCookieSync,
   getCookiePreferences,
   persistCookiePreferences,
 } from "@/lib/cookies";
+import { APP_LOCALE_COOKIE_NAME, APP_THEME_COOKIE_NAME } from "@/lib/consent-cookie-names";
+import { authClient } from "@/lib/auth-client";
 import { m } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
+import { getLocale, localizeHref, setLocale } from "@/paraglide/runtime";
 import { CookieIcon } from "@phosphor-icons/react";
 
 interface CookieRowProps {
@@ -59,19 +62,39 @@ export const CookieConsent = () => {
   useEffect(() => {
     const run = async () => {
       const preferences = await getCookiePreferences();
+      const savedConsent = await readCookieConsent();
+
       if (preferences === null) {
+        if (savedConsent === "all") {
+          persistCookiePreferences({ analytics: true, functional: true });
+          setChoice("all");
+          return;
+        }
+
         setTimeout(() => setOpen(true), 3000);
         return;
       }
-      const saved = await readCookieConsent();
-      setChoice(saved);
+
+      setChoice(savedConsent);
     };
     run();
   }, []);
 
   const updateChoice = async (nextChoice: CookieConsentChoice) => {
     await writeCookieConsent(nextChoice);
-    persistCookiePreferences({ analytics: nextChoice === "all", functional: true });
+    persistCookiePreferences({
+      analytics: nextChoice === "all",
+      functional: nextChoice === "all",
+    });
+
+    if (nextChoice === "all") {
+      setLocale(getLocale(), { reload: false });
+    } else {
+      clearCookieSync(APP_LOCALE_COOKIE_NAME);
+      clearCookieSync(APP_THEME_COOKIE_NAME);
+      await authClient.clearLastUsedLoginMethod();
+    }
+
     setChoice(nextChoice);
     setOpen(false);
   };
@@ -79,10 +102,14 @@ export const CookieConsent = () => {
   const resetConsent = async () => {
     await clearCookieConsent();
     await clearCookiePreferences();
+    clearCookieSync(APP_LOCALE_COOKIE_NAME);
+    clearCookieSync(APP_THEME_COOKIE_NAME);
+    authClient.clearLastUsedLoginMethod();
     setChoice("essential");
   };
 
   const analyticsEnabled = choice === "all";
+  const functionalEnabled = choice === "all";
 
   return (
     <>
@@ -122,8 +149,8 @@ export const CookieConsent = () => {
 
             <CookieSection
               title={m.cookie_consent_section_functional()}
-              badge={m.cookie_consent_always_active()}
-              badgeActive
+              badge={functionalEnabled ? m.cookie_consent_on() : m.cookie_consent_off()}
+              badgeActive={functionalEnabled}
             >
               <CookieRow
                 name={m.cookie_consent_cookie_locale_name()}
@@ -132,6 +159,10 @@ export const CookieConsent = () => {
               <CookieRow
                 name={m.cookie_consent_cookie_theme_name()}
                 description={m.cookie_consent_cookie_theme_desc()}
+              />
+              <CookieRow
+                name={m.cookie_consent_cookie_login_method_name()}
+                description={m.cookie_consent_cookie_login_method_desc()}
               />
             </CookieSection>
 
