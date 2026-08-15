@@ -52,8 +52,8 @@
     "audit:write-targets": "bun scripts/audit/write-dispatch-targets.ts",
     "audit:run": "bun scripts/audit/run-skill-scanner-audit.ts",
     "audit:ingest": "bun scripts/audit/ingest-audits.ts",
-    "check": "bun ./scripts/ultracite-run.mjs check",
-    "fix": "bun ./scripts/ultracite-run.mjs fix",
+    "check": "bun x ultracite check",
+    "fix": "bun x ultracite fix",
     "cli:release": "turbo -F @skills-re/cli build && changeset publish"
   },
   "dependencies": {
