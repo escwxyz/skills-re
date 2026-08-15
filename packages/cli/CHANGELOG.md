@@ -1,5 +1,11 @@
 # @skills-re/cli
 
+## 0.0.3
+
+### Patch Changes
+
+- 6292950: Publish npm-compatible dependency metadata for Zod.
+
 ## 0.0.2
 
 ### Patch Changes
