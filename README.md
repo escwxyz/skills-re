@@ -45,8 +45,8 @@ Useful focused commands:
 bun run dev:server
 bun run build
 bun run check-types
-bun run check
-bun run fix
+bun x ultracite check
+bun x ultracite fix
 ```
 
 Database helpers:
@@ -88,13 +88,13 @@ Issues and pull requests are welcome. Before opening a PR, run the relevant chec
 
 ```bash
 bun run check-types
-bun run check
+bun x ultracite check
 ```
 
 For formatting and lint fixes, run:
 
 ```bash
-bun run fix
+bun x ultracite fix
 ```
 
 ## License
