@@ -185,7 +185,7 @@
     },
     "packages/cli": {
       "name": "@skills-re/cli",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "bin": {
         "skills-re": "./dist/main.mjs",
       },
@@ -194,7 +194,7 @@
         "@modelcontextprotocol/sdk": "^1.29.0",
         "modern-tar": "^0.7.6",
         "picocolors": "^1.1.1",
-        "zod": "catalog:",
+        "zod": "^4.1.13",
       },
       "devDependencies": {
         "@skills-re/config": "workspace:*",
