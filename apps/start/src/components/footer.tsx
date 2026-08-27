@@ -50,7 +50,7 @@ const FOOTER_MENUS: { title: string; children: MenuItem[] }[] = [
       {
         label: "GitHub",
         Icon: GithubLogoIcon,
-        href: "https://github.com/skills-re",
+        href: "https://github.com/escwxyz/skills-re",
         external: true,
       },
       {
