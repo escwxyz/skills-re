@@ -9,7 +9,7 @@ import { EmailOtpForm } from "@/components/email-otp-form";
 import { SocialAuthButtons } from "@/components/social-auth-buttons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { m } from "@/paraglide/messages";
-import { localizeHref } from "@/paraglide/runtime";
+import { Link } from "@tanstack/react-router";
 
 export interface AuthLoginPanelProps {
   callbackUrl?: string;
@@ -25,13 +25,13 @@ const AuthLoginFooter = ({ onLinkClick }: { onLinkClick: () => void }) => (
   <div className="border-border/50 mt-6 border-t pt-4 text-center">
     <p className="text-muted-foreground text-[11px]">
       {m.login_dialog_by_signing_in_you_agree_to_our()}{" "}
-      <a className="underline" onClick={onLinkClick} href={localizeHref("/terms")}>
+      <Link to="/terms" onClick={onLinkClick} className="underline">
         {m.login_dialog_terms()}
-      </a>{" "}
+      </Link>
       {m.login_dialog_and()}{" "}
-      <a className="underline" onClick={onLinkClick} href={localizeHref("/privacy")}>
+      <Link className="underline" onClick={onLinkClick} to="/privacy">
         {m.login_dialog_privacy_policy()}
-      </a>
+      </Link>
       .
     </p>
   </div>
