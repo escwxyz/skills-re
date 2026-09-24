@@ -423,6 +423,11 @@ export const server = await Worker("server", {
   entrypoint: "src/index.ts",
   compatibility: "node",
   compatibilityDate: "2026-03-10",
+  observability: {
+    logs: {
+      invocationLogs: false,
+    },
+  },
   placement: {
     mode: "smart",
   },
