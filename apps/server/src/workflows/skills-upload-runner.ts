@@ -55,6 +55,9 @@ const QUIET_STATIC_AUDIT_SKIP_REASONS = new Set([
   "missing-dispatch-runtime",
   "no-targets",
 ]);
+const DEFAULT_SKILL_VERSION = "1.0.0";
+const SEMVER_PATTERN =
+  /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 export interface WorkflowEvent<TPayload> {
   payload: TPayload;
@@ -178,6 +181,23 @@ const findSkillMdFile = (skill: Awaited<ReturnType<typeof prepareUploadSkills>>[
 
 const normalizeCanonicalSlug = (value: string) => normalizeSkillSlug(value);
 
+export const resolveUploadSnapshotVersion = (
+  preferredVersion: string | undefined,
+  latestVersion: string | null,
+) => {
+  if (preferredVersion) {
+    return preferredVersion;
+  }
+
+  const match = latestVersion?.match(SEMVER_PATTERN);
+  if (!match) {
+    return DEFAULT_SKILL_VERSION;
+  }
+
+  const [, major, minor, patch] = match;
+  return `${major}.${minor}.${Number(patch) + 1}`;
+};
+
 const buildUniqueSkillIdByCanonicalSlug = (
   existingRepoSkills: Awaited<ReturnType<typeof listRepoSkillSnapshotHeadsByRepoId>>,
 ) => {
@@ -205,6 +225,7 @@ interface ProcessUploadSkillParams {
   deps: RunSkillsUploadWorkflowDeps;
   existingRepoSkillIdByCanonicalSlug: Map<string, string>;
   existingRepoSkillIdByDirectoryPath: Map<string, string>;
+  latestVersionBySkillId: Map<string, string>;
   repoId: string;
   repoName: string;
   skill: Awaited<ReturnType<typeof prepareUploadSkills>>[number];
@@ -263,6 +284,7 @@ const resolveUploadSkillRecord = async ({
   deps,
   existingRepoSkillIdByCanonicalSlug,
   existingRepoSkillIdByDirectoryPath,
+  latestVersionBySkillId,
   repoId,
   skill,
   skillIndex,
@@ -281,6 +303,7 @@ const resolveUploadSkillRecord = async ({
     usedSlugs.add(skill.slug);
     return {
       canonicalSlug,
+      latestVersion: latestVersionBySkillId.get(existingSkillId) ?? null,
       normalizedDirectoryPath,
       skillId: existingSkillId,
       slug: skill.slug,
@@ -318,6 +341,7 @@ const resolveUploadSkillRecord = async ({
 
   return {
     canonicalSlug,
+    latestVersion: null,
     normalizedDirectoryPath,
     skillId,
     slug,
@@ -329,6 +353,7 @@ const processUploadSkill = async ({
   deps,
   existingRepoSkillIdByCanonicalSlug,
   existingRepoSkillIdByDirectoryPath,
+  latestVersionBySkillId,
   repoId,
   repoName,
   skill,
@@ -362,10 +387,11 @@ const processUploadSkill = async ({
     }
   }
 
-  const { normalizedDirectoryPath, skillId, slug } = await resolveUploadSkillRecord({
+  const { latestVersion, normalizedDirectoryPath, skillId, slug } = await resolveUploadSkillRecord({
     deps,
     existingRepoSkillIdByCanonicalSlug,
     existingRepoSkillIdByDirectoryPath,
+    latestVersionBySkillId,
     repoId,
     skill,
     skillIndex,
@@ -374,7 +400,7 @@ const processUploadSkill = async ({
     usedSlugs,
   });
 
-  const snapshotVersion = skill.preferredVersion ?? "1.0.0";
+  const snapshotVersion = resolveUploadSnapshotVersion(skill.preferredVersion, latestVersion);
   const skillTags = normalizeSkillTags(skill.tags ?? []);
   const snapshotId = await step.do(
     `create-upload-snapshot-${skillIndex}`,
@@ -441,6 +467,7 @@ const processUploadSkill = async ({
         version: snapshotVersion,
       }),
   );
+  latestVersionBySkillId.set(skillId, snapshotVersion);
 
   await step.do(
     `sync-upload-skill-tags-${skillIndex}`,
@@ -530,7 +557,7 @@ const processUploadSkill = async ({
           repoName,
           skillId,
           skillSlug: slug,
-          version: skill.preferredVersion ?? "1.0.0",
+          version: snapshotVersion,
         });
         return id;
       } catch (error) {
@@ -710,6 +737,12 @@ export const runSkillsUploadWorkflow = async (
     );
     const existingRepoSkillIdByCanonicalSlug =
       buildUniqueSkillIdByCanonicalSlug(existingRepoSkills);
+    const latestVersionBySkillId = new Map(
+      existingRepoSkills.map((existingSkill) => [
+        existingSkill.skillId,
+        existingSkill.latestVersion,
+      ]),
+    );
     const syncTime = Date.now();
 
     for (const [index, skill] of preparedSkills.entries()) {
@@ -718,6 +751,7 @@ export const runSkillsUploadWorkflow = async (
         deps,
         existingRepoSkillIdByCanonicalSlug,
         existingRepoSkillIdByDirectoryPath,
+        latestVersionBySkillId,
         repoId,
         repoName,
         skill,

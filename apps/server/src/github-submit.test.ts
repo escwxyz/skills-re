@@ -221,7 +221,7 @@ describe("createGithubSubmitRuntime", () => {
               Response.json(
                 {
                   content: encodeBase64(
-                    `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
+                    `---\nname: example-skill\ndescription: Example skill\nmetadata:\n  version: 2.0.0\n---\n# Example`,
                   ),
                   encoding: "base64",
                 },
@@ -274,7 +274,7 @@ describe("createGithubSubmitRuntime", () => {
             initialSnapshot: {
               files: [
                 {
-                  content: `---\nname: example-skill\ndescription: Example skill\n---\n# Example`,
+                  content: `---\nname: example-skill\ndescription: Example skill\nmetadata:\n  version: 2.0.0\n---\n# Example`,
                   path: "SKILL.md",
                 },
               ],
@@ -293,7 +293,7 @@ describe("createGithubSubmitRuntime", () => {
               ],
             },
             license: "MIT",
-            preferredVersion: undefined,
+            preferredVersion: "2.0.0",
             slug: "example-skill",
             sourceLocator: "github:acme/skills/skills/example/SKILL.md",
             sourceType: "github",
