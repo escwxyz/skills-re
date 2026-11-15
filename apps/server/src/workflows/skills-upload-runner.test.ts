@@ -2,12 +2,19 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { runSkillsUploadWorkflow } from "./skills-upload-runner";
+import { resolveUploadSnapshotVersion, runSkillsUploadWorkflow } from "./skills-upload-runner";
 import { stageSkillsUploadPayload } from "./skills-upload";
 import { createWorkflowStepStub } from "./test-support";
 
 const replaceSkillSearchDocumentNoop = () =>
   Promise.resolve({ indexingStatus: "indexed" as const, status: "replaced" as const });
+
+describe("resolveUploadSnapshotVersion", () => {
+  test("bumps the core patch when the latest version has prerelease or build metadata", () => {
+    expect(resolveUploadSnapshotVersion(undefined, "2.0.0-beta.1")).toBe("2.0.1");
+    expect(resolveUploadSnapshotVersion(undefined, "2.0.0+build.4")).toBe("2.0.1");
+  });
+});
 
 describe("runSkillsUploadWorkflow", () => {
   test("runs the upload pipeline as separate workflow steps", async () => {
@@ -716,6 +723,7 @@ describe("runSkillsUploadWorkflow", () => {
     const stepNames: string[] = [];
     const storage = new Map<string, string>();
     const calls = {
+      aiSearchItemUpload: [] as unknown[],
       createSkill: [] as unknown[],
       createSnapshot: [] as unknown[],
       setSkillLatestSnapshot: [] as unknown[],
@@ -798,7 +806,10 @@ describe("runSkillsUploadWorkflow", () => {
       {
         aiSearchItems: {
           deleteItem: (_itemId: string) => Promise.resolve(),
-          uploadItem: () => Promise.resolve({ id: "ai-search-existing" }),
+          uploadItem: (key: string, content: string, metadata: Record<string, string>) => {
+            calls.aiSearchItemUpload.push({ content, key, metadata });
+            return Promise.resolve({ id: "ai-search-existing" });
+          },
         },
         checkSkillExistingBySlug: () => Promise.resolve(true),
         createSkill: (input: unknown) => {
@@ -871,12 +882,14 @@ describe("runSkillsUploadWorkflow", () => {
       expect.objectContaining({
         directoryPath: "skills/acme/widget",
         skillId: "skill-existing",
+        version: "1.0.1",
       }),
     ]);
     expect(calls.setSkillLatestSnapshot).toEqual([
       expect.objectContaining({
         skillId: "skill-existing",
         snapshotId: "snapshot-existing-2",
+        version: "1.0.1",
       }),
     ]);
     expect(calls.syncSkillTags).toEqual([
@@ -884,6 +897,11 @@ describe("runSkillsUploadWorkflow", () => {
         skillId: "skill-existing",
         tags: [],
       },
+    ]);
+    expect(calls.aiSearchItemUpload).toEqual([
+      expect.objectContaining({
+        metadata: expect.objectContaining({ version: "1.0.1" }),
+      }),
     ]);
     expect(result).toEqual({
       ids: ["skill-existing"],
@@ -960,6 +978,7 @@ describe("runSkillsUploadWorkflow", () => {
           sourceLocator: "github:acme/skills/skills/new-widget/SKILL.md",
           sourceType: "github",
           title: "Widget",
+          preferredVersion: "2.0.0",
         },
       ],
     });
@@ -1034,12 +1053,14 @@ describe("runSkillsUploadWorkflow", () => {
       expect.objectContaining({
         directoryPath: "skills/new-widget",
         skillId: "skill-existing",
+        version: "2.0.0",
       }),
     ]);
     expect(calls.setSkillLatestSnapshot).toEqual([
       expect.objectContaining({
         skillId: "skill-existing",
         snapshotId: "snapshot-existing-2",
+        version: "2.0.0",
       }),
     ]);
     expect(result).toEqual({
